@@ -98,7 +98,7 @@ export const promosContent = {
       originalPrice: '$1,299',
       badge: '-30%',
       features: ['Aceite sintético 5W-30', 'Filtro de aceite nuevo', 'Revisión de niveles', 'Check-up de 21 puntos'],
-      image: 'https://images.unsplash.com/photo-1635784063388-1ff609e6e984?w=600&q=80',
+      image: '/images/promo-oil-change.png',
     },
     {
       title: 'Alineación + Balanceo',
@@ -107,7 +107,7 @@ export const promosContent = {
       originalPrice: '$899',
       badge: 'POPULAR',
       features: ['Alineación computarizada', 'Balanceo 4 ruedas', 'Rotación de llantas', 'Revisión de suspensión'],
-      image: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&q=80',
+      image: '/images/promo-alignment.png',
     },
     {
       title: 'Check-Up Completo',
@@ -116,7 +116,7 @@ export const promosContent = {
       originalPrice: '$799',
       badge: 'NUEVO',
       features: ['Diagnóstico completo', 'Revisión de frenos', 'Sistema eléctrico', 'Reporte detallado'],
-      image: 'https://images.unsplash.com/photo-1625047509248-ec889cbff17f?w=600&q=80',
+      image: '/images/promo-checkup.png',
     },
   ],
 };
