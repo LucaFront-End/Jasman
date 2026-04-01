@@ -7,14 +7,14 @@ import { Link } from 'react-router-dom';
 
 /* ═══ DATA ═══ */
 const historia = [
-  { year: '1960', title: 'Los Primeros Pasos', text: 'Nace como una pequeña venta de refacciones en el Estado de México, fundada con valores de honestidad y servicio al cliente.', icon: Building2, color: '#f59e0b' },
-  { year: '1987', title: 'Nueva Generación', text: 'La segunda generación toma las riendas del negocio con el sueño de crecer a cinco sucursales y profesionalizar la operación.', icon: Users, color: '#3b82f6' },
-  { year: '1990', title: 'Expansión Oriente', text: 'Primera gran expansión con 8 sucursales en la Zona Oriente: Texcoco, Iztacalco, Aeropuerto, Los Reyes, Iztapalapa, Zumpango, Chalco y La Villa.', icon: TrendingUp, color: '#22c55e' },
-  { year: '1995', title: 'Adquisición JUJOMA', text: 'Jasma adquiere el Grupo JUJOMA con 16 Centros de Servicio distribuidos estratégicamente en el Distrito Federal y Estado de México.', icon: Handshake, color: '#8b5cf6' },
-  { year: '2005', title: 'Expansión Nacional', text: 'Se adquiere Comercial Jiménez de Jalisco (17 patios en Jalisco y Michoacán) y Neumatik de Nuevo León (18 patios con 65+ años en el mercado).', icon: MapPin, color: '#ef4444' },
-  { year: '2007', title: 'JASMAN AUTOMOTRIZ', text: 'Fusión de JUJOMA, Comercial Jiménez, Neumatik y Jasma para conformar JASMAN AUTOMOTRIZ S.A. De C.V. como una sola empresa sólida.', icon: Star, color: '#f59e0b' },
-  { year: '2009', title: 'Grupo Dinese', text: 'Adquisición de Grupo Dinese con 8 sucursales en León, Irapuato, Salamanca y Guanajuato, consolidando presencia en el Bajío.', icon: Flag, color: '#06b6d4' },
-  { year: 'Hoy', title: 'Líder Nacional', text: 'Con más de 80 sucursales en todo México, somos el centro de soluciones automotrices líder del país, sirviendo a millones de familias.', icon: Trophy, color: '#C41E24' },
+  { year: '1960', title: 'Los Primeros Pasos', text: 'Nace como una pequeña venta de refacciones en el Estado de México, fundada con valores de honestidad y servicio al cliente.', icon: Building2, color: '#f59e0b', image: '/images/timeline-1960.png' },
+  { year: '1987', title: 'Nueva Generación', text: 'La segunda generación toma las riendas del negocio con el sueño de crecer a cinco sucursales y profesionalizar la operación.', icon: Users, color: '#3b82f6', image: '/images/timeline-1987.png' },
+  { year: '1990', title: 'Expansión Oriente', text: 'Primera gran expansión con 8 sucursales en la Zona Oriente: Texcoco, Iztacalco, Aeropuerto, Los Reyes, Iztapalapa, Zumpango, Chalco y La Villa.', icon: TrendingUp, color: '#22c55e', image: '/images/timeline-1990.png' },
+  { year: '1995', title: 'Adquisición JUJOMA', text: 'Jasma adquiere el Grupo JUJOMA con 16 Centros de Servicio distribuidos estratégicamente en el Distrito Federal y Estado de México.', icon: Handshake, color: '#8b5cf6', image: '/images/timeline-1995.png' },
+  { year: '2005', title: 'Expansión Nacional', text: 'Se adquiere Comercial Jiménez de Jalisco (17 patios en Jalisco y Michoacán) y Neumatik de Nuevo León (18 patios con 65+ años en el mercado).', icon: MapPin, color: '#ef4444', image: '/images/timeline-2005.png' },
+  { year: '2007', title: 'JASMAN AUTOMOTRIZ', text: 'Fusión de JUJOMA, Comercial Jiménez, Neumatik y Jasma para conformar JASMAN AUTOMOTRIZ S.A. De C.V. como una sola empresa sólida.', icon: Star, color: '#f59e0b', image: '/images/timeline-2007.png' },
+  { year: '2009', title: 'Grupo Dinese', text: 'Adquisición de Grupo Dinese con 8 sucursales en León, Irapuato, Salamanca y Guanajuato, consolidando presencia en el Bajío.', icon: Flag, color: '#06b6d4', image: '/images/timeline-2009.png' },
+  { year: 'Hoy', title: 'Líder Nacional', text: 'Con más de 80 sucursales en todo México, somos el centro de soluciones automotrices líder del país, sirviendo a millones de familias.', icon: Trophy, color: '#C41E24', image: '/images/timeline-today.png' },
 ];
 
 const valores = [
@@ -384,26 +384,41 @@ export default function NosotrosPage() {
                 boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
               }}>
                 <div style={{
-                  height: 240, background: `linear-gradient(135deg, ${historia[activeTimeline].color}25, ${historia[activeTimeline].color}08)`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background 0.6s',
-                  position: 'relative',
+                  height: 280, position: 'relative', overflow: 'hidden',
                 }}>
-                  {/* Big year watermark */}
-                  <span style={{
-                    fontFamily: F.heading, fontWeight: 900,
-                    fontSize: 'clamp(5rem, 12vw, 9rem)', color: `${historia[activeTimeline].color}12`,
-                    transition: 'color 0.6s', lineHeight: 1, userSelect: 'none',
-                  }}>{historia[activeTimeline].year}</span>
+                  {/* Actual image */}
+                  <img
+                    key={activeTimeline}
+                    src={historia[activeTimeline].image}
+                    alt={historia[activeTimeline].title}
+                    style={{
+                      width: '100%', height: '100%', objectFit: 'cover',
+                      animation: 'fadeIn 0.5s ease-out',
+                    }}
+                  />
+                  {/* Color overlay */}
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: `linear-gradient(135deg, ${historia[activeTimeline].color}30, transparent 60%)`,
+                    transition: 'background 0.6s',
+                  }} />
+                  {/* Year badge */}
+                  <div style={{
+                    position: 'absolute', top: 16, left: 16,
+                    padding: '6px 16px', borderRadius: 12,
+                    background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)',
+                    fontFamily: F.heading, fontWeight: 800, fontSize: 18, color: C.white,
+                    letterSpacing: '0.02em',
+                  }}>{historia[activeTimeline].year}</div>
                   {/* Floating icon */}
                   <div style={{
-                    position: 'absolute', bottom: 20, right: 20,
-                    width: 56, height: 56, borderRadius: 18,
-                    background: C.white, boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                    position: 'absolute', bottom: 16, right: 16,
+                    width: 48, height: 48, borderRadius: 16,
+                    background: 'rgba(255,255,255,0.95)', boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     animation: 'float 3s ease-in-out infinite',
                   }}>
-                    {(() => { const I = historia[activeTimeline].icon; return <I size={24} color={historia[activeTimeline].color} />; })()}
+                    {(() => { const I = historia[activeTimeline].icon; return <I size={22} color={historia[activeTimeline].color} />; })()}
                   </div>
                 </div>
                 <div style={{ padding: '20px 24px', background: C.white }}>
