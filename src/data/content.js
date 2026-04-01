@@ -243,16 +243,19 @@ export const footerContent = {
   description: 'Talleres Automotrices Jasman, mucho más que un taller. Con una red de más de 80 sucursales en las ciudades principales del país.',
   links: {
     company: [
-      { label: 'Conócenos', href: '/conocenos' },
+      { label: 'Nosotros', href: '/nosotros' },
       { label: 'Servicios', href: '/servicios' },
       { label: 'Sucursales', href: '/sucursales' },
       { label: 'Flotillas', href: '/flotillas' },
+      { label: 'Bolsa de Trabajo', href: '/bolsa-de-trabajo' },
+      { label: 'Proveedores', href: '/proveedores' },
+      { label: 'Contacto', href: '/contacto' },
     ],
     legal: [
-      { label: 'Aviso de Privacidad', href: '/privacidad' },
-      { label: 'Términos y Condiciones', href: '/terminos' },
-      { label: 'Facturación', href: '/facturacion' },
-      { label: 'Contacto', href: '/contacto' },
+      { label: 'Aviso de Privacidad', href: 'https://www.jasman.com.mx/avisodeprivacidad' },
+      { label: 'Términos y Condiciones', href: 'https://www.jasman.com.mx/términosycondciones' },
+      { label: 'Facturación', href: 'https://www.jasman.com.mx/facturación' },
+      { label: 'Jasman Te Escucha', href: 'https://www.jasman.com.mx/jasman-te-escucha' },
     ],
   },
   contact: {
@@ -268,10 +271,10 @@ export const footerContent = {
 };
 
 export const navLinks = [
-  { label: 'Conócenos', href: '#about' },
-  { label: 'Servicios', href: '#services' },
-  { label: 'Sucursales', href: '#locations' },
-  { label: 'Flotillas', href: '#' },
-  { label: 'Catálogo', href: '#' },
-  { label: 'Contacto', href: '#cta' },
+  { label: 'Nosotros', href: '/nosotros' },
+  { label: 'Servicios', href: '/servicios' },
+  { label: 'Sucursales', href: '/sucursales' },
+  { label: 'Flotillas', href: '/flotillas' },
+  { label: 'Llantas', href: 'https://llantastic.com', external: true },
+  { label: 'Contacto', href: '/contacto' },
 ];

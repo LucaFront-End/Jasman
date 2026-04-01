@@ -315,4 +315,70 @@ button { cursor: pointer; }
 /* ═══════ RESPONSIVE ═══════ */
 @media (max-width: 768px) {
   .nav-links { display: none !important; }
+  .mobile-menu-btn { display: flex !important; }
+}
+
+/* ═══════ PROMOTIONS POPUP ═══════ */
+@keyframes promoSlideUp {
+  0% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* ═══════ FORM INPUTS ═══════ */
+input::placeholder, textarea::placeholder { opacity: 0.5; }
+select { appearance: none; }
+
+/* ═══════ PAGE RESPONSIVE ═══════ */
+@media (max-width: 900px) {
+  /* Grids that go 2-col or 1-col on mobile */
+  section div[style*="gridTemplateColumns: '1.2fr 0.8fr'"],
+  section div[style*="gridTemplateColumns: '1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  section div[style*="repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ═══════ NOSOTROS PAGE RESPONSIVE ═══════ */
+@media (max-width: 900px) {
+  /* Timeline 2-col → 1-col */
+  .nosotros-timeline-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Sticky sidebar disabled on mobile */
+  .nosotros-sticky {
+    position: static !important;
+  }
+  /* Misión/Visión cards */
+  .mision-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════ CONTACTO PAGE RESPONSIVE ═══════ */
+@media (max-width: 900px) {
+  .contacto-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 640px) {
+  .contacto-form-fields-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════ FOCUS ANIMATION ═══════ */
+@keyframes focusPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(196,30,36,0.08); }
+  50% { box-shadow: 0 0 0 5px rgba(196,30,36,0.12); }
+}
+
+/* ═══════ FAQ ACCORDION ═══════ */
+@keyframes expandDown {
+  0% { max-height: 0; opacity: 0; }
+  100% { max-height: 300px; opacity: 1; }
 }

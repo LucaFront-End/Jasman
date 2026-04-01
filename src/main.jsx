@@ -1,37 +1,35 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import './index.css';
+import App from './App.jsx';
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// Reveal on scroll
+const revealObserver = new IntersectionObserver(
+  (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('revealed'); }),
+  { threshold: 0.1 }
+);
 
-/* ═══ Global entrance animations ═══ */
 const observeSections = () => {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('revealed');
-          observer.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
-  );
-
-  document.querySelectorAll('section > div, section > div > div, footer > div').forEach((el) => {
-    el.classList.add('reveal-on-scroll');
-    observer.observe(el);
+  document.querySelectorAll('section').forEach((s) => {
+    s.classList.add('reveal-section');
+    revealObserver.observe(s);
   });
 };
 
-// Run after React renders
-if (document.readyState === 'complete') {
-  setTimeout(observeSections, 300);
-} else {
-  window.addEventListener('load', () => setTimeout(observeSections, 300));
-}
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </StrictMode>
+);
+
+// re-observe on route changes
+const origPushState = history.pushState;
+history.pushState = function (...args) {
+  origPushState.apply(this, args);
+  setTimeout(observeSections, 100);
+};
+window.addEventListener('popstate', () => setTimeout(observeSections, 100));
+setTimeout(observeSections, 100);

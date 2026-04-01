@@ -1,0 +1,158 @@
+/* ═══ Example vacancies for Bolsa de Trabajo ═══ */
+
+export const vacantes = [
+  {
+    id: 'tecnico-automotriz-cdmx',
+    title: 'Técnico Automotriz',
+    category: 'Técnico',
+    city: 'CDMX',
+    type: 'Tiempo completo',
+    description: 'Buscamos técnico automotriz con experiencia en diagnóstico y reparación de vehículos. Capacitación constante y excelente ambiente laboral.',
+    requirements: [
+      'Experiencia mínima de 2 años en mecánica automotriz',
+      'Conocimiento en sistemas de frenos, suspensión y motor',
+      'Manejo de equipo de diagnóstico computarizado',
+      'Disponibilidad de horario',
+      'Licencia de conducir vigente',
+    ],
+    benefits: [
+      'Sueldo competitivo + bonos por productividad',
+      'Prestaciones de ley desde el primer día',
+      'Capacitación continua certificada',
+      'Oportunidad de crecimiento',
+      'Seguro de vida',
+    ],
+  },
+  {
+    id: 'tecnico-automotriz-monterrey',
+    title: 'Técnico Automotriz',
+    category: 'Técnico',
+    city: 'Monterrey',
+    type: 'Tiempo completo',
+    description: 'Únete a nuestro equipo en Monterrey. Buscamos técnicos con pasión por la mecánica automotriz y deseo de crecimiento profesional.',
+    requirements: [
+      'Experiencia mínima de 1 año en taller automotriz',
+      'Conocimiento en alineación y balanceo',
+      'Actitud de servicio y trabajo en equipo',
+      'Disponibilidad para laborar en zona Monterrey',
+    ],
+    benefits: [
+      'Sueldo base + comisiones',
+      'Prestaciones superiores a la ley',
+      'Uniforme y herramienta proporcionados',
+      'Plan de carrera',
+    ],
+  },
+  {
+    id: 'asesor-servicio-guadalajara',
+    title: 'Asesor de Servicio al Cliente',
+    category: 'Ventas',
+    city: 'Guadalajara',
+    type: 'Tiempo completo',
+    description: 'Responsable de recibir a los clientes, diagnosticar necesidades del vehículo y ofrecer soluciones integrales. Excelentes habilidades de comunicación.',
+    requirements: [
+      'Experiencia en atención al cliente (mínimo 1 año)',
+      'Conocimiento básico automotriz',
+      'Excelentes habilidades de comunicación',
+      'Manejo de herramientas digitales',
+      'Enfoque en resultados y satisfacción del cliente',
+    ],
+    benefits: [
+      'Sueldo base competitivo + comisiones atractivas',
+      'Prestaciones de ley',
+      'Capacitación comercial y técnica',
+      'Horario fijo de lunes a sábado',
+      'Descuentos en servicios para empleados',
+    ],
+  },
+  {
+    id: 'gerente-sucursal-queretaro',
+    title: 'Gerente de Sucursal',
+    category: 'Gerencia',
+    city: 'Querétaro',
+    type: 'Tiempo completo',
+    description: 'Liderazgo operativo de sucursal. Responsable de ventas, servicio, personal y alcance de objetivos. Reporta a dirección regional.',
+    requirements: [
+      'Experiencia mínima de 3 años en puesto gerencial',
+      'Conocimiento del sector automotriz',
+      'Liderazgo comprobable de equipos de trabajo',
+      'Manejo de indicadores (KPIs) y presupuestos',
+      'Licenciatura terminada (deseable)',
+    ],
+    benefits: [
+      'Sueldo competitivo + bono por cumplimiento',
+      'Prestaciones superiores a la ley',
+      'Auto de la empresa',
+      'Teléfono corporativo',
+      'Capacitación ejecutiva',
+    ],
+  },
+  {
+    id: 'almacenista-leon',
+    title: 'Almacenista',
+    category: 'Administrativo',
+    city: 'León',
+    type: 'Tiempo completo',
+    description: 'Control de inventario de refacciones y llantas. Recepción, acomodo y despacho de mercancía. Manejo de sistema de inventarios.',
+    requirements: [
+      'Experiencia en almacén (mínimo 6 meses)',
+      'Conocimiento básico de refacciones automotrices',
+      'Manejo de paquetería Office',
+      'Organizado y detallista',
+      'Disponibilidad inmediata',
+    ],
+    benefits: [
+      'Sueldo competitivo',
+      'Prestaciones de ley',
+      'Estabilidad laboral',
+      'Capacitación interna',
+    ],
+  },
+  {
+    id: 'auxiliar-administrativo-cdmx',
+    title: 'Auxiliar Administrativo',
+    category: 'Administrativo',
+    city: 'CDMX',
+    type: 'Tiempo completo',
+    description: 'Apoyo en procesos administrativos de sucursal: facturación, cortes de caja, control de documentación y atención telefónica.',
+    requirements: [
+      'Preparatoria terminada (mínimo)',
+      'Conocimiento de facturación electrónica',
+      'Manejo de Excel intermedio',
+      'Experiencia en área administrativa',
+      'Buena presentación y trato amable',
+    ],
+    benefits: [
+      'Sueldo competitivo',
+      'Prestaciones de ley desde el primer día',
+      'Horario de lunes a sábado',
+      'Estabilidad laboral',
+      'Posibilidad de crecimiento',
+    ],
+  },
+  {
+    id: 'tecnico-llantas-puebla',
+    title: 'Técnico en Llantas',
+    category: 'Técnico',
+    city: 'Puebla',
+    type: 'Tiempo completo',
+    description: 'Especialista en montaje, balanceo y alineación de llantas. Operación de equipos computarizados de última generación.',
+    requirements: [
+      'Experiencia en montaje y desmontaje de llantas',
+      'Conocimiento en alineación computarizada',
+      'Condición física adecuada',
+      'Actitud de servicio',
+    ],
+    benefits: [
+      'Sueldo base + bono de productividad',
+      'Prestaciones de ley',
+      'Uniforme y herramienta',
+      'Capacitación técnica continua',
+    ],
+  },
+];
+
+export const jobCategories = ['Todos', 'Técnico', 'Ventas', 'Gerencia', 'Administrativo'];
+export const jobCities = ['Todas', ...new Set(vacantes.map(v => v.city))];
+
+export default vacantes;

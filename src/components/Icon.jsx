@@ -4,6 +4,8 @@ import {
   Store, Wrench, TrendingUp, Handshake, Monitor, GraduationCap, Map, Trophy,
   MapPin, Star, Check, Shield, Clock, Phone, Mail,
   ChevronLeft, ChevronRight, ArrowRight, Navigation,
+  Wind, Sparkles, Gauge,
+  ClipboardList, BarChart3, UserCheck, Wallet,
 } from 'lucide-react';
 
 const iconMap = {
@@ -14,6 +16,9 @@ const iconMap = {
   'car': Car,
   'droplets': Droplets,
   'battery-charging': BatteryCharging,
+  'wind': Wind,
+  'sparkles': Sparkles,
+  'gauge': Gauge,
   // About features
   'award': Award,
   'shield-check': ShieldCheck,
@@ -28,6 +33,11 @@ const iconMap = {
   'graduation-cap': GraduationCap,
   'map': Map,
   'trophy': Trophy,
+  // Flotillas
+  'clipboard-list': ClipboardList,
+  'bar-chart-3': BarChart3,
+  'user-check': UserCheck,
+  'wallet': Wallet,
   // General
   'map-pin': MapPin,
   'star': Star,
