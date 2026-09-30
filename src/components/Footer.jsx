@@ -19,9 +19,18 @@ export default function Footer() {
         <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: 48 }}>
           {/* Brand */}
           <div>
-            <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-              <div style={{ width: 42, height: 42, borderRadius: 12, background: C.red, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F.heading, fontWeight: 900, fontSize: 18, color: C.white, boxShadow: '0 4px 16px rgba(196,30,36,0.3)' }}>J</div>
-              <span style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 22, color: C.white }}>JASMAN</span>
+            <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', marginBottom: 20 }} aria-label="Jasman Automotriz">
+              <img
+                src="/images/logo/logo-03.png"
+                alt="Jasman Automotriz"
+                style={{
+                  height: 46,
+                  width: 'auto',
+                  maxWidth: 200,
+                  objectFit: 'contain',
+                  display: 'block',
+                }}
+              />
             </Link>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, maxWidth: 280 }}>{footerContent.description}</p>
             <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>

@@ -64,19 +64,40 @@ export default function Navbar() {
         transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)',
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: 12,
-              background: scrolled ? C.red : 'rgba(255,255,255,0.12)',
-              color: C.white, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: F.heading, fontWeight: 900, fontSize: 18,
-              transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)',
-              boxShadow: scrolled ? '0 4px 16px rgba(196,30,36,0.3)' : 'none',
-            }}>J</div>
-            <span style={{
-              fontFamily: F.heading, fontWeight: 800, fontSize: 22, letterSpacing: '0.02em',
-              color: scrolled ? C.navy : C.white, transition: 'color 0.5s',
-            }}>JASMAN</span>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', position: 'relative', height: 42, textDecoration: 'none' }} aria-label="Jasman Automotriz">
+            {/* Logo para fondo claro (al hacer scroll o abrir menu movil) */}
+            <img
+              src="/images/logo/logo-01.png"
+              alt="Jasman Automotriz"
+              style={{
+                height: 42,
+                width: 'auto',
+                maxWidth: 180,
+                objectFit: 'contain',
+                opacity: (scrolled || mobileOpen) ? 1 : 0,
+                transition: 'opacity 0.4s ease',
+                display: 'block',
+              }}
+            />
+            {/* Logo para fondo oscuro (hero inicial) */}
+            <img
+              src="/images/logo/logo-03.png"
+              alt="Jasman Automotriz"
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                height: 42,
+                width: 'auto',
+                maxWidth: 180,
+                objectFit: 'contain',
+                opacity: (scrolled || mobileOpen) ? 0 : 1,
+                transition: 'opacity 0.4s ease',
+                pointerEvents: 'none',
+                display: 'block',
+              }}
+            />
           </Link>
           {/* Desktop nav */}
           <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -93,7 +114,7 @@ export default function Navbar() {
           {/* Mobile hamburger */}
           <button className="mobile-menu-btn" onClick={() => setMobileOpen(!mobileOpen)} style={{
             display: 'none', background: 'none', border: 'none',
-            color: scrolled ? C.navy : C.white, padding: 8, cursor: 'pointer',
+            color: (scrolled || mobileOpen) ? C.navy : C.white, padding: 8, cursor: 'pointer',
           }}>
             {mobileOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
