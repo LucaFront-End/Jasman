@@ -123,6 +123,7 @@ export default function LandingAlineacionPage() {
 
   // FAQ Accordion
   const [openFaq, setOpenFaq] = useState(0);
+  const [showOtherBranches, setShowOtherBranches] = useState(false);
 
   // References
   const searchSectionRef = useRef(null);
@@ -341,8 +342,7 @@ export default function LandingAlineacionPage() {
   return (
     <div className="landing-root" style={{ background: '#F8F9FA', color: C.charcoal, minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
 
-      {/* ═══════ 1. PROMOTIONAL HERO BANNER ═══════ */}
-      <section style={{
+      <section className="landing-hero-section" style={{
         background: '#0B0D17',
         padding: '100px 16px 36px',
         position: 'relative',
@@ -360,111 +360,253 @@ export default function LandingAlineacionPage() {
 
         <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative', zIndex: 1, width: '100%' }}>
 
-          {/* Promotional Tag */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '6px 18px', borderRadius: 9999,
-              background: 'rgba(196,30,36,0.15)', border: '1px solid rgba(196,30,36,0.4)',
-              color: '#FF6B6B', fontFamily: F.heading, fontWeight: 700, fontSize: 13,
-              letterSpacing: '0.08em', textTransform: 'uppercase',
-            }}>
-              <Sparkles size={15} color="#FF6B6B" /> OFERTA ESPECIAL VIGENTE
-            </span>
-          </div>
-
-          {/* Main Banner Image Container */}
-          <div style={{
-            borderRadius: 20,
-            overflow: 'hidden',
-            boxShadow: '0 16px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)',
-            position: 'relative',
-            background: '#1A1F36',
-            width: '100%',
-          }}>
-            <img
-              src="/images/promo-landing-banner.jpg"
-              alt="Promoción Alineación y Balanceo Jasman Automotriz en las 4 llantas desde $750 MXN"
-              style={{
-                width: '100%',
-                height: 'auto',
-                display: 'block',
-                maxHeight: '500px',
-                objectFit: 'cover',
-                objectPosition: 'center',
-              }}
-            />
-          </div>
-
-          {/* Quick CTA Action Bar Below Banner */}
-          <div className="landing-hero-bar" style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 16,
-            background: 'rgba(26,31,54,0.92)',
-            backdropFilter: 'blur(16px)',
-            borderRadius: 20,
-            padding: '20px 24px',
-            marginTop: 18,
-            border: '1px solid rgba(255,255,255,0.1)',
-            width: '100%',
-            boxSizing: 'border-box',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{
-                width: 46, height: 46, borderRadius: 14,
-                background: C.red, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: C.white, flexShrink: 0, boxShadow: '0 4px 16px rgba(196,30,36,0.4)',
+          {/* ═══════ DESKTOP HERO (100% UNTOUCHED) ═══════ */}
+          <div className="landing-desktop-only">
+            {/* Promotional Tag */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '6px 18px', borderRadius: 9999,
+                background: 'rgba(196,30,36,0.15)', border: '1px solid rgba(196,30,36,0.4)',
+                color: '#FF6B6B', fontFamily: F.heading, fontWeight: 700, fontSize: 13,
+                letterSpacing: '0.08em', textTransform: 'uppercase',
               }}>
-                <Wrench size={22} />
+                <Sparkles size={15} color="#FF6B6B" /> OFERTA ESPECIAL VIGENTE
+              </span>
+            </div>
+
+            {/* Main Banner Image Container */}
+            <div style={{
+              borderRadius: 20,
+              overflow: 'hidden',
+              boxShadow: '0 16px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)',
+              position: 'relative',
+              background: '#1A1F36',
+              width: '100%',
+            }}>
+              <img
+                src="/images/promo-landing-banner.jpg"
+                alt="Promoción Alineación y Balanceo Jasman Automotriz en las 4 llantas desde $750 MXN"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  display: 'block',
+                  maxHeight: '500px',
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                }}
+              />
+            </div>
+
+            {/* Quick CTA Action Bar Below Banner */}
+            <div className="landing-hero-bar" style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 16,
+              background: 'rgba(26,31,54,0.92)',
+              backdropFilter: 'blur(16px)',
+              borderRadius: 20,
+              padding: '20px 24px',
+              marginTop: 18,
+              border: '1px solid rgba(255,255,255,0.1)',
+              width: '100%',
+              boxSizing: 'border-box',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{
+                  width: 46, height: 46, borderRadius: 14,
+                  background: C.red, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: C.white, flexShrink: 0, boxShadow: '0 4px 16px rgba(196,30,36,0.4)',
+                }}>
+                  <Wrench size={22} />
+                </div>
+                <div>
+                  <div style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 17, color: C.white }}>
+                    Alineación y Balanceo en las 4 Llantas
+                  </div>
+                  <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 2 }}>
+                    Desde <span style={{ color: '#FFD700', fontWeight: 700, fontSize: 15 }}>$750.00 MXN</span> (IVA Incluido) · Rin 13" al 17"
+                  </div>
+                </div>
               </div>
-              <div>
-                <div style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 17, color: C.white }}>
-                  Alineación y Balanceo en las 4 Llantas
-                </div>
-                <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 2 }}>
-                  Desde <span style={{ color: '#FFD700', fontWeight: 700, fontSize: 15 }}>$750.00 MXN</span> (IVA Incluido) · Rin 13" al 17"
-                </div>
+
+              {/* Hero Action Buttons */}
+              <div className="landing-hero-actions" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => searchSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  style={{
+                    padding: '12px 22px', borderRadius: 9999,
+                    background: C.red, color: C.white, border: 'none',
+                    fontFamily: F.heading, fontWeight: 700, fontSize: 14,
+                    cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8,
+                    boxShadow: '0 4px 16px rgba(196,30,36,0.35)',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = C.redDark; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = C.red; }}
+                >
+                  <MapPin size={16} /> Buscar mi Sucursal
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => bookingSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  style={{
+                    padding: '12px 22px', borderRadius: 9999,
+                    background: 'rgba(255,255,255,0.08)', color: C.white,
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    fontFamily: F.heading, fontWeight: 600, fontSize: 14,
+                    cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8,
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.18)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                >
+                  <Calendar size={16} color="#FFD700" /> Agendar Visita
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ═══════ MOBILE HERO (REORGANIZED & ENLARGED IMAGERY) ═══════ */}
+          <div className="landing-mobile-only">
+            {/* Promotional Tag */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '5px 14px', borderRadius: 9999,
+                background: 'rgba(196,30,36,0.15)', border: '1px solid rgba(196,30,36,0.4)',
+                color: '#FF6B6B', fontFamily: F.heading, fontWeight: 700, fontSize: 11,
+                letterSpacing: '0.08em', textTransform: 'uppercase',
+              }}>
+                <Sparkles size={13} color="#FF6B6B" /> OFERTA ESPECIAL VIGENTE
+              </span>
+            </div>
+
+            {/* Large Banner Image with Mobile Framing */}
+            <div style={{
+              borderRadius: 18,
+              overflow: 'hidden',
+              boxShadow: '0 12px 30px rgba(0,0,0,0.6)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              position: 'relative',
+              background: '#1A1F36',
+              marginBottom: 14,
+            }}>
+              <img
+                src="/images/promo-landing-banner.jpg"
+                alt="Promoción Alineación y Balanceo Jasman Automotriz desde $750 MXN"
+                style={{
+                  width: '100%',
+                  height: '200px',
+                  display: 'block',
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                }}
+              />
+              <div style={{
+                position: 'absolute', bottom: 10, left: 10,
+                background: 'rgba(11,13,23,0.88)', backdropFilter: 'blur(8px)',
+                padding: '6px 12px', borderRadius: 10, border: '1px solid rgba(255,215,0,0.3)',
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}>
+                <span style={{ color: '#FFD700', fontFamily: F.heading, fontWeight: 900, fontSize: 14 }}>
+                  DESDE $750 MXN
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>· Rin 13" al 17"</span>
               </div>
             </div>
 
-            {/* Hero Action Buttons */}
-            <div className="landing-hero-actions" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => searchSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                style={{
-                  padding: '12px 22px', borderRadius: 9999,
-                  background: C.red, color: C.white, border: 'none',
-                  fontFamily: F.heading, fontWeight: 700, fontSize: 14,
-                  cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8,
-                  boxShadow: '0 4px 16px rgba(196,30,36,0.35)',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = C.redDark; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = C.red; }}
-              >
-                <MapPin size={16} /> Buscar mi Sucursal
-              </button>
+            {/* Mobile Value Card */}
+            <div style={{
+              background: 'rgba(26,31,54,0.96)',
+              backdropFilter: 'blur(16px)',
+              borderRadius: 20,
+              padding: '20px 16px',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 10, background: C.red,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.white, flexShrink: 0,
+                }}>
+                  <Wrench size={16} />
+                </div>
+                <span style={{ color: C.redLight, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Servicio en las 4 llantas
+                </span>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => bookingSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                style={{
-                  padding: '12px 22px', borderRadius: 9999,
-                  background: 'rgba(255,255,255,0.08)', color: C.white,
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  fontFamily: F.heading, fontWeight: 600, fontSize: 14,
-                  cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8,
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.18)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
-              >
-                <Calendar size={16} color="#FFD700" /> Agendar Visita
-              </button>
+              <h2 style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 20, color: C.white, lineHeight: 1.2, margin: '0 0 10px' }}>
+                Alineación y Balanceo
+              </h2>
+
+              <div style={{
+                padding: '12px 14px', borderRadius: 14,
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+                marginBottom: 16,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>Desde</span>
+                  <span style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 24, color: '#FFD700' }}>
+                    $750.00 MXN
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
+                  IVA incluido · Válido para rines desde 13" hasta 17"
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => bookingSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  style={{
+                    width: '100%', padding: '14px', borderRadius: 14,
+                    background: C.red, color: C.white, border: 'none',
+                    fontFamily: F.heading, fontWeight: 800, fontSize: 15,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    boxShadow: '0 4px 18px rgba(196,30,36,0.45)',
+                  }}
+                >
+                  <Calendar size={18} /> Agendar Visita Ahora
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => searchSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  style={{
+                    width: '100%', padding: '13px', borderRadius: 14,
+                    background: 'rgba(255,255,255,0.08)', color: C.white,
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    fontFamily: F.heading, fontWeight: 700, fontSize: 14,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  }}
+                >
+                  <MapPin size={16} /> Buscar mi Sucursal
+                </button>
+
+                <a
+                  href={getWhatsAppPromoUrl(primaryBranch)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: '100%', padding: '12px', borderRadius: 14,
+                    background: '#25D366', color: C.white,
+                    fontFamily: F.heading, fontWeight: 700, fontSize: 13,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    textDecoration: 'none', boxShadow: '0 4px 14px rgba(37,211,102,0.3)',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <MessageCircle size={16} /> WhatsApp de la promoción
+                </a>
+              </div>
             </div>
           </div>
 
@@ -650,17 +792,22 @@ export default function LandingAlineacionPage() {
 
           {/* Quick Postal Code Chips */}
           <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: C.gray, marginRight: 8 }}>
-              C.P. frecuentes:
-            </span>
-            <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 6, verticalAlign: 'middle', marginTop: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: C.gray }}>
+                C.P. frecuentes y rápidos:
+              </span>
+              <span className="landing-mobile-only" style={{ fontSize: 11, color: C.red, fontWeight: 600 }}>
+                Desliza para ver más →
+              </span>
+            </div>
+            <div className="landing-cp-chips" style={{ marginTop: 4 }}>
               {popularPostalCodes.map(item => (
                 <button
                   key={item.cp}
                   type="button"
                   onClick={() => { setPostalCode(item.cp); executeSearch(item.cp); }}
                   style={{
-                    padding: '4px 10px',
+                    padding: '5px 12px',
                     borderRadius: 9999,
                     fontSize: 12,
                     fontWeight: 600,
@@ -669,6 +816,8 @@ export default function LandingAlineacionPage() {
                     color: postalCode === item.cp && !currentLocation.isGps ? C.red : C.charcoal,
                     cursor: 'pointer',
                     transition: 'all 0.2s',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {item.label}
@@ -694,257 +843,292 @@ export default function LandingAlineacionPage() {
         {primaryBranch && (
           <div className="landing-repeater-grid">
 
-            {/* Left Column: Closest Branch Card ("EL REPETIDOR") */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 18, width: '100%', minWidth: 0 }}>
+            {/* 1. Main Closest Branch Hero Card */}
+            <div className="landing-primary-card landing-card-padding" style={{
+              background: C.white,
+              borderRadius: 22,
+              padding: '28px 24px',
+              border: '2px solid #C41E24',
+              boxShadow: '0 12px 35px rgba(196,30,36,0.1)',
+              position: 'relative',
+              width: '100%',
+              boxSizing: 'border-box',
+            }}>
+              {/* Header Badges */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '5px 12px', borderRadius: 9999,
+                  background: '#C41E24', color: C.white,
+                  fontFamily: F.heading, fontWeight: 800, fontSize: 11,
+                  letterSpacing: '0.05em', textTransform: 'uppercase',
+                }}>
+                  <Sparkles size={12} /> TU SUCURSAL MÁS CERCANA
+                </span>
 
-              {/* Main Closest Branch Hero Card */}
-              <div className="landing-card-padding" style={{
-                background: C.white,
-                borderRadius: 22,
-                padding: '28px 24px',
-                border: '2px solid #C41E24',
-                boxShadow: '0 12px 35px rgba(196,30,36,0.1)',
-                position: 'relative',
-                width: '100%',
-                boxSizing: 'border-box',
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '5px 12px', borderRadius: 9999,
+                  background: 'rgba(196,30,36,0.08)', color: C.red,
+                  fontFamily: F.heading, fontWeight: 800, fontSize: 13,
+                }}>
+                  <Car size={15} /> A solo {primaryBranch.distanceFormatted}
+                </span>
+              </div>
+
+              {/* Branch Name */}
+              <h2 style={{
+                fontFamily: F.heading, fontWeight: 800, fontSize: 22, color: C.navy,
+                lineHeight: 1.25, marginBottom: 14,
               }}>
-                {/* Header Badges */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '5px 12px', borderRadius: 9999,
-                    background: '#C41E24', color: C.white,
-                    fontFamily: F.heading, fontWeight: 800, fontSize: 11,
-                    letterSpacing: '0.05em', textTransform: 'uppercase',
+                {primaryBranch.fullName}
+              </h2>
+
+              {/* Reference to searched location */}
+              <div style={{
+                fontSize: 13, color: C.gray, marginBottom: 18,
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '8px 12px', background: C.light, borderRadius: 10,
+              }}>
+                <Navigation size={14} color="#2563EB" flexShrink={0} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  Calculado desde: <strong>{currentLocation.name}</strong>
+                </span>
+              </div>
+
+              {/* Details List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 22 }}>
+                {/* Address */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 12, background: 'rgba(196,30,36,0.06)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.red, flexShrink: 0,
                   }}>
-                    <Sparkles size={12} /> TU SUCURSAL MÁS CERCANA
-                  </span>
-
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                    padding: '5px 12px', borderRadius: 9999,
-                    background: 'rgba(196,30,36,0.08)', color: C.red,
-                    fontFamily: F.heading, fontWeight: 800, fontSize: 13,
-                  }}>
-                    <Car size={15} /> A solo {primaryBranch.distanceFormatted}
-                  </span>
-                </div>
-
-                {/* Branch Name */}
-                <h2 style={{
-                  fontFamily: F.heading, fontWeight: 800, fontSize: 22, color: C.navy,
-                  lineHeight: 1.25, marginBottom: 14,
-                }}>
-                  {primaryBranch.fullName}
-                </h2>
-
-                {/* Reference to searched location */}
-                <div style={{
-                  fontSize: 13, color: C.gray, marginBottom: 18,
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '8px 12px', background: C.light, borderRadius: 10,
-                }}>
-                  <Navigation size={14} color="#2563EB" flexShrink={0} />
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    Calculado desde: <strong>{currentLocation.name}</strong>
-                  </span>
-                </div>
-
-                {/* Details List */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 22 }}>
-                  {/* Address */}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 12, background: 'rgba(196,30,36,0.06)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.red, flexShrink: 0,
-                    }}>
-                      <MapPin size={17} />
+                    <MapPin size={17} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.gray, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Dirección completa
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: C.gray, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Dirección completa
-                      </div>
-                      <div style={{ fontSize: 14, color: C.navy, lineHeight: 1.45, marginTop: 2, wordBreak: 'break-word' }}>
-                        {primaryBranch.address}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyAddress(primaryBranch.address)}
-                        style={{
-                          background: 'none', border: 'none', padding: 0, marginTop: 4,
-                          fontSize: 12, color: copiedAddress ? '#059669' : C.red,
-                          cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 600,
-                        }}
-                      >
-                        {copiedAddress ? <Check size={13} /> : <Copy size={13} />}
-                        {copiedAddress ? '¡Copiado!' : 'Copiar dirección'}
-                      </button>
+                    <div style={{ fontSize: 14, color: C.navy, lineHeight: 1.45, marginTop: 2, wordBreak: 'break-word' }}>
+                      {primaryBranch.address}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyAddress(primaryBranch.address)}
+                      style={{
+                        background: 'none', border: 'none', padding: 0, marginTop: 4,
+                        fontSize: 12, color: copiedAddress ? '#059669' : C.red,
+                        cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 600,
+                      }}
+                    >
+                      {copiedAddress ? <Check size={13} /> : <Copy size={13} />}
+                      {copiedAddress ? '¡Copiado!' : 'Copiar dirección'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Hours */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 12, background: 'rgba(196,30,36,0.06)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.red, flexShrink: 0,
+                  }}>
+                    <Clock size={17} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.gray, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Horario de atención
+                    </div>
+                    <div style={{ fontSize: 13, color: C.navy, lineHeight: 1.45, marginTop: 2 }}>
+                      <strong>Lunes a Sábado:</strong> 8:00 a.m. - 7:00 p.m.<br />
+                      <strong>Domingo:</strong> 9:00 a.m. - 3:00 p.m.
                     </div>
                   </div>
+                </div>
 
-                  {/* Hours */}
+                {/* Phone */}
+                {primaryBranch.phone && (
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                     <div style={{
                       width: 36, height: 36, borderRadius: 12, background: 'rgba(196,30,36,0.06)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.red, flexShrink: 0,
                     }}>
-                      <Clock size={17} />
+                      <Phone size={17} />
                     </div>
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: C.gray, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Horario de atención
+                        Teléfono directo
                       </div>
-                      <div style={{ fontSize: 13, color: C.navy, lineHeight: 1.45, marginTop: 2 }}>
-                        <strong>Lunes a Sábado:</strong> 8:00 a.m. - 7:00 p.m.<br />
-                        <strong>Domingo:</strong> 9:00 a.m. - 3:00 p.m.
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Phone */}
-                  {primaryBranch.phone && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <div style={{
-                        width: 36, height: 36, borderRadius: 12, background: 'rgba(196,30,36,0.06)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.red, flexShrink: 0,
-                      }}>
-                        <Phone size={17} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: C.gray, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Teléfono directo
-                        </div>
-                        <a
-                          href={`tel:${primaryBranch.phone.replace(/\s/g, '')}`}
-                          style={{
-                            fontSize: 15, fontFamily: F.heading, fontWeight: 700, color: C.navy,
-                            textDecoration: 'none', display: 'inline-block', marginTop: 2,
-                          }}
-                        >
-                          {primaryBranch.phone}
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Primary Action Buttons */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {/* WhatsApp CTA (starts with SW - and pulls branch name) */}
-                  <a
-                    href={getWhatsAppPromoUrl(primaryBranch)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      padding: '13px 18px',
-                      borderRadius: 14,
-                      background: '#25D366',
-                      color: C.white,
-                      fontFamily: F.heading,
-                      fontWeight: 700,
-                      fontSize: 14,
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
-                      boxShadow: '0 4px 16px rgba(37,211,102,0.3)',
-                      transition: 'all 0.3s ease',
-                      textAlign: 'center',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                  >
-                    <MessageCircle size={18} flexShrink={0} /> Agendar Promoción por WhatsApp
-                  </a>
-
-                  {/* Google Maps Directions */}
-                  <a
-                    href={primaryBranch.mapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      padding: '11px 18px',
-                      borderRadius: 14,
-                      background: C.white,
-                      border: `1px solid ${C.border}`,
-                      color: C.navy,
-                      fontFamily: F.heading,
-                      fontWeight: 600,
-                      fontSize: 13,
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = C.light; e.currentTarget.style.borderColor = C.red; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.borderColor = C.border; }}
-                  >
-                    <Navigation size={15} color={C.red} flexShrink={0} /> Cómo llegar / Ver en Google Maps
-                  </a>
-                </div>
-
-              </div>
-
-              {/* Other nearby branches (2nd, 3rd, 4th) */}
-              {nearbyBranches.length > 1 && (
-                <div style={{
-                  background: C.white, borderRadius: 20, padding: '20px 18px',
-                  border: `1px solid ${C.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                  width: '100%', boxSizing: 'border-box',
-                }}>
-                  <h3 style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 15, color: C.navy, marginBottom: 12 }}>
-                    Otras sucursales Jasman cercanas:
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {nearbyBranches.slice(1).map((branch) => (
-                      <div
-                        key={branch.id}
-                        onClick={() => {
-                          setSelectedBranch(branch);
-                          setBookingBranchId(branch.id);
-                        }}
+                      <a
+                        href={`tel:${primaryBranch.phone.replace(/\s/g, '')}`}
                         style={{
-                          padding: '12px 14px',
-                          borderRadius: 12,
-                          background: selectedBranch?.id === branch.id ? 'rgba(196,30,36,0.06)' : C.light,
-                          border: `1px solid ${selectedBranch?.id === branch.id ? C.red : C.border}`,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 10,
-                          transition: 'all 0.2s',
+                          fontSize: 15, fontFamily: F.heading, fontWeight: 700, color: C.navy,
+                          textDecoration: 'none', display: 'inline-block', marginTop: 2,
                         }}
                       >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 13, color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            Suc. {branch.name}
-                          </div>
-                          <div style={{ fontSize: 12, color: C.gray, marginTop: 2 }}>
-                            {branch.city}, {branch.state}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <span style={{
-                            fontSize: 12, fontWeight: 800, color: C.red,
-                            fontFamily: F.heading, background: C.white,
-                            padding: '3px 8px', borderRadius: 9999, border: `1px solid ${C.border}`,
-                          }}>
-                            {branch.distanceFormatted}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                        {primaryBranch.phone}
+                      </a>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+
+              {/* Primary Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* WhatsApp CTA (starts with SW - and pulls branch name) */}
+                <a
+                  href={getWhatsAppPromoUrl(primaryBranch)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: '13px 18px',
+                    borderRadius: 14,
+                    background: '#25D366',
+                    color: C.white,
+                    fontFamily: F.heading,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    boxShadow: '0 4px 16px rgba(37,211,102,0.3)',
+                    transition: 'all 0.3s ease',
+                    textAlign: 'center',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  <MessageCircle size={18} flexShrink={0} /> Agendar Promoción por WhatsApp
+                </a>
+
+                {/* Google Maps Directions */}
+                <a
+                  href={primaryBranch.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: '11px 18px',
+                    borderRadius: 14,
+                    background: C.white,
+                    border: `1px solid ${C.border}`,
+                    color: C.navy,
+                    fontFamily: F.heading,
+                    fontWeight: 600,
+                    fontSize: 13,
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = C.light; e.currentTarget.style.borderColor = C.red; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.borderColor = C.border; }}
+                >
+                  <Navigation size={15} color={C.red} flexShrink={0} /> Cómo llegar / Ver en Google Maps
+                </a>
+              </div>
 
             </div>
 
-            {/* Right Column: Interactive Leaflet Map */}
+            {/* 2. Other nearby branches (2nd, 3rd, 4th) */}
+            {nearbyBranches.length > 1 && (
+              <div className="landing-other-branches" style={{
+                background: C.white, borderRadius: 20, padding: '20px 18px',
+                border: `1px solid ${C.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                width: '100%', boxSizing: 'border-box',
+              }}>
+                {/* Mobile Accordion Header Button */}
+                <div className="landing-mobile-only" style={{ width: '100%' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowOtherBranches(!showOtherBranches)}
+                    style={{
+                      width: '100%',
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <span style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 14, color: C.navy, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <MapPin size={16} color={C.red} /> Ver {nearbyBranches.length - 1} otras sucursales cercanas
+                    </span>
+                    <ChevronDown
+                      size={18}
+                      color={C.red}
+                      style={{
+                        transform: showOtherBranches ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.25s ease',
+                        flexShrink: 0,
+                      }}
+                    />
+                  </button>
+                </div>
+
+                {/* Desktop Static Header */}
+                <div className="landing-desktop-only">
+                  <h3 style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 15, color: C.navy, marginBottom: 12 }}>
+                    Otras sucursales Jasman cercanas:
+                  </h3>
+                </div>
+
+                {/* Branches List */}
+                <div
+                  className={`landing-other-branches-list ${showOtherBranches ? 'is-open' : ''}`}
+                  style={{ flexDirection: 'column', gap: 10, marginTop: 12 }}
+                >
+                  {nearbyBranches.slice(1).map((branch) => (
+                    <div
+                      key={branch.id}
+                      onClick={() => {
+                        setSelectedBranch(branch);
+                        setBookingBranchId(branch.id);
+                      }}
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: 12,
+                        background: selectedBranch?.id === branch.id ? 'rgba(196,30,36,0.06)' : C.light,
+                        border: `1px solid ${selectedBranch?.id === branch.id ? C.red : C.border}`,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 13, color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          Suc. {branch.name}
+                        </div>
+                        <div style={{ fontSize: 12, color: C.gray, marginTop: 2 }}>
+                          {branch.city}, {branch.state}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <span style={{
+                          fontSize: 12, fontWeight: 800, color: C.red,
+                          fontFamily: F.heading, background: C.white,
+                          padding: '3px 8px', borderRadius: 9999, border: `1px solid ${C.border}`,
+                        }}>
+                          {branch.distanceFormatted}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3. Right Column: Interactive Leaflet Map */}
             <div className="landing-map-wrapper" style={{
               background: C.white,
               borderRadius: 22,
@@ -1121,62 +1305,93 @@ export default function LandingAlineacionPage() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
+          <div className="landing-service-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 22 }}>
             {[
               {
                 title: 'Alineación Computarizada 3D',
                 desc: 'Ajuste milimétrico de los ángulos de las 4 ruedas (cámber, cáster y convergencia) según las especificaciones del fabricante.',
-                icon: <Compass size={22} color={C.red} />,
+                icon: <Compass size={20} color={C.red} />,
+                image: '/images/promo-alignment.png',
+                badge: 'Tecnología 3D',
               },
               {
                 title: 'Balanceo Dinámico en 4 Ruedas',
                 desc: 'Compensación precisa del peso de rines y llantas del Rin 13" al Rin 17" para eliminar vibraciones en el volante a cualquier velocidad.',
-                icon: <Wrench size={22} color={C.red} />,
+                icon: <Wrench size={20} color={C.red} />,
+                image: '/images/service-alignment.png',
+                badge: '4 Ruedas',
               },
               {
                 title: 'Revisión de Suspensión y Dirección',
                 desc: 'Inspección de amortiguadores, rótulas, bieletas, bujes y terminales de dirección para garantizar estabilidad y seguridad.',
-                icon: <ShieldCheck size={22} color={C.red} />,
+                icon: <ShieldCheck size={20} color={C.red} />,
+                image: '/images/service-suspension.png',
+                badge: 'Seguridad Total',
               },
               {
                 title: 'Calibración e Inspección de Llantas',
                 desc: 'Revisión de profundidad de dibujo, desgaste simétrico y ajuste de presión con aire o nitrógeno para optimizar el consumo de combustible.',
-                icon: <CheckCircle size={22} color={C.red} />,
+                icon: <CheckCircle size={20} color={C.red} />,
+                image: '/images/service-tires.png',
+                badge: 'Inspección Visual',
               },
             ].map((card, idx) => (
               <div
                 key={idx}
                 style={{
-                  background: C.light,
-                  borderRadius: 18,
-                  padding: '24px 20px',
+                  background: C.white,
+                  borderRadius: 20,
+                  overflow: 'hidden',
                   border: `1px solid ${C.border}`,
+                  boxShadow: '0 4px 18px rgba(0,0,0,0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
                   transition: 'all 0.3s ease',
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 12px 26px rgba(0,0,0,0.05)';
+                  e.currentTarget.style.boxShadow = '0 14px 28px rgba(0,0,0,0.08)';
                   e.currentTarget.style.borderColor = 'rgba(196,30,36,0.3)';
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.boxShadow = '0 4px 18px rgba(0,0,0,0.04)';
                   e.currentTarget.style.borderColor = C.border;
                 }}
               >
-                <div style={{
-                  width: 46, height: 46, borderRadius: 12, background: C.white,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginBottom: 16, boxShadow: '0 4px 10px rgba(0,0,0,0.03)',
-                }}>
-                  {card.icon}
+                {/* Visual Image Header */}
+                <div style={{ height: 165, overflow: 'hidden', position: 'relative', background: '#111827' }}>
+                  <img
+                    src={card.image}
+                    alt={card.title}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <div style={{
+                    position: 'absolute', top: 12, left: 12,
+                    width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.95)',
+                    backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.12)',
+                  }}>
+                    {card.icon}
+                  </div>
+                  <div style={{
+                    position: 'absolute', bottom: 10, right: 12,
+                    background: 'rgba(11,13,23,0.85)', backdropFilter: 'blur(4px)',
+                    color: C.white, fontSize: 11, fontWeight: 700,
+                    padding: '3px 10px', borderRadius: 9999, letterSpacing: '0.04em',
+                  }}>
+                    {card.badge}
+                  </div>
                 </div>
-                <h3 style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 17, color: C.navy, marginBottom: 8 }}>
-                  {card.title}
-                </h3>
-                <p style={{ fontSize: 13, color: C.gray, lineHeight: 1.55 }}>
-                  {card.desc}
-                </p>
+
+                <div style={{ padding: '22px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <h3 style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 17, color: C.navy, marginBottom: 8, lineHeight: 1.3 }}>
+                    {card.title}
+                  </h3>
+                  <p style={{ fontSize: 13, color: C.gray, lineHeight: 1.55, margin: 0 }}>
+                    {card.desc}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -1464,6 +1679,20 @@ export default function LandingAlineacionPage() {
       <section className="landing-section-padding" style={{ padding: '60px 16px', background: C.white, width: '100%', boxSizing: 'border-box' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
 
+          {/* Brand logos showcase */}
+          <div style={{ textAlign: 'center', marginBottom: 44, padding: '0 10px' }}>
+            <span style={{ fontSize: 11, fontWeight: 800, color: C.red, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 14 }}>
+              DISTRIBUIDORES AUTORIZADOS DE LAS MEJORES MARCAS
+            </span>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <img
+                src="/images/brands-trust.png"
+                alt="Marcas autorizadas Jasman: Michelin, Bridgestone, Continental, Pirelli, Goodyear"
+                style={{ maxWidth: '100%', height: 'auto', maxHeight: 52, objectFit: 'contain' }}
+              />
+            </div>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 26, textAlign: 'center' }}>
             <div>
               <div style={{
@@ -1609,6 +1838,64 @@ export default function LandingAlineacionPage() {
 
         </div>
       </section>
+
+      {/* ═══════ 7. MOBILE STICKY BOTTOM BAR ═══════ */}
+      <div className="landing-mobile-sticky-bar">
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', fontWeight: 600 }}>
+            Alineación y Balanceo
+          </span>
+          <span style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 17, color: '#FBBF24', lineHeight: 1.1 }}>
+            Desde $750 <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>MXN</span>
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={() => bookingSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+            style={{
+              padding: '9px 14px',
+              borderRadius: 10,
+              background: C.red,
+              color: C.white,
+              border: 'none',
+              fontFamily: F.heading,
+              fontWeight: 800,
+              fontSize: 12,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              boxShadow: '0 2px 8px rgba(196,30,36,0.4)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Calendar size={13} /> Agendar Visita
+          </button>
+
+          <a
+            href={getWhatsAppPromoUrl(primaryBranch)}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: '9px 12px',
+              borderRadius: 10,
+              background: '#25D366',
+              color: C.white,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(37,211,102,0.4)',
+              flexShrink: 0,
+            }}
+            aria-label="Contactar por WhatsApp"
+          >
+            <MessageCircle size={17} />
+          </a>
+        </div>
+      </div>
 
     </div>
   );
