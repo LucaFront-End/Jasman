@@ -388,3 +388,91 @@ select { appearance: none; }
   0% { max-height: 0; opacity: 0; }
   100% { max-height: 300px; opacity: 1; }
 }
+
+/* ═══════ LANDING PAGE MOBILE RESPONSIVE ═══════ */
+html, body, #root, main {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.landing-root {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.landing-repeater-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.25fr);
+  gap: 32px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.landing-map-wrapper {
+  height: 600px;
+  width: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  z-index: 1 !important;
+}
+
+@media (max-width: 960px) {
+  .landing-repeater-grid {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  .landing-map-wrapper {
+    height: 380px !important;
+    border-radius: 18px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-hero-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 16px !important;
+    gap: 16px !important;
+  }
+  .landing-hero-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  .landing-hero-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .landing-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .landing-search-form {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .landing-search-buttons {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  .landing-search-buttons button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .landing-card-padding {
+    padding: 20px 16px !important;
+    border-radius: 18px !important;
+  }
+  .landing-section-padding {
+    padding: 40px 16px !important;
+  }
+}

@@ -24,6 +24,8 @@ function ScrollToTop() {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
+
   // Subdomain detection: if visiting via a landing/promo subdomain, render landing page at root
   const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
   const isLandingSubdomain =
@@ -56,7 +58,10 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
-      <PromotionsPopup />
+      {/* Hide general promotion popup when already on a dedicated landing page */}
+      {!isLandingSubdomain && !pathname.includes('alineacion') && !pathname.includes('alineación') && (
+        <PromotionsPopup />
+      )}
     </>
   );
 }
