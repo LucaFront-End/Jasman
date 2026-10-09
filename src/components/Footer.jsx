@@ -14,91 +14,119 @@ const isExternal = (href) => href.startsWith('http');
 export default function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer style={{ background: C.navy, color: C.white }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '64px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: 48 }}>
+    <footer className="site-footer">
+      <div className="site-footer-inner">
+        <div className="site-footer-grid">
           {/* Brand */}
-          <div>
+          <div className="site-footer-brand">
             <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', marginBottom: 20 }} aria-label="Jasman Automotriz">
               <img
                 src="/images/logo/logo-03.png"
                 alt="Jasman Automotriz"
-                style={{
-                  height: 46,
-                  width: 'auto',
-                  maxWidth: 200,
-                  objectFit: 'contain',
-                  display: 'block',
-                }}
+                className="site-footer-brand-logo"
               />
             </Link>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, maxWidth: 280 }}>{footerContent.description}</p>
-            <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-            {socialIcons.map((icon, i) => (
-                <a key={i} href="#" style={{
-                  width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.45)',
-                  transition: 'all 0.3s',
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(196,30,36,0.15)'; e.currentTarget.style.color = C.redLight; e.currentTarget.style.borderColor = 'rgba(196,30,36,0.3)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                >{icon}</a>
+            <p className="site-footer-desc">{footerContent.description}</p>
+            <div className="site-footer-social">
+              {socialIcons.map((icon, i) => (
+                <a
+                  key={i}
+                  href="#"
+                  className="site-footer-social-btn"
+                  aria-label="Red social Jasman"
+                >
+                  {icon}
+                </a>
               ))}
             </div>
           </div>
-          {/* Company */}
-          <div>
-            <h4 style={{ fontFamily: F.heading, fontWeight: 600, fontSize: 13, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 24 }}>Compañía</h4>
-            <ul>{footerContent.links.company.map(l => (
-              <li key={l.label} style={{ marginBottom: 14 }}>
-                {isExternal(l.href) ? (
-                  <a href={l.href} target="_blank" rel="noopener noreferrer" className="link-hover" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, transition: 'color 0.3s' }}
-                    onMouseEnter={e => e.currentTarget.style.color = C.white}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
-                  >{l.label}</a>
-                ) : (
-                  <Link to={l.href} className="link-hover" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, transition: 'color 0.3s' }}
-                    onMouseEnter={e => e.currentTarget.style.color = C.white}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
-                  >{l.label}</Link>
-                )}
-              </li>
-            ))}</ul>
+
+          {/* Links Group (Company + Legal) */}
+          <div className="site-footer-links-group">
+            {/* Company */}
+            <div className="site-footer-col">
+              <h4>Compañía</h4>
+              <ul>
+                {footerContent.links.company.map(l => (
+                  <li key={l.label}>
+                    {isExternal(l.href) ? (
+                      <a href={l.href} target="_blank" rel="noopener noreferrer" className="link-hover">
+                        {l.label}
+                      </a>
+                    ) : (
+                      <Link to={l.href} className="link-hover">
+                        {l.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div className="site-footer-col">
+              <h4>Legal</h4>
+              <ul>
+                {footerContent.links.legal.map(l => (
+                  <li key={l.label}>
+                    {isExternal(l.href) ? (
+                      <a href={l.href} target="_blank" rel="noopener noreferrer" className="link-hover">
+                        {l.label}
+                      </a>
+                    ) : (
+                      <Link to={l.href} className="link-hover">
+                        {l.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-          {/* Legal */}
-          <div>
-            <h4 style={{ fontFamily: F.heading, fontWeight: 600, fontSize: 13, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 24 }}>Legal</h4>
-            <ul>{footerContent.links.legal.map(l => (
-              <li key={l.label} style={{ marginBottom: 14 }}>
-                {isExternal(l.href) ? (
-                  <a href={l.href} target="_blank" rel="noopener noreferrer" className="link-hover" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, transition: 'color 0.3s' }}
-                    onMouseEnter={e => e.currentTarget.style.color = C.white}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
-                  >{l.label}</a>
-                ) : (
-                  <Link to={l.href} className="link-hover" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, transition: 'color 0.3s' }}
-                    onMouseEnter={e => e.currentTarget.style.color = C.white}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
-                  >{l.label}</Link>
-                )}
-              </li>
-            ))}</ul>
-          </div>
+
           {/* Contact */}
-          <div>
-            <h4 style={{ fontFamily: F.heading, fontWeight: 600, fontSize: 13, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 24 }}>Contacto</h4>
+          <div className="site-footer-col site-footer-contact">
+            <h4>Contacto</h4>
             <ul>
-              <li style={{ marginBottom: 14 }}><a href={`tel:${footerContent.contact.phone}`} style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, transition: 'color 0.3s', display: 'inline-flex', alignItems: 'center', gap: 8 }} onMouseEnter={e => e.currentTarget.style.color = C.white} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}><Phone size={14} /> {footerContent.contact.phone}</a></li>
-              <li style={{ marginBottom: 14 }}><a href={`mailto:${footerContent.contact.email}`} style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, wordBreak: 'break-all', transition: 'color 0.3s', display: 'inline-flex', alignItems: 'center', gap: 8 }} onMouseEnter={e => e.currentTarget.style.color = C.white} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}><Mail size={14} /> {footerContent.contact.email}</a></li>
-              <li><a href={`https://api.whatsapp.com/send/?phone=52${footerContent.contact.whatsapp.replace(/[\s+]/g, '')}&text=${encodeURIComponent('SW -Hola quisiera más información sobre sus servicios')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, transition: 'color 0.3s', display: 'inline-flex', alignItems: 'center', gap: 8 }} onMouseEnter={e => e.currentTarget.style.color = C.white} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}><MessageCircle size={14} /> WhatsApp</a></li>
+              <li>
+                <a
+                  href={`tel:${footerContent.contact.phone.replace(/\s/g, '')}`}
+                  className="site-footer-contact-item"
+                >
+                  <Phone size={15} style={{ flexShrink: 0, color: C.red }} />
+                  <span>{footerContent.contact.phone}</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`mailto:${footerContent.contact.email}`}
+                  className="site-footer-contact-item"
+                >
+                  <Mail size={15} style={{ flexShrink: 0, color: C.red }} />
+                  <span>{footerContent.contact.email}</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`https://api.whatsapp.com/send/?phone=52${footerContent.contact.whatsapp.replace(/[\s+]/g, '')}&text=${encodeURIComponent('SW -Hola quisiera más información sobre sus servicios')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="site-footer-contact-item"
+                >
+                  <MessageCircle size={15} style={{ flexShrink: 0, color: '#25D366' }} />
+                  <span>WhatsApp Atención</span>
+                </a>
+              </li>
             </ul>
           </div>
         </div>
       </div>
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '20px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>© {year} Jasman Automotriz. Todos los derechos reservados.</span>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)' }}>Centro de Soluciones Automotrices</span>
+
+      {/* Bottom Bar */}
+      <div className="site-footer-bottom">
+        <div className="site-footer-bottom-inner">
+          <span>© {year} Jasman Automotriz. Todos los derechos reservados.</span>
+          <span>Centro de Soluciones Automotrices</span>
         </div>
       </div>
     </footer>
