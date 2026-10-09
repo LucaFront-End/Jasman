@@ -15,6 +15,7 @@ import BolsaTrabajoPage from './pages/BolsaTrabajoPage';
 import VacanteDetailPage from './pages/VacanteDetailPage';
 import ProveedoresPage from './pages/ProveedoresPage';
 import ContactoPage from './pages/ContactoPage';
+import LandingAlineacionPage from './pages/LandingAlineacionPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -23,6 +24,14 @@ function ScrollToTop() {
 }
 
 export default function App() {
+  // Subdomain detection: if visiting via a landing/promo subdomain, render landing page at root
+  const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+  const isLandingSubdomain =
+    hostname.startsWith('promociones.') ||
+    hostname.startsWith('promocion.') ||
+    hostname.startsWith('alineacion.') ||
+    hostname.startsWith('landing.');
+
   return (
     <>
       <ScrollToTop />
@@ -30,7 +39,10 @@ export default function App() {
       <ScrollProgress />
       <main>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={isLandingSubdomain ? <LandingAlineacionPage /> : <HomePage />} />
+          <Route path="/alineacion-y-balanceo" element={<LandingAlineacionPage />} />
+          <Route path="/alineación-y-balanceo" element={<LandingAlineacionPage />} />
+          <Route path="/promociones/alineacion-y-balanceo" element={<LandingAlineacionPage />} />
           <Route path="/nosotros" element={<NosotrosPage />} />
           <Route path="/servicios" element={<ServiciosPage />} />
           <Route path="/servicios/:slug" element={<ServicioDetailPage />} />
