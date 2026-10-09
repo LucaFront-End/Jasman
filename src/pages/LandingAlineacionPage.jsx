@@ -72,7 +72,7 @@ function MapController({ center, zoom, bounds }) {
   return null;
 }
 
-// Popular sample postal codes for quick selection
+// Popular sample postal codes across Jasman territories for quick selection
 const popularPostalCodes = [
   { cp: '02710', label: 'Azcapotzalco (02710)' },
   { cp: '03100', label: 'Del Valle / Benito Juárez (03100)' },
@@ -80,9 +80,16 @@ const popularPostalCodes = [
   { cp: '06720', label: 'Roma / Cuauhtémoc (06720)' },
   { cp: '53120', label: 'Naucalpan (53120)' },
   { cp: '54060', label: 'Tlalnepantla (54060)' },
+  { cp: '50010', label: 'Toluca (50010)' },
   { cp: '76000', label: 'Querétaro (76000)' },
   { cp: '44160', label: 'Guadalajara (44160)' },
-  { cp: '64000', label: 'Monterrey (64000)' },
+  { cp: '37220', label: 'León (37220)' },
+  { cp: '36500', label: 'Irapuato (36500)' },
+  { cp: '64800', label: 'Monterrey (64800)' },
+  { cp: '58270', label: 'Morelia (58270)' },
+  { cp: '62740', label: 'Cuautla (62740)' },
+  { cp: '42080', label: 'Pachuca (42080)' },
+  { cp: '88000', label: 'Nuevo Laredo (88000)' },
 ];
 
 export default function LandingAlineacionPage() {

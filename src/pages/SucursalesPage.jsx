@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import PageHero from '../components/PageHero';
 import { C, F, useCountUp } from '../hooks/useAnimations';
 import { sucursales, regions, states } from '../data/sucursalesData';
+import { branchCoordinates } from '../data/postalCodesData';
 import { MapPin, Phone, MessageCircle, Navigation, Search, ChevronRight, Building2, Users, Wrench, Shield } from 'lucide-react';
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -102,7 +103,8 @@ export default function SucursalesPage() {
       const term = searchTerm.toLowerCase();
       list = list.filter(s =>
         s.name.toLowerCase().includes(term) || s.city.toLowerCase().includes(term) ||
-        s.state.toLowerCase().includes(term) || s.address.toLowerCase().includes(term)
+        s.state.toLowerCase().includes(term) || s.address.toLowerCase().includes(term) ||
+        (s.cp && s.cp.includes(term))
       );
     }
     return list;
@@ -115,8 +117,10 @@ export default function SucursalesPage() {
   }, [filtered]);
 
   const getCoords = (b) => {
+    const exact = branchCoordinates[b.id];
+    if (exact) return [exact.lat, exact.lng];
     const geo = cityGeo[b.city];
-    if (geo) return [geo[0] + (Math.random() - 0.5) * 0.008, geo[1] + (Math.random() - 0.5) * 0.008];
+    if (geo) return [geo[0], geo[1]];
     return [19.43, -99.13];
   };
 
@@ -301,7 +305,7 @@ export default function SucursalesPage() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 13, color: C.white }}>Suc. {b.name}</div>
-                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{b.city}, {b.state}</div>
+                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{b.city}, {b.state} {b.cp ? `· C.P. ${b.cp}` : ''}</div>
                       </div>
                       <span style={{
                         padding: '3px 8px', borderRadius: 6,
@@ -397,8 +401,18 @@ export default function SucursalesPage() {
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}><MapPin size={16} color={C.red} /></div>
                       <div>
-                        <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 14, color: C.navy }}>Suc. {b.name}</div>
-                        <div style={{ fontSize: 11, color: C.gray }}>{b.city}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 14, color: C.navy }}>Suc. {b.name}</span>
+                          {b.cp && (
+                            <span style={{
+                              fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6,
+                              background: 'rgba(196,30,36,0.08)', color: C.red, fontFamily: F.heading,
+                            }}>
+                              C.P. {b.cp}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>{b.city}</div>
                       </div>
                     </div>
                     <p style={{ fontSize: 12, color: C.gray, lineHeight: 1.5, marginBottom: 12 }}>{b.address}</p>
