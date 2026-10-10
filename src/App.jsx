@@ -44,6 +44,10 @@ export default function App() {
           <Route path="/" element={isLandingSubdomain ? <LandingAlineacionPage /> : <HomePage />} />
           <Route path="/alineacion-y-balanceo" element={<LandingAlineacionPage />} />
           <Route path="/alineación-y-balanceo" element={<LandingAlineacionPage />} />
+          <Route path="/alineacion-y-balanceo-promocion-cdmx-octubre" element={<LandingAlineacionPage />} />
+          <Route path="/promociones/:slug" element={<LandingAlineacionPage />} />
+          <Route path="/promocion/:slug" element={<LandingAlineacionPage />} />
+          <Route path="/promociones" element={<LandingAlineacionPage />} />
           <Route path="/promociones/alineacion-y-balanceo" element={<LandingAlineacionPage />} />
           <Route path="/nosotros" element={<NosotrosPage />} />
           <Route path="/servicios" element={<ServiciosPage />} />

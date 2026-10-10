@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -11,9 +11,16 @@ import {
   formatDistance,
 } from '../data/postalCodesData';
 import {
+  getLandingPromotion,
+  getWixPostalCode,
+  getWixBranches,
+  saveBookingLead,
+} from '../services/wixService';
+import {
   MapPin, Phone, MessageCircle, Navigation, Search, CheckCircle,
   ShieldCheck, Wrench, Trophy, Clock, ArrowRight, Sparkles, AlertCircle,
-  Copy, Check, Share2, Compass, Car, ChevronDown, Calendar, Building2
+  Copy, Check, Share2, Compass, Car, ChevronDown, Calendar, Building2,
+  Database
 } from 'lucide-react';
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -93,6 +100,22 @@ const popularPostalCodes = [
 ];
 
 export default function LandingAlineacionPage() {
+  const { slug } = useParams();
+  const location = useLocation();
+
+  // Dynamic promotion state loaded from Wix CMS "Landingdepromociones"
+  const [promotion, setPromotion] = useState({
+    id: 'default',
+    title: 'Alineación y Balanceo',
+    slug: 'alineacion-y-balanceo',
+    headline: 'Alineación y Balanceo en las 4 Llantas',
+    subheadline: 'Desde $750.00 MXN (IVA Incluido) · Rin 13" al 17"',
+    bannerImage: '/images/promo-landing-banner.jpg',
+    source: 'wix-connecting',
+  });
+  const [allBranches, setAllBranches] = useState(sucursalesWithCoords);
+  const [isWixConnected, setIsWixConnected] = useState(false);
+
   // Input state
   const [postalCode, setPostalCode] = useState('02710');
   const [loading, setLoading] = useState(false);
@@ -121,7 +144,7 @@ export default function LandingAlineacionPage() {
   const [confirmedBooking, setConfirmedBooking] = useState(null);
   const [copiedFolio, setCopiedFolio] = useState(false);
 
-  // FAQ Accordion
+  // FAQ Accordion & Mobile controls
   const [openFaq, setOpenFaq] = useState(0);
   const [showOtherBranches, setShowOtherBranches] = useState(false);
 
@@ -129,10 +152,41 @@ export default function LandingAlineacionPage() {
   const searchSectionRef = useRef(null);
   const bookingSectionRef = useRef(null);
 
+  // Sync with Wix CMS "Landingdepromociones" & "Sucursales"
+  useEffect(() => {
+    let isSubscribed = true;
+
+    async function syncWixData() {
+      try {
+        const currentSlug = slug || location.pathname.replace(/^\/promociones\/|^\/promocion\/|^\//, '');
+        const promoData = await getLandingPromotion(currentSlug);
+        if (isSubscribed && promoData) {
+          setPromotion(promoData);
+          setIsWixConnected(promoData.source === 'wix-cms');
+          document.title = `${promoData.headline || promoData.title} | Jasman Automotriz`;
+        }
+
+        // Fetch custom branches from Wix CMS "Sucursales"
+        const wixBranches = await getWixBranches();
+        if (isSubscribed && wixBranches && wixBranches.length > 0) {
+          const wixNameMap = new Map(wixBranches.map(b => [b.name.toLowerCase(), b]));
+          const merged = sucursalesWithCoords.map(localB => {
+            const match = wixNameMap.get(localB.name.toLowerCase());
+            return match ? { ...localB, ...match, mapsUrl: localB.mapsUrl } : localB;
+          });
+          setAllBranches(merged);
+        }
+      } catch (err) {
+        console.warn('Wix Headless sync error:', err);
+      }
+    }
+
+    syncWixData();
+    return () => { isSubscribed = false; };
+  }, [slug, location.pathname]);
+
   // Initial automatic geolocation request on mount
   useEffect(() => {
-    document.title = 'Alineación y balanceo en las 4 llantas desde $750 | Jasman Automotriz';
-
     // 1. Initial fast fallback so the UI displays immediately
     executeSearch('02710');
 
@@ -150,7 +204,7 @@ export default function LandingAlineacionPage() {
             isGps: true,
           });
 
-          const closest = getClosestBranches(latitude, longitude, 4);
+          const closest = getClosestBranches(latitude, longitude, 4, allBranches);
           setNearbyBranches(closest);
           setSelectedBranch(closest[0] || null);
           setBookingBranchId(closest[0]?.id || '');
@@ -158,7 +212,6 @@ export default function LandingAlineacionPage() {
           setGeoError(null);
         },
         (err) => {
-          // Silent fallback on initial load if user denies or dismisses permission prompt
           console.log('Ubicación inicial rechazada o no disponible:', err?.message);
           setGeoLoading(false);
         },
@@ -181,7 +234,16 @@ export default function LandingAlineacionPage() {
     setGeoError(null);
 
     try {
-      const resolved = await resolvePostalCodeCoords(cp);
+      // 1. Check Wix CMS "Codigospostales" first
+      const wixCp = await getWixPostalCode(cp);
+      let resolved;
+      if (wixCp) {
+        resolved = wixCp;
+      } else {
+        // 2. Fallback to comprehensive local database
+        resolved = await resolvePostalCodeCoords(cp);
+      }
+
       setCurrentLocation({
         cp: resolved.cp,
         name: resolved.name,
@@ -190,7 +252,7 @@ export default function LandingAlineacionPage() {
         isGps: false,
       });
 
-      const closest = getClosestBranches(resolved.lat, resolved.lng, 4);
+      const closest = getClosestBranches(resolved.lat, resolved.lng, 4, allBranches);
       setNearbyBranches(closest);
       setSelectedBranch(closest[0] || null);
       if (closest[0]) setBookingBranchId(closest[0].id);
@@ -222,7 +284,7 @@ export default function LandingAlineacionPage() {
           isGps: true,
         });
 
-        const closest = getClosestBranches(latitude, longitude, 4);
+        const closest = getClosestBranches(latitude, longitude, 4, allBranches);
         setNearbyBranches(closest);
         setSelectedBranch(closest[0] || null);
         if (closest[0]) setBookingBranchId(closest[0].id);
@@ -251,32 +313,33 @@ export default function LandingAlineacionPage() {
     setTimeout(() => setCopiedAddress(false), 2500);
   };
 
-  // Build WhatsApp URL with "SW-" standard prefix and landing promo details
+  // Build WhatsApp URL with "SW-" standard prefix and dynamic Wix promo details
   const getWhatsAppPromoUrl = (branch, bookingDetails = null) => {
     const defaultPhone = '5215579337994';
     const targetBranch = branch || selectedBranch || nearbyBranches[0];
     const cleanPhone = targetBranch?.phone ? targetBranch.phone.replace(/[\s\-()]/g, '') : '';
     const phoneWithCountry = cleanPhone ? (cleanPhone.startsWith('52') ? cleanPhone : `52${cleanPhone}`) : defaultPhone;
     const branchName = targetBranch ? targetBranch.fullName : 'Jasman Automotriz';
+    const promoTitle = promotion.headline || promotion.title || 'Alineación y Balanceo';
 
     let text = '';
     if (bookingDetails) {
-      text = `SW- Hola, deseo confirmar mi visita para la promoción Alineación y Balanceo (desde $750 MXN) en sucursal "${branchName}". Folio: ${bookingDetails.folio}. Nombre: ${bookingDetails.nombre}, Teléfono: ${bookingDetails.telefono}, Vehículo: ${bookingDetails.vehiculo}, Fecha tentativa: ${bookingDetails.fechaVisita}.`;
+      text = `SW- Hola, deseo confirmar mi visita para la promoción "${promoTitle}" (${promotion.subheadline}) en sucursal "${branchName}". Folio: ${bookingDetails.folio}. Nombre: ${bookingDetails.nombre}, Teléfono: ${bookingDetails.telefono}, Vehículo: ${bookingDetails.vehiculo}, Fecha tentativa: ${bookingDetails.fechaVisita}.`;
     } else {
-      text = `SW- Hola, quisiera agendar el servicio de la promoción Alineación y Balanceo en 4 llantas (desde $750 MXN) en sucursal "${branchName}".`;
+      text = `SW- Hola, quisiera agendar el servicio de la promoción "${promoTitle}" (${promotion.subheadline}) en sucursal "${branchName}".`;
     }
 
     return `https://api.whatsapp.com/send/?phone=${phoneWithCountry}&text=${encodeURIComponent(text)}`;
   };
 
-  // Submit Appointment Form & save to CMS collection
-  const handleBookVisit = (e) => {
+  // Submit Appointment Form & save to Wix CMS collection
+  const handleBookVisit = async (e) => {
     e.preventDefault();
     if (!bookingName.trim() || !bookingPhone.trim()) return;
 
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const folio = `SW-ALIN-${randomSuffix}`;
-    const targetBranch = sucursalesWithCoords.find(s => s.id === bookingBranchId) || primaryBranch;
+    const targetBranch = allBranches.find(s => s.id === bookingBranchId) || primaryBranch;
 
     const newBooking = {
       id: `CITA-${Date.now()}`,
@@ -289,23 +352,19 @@ export default function LandingAlineacionPage() {
       sucursalNombre: targetBranch?.fullName || 'Jasman Automotriz',
       sucursalTelefono: targetBranch?.phone || '',
       sucursalDireccion: targetBranch?.address || '',
-      servicio: 'Alineación y Balanceo en 4 llantas',
-      precio: 'Desde $750.00 MXN (Rin 13" al 17")',
+      servicio: promotion.headline || promotion.title || 'Alineación y Balanceo en 4 llantas',
+      precio: promotion.subheadline || 'Desde $750.00 MXN',
+      promocionId: promotion.id,
+      promocionSlug: promotion.slug,
       fechaRegistro: new Date().toISOString(),
       estatus: 'Pendiente de confirmación',
     };
 
-    // Save to CMS collection in localStorage
-    try {
-      const existing = JSON.parse(localStorage.getItem('jasman_cms_visitas') || '[]');
-      existing.unshift(newBooking);
-      localStorage.setItem('jasman_cms_visitas', JSON.stringify(existing));
-      console.log('[CMS Jasman] Cita registrada con éxito en CMS junto con sucursal:', newBooking);
-    } catch (err) {
-      console.error('Error guardando en CMS local:', err);
-    }
+    // Save to CMS collection via Wix Headless
+    const saved = await saveBookingLead(newBooking);
+    console.log('[Wix CMS Headless] Cita guardada en CMS junto con sucursal:', saved);
 
-    setConfirmedBooking(newBooking);
+    setConfirmedBooking(saved);
   };
 
   const primaryBranch = selectedBranch || nearbyBranches[0];
@@ -385,8 +444,8 @@ export default function LandingAlineacionPage() {
               width: '100%',
             }}>
               <img
-                src="/images/promo-landing-banner.jpg"
-                alt="Promoción Alineación y Balanceo Jasman Automotriz en las 4 llantas desde $750 MXN"
+                src={promotion.bannerImage}
+                alt={`${promotion.headline} Jasman Automotriz`}
                 style={{
                   width: '100%',
                   height: 'auto',
@@ -424,10 +483,10 @@ export default function LandingAlineacionPage() {
                 </div>
                 <div>
                   <div style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 17, color: C.white }}>
-                    Alineación y Balanceo en las 4 Llantas
+                    {promotion.headline}
                   </div>
                   <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 2 }}>
-                    Desde <span style={{ color: '#FFD700', fontWeight: 700, fontSize: 15 }}>$750.00 MXN</span> (IVA Incluido) · Rin 13" al 17"
+                    {promotion.subheadline}
                   </div>
                 </div>
               </div>
@@ -497,8 +556,8 @@ export default function LandingAlineacionPage() {
               marginBottom: 14,
             }}>
               <img
-                src="/images/promo-landing-banner.jpg"
-                alt="Promoción Alineación y Balanceo Jasman Automotriz desde $750 MXN"
+                src={promotion.bannerImage}
+                alt={`${promotion.headline} Jasman Automotriz`}
                 style={{
                   width: '100%',
                   height: '200px',
@@ -514,7 +573,7 @@ export default function LandingAlineacionPage() {
                 display: 'flex', alignItems: 'center', gap: 6,
               }}>
                 <span style={{ color: '#FFD700', fontFamily: F.heading, fontWeight: 900, fontSize: 14 }}>
-                  DESDE $750 MXN
+                  {promotion.subheadline.includes('$') ? promotion.subheadline.split('·')[0].trim() : 'DESDE $750 MXN'}
                 </span>
                 <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>· Rin 13" al 17"</span>
               </div>
@@ -542,7 +601,7 @@ export default function LandingAlineacionPage() {
               </div>
 
               <h2 style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 20, color: C.white, lineHeight: 1.2, margin: '0 0 10px' }}>
-                Alineación y Balanceo
+                {promotion.headline}
               </h2>
 
               <div style={{
@@ -550,14 +609,8 @@ export default function LandingAlineacionPage() {
                 background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
                 marginBottom: 16,
               }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>Desde</span>
-                  <span style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 24, color: '#FFD700' }}>
-                    $750.00 MXN
-                  </span>
-                </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
-                  IVA incluido · Válido para rines desde 13" hasta 17"
+                <div style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 18, color: '#FFD700' }}>
+                  {promotion.subheadline}
                 </div>
               </div>
 
@@ -1516,7 +1569,7 @@ export default function LandingAlineacionPage() {
                           boxSizing: 'border-box', appearance: 'none', textOverflow: 'ellipsis',
                         }}
                       >
-                        {sucursalesWithCoords.map(branch => (
+                        {allBranches.map(branch => (
                           <option key={branch.id} value={branch.id} style={{ background: '#1A1F36', color: C.white }}>
                             {branch.fullName} ({branch.city}, {branch.state})
                           </option>
@@ -1584,7 +1637,7 @@ export default function LandingAlineacionPage() {
                       <CheckCircle size={14} color="#059669" /> VISITA REGISTRADA EN EL SISTEMA
                     </span>
                     <h3 style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 22, color: C.navy, marginTop: 4 }}>
-                      Alineación y Balanceo desde $750 MXN
+                      {promotion.headline || promotion.title}
                     </h3>
                   </div>
                   <div style={{
@@ -1625,7 +1678,7 @@ export default function LandingAlineacionPage() {
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                   <a
                     href={getWhatsAppPromoUrl(
-                      sucursalesWithCoords.find(s => s.id === confirmedBooking.sucursalId),
+                      allBranches.find(s => s.id === confirmedBooking.sucursalId),
                       confirmedBooking
                     )}
                     target="_blank"
@@ -1843,10 +1896,10 @@ export default function LandingAlineacionPage() {
       <div className="landing-mobile-sticky-bar">
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', fontWeight: 600 }}>
-            Alineación y Balanceo
+            {promotion.title || 'Alineación y Balanceo'}
           </span>
-          <span style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 17, color: '#FBBF24', lineHeight: 1.1 }}>
-            Desde $750 <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>MXN</span>
+          <span style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 15, color: '#FBBF24', lineHeight: 1.1 }}>
+            {promotion.subheadline ? (promotion.subheadline.includes('$') ? promotion.subheadline.split('·')[0].trim() : promotion.subheadline) : 'Desde $750 MXN'}
           </span>
         </div>
 
