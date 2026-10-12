@@ -12,7 +12,7 @@ html { scroll-behavior: smooth; }
 body {
   font-family: 'Inter', sans-serif;
   color: #2D2D2D;
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
 }
 h1, h2, h3, h4, h5, h6 {
@@ -391,12 +391,12 @@ select { appearance: none; }
 
 /* ═══════ LANDING PAGE MOBILE RESPONSIVE ═══════ */
 html, body, #root, main {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
 }
 
 .landing-root {
-  overflow-x: hidden !important;
+  overflow-x: clip !important;
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
@@ -452,6 +452,7 @@ html, body, #root, main {
 .jasman-branch-pin,
 .user-location-pin,
 .jasman-secondary-pin,
+.jasman-other-pin,
 .map-pin-icon {
   background: transparent !important;
   border: none !important;

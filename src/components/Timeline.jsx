@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { C, F } from '../hooks/useAnimations';
 import Icon from './Icon';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MousePointer } from 'lucide-react';
 
 const timeline = [
   {
@@ -62,85 +62,124 @@ const timeline = [
   },
 ];
 
+// 45vh per timeline item = ~360vh total scroll distance
+const HEIGHT_PER_ITEM_VH = 45;
+
 export default function Timeline() {
+  const containerRef = useRef(null);
+  const [progress, setProgress] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const trackRef = useRef(null);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
 
-  const prev = useCallback(() => {
-    setActiveIndex(curr => (curr > 0 ? curr - 1 : timeline.length - 1));
+  // Track window resize for card stride measurement
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const next = useCallback(() => {
-    setActiveIndex(curr => (curr < timeline.length - 1 ? curr + 1 : 0));
+  // Compute scroll progress strictly relative to the container
+  useEffect(() => {
+    const handleScroll = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const totalScroll = el.offsetHeight - window.innerHeight;
+      if (totalScroll <= 0) return;
+
+      const scrolled = -rect.top;
+      const rawProgress = scrolled / totalScroll;
+      const clamped = Math.max(0, Math.min(1, rawProgress));
+      setProgress(clamped);
+
+      const idx = Math.min(timeline.length - 1, Math.round(clamped * (timeline.length - 1)));
+      setActiveIndex(idx);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Pointer drag events for horizontal swipe
-  const handlePointerDown = (e) => {
-    setIsDragging(true);
-    setDragStartX(e.clientX || (e.touches && e.touches[0].clientX) || 0);
-    setDragOffset(0);
-  };
+  // Smooth scroll to a specific milestone
+  const scrollToMilestone = useCallback((index) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const totalScroll = el.offsetHeight - window.innerHeight;
+    const targetTop = el.offsetTop + (index / (timeline.length - 1)) * totalScroll;
+    window.scrollTo({ top: targetTop, behavior: 'smooth' });
+  }, []);
 
-  const handlePointerMove = (e) => {
-    if (!isDragging) return;
-    const currentX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
-    setDragOffset(currentX - dragStartX);
-  };
+  const goToPrev = () => scrollToMilestone(Math.max(0, activeIndex - 1));
+  const goToNext = () => scrollToMilestone(Math.min(timeline.length - 1, activeIndex + 1));
 
-  const handlePointerUp = () => {
-    if (!isDragging) return;
-    if (dragOffset > 50) {
-      prev();
-    } else if (dragOffset < -50) {
-      next();
-    }
-    setIsDragging(false);
-    setDragOffset(0);
-  };
+  // Dynamic card width and step calculation
+  const cardWidth = windowWidth < 640 ? Math.min(340, windowWidth * 0.85) : 440;
+  const cardGap = windowWidth < 640 ? 18 : 28;
+  const cardStep = cardWidth + cardGap;
+  const trackTranslate = progress * (timeline.length - 1) * -cardStep;
 
   return (
-    <section id="historia" style={{
-      position: 'relative',
-      padding: 'clamp(4rem, 7vw, 6rem) 1.5rem',
-      background: '#FAFAFC',
-      overflow: 'hidden',
-    }}>
-      {/* Decorative background watermark year */}
-      <div style={{
-        position: 'absolute',
-        top: '12%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        fontSize: 'clamp(6rem, 16vw, 13rem)',
-        fontFamily: F.heading,
-        fontWeight: 900,
-        color: 'rgba(196,30,36,0.035)',
-        letterSpacing: '-0.04em',
-        pointerEvents: 'none',
-        userSelect: 'none',
-        zIndex: 0,
-        lineHeight: 1,
-      }}>
-        {timeline[activeIndex].year}
-      </div>
+    <section
+      id="historia"
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        height: `${timeline.length * HEIGHT_PER_ITEM_VH}vh`,
+        background: '#FAFAFC',
+      }}
+    >
+      {/* Sticky Fullscreen Stage */}
+      <div
+        style={{
+          position: 'sticky',
+          top: 0,
+          height: '100vh',
+          width: '100%',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          padding: 'clamp(20px, 4vh, 36px) 0 clamp(16px, 3vh, 24px)',
+          boxSizing: 'border-box',
+          background: 'linear-gradient(180deg, #FAFAFC 0%, #FFFFFF 100%)',
+        }}
+      >
+        {/* Background Watermark Year */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '32%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            fontSize: 'clamp(7rem, 20vw, 15rem)',
+            fontFamily: F.heading,
+            fontWeight: 900,
+            color: 'rgba(196,30,36,0.038)',
+            letterSpacing: '-0.04em',
+            pointerEvents: 'none',
+            userSelect: 'none',
+            zIndex: 0,
+            lineHeight: 1,
+            transition: 'all 0.5s ease-out',
+          }}
+        >
+          {timeline[activeIndex].year}
+        </div>
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-        {/* Section Header */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        {/* 1. Header (Fixed top area) */}
+        <div style={{ textAlign: 'center', padding: '0 1.5rem', position: 'relative', zIndex: 1, flexShrink: 0 }}>
           <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
+            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 16px', borderRadius: 9999,
             background: 'rgba(196,30,36,0.08)', color: C.red,
-            fontFamily: F.heading, fontWeight: 600, fontSize: 13, letterSpacing: '0.05em', textTransform: 'uppercase',
+            fontFamily: F.heading, fontWeight: 700, fontSize: 12, letterSpacing: '0.06em', textTransform: 'uppercase',
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.red }} />
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.red, animation: 'pulseGlow 2s infinite' }} />
             NUESTRA HISTORIA
           </span>
           <h2 style={{
-            fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 2.7rem)', color: C.navy,
-            marginTop: 14, lineHeight: 1.2,
+            fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)', color: C.navy,
+            marginTop: 10, lineHeight: 1.15,
           }}>
             Más de 60 años{' '}
             <span className="animated-gradient" style={{
@@ -149,96 +188,92 @@ export default function Timeline() {
             }}>escribiendo historia</span>
           </h2>
           <p style={{
-            fontSize: 15, color: C.gray, maxWidth: 620, margin: '12px auto 0', lineHeight: 1.6,
+            fontSize: 'clamp(13px, 1.5vw, 14px)', color: C.gray, maxWidth: 620, margin: '6px auto 0', lineHeight: 1.5,
           }}>
             Conoce los hitos que transformaron una modesta refaccionaria familiar en la red automotriz de mayor confianza en México.
           </p>
+
+          {/* Milestone Buttons / Year Pills Bar */}
+          <div style={{
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+            gap: 'clamp(4px, 1vw, 8px)', flexWrap: 'wrap',
+            marginTop: 14,
+          }}>
+            {timeline.map((t, idx) => {
+              const isActive = idx === activeIndex;
+              return (
+                <button
+                  key={t.year}
+                  type="button"
+                  onClick={() => scrollToMilestone(idx)}
+                  style={{
+                    padding: '5px 13px',
+                    borderRadius: 9999,
+                    border: `1.5px solid ${isActive ? C.red : C.border}`,
+                    background: isActive ? C.red : C.white,
+                    color: isActive ? C.white : C.navy,
+                    fontFamily: F.heading,
+                    fontWeight: isActive ? 800 : 600,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.25s ease',
+                    boxShadow: isActive ? '0 4px 14px rgba(196,30,36,0.28)' : '0 2px 4px rgba(0,0,0,0.02)',
+                    transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                  }}
+                >
+                  {t.year}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Milestone Buttons Bar */}
+        {/* 2. Sliding Track Area (Middle - Scroll Driven) */}
         <div style={{
-          display: 'flex', justifyContent: 'center', alignItems: 'center',
-          gap: 'clamp(6px, 1.2vw, 12px)', flexWrap: 'wrap',
-          marginBottom: 36,
+          position: 'relative',
+          width: '100%',
+          overflow: 'hidden',
+          flex: '1 1 auto',
+          display: 'flex',
+          alignItems: 'center',
+          minHeight: 0,
+          zIndex: 2,
         }}>
-          {timeline.map((t, idx) => {
-            const isActive = idx === activeIndex;
-            return (
-              <button
-                key={t.year}
-                type="button"
-                onClick={() => setActiveIndex(idx)}
-                style={{
-                  padding: '7px 15px',
-                  borderRadius: 9999,
-                  border: `1.5px solid ${isActive ? C.red : C.border}`,
-                  background: isActive ? C.red : C.white,
-                  color: isActive ? C.white : C.navy,
-                  fontFamily: F.heading,
-                  fontWeight: isActive ? 800 : 600,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  transition: 'all 0.25s ease',
-                  boxShadow: isActive ? '0 4px 14px rgba(196,30,36,0.3)' : '0 2px 6px rgba(0,0,0,0.03)',
-                  transform: isActive ? 'scale(1.05)' : 'scale(1)',
-                }}
-              >
-                {t.year}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Lateral Carousel Track Area */}
-        <div
-          ref={trackRef}
-          style={{
-            position: 'relative',
-            overflow: 'hidden',
-            padding: '16px 0 24px',
-            cursor: isDragging ? 'grabbing' : 'grab',
-            userSelect: 'none',
-          }}
-          onMouseDown={handlePointerDown}
-          onMouseMove={handlePointerMove}
-          onMouseUp={handlePointerUp}
-          onMouseLeave={handlePointerUp}
-          onTouchStart={handlePointerDown}
-          onTouchMove={handlePointerMove}
-          onTouchEnd={handlePointerUp}
-        >
-          {/* Card slider track */}
+          {/* Lateral moving track */}
           <div style={{
             display: 'flex',
-            gap: 24,
-            transition: isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.16,1,0.3,1)',
-            transform: `translateX(calc(50% - 210px - ${activeIndex * 444}px + ${dragOffset}px))`,
+            gap: cardGap,
+            transform: `translateX(calc(50vw - ${cardWidth / 2}px + ${trackTranslate}px))`,
+            transition: 'transform 0.12s ease-out',
+            willChange: 'transform',
+            padding: '10px 0',
           }}>
             {timeline.map((item, i) => {
               const isActive = i === activeIndex;
               return (
                 <div
                   key={item.year}
-                  onClick={() => setActiveIndex(i)}
+                  onClick={() => scrollToMilestone(i)}
                   style={{
-                    flex: '0 0 420px',
-                    maxWidth: '85vw',
+                    flex: `0 0 ${cardWidth}px`,
+                    width: cardWidth,
                     background: C.white,
-                    borderRadius: 24,
+                    borderRadius: 22,
                     overflow: 'hidden',
-                    border: `1px solid ${isActive ? 'rgba(196,30,36,0.35)' : C.border}`,
+                    border: `1px solid ${isActive ? 'rgba(196,30,36,0.4)' : C.border}`,
                     boxShadow: isActive
-                      ? '0 20px 50px rgba(196,30,36,0.12), 0 6px 20px rgba(0,0,0,0.06)'
-                      : '0 4px 16px rgba(0,0,0,0.04)',
-                    transform: isActive ? 'scale(1.02)' : 'scale(0.93)',
-                    opacity: isActive ? 1 : 0.55,
-                    filter: isActive ? 'none' : 'grayscale(0.4)',
-                    transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)',
+                      ? '0 20px 50px rgba(196,30,36,0.13), 0 8px 24px rgba(0,0,0,0.06)'
+                      : '0 4px 14px rgba(0,0,0,0.03)',
+                    transform: isActive ? 'scale(1.02)' : 'scale(0.92)',
+                    opacity: isActive ? 1 : 0.42,
+                    filter: isActive ? 'none' : 'grayscale(0.6)',
+                    transition: 'transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.4s ease, filter 0.4s ease, border-color 0.4s ease',
                     cursor: 'pointer',
+                    userSelect: 'none',
                   }}
                 >
                   {/* Card Image */}
-                  <div style={{ height: 210, overflow: 'hidden', position: 'relative' }}>
+                  <div style={{ height: windowWidth < 640 ? 150 : 190, overflow: 'hidden', position: 'relative' }}>
                     <img
                       src={item.image}
                       alt={item.title}
@@ -254,13 +289,13 @@ export default function Timeline() {
                     <div style={{
                       position: 'absolute',
                       inset: 0,
-                      background: 'linear-gradient(180deg, transparent 40%, rgba(26,31,54,0.85) 100%)',
+                      background: 'linear-gradient(180deg, transparent 35%, rgba(26,31,54,0.85) 100%)',
                     }} />
                     <div style={{
                       position: 'absolute',
-                      bottom: 14,
-                      left: 18,
-                      right: 18,
+                      bottom: 12,
+                      left: 16,
+                      right: 16,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -268,7 +303,7 @@ export default function Timeline() {
                       <span style={{
                         fontFamily: F.heading,
                         fontWeight: 900,
-                        fontSize: 26,
+                        fontSize: 24,
                         color: C.white,
                         letterSpacing: '0.04em',
                         textShadow: '0 2px 6px rgba(0,0,0,0.4)',
@@ -276,8 +311,8 @@ export default function Timeline() {
                         {item.year}
                       </span>
                       <div style={{
-                        width: 36,
-                        height: 36,
+                        width: 34,
+                        height: 34,
                         borderRadius: 10,
                         background: 'rgba(255,255,255,0.25)',
                         backdropFilter: 'blur(8px)',
@@ -285,26 +320,26 @@ export default function Timeline() {
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}>
-                        <Icon name={item.icon} size={18} color={C.white} />
+                        <Icon name={item.icon} size={17} color={C.white} />
                       </div>
                     </div>
                   </div>
 
                   {/* Card Content */}
-                  <div style={{ padding: '22px 24px 26px' }}>
+                  <div style={{ padding: windowWidth < 640 ? '16px 18px 20px' : '20px 22px 24px' }}>
                     <h3 style={{
                       fontFamily: F.heading,
                       fontWeight: 800,
-                      fontSize: 19,
+                      fontSize: windowWidth < 640 ? 17 : 19,
                       color: C.navy,
                       marginBottom: 8,
                     }}>
                       {item.title}
                     </h3>
                     <p style={{
-                      fontSize: 14,
+                      fontSize: windowWidth < 640 ? 13 : 14,
                       color: C.charcoal,
-                      lineHeight: 1.7,
+                      lineHeight: 1.6,
                       margin: 0,
                     }}>
                       {item.text}
@@ -315,91 +350,128 @@ export default function Timeline() {
             })}
           </div>
 
-          {/* Left / Right Nav Arrows */}
-          <button
-            type="button"
-            onClick={prev}
-            aria-label="Hito anterior"
-            style={{
-              position: 'absolute',
-              left: 8,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              background: C.white,
-              border: `1px solid ${C.border}`,
-              color: C.navy,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-              zIndex: 10,
-              transition: 'all 0.25s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = C.red; e.currentTarget.style.color = C.white; }}
-            onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.navy; }}
-          >
-            <ChevronLeft size={22} />
-          </button>
+          {/* Quick Nav Floating Arrows (Left / Right) */}
+          {activeIndex > 0 && (
+            <button
+              type="button"
+              onClick={goToPrev}
+              aria-label="Hito anterior"
+              style={{
+                position: 'absolute',
+                left: 16,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: 42,
+                height: 42,
+                borderRadius: '50%',
+                background: C.white,
+                border: `1px solid ${C.border}`,
+                color: C.navy,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                zIndex: 10,
+                transition: 'all 0.25s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.red; e.currentTarget.style.color = C.white; }}
+              onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.navy; }}
+            >
+              <ChevronLeft size={22} />
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={next}
-            aria-label="Siguiente hito"
-            style={{
-              position: 'absolute',
-              right: 8,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              background: C.white,
-              border: `1px solid ${C.border}`,
-              color: C.navy,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-              zIndex: 10,
-              transition: 'all 0.25s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = C.red; e.currentTarget.style.color = C.white; }}
-            onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.navy; }}
-          >
-            <ChevronRight size={22} />
-          </button>
+          {activeIndex < timeline.length - 1 && (
+            <button
+              type="button"
+              onClick={goToNext}
+              aria-label="Siguiente hito"
+              style={{
+                position: 'absolute',
+                right: 16,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: 42,
+                height: 42,
+                borderRadius: '50%',
+                background: C.white,
+                border: `1px solid ${C.border}`,
+                color: C.navy,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                zIndex: 10,
+                transition: 'all 0.25s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.red; e.currentTarget.style.color = C.white; }}
+              onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.navy; }}
+            >
+              <ChevronRight size={22} />
+            </button>
+          )}
         </div>
 
-        {/* Carousel Dots & Hint */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginTop: 12 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {timeline.map((_, dotIdx) => (
-              <button
-                key={dotIdx}
-                type="button"
-                aria-label={`Ver hito ${dotIdx + 1}`}
-                onClick={() => setActiveIndex(dotIdx)}
-                style={{
-                  width: dotIdx === activeIndex ? 26 : 8,
-                  height: 8,
-                  borderRadius: 4,
-                  background: dotIdx === activeIndex ? C.red : C.border,
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: 0,
-                  transition: 'all 0.3s ease',
-                }}
-              />
-            ))}
+        {/* 3. Bottom Progress Bar & Scroll Indicator */}
+        <div style={{
+          textAlign: 'center',
+          padding: '0 1.5rem',
+          flexShrink: 0,
+          position: 'relative',
+          zIndex: 2,
+        }}>
+          {/* Visual Progress Bar */}
+          <div style={{
+            maxWidth: 640,
+            width: '100%',
+            height: 4,
+            borderRadius: 2,
+            background: 'rgba(0,0,0,0.06)',
+            margin: '0 auto 10px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              height: '100%',
+              width: `${Math.max(4, progress * 100)}%`,
+              background: `linear-gradient(90deg, ${C.red}, ${C.redLight})`,
+              borderRadius: 2,
+              transition: 'width 0.15s ease-out',
+            }} />
           </div>
-          <span style={{ fontSize: 12, color: C.gray, fontFamily: F.heading }}>
-            Desliza o usa las flechas para explorar cada época
-          </span>
+
+          {/* Indicator text */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 12,
+            color: C.gray,
+            fontFamily: F.heading,
+            fontWeight: 600,
+          }}>
+            <div style={{
+              width: 14,
+              height: 22,
+              borderRadius: 7,
+              border: `1.5px solid ${C.gray}70`,
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+              padding: '2px 0',
+            }}>
+              <div style={{
+                width: 2.5,
+                height: 5,
+                borderRadius: 2,
+                background: C.red,
+                animation: 'scrollIndicator 1.5s ease-in-out infinite',
+              }} />
+            </div>
+            <span>Haz scroll hacia abajo para viajar por la historia ({activeIndex + 1} de {timeline.length})</span>
+          </div>
         </div>
       </div>
     </section>

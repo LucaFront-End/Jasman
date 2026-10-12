@@ -66,6 +66,19 @@ const secondaryBranchIcon = new L.DivIcon({
   popupAnchor: [0, -14],
 });
 
+const otherBranchIcon = new L.DivIcon({
+  className: 'jasman-other-pin',
+  html: `<div style="
+    width:22px;height:22px;background:#C41E24;border-radius:50%;
+    border:2px solid #FFFFFF;box-shadow:0 2px 6px rgba(196,30,36,0.35);
+    display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-family:'Montserrat',sans-serif;
+    font-weight:800;font-size:10px;cursor:pointer;opacity:0.88;transition:all 0.2s;
+  ">J</div>`,
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -14],
+});
+
 // Map Controller for Dynamic View/Fit Bounds
 function MapController({ center, zoom, bounds }) {
   const map = useMap();
@@ -1335,17 +1348,74 @@ export default function LandingAlineacionPage() {
                       </Popup>
                     </Marker>
                   ))}
+
+                  {/* All Other Jasman Branch Pins Across Mexico */}
+                  {(() => {
+                    const renderedIds = new Set([
+                      primaryBranch?.id,
+                      ...nearbyBranches.map(b => b.id),
+                    ]);
+                    return (allBranches || [])
+                      .filter(b => !renderedIds.has(b.id) && b.lat && b.lng)
+                      .map(branch => (
+                        <Marker
+                          key={branch.id}
+                          position={[branch.lat, branch.lng]}
+                          icon={otherBranchIcon}
+                          eventHandlers={{
+                            click: () => {
+                              setSelectedBranch(branch);
+                              setBookingBranchId(branch.id);
+                            },
+                          }}
+                        >
+                          <Popup>
+                            <div style={{ padding: 6, fontFamily: F.body, maxWidth: 220 }}>
+                              <strong style={{ fontFamily: F.heading, color: C.navy, fontSize: 12 }}>
+                                {branch.fullName || `Sucursal ${branch.name}`}
+                              </strong>
+                              <div style={{ fontSize: 11, color: C.charcoal, marginTop: 3, lineHeight: 1.3 }}>
+                                {branch.address}
+                              </div>
+                              <div style={{ fontSize: 10, color: C.gray, marginTop: 2 }}>
+                                {branch.city}, {branch.state}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedBranch(branch);
+                                  setBookingBranchId(branch.id);
+                                }}
+                                style={{
+                                  marginTop: 6, width: '100%', padding: '5px 10px',
+                                  background: C.red, color: C.white, border: 'none',
+                                  borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 700,
+                                }}
+                              >
+                                Seleccionar esta sucursal
+                              </button>
+                            </div>
+                          </Popup>
+                        </Marker>
+                      ));
+                  })()}
                 </MapContainer>
               </div>
 
               {/* Map Footer Helper */}
               <div style={{
-                padding: '8px 14px', background: C.light, borderTop: `1px solid ${C.border}`,
+                padding: '10px 16px', background: C.light, borderTop: `1px solid ${C.border}`,
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: C.gray,
-                flexWrap: 'wrap', gap: 4,
+                flexWrap: 'wrap', gap: 6,
               }}>
-                <span>🔵 Tu ubicación / C.P.</span>
-                <span>🔴 Sucursal Jasman Seleccionada</span>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span>🔵 Tu C.P.</span>
+                  <span>🔴 Sucursal Elegida</span>
+                  <span>⚫ Cercanas</span>
+                </div>
+                <span style={{ fontWeight: 700, color: C.navy, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <MapPin size={12} color={C.red} /> {allBranches.length}+ sucursales en todo México (click para elegir)
+                </span>
               </div>
             </div>
 

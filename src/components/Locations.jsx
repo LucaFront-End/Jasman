@@ -14,16 +14,17 @@ delete L.Icon.Default.prototype._getIconUrl;
 const createIcon = (isActive) => new L.DivIcon({
   className: 'map-pin-icon',
   html: `<div class="map-pin" style="
-    width:${isActive ? 30 : 22}px;height:${isActive ? 30 : 22}px;
+    width:${isActive ? 32 : 22}px;height:${isActive ? 32 : 22}px;
     background:#C41E24;border-radius:50%;
-    box-shadow:0 0 0 ${isActive ? 6 : 3}px rgba(196,30,36,${isActive ? 0.25 : 0.15}), 0 4px 12px rgba(196,30,36,0.5);
-    border:3px solid white;
+    box-shadow:0 0 0 ${isActive ? 6 : 3}px rgba(196,30,36,${isActive ? 0.3 : 0.18}), 0 4px 12px rgba(196,30,36,0.5);
+    border:2.5px solid white;
     transition:all 0.3s;
     cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:white;font-family:'Montserrat',sans-serif;font-weight:900;font-size:${isActive ? 13 : 10}px;
     ${isActive ? 'animation:pulseGlow 2s infinite;' : ''}
-  "></div>`,
-  iconSize: [isActive ? 30 : 22, isActive ? 30 : 22],
-  iconAnchor: [isActive ? 15 : 11, isActive ? 15 : 11],
+  ">J</div>`,
+  iconSize: [isActive ? 32 : 22, isActive ? 32 : 22],
+  iconAnchor: [isActive ? 16 : 11, isActive ? 16 : 11],
   popupAnchor: [0, isActive ? -18 : -14],
 });
 
@@ -96,6 +97,11 @@ export default function Locations() {
   const [activeRegion, setActiveRegion] = useState(null);
   const [selectedLoc, setSelectedLoc] = useState(null);
   const header = useReveal();
+
+  const mapLocations = useMemo(() => {
+    if (!activeRegion) return sucursales;
+    return sucursales.filter(s => s.region === activeRegion);
+  }, [activeRegion]);
 
   const filtered = useMemo(() => {
     if (!activeRegion) return homeSubset;
@@ -193,7 +199,7 @@ export default function Locations() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               <MapController activeRegion={activeRegion} />
-              {filtered.map((loc) => {
+              {mapLocations.map((loc) => {
                 const coords = getCoords(loc);
                 return (
                   <Marker key={loc.id} position={coords}
@@ -236,10 +242,10 @@ export default function Locations() {
             }}>
               <div>
                 <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 14, color: C.white }}>
-                  {activeRegion || 'Todo México'}
+                  {activeRegion ? `Región ${activeRegion}` : 'Todo México'}
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
-                  {filtered.length} sucursales mostrando • Click en un pin
+                  {mapLocations.length} sucursales en el mapa • Click en un pin para ver detalles
                 </div>
               </div>
               <div style={{
@@ -249,7 +255,7 @@ export default function Locations() {
               }}>
                 <MapPin size={13} color={C.redLight} />
                 <span style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 12, color: C.redLight }}>
-                  {sucursales.length}+ sucursales
+                  {mapLocations.length} pines activos
                 </span>
               </div>
             </div>
