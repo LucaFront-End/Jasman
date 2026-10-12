@@ -171,19 +171,47 @@ export default function Services() {
             </div>
 
             {/* CTA button */}
-            <button className="glow-btn" style={{
-              padding: '18px 40px', borderRadius: 16, border: 'none',
-              background: `linear-gradient(135deg, ${C.red}, ${C.redLight})`,
-              color: C.white, fontFamily: F.heading, fontWeight: 700, fontSize: 16,
-              cursor: 'pointer', boxShadow: '0 8px 32px rgba(196,30,36,0.35)',
-              transition: 'all 0.3s', display: 'inline-flex', alignItems: 'center', gap: 10,
-            }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(196,30,36,0.45)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(196,30,36,0.35)'; }}
-            >
-              Cotizar Ahora
-              <ArrowRight size={18} />
-            </button>
+            {s.title === 'Llantas' ? (
+              <a
+                href="https://llantas.jasman.com.mx/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glow-btn"
+                style={{
+                  padding: '18px 40px', borderRadius: 16, border: 'none',
+                  background: `linear-gradient(135deg, ${C.red}, ${C.redLight})`,
+                  color: C.white, fontFamily: F.heading, fontWeight: 700, fontSize: 16,
+                  cursor: 'pointer', boxShadow: '0 8px 32px rgba(196,30,36,0.35)',
+                  transition: 'all 0.3s', display: 'inline-flex', alignItems: 'center', gap: 10,
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(196,30,36,0.45)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(196,30,36,0.35)'; }}
+              >
+                Comprar Llantas en Línea
+                <ArrowRight size={18} />
+              </a>
+            ) : (
+              <a
+                href={`https://api.whatsapp.com/send/?phone=5215579337994&text=${encodeURIComponent(`SW- Hola, quisiera cotizar el servicio de ${s.title}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glow-btn"
+                style={{
+                  padding: '18px 40px', borderRadius: 16, border: 'none',
+                  background: `linear-gradient(135deg, ${C.red}, ${C.redLight})`,
+                  color: C.white, fontFamily: F.heading, fontWeight: 700, fontSize: 16,
+                  cursor: 'pointer', boxShadow: '0 8px 32px rgba(196,30,36,0.35)',
+                  transition: 'all 0.3s', display: 'inline-flex', alignItems: 'center', gap: 10,
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(196,30,36,0.45)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(196,30,36,0.35)'; }}
+              >
+                Cotizar Ahora
+                <ArrowRight size={18} />
+              </a>
+            )}
           </div>
 
           {/* Right: Includes card */}

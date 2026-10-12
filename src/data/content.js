@@ -247,6 +247,7 @@ export const footerContent = {
       { label: 'Servicios', href: '/servicios' },
       { label: 'Sucursales', href: '/sucursales' },
       { label: 'Flotillas', href: '/flotillas' },
+      { label: 'Llantas', href: 'https://llantas.jasman.com.mx/' },
       { label: 'Bolsa de Trabajo', href: '/bolsa-de-trabajo' },
       { label: 'Proveedores', href: '/proveedores' },
       { label: 'Contacto', href: '/contacto' },
@@ -275,6 +276,6 @@ export const navLinks = [
   { label: 'Servicios', href: '/servicios' },
   { label: 'Sucursales', href: '/sucursales' },
   { label: 'Flotillas', href: '/flotillas' },
-  { label: 'Llantas', href: 'https://llantastic.com', external: true },
+  { label: 'Llantas', href: 'https://llantas.jasman.com.mx/', external: true },
   { label: 'Contacto', href: '/contacto' },
 ];

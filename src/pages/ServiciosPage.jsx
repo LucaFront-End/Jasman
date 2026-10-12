@@ -159,6 +159,44 @@ export default function ServiciosPage() {
                   color: C.red, fontSize: 12, fontWeight: 700, fontFamily: F.heading,
                 }}>{filteredServices.length}</span>
               </div>
+
+              {activeCategory === 'Llantas' && (
+                <div style={{
+                  marginBottom: 28, padding: '22px 28px', borderRadius: 20,
+                  background: `linear-gradient(135deg, ${C.navy} 0%, #1F2438 100%)`,
+                  color: C.white, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  flexWrap: 'wrap', gap: 18, border: '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                }}>
+                  <div style={{ maxWidth: 640 }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: C.redLight, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
+                      <Sparkles size={13} /> TIENDA EN LÍNEA
+                    </div>
+                    <h3 style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 20, color: C.white }}>
+                      ¿Buscas comprar llantas en línea con envío o montaje?
+                    </h3>
+                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 4, lineHeight: 1.5 }}>
+                      Visita nuestro catálogo digital con las mejores marcas (Michelin, Continental, Pirelli, Goodyear, Bridgestone y más) en <strong>llantas.jasman.com.mx</strong>.
+                    </p>
+                  </div>
+                  <a
+                    href="https://llantas.jasman.com.mx/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: '13px 28px', borderRadius: 14, background: C.red, color: C.white,
+                      fontFamily: F.heading, fontWeight: 700, fontSize: 14, textDecoration: 'none',
+                      display: 'inline-flex', alignItems: 'center', gap: 8,
+                      boxShadow: '0 4px 18px rgba(196,30,36,0.35)',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = C.redDark; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = C.red; }}
+                  >
+                    Ver Catálogo en llantas.jasman.com.mx <ArrowRight size={16} />
+                  </a>
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
                 {filteredServices.map((s) => (
                   <Link to={`/servicios/${s.slug}`} key={s.slug} style={{

@@ -886,7 +886,7 @@ export default function LandingAlineacionPage() {
               background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B',
               fontSize: 13, display: 'flex', alignItems: 'center', gap: 10,
             }}>
-              <AlertCircle size={18} flexShrink={0} />
+              <AlertCircle size={18} style={{ flexShrink: 0 }} />
               <span>{geoError}</span>
             </div>
           )}
@@ -943,7 +943,7 @@ export default function LandingAlineacionPage() {
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '8px 12px', background: C.light, borderRadius: 10,
               }}>
-                <Navigation size={14} color="#2563EB" flexShrink={0} />
+                <Navigation size={14} color="#2563EB" style={{ flexShrink: 0 }} />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   Calculado desde: <strong>{currentLocation.name}</strong>
                 </span>
@@ -1054,7 +1054,7 @@ export default function LandingAlineacionPage() {
                   onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                   onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                 >
-                  <MessageCircle size={18} flexShrink={0} /> Agendar Promoción por WhatsApp
+                  <MessageCircle size={18} style={{ flexShrink: 0 }} /> Agendar Promoción por WhatsApp
                 </a>
 
                 {/* Google Maps Directions */}
@@ -1081,7 +1081,7 @@ export default function LandingAlineacionPage() {
                   onMouseEnter={e => { e.currentTarget.style.background = C.light; e.currentTarget.style.borderColor = C.red; }}
                   onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.borderColor = C.border; }}
                 >
-                  <Navigation size={15} color={C.red} flexShrink={0} /> Cómo llegar / Ver en Google Maps
+                  <Navigation size={15} color={C.red} style={{ flexShrink: 0 }} /> Cómo llegar / Ver en Google Maps
                 </a>
               </div>
 
@@ -1208,7 +1208,7 @@ export default function LandingAlineacionPage() {
                 gap: 6,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600 }}>
-                  <MapPin size={15} color={C.redLight} flexShrink={0} /> Mapa de Ubicación y Ruta
+                  <MapPin size={15} color={C.redLight} style={{ flexShrink: 0 }} /> Mapa de Ubicación y Ruta
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)' }}>
                   {primaryBranch.name} ({primaryBranch.distanceFormatted})
