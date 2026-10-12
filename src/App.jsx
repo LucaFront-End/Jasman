@@ -29,6 +29,7 @@ export default function App() {
   // Subdomain detection: if visiting via a landing/promo subdomain, render landing page at root
   const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
   const isLandingSubdomain =
+    hostname.startsWith('llantas.') ||
     hostname.startsWith('promociones.') ||
     hostname.startsWith('promocion.') ||
     hostname.startsWith('alineacion.') ||
@@ -42,6 +43,8 @@ export default function App() {
       <main>
         <Routes>
           <Route path="/" element={isLandingSubdomain ? <LandingAlineacionPage /> : <HomePage />} />
+          <Route path="/llantas" element={<LandingAlineacionPage />} />
+          <Route path="/llantas/:slug" element={<LandingAlineacionPage />} />
           <Route path="/alineacion-y-balanceo" element={<LandingAlineacionPage />} />
           <Route path="/alineación-y-balanceo" element={<LandingAlineacionPage />} />
           <Route path="/alineacion-y-balanceo-promocion-cdmx-octubre" element={<LandingAlineacionPage />} />
@@ -63,7 +66,7 @@ export default function App() {
       </main>
       <Footer />
       {/* Hide general promotion popup when already on a dedicated landing page */}
-      {!isLandingSubdomain && !pathname.includes('alineacion') && !pathname.includes('alineación') && (
+      {!isLandingSubdomain && !pathname.includes('alineacion') && !pathname.includes('alineación') && !pathname.includes('llantas') && (
         <PromotionsPopup />
       )}
     </>
