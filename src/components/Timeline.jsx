@@ -1,6 +1,7 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { C, F } from '../hooks/useAnimations';
 import Icon from './Icon';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const timeline = [
   {
@@ -61,50 +62,74 @@ const timeline = [
   },
 ];
 
-const SECTION_HEIGHT_PER_ITEM = 80; // vh per timeline item
-
 export default function Timeline() {
-  const containerRef = useRef(null);
-  const [progress, setProgress] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const trackRef = useRef(null);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const el = containerRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const totalScroll = el.offsetHeight - window.innerHeight;
-      const scrolled = -rect.top;
-      const p = Math.max(0, Math.min(1, scrolled / totalScroll));
-      setProgress(p);
-      const idx = Math.min(timeline.length - 1, Math.floor(p * timeline.length));
-      setActiveIndex(idx);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+  const prev = useCallback(() => {
+    setActiveIndex(curr => (curr > 0 ? curr - 1 : timeline.length - 1));
   }, []);
 
-  const trackTranslate = progress * (timeline.length - 1) * -460;
+  const next = useCallback(() => {
+    setActiveIndex(curr => (curr < timeline.length - 1 ? curr + 1 : 0));
+  }, []);
+
+  // Pointer drag events for horizontal swipe
+  const handlePointerDown = (e) => {
+    setIsDragging(true);
+    setDragStartX(e.clientX || (e.touches && e.touches[0].clientX) || 0);
+    setDragOffset(0);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging) return;
+    const currentX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    setDragOffset(currentX - dragStartX);
+  };
+
+  const handlePointerUp = () => {
+    if (!isDragging) return;
+    if (dragOffset > 50) {
+      prev();
+    } else if (dragOffset < -50) {
+      next();
+    }
+    setIsDragging(false);
+    setDragOffset(0);
+  };
 
   return (
-    <section id="historia" ref={containerRef} style={{
+    <section id="historia" style={{
       position: 'relative',
-      height: `${timeline.length * SECTION_HEIGHT_PER_ITEM}vh`,
+      padding: 'clamp(4rem, 7vw, 6rem) 1.5rem',
+      background: '#FAFAFC',
+      overflow: 'hidden',
     }}>
-      {/* Sticky viewport */}
+      {/* Decorative background watermark year */}
       <div style={{
-        position: 'sticky',
-        top: 0,
-        height: '100vh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        background: C.white,
+        position: 'absolute',
+        top: '12%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        fontSize: 'clamp(6rem, 16vw, 13rem)',
+        fontFamily: F.heading,
+        fontWeight: 900,
+        color: 'rgba(196,30,36,0.035)',
+        letterSpacing: '-0.04em',
+        pointerEvents: 'none',
+        userSelect: 'none',
+        zIndex: 0,
+        lineHeight: 1,
       }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', padding: '0 1.5rem', marginBottom: 32, flexShrink: 0 }}>
+        {timeline[activeIndex].year}
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        {/* Section Header */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
             background: 'rgba(196,30,36,0.08)', color: C.red,
@@ -113,175 +138,268 @@ export default function Timeline() {
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.red }} />
             NUESTRA HISTORIA
           </span>
-          <h3 style={{
-            fontFamily: F.heading, fontWeight: 700, fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', color: C.navy,
-            marginTop: 16, lineHeight: 1.2,
+          <h2 style={{
+            fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 2.7rem)', color: C.navy,
+            marginTop: 14, lineHeight: 1.2,
           }}>
             Más de 60 años{' '}
             <span className="animated-gradient" style={{
               background: `linear-gradient(135deg, ${C.red}, ${C.redLight}, ${C.red})`,
               backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             }}>escribiendo historia</span>
-          </h3>
-        </div>
-
-        {/* Year indicator */}
-        <div style={{
-          textAlign: 'center', marginBottom: 20, flexShrink: 0,
-        }}>
-          <div key={activeIndex} style={{
-            fontFamily: F.heading, fontWeight: 900,
-            fontSize: 'clamp(3rem, 8vw, 5rem)',
-            color: 'transparent',
-            WebkitTextStroke: `2px ${C.red}20`,
-            position: 'relative', display: 'inline-block',
+          </h2>
+          <p style={{
+            fontSize: 15, color: C.gray, maxWidth: 620, margin: '12px auto 0', lineHeight: 1.6,
           }}>
-            {timeline[activeIndex].year}
-            <span style={{
-              position: 'absolute', inset: 0,
-              color: C.red,
-              clipPath: `inset(0 ${100 - ((progress * timeline.length - activeIndex) * 100)}% 0 0)`,
-              WebkitTextStroke: '0px',
-              transition: 'clip-path 0.15s ease-out',
-            }}>{timeline[activeIndex].year}</span>
-          </div>
+            Conoce los hitos que transformaron una modesta refaccionaria familiar en la red automotriz de mayor confianza en México.
+          </p>
         </div>
 
-        {/* Horizontal progress line with dots */}
+        {/* Milestone Buttons Bar */}
         <div style={{
-          position: 'relative', maxWidth: 800, width: '90%', margin: '0 auto 32px', flexShrink: 0,
+          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          gap: 'clamp(6px, 1.2vw, 12px)', flexWrap: 'wrap',
+          marginBottom: 36,
         }}>
-          <div style={{ height: 3, borderRadius: 3, background: C.light }}>
-            <div style={{
-              height: '100%', borderRadius: 3,
-              background: `linear-gradient(90deg, ${C.red}, ${C.redLight})`,
-              width: `${Math.max(2, progress * 100)}%`,
-              transition: 'width 0.15s ease-out',
-            }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', marginTop: -9 }}>
-            {timeline.map((t, i) => {
-              const isActive = i === activeIndex;
-              const isPast = i <= activeIndex;
-              return (
-                <div key={i} style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                }}>
-                  <div style={{
-                    width: isActive ? 18 : 12, height: isActive ? 18 : 12,
-                    borderRadius: '50%',
-                    background: isPast ? C.red : C.light,
-                    border: `2px solid ${isPast ? C.red : C.border}`,
-                    transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)',
-                    boxShadow: isActive ? `0 0 0 4px ${C.red}25, 0 2px 8px rgba(196,30,36,0.3)` : 'none',
-                  }} />
-                  <span style={{
-                    marginTop: 8, fontFamily: F.heading, fontWeight: isActive ? 700 : 500,
-                    fontSize: isActive ? 13 : 11, color: isActive ? C.red : C.gray,
-                    transition: 'all 0.3s',
-                    opacity: isActive || i === 0 || i === timeline.length - 1 ? 1 : 0.5,
-                  }}>{t.year}</span>
-                </div>
-              );
-            })}
-          </div>
+          {timeline.map((t, idx) => {
+            const isActive = idx === activeIndex;
+            return (
+              <button
+                key={t.year}
+                type="button"
+                onClick={() => setActiveIndex(idx)}
+                style={{
+                  padding: '7px 15px',
+                  borderRadius: 9999,
+                  border: `1.5px solid ${isActive ? C.red : C.border}`,
+                  background: isActive ? C.red : C.white,
+                  color: isActive ? C.white : C.navy,
+                  fontFamily: F.heading,
+                  fontWeight: isActive ? 800 : 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  boxShadow: isActive ? '0 4px 14px rgba(196,30,36,0.3)' : '0 2px 6px rgba(0,0,0,0.03)',
+                  transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                }}
+              >
+                {t.year}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Sliding cards track */}
-        <div style={{
-          position: 'relative', overflow: 'hidden', flex: '1 1 auto',
-          display: 'flex', alignItems: 'center',
-          minHeight: 0,
-        }}>
+        {/* Lateral Carousel Track Area */}
+        <div
+          ref={trackRef}
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            padding: '16px 0 24px',
+            cursor: isDragging ? 'grabbing' : 'grab',
+            userSelect: 'none',
+          }}
+          onMouseDown={handlePointerDown}
+          onMouseMove={handlePointerMove}
+          onMouseUp={handlePointerUp}
+          onMouseLeave={handlePointerUp}
+          onTouchStart={handlePointerDown}
+          onTouchMove={handlePointerMove}
+          onTouchEnd={handlePointerUp}
+        >
+          {/* Card slider track */}
           <div style={{
-            display: 'flex', gap: 32,
-            transform: `translateX(calc(50vw - 230px + ${trackTranslate}px))`,
-            transition: 'transform 0.4s cubic-bezier(0.16,1,0.3,1)',
-            padding: '20px 0',
+            display: 'flex',
+            gap: 24,
+            transition: isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.16,1,0.3,1)',
+            transform: `translateX(calc(50% - 210px - ${activeIndex * 444}px + ${dragOffset}px))`,
           }}>
-            {timeline.map((t, i) => {
+            {timeline.map((item, i) => {
               const isActive = i === activeIndex;
               return (
-                <div key={i} style={{
-                  flex: '0 0 460px',
-                  transform: isActive ? 'scale(1)' : 'scale(0.88)',
-                  opacity: isActive ? 1 : 0.35,
-                  filter: isActive ? 'none' : 'grayscale(0.6)',
-                  transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)',
-                  pointerEvents: isActive ? 'auto' : 'none',
-                }}>
-                  <div style={{
-                    background: C.white, borderRadius: 24,
-                    border: `1px solid ${isActive ? C.red + '30' : C.border}`,
+                <div
+                  key={item.year}
+                  onClick={() => setActiveIndex(i)}
+                  style={{
+                    flex: '0 0 420px',
+                    maxWidth: '85vw',
+                    background: C.white,
+                    borderRadius: 24,
                     overflow: 'hidden',
+                    border: `1px solid ${isActive ? 'rgba(196,30,36,0.35)' : C.border}`,
                     boxShadow: isActive
-                      ? '0 20px 60px rgba(196,30,36,0.12), 0 8px 24px rgba(0,0,0,0.06)'
-                      : '0 4px 12px rgba(0,0,0,0.04)',
-                    transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)',
-                  }}>
-                    {/* Image */}
-                    <div style={{ height: 220, overflow: 'hidden', position: 'relative' }}>
-                      <img src={t.image} alt={t.title} loading="lazy" style={{
-                        width: '100%', height: '100%', objectFit: 'cover',
-                        transform: isActive ? 'scale(1.05)' : 'scale(1)',
-                        transition: 'transform 0.7s cubic-bezier(0.16,1,0.3,1)',
-                      }} />
-                      <div style={{
-                        position: 'absolute', inset: 0,
-                        background: 'linear-gradient(180deg, transparent 30%, rgba(26,31,54,0.75) 100%)',
-                      }} />
-                      <div style={{
-                        position: 'absolute', bottom: 14, left: 18, right: 18,
-                        display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+                      ? '0 20px 50px rgba(196,30,36,0.12), 0 6px 20px rgba(0,0,0,0.06)'
+                      : '0 4px 16px rgba(0,0,0,0.04)',
+                    transform: isActive ? 'scale(1.02)' : 'scale(0.93)',
+                    opacity: isActive ? 1 : 0.55,
+                    filter: isActive ? 'none' : 'grayscale(0.4)',
+                    transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {/* Card Image */}
+                  <div style={{ height: 210, overflow: 'hidden', position: 'relative' }}>
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      loading="lazy"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transform: isActive ? 'scale(1.04)' : 'scale(1)',
+                        transition: 'transform 0.6s ease',
+                      }}
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(180deg, transparent 40%, rgba(26,31,54,0.85) 100%)',
+                    }} />
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 14,
+                      left: 18,
+                      right: 18,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}>
+                      <span style={{
+                        fontFamily: F.heading,
+                        fontWeight: 900,
+                        fontSize: 26,
+                        color: C.white,
+                        letterSpacing: '0.04em',
+                        textShadow: '0 2px 6px rgba(0,0,0,0.4)',
                       }}>
-                        <div>
-                          <div style={{
-                            fontFamily: F.heading, fontWeight: 900, fontSize: 28, color: C.white,
-                            lineHeight: 1, textShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                          }}>{t.year}</div>
-                        </div>
-                        <div style={{
-                          width: 40, height: 40, borderRadius: 12,
-                          background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 20,
-                        }}><Icon name={t.icon} size={18} color={C.white} /></div>
+                        {item.year}
+                      </span>
+                      <div style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background: 'rgba(255,255,255,0.25)',
+                        backdropFilter: 'blur(8px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <Icon name={item.icon} size={18} color={C.white} />
                       </div>
                     </div>
+                  </div>
 
-                    {/* Text */}
-                    <div style={{ padding: '20px 22px 26px' }}>
-                      <h4 style={{
-                        fontFamily: F.heading, fontWeight: 700, fontSize: 18, color: C.navy,
-                        marginBottom: 10,
-                      }}>{t.title}</h4>
-                      <p style={{
-                        fontSize: 14, color: C.gray, lineHeight: 1.75,
-                      }}>{t.text}</p>
-                    </div>
+                  {/* Card Content */}
+                  <div style={{ padding: '22px 24px 26px' }}>
+                    <h3 style={{
+                      fontFamily: F.heading,
+                      fontWeight: 800,
+                      fontSize: 19,
+                      color: C.navy,
+                      marginBottom: 8,
+                    }}>
+                      {item.title}
+                    </h3>
+                    <p style={{
+                      fontSize: 14,
+                      color: C.charcoal,
+                      lineHeight: 1.7,
+                      margin: 0,
+                    }}>
+                      {item.text}
+                    </p>
                   </div>
                 </div>
               );
             })}
           </div>
+
+          {/* Left / Right Nav Arrows */}
+          <button
+            type="button"
+            onClick={prev}
+            aria-label="Hito anterior"
+            style={{
+              position: 'absolute',
+              left: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: C.white,
+              border: `1px solid ${C.border}`,
+              color: C.navy,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+              zIndex: 10,
+              transition: 'all 0.25s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = C.red; e.currentTarget.style.color = C.white; }}
+            onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.navy; }}
+          >
+            <ChevronLeft size={22} />
+          </button>
+
+          <button
+            type="button"
+            onClick={next}
+            aria-label="Siguiente hito"
+            style={{
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: C.white,
+              border: `1px solid ${C.border}`,
+              color: C.navy,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+              zIndex: 10,
+              transition: 'all 0.25s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = C.red; e.currentTarget.style.color = C.white; }}
+            onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.navy; }}
+          >
+            <ChevronRight size={22} />
+          </button>
         </div>
 
-        {/* Scroll hint */}
-        <div style={{
-          textAlign: 'center', paddingBottom: 24, flexShrink: 0,
-          fontFamily: F.heading, fontSize: 12, color: C.gray, opacity: 0.5,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        }}>
-          <div style={{
-            width: 20, height: 32, borderRadius: 10, border: `2px solid ${C.gray}50`,
-            display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 4,
-          }}>
-            <div style={{
-              width: 3, height: 8, borderRadius: 3, background: C.red,
-              animation: 'scrollIndicator 1.5s ease-in-out infinite',
-            }} />
+        {/* Carousel Dots & Hint */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginTop: 12 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {timeline.map((_, dotIdx) => (
+              <button
+                key={dotIdx}
+                type="button"
+                aria-label={`Ver hito ${dotIdx + 1}`}
+                onClick={() => setActiveIndex(dotIdx)}
+                style={{
+                  width: dotIdx === activeIndex ? 26 : 8,
+                  height: 8,
+                  borderRadius: 4,
+                  background: dotIdx === activeIndex ? C.red : C.border,
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  transition: 'all 0.3s ease',
+                }}
+              />
+            ))}
           </div>
-          Sigue haciendo scroll para explorar
+          <span style={{ fontSize: 12, color: C.gray, fontFamily: F.heading }}>
+            Desliza o usa las flechas para explorar cada época
+          </span>
         </div>
       </div>
     </section>

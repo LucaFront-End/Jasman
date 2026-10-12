@@ -70,11 +70,26 @@ const secondaryBranchIcon = new L.DivIcon({
 function MapController({ center, zoom, bounds }) {
   const map = useMap();
   useEffect(() => {
-    if (bounds) {
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+    map.invalidateSize();
+    const t1 = setTimeout(() => map.invalidateSize(), 150);
+    const t2 = setTimeout(() => map.invalidateSize(), 500);
+
+    if (bounds && bounds.length === 2) {
+      const [[lat1, lng1], [lat2, lng2]] = bounds;
+      const isSameSpot = Math.abs(lat1 - lat2) < 0.001 && Math.abs(lng1 - lng2) < 0.001;
+      if (isSameSpot) {
+        map.setView([lat1, lng1], 14, { animate: true });
+      } else {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: true });
+      }
     } else if (center) {
-      map.setView(center, zoom, { animate: true });
+      map.setView(center, zoom || 13, { animate: true });
     }
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [center, zoom, bounds, map]);
   return null;
 }
@@ -1216,12 +1231,13 @@ export default function LandingAlineacionPage() {
               </div>
 
               {/* Leaflet Map Container */}
-              <div style={{ flex: 1, position: 'relative', width: '100%' }}>
+              <div style={{ flex: 1, position: 'relative', width: '100%', minHeight: 480 }}>
                 <MapContainer
+                  key={`map-${primaryBranch.id}-${currentLocation.cp}`}
                   center={[primaryBranch.lat, primaryBranch.lng]}
                   zoom={13}
                   scrollWheelZoom={false}
-                  style={{ width: '100%', height: '100%' }}
+                  style={{ width: '100%', height: '100%', minHeight: 480 }}
                 >
                   <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

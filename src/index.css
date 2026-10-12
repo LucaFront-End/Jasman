@@ -447,6 +447,37 @@ html, body, #root, main {
   z-index: 1 !important;
 }
 
+/* Leaflet marker & pin resets to prevent hidden/displaced pins */
+.leaflet-div-icon,
+.jasman-branch-pin,
+.user-location-pin,
+.jasman-secondary-pin,
+.map-pin-icon {
+  background: transparent !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.leaflet-marker-pane {
+  z-index: 600 !important;
+}
+
+.leaflet-marker-icon {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.leaflet-shadow-pane {
+  z-index: 500 !important;
+}
+
+.leaflet-overlay-pane {
+  z-index: 400 !important;
+}
+
 /* Quick C.P. Chips */
 .landing-cp-chips {
   display: flex;

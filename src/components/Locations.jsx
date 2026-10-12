@@ -5,6 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { locationsContent } from '../data/content';
 import { sucursales, regions } from '../data/sucursalesData';
+import { branchCoordinates } from '../data/postalCodesData';
 import { C, F, useReveal } from '../hooks/useAnimations';
 import { Phone, MapPin, Clock, Navigation, MessageCircle, ArrowRight } from 'lucide-react';
 
@@ -62,12 +63,21 @@ const regionCoords = {
 function MapController({ activeRegion }) {
   const map = useMap();
   useEffect(() => {
+    map.invalidateSize();
+    const t1 = setTimeout(() => map.invalidateSize(), 150);
+    const t2 = setTimeout(() => map.invalidateSize(), 500);
+
     if (activeRegion && regionCoords[activeRegion]) {
       const [lat, lng, zoom] = regionCoords[activeRegion];
       map.flyTo([lat, lng], zoom, { duration: 1.2 });
     } else {
       map.flyTo([23.5, -102.5], 5, { duration: 1.2 });
     }
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [activeRegion, map]);
   return null;
 }
@@ -96,8 +106,11 @@ export default function Locations() {
   regions.forEach(r => { regionCounts[r] = sucursales.filter(s => s.region === r).length; });
 
   const getCoords = (b) => {
+    if (branchCoordinates[b.name]) {
+      return [branchCoordinates[b.name].lat, branchCoordinates[b.name].lng];
+    }
     const geo = cityGeo[b.city];
-    if (geo) return [geo[0] + (Math.random() - 0.5) * 0.01, geo[1] + (Math.random() - 0.5) * 0.01];
+    if (geo) return [geo[0], geo[1]];
     return [19.43, -99.13];
   };
 
@@ -171,12 +184,14 @@ export default function Locations() {
           }}>
             <MapContainer
               center={[23.5, -102.5]} zoom={5}
-              style={{ width: '100%', height: '100%' }}
-              zoomControl={false} dragging={false} touchZoom={false}
-              doubleClickZoom={false} scrollWheelZoom={false} boxZoom={false}
-              keyboard={false} attributionControl={false}
+              style={{ width: '100%', height: '100%', minHeight: 560 }}
+              zoomControl={true} dragging={true} touchZoom={true}
+              doubleClickZoom={true} scrollWheelZoom={false}
             >
-              <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
               <MapController activeRegion={activeRegion} />
               {filtered.map((loc) => {
                 const coords = getCoords(loc);
