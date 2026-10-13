@@ -4,6 +4,7 @@ import { C, F, useReveal, useCountUp } from '../hooks/useAnimations';
 import Icon from '../components/Icon';
 import { Phone, MessageCircle, Send, CheckCircle2, ArrowRight, Building2, User, Mail, Users, Truck, BarChart3 } from 'lucide-react';
 import { flotillasContent } from '../data/flotillasData';
+import { saveContactoWeb } from '../services/wixService';
 
 function StatCard2({ number, suffix, label }) {
   const { ref, count } = useCountUp(number, 2000);
@@ -22,6 +23,16 @@ export default function FlotillasPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    saveContactoWeb({
+      nombre: formData.name,
+      empresa: formData.company,
+      telefono: formData.phone,
+      email: formData.email,
+      tipo: `Flotilla de ${formData.fleetSize} unidades`,
+      asunto: `Cotización Flotilla: ${formData.company} (${formData.fleetSize} unidades)`,
+      mensaje: formData.message,
+      origen: 'Formulario Flotillas',
+    }).catch(err => console.warn('Wix save error in flotillas:', err));
     setSubmitted(true);
   };
 

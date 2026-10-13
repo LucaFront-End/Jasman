@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { C, F } from '../hooks/useAnimations';
+import { saveContactoWeb } from '../services/wixService';
 import { X, Tag, Check, Sparkles, AlertCircle, Phone, User, Mail, MapPin, Copy, ExternalLink, ShieldCheck } from 'lucide-react';
 
 const CITIES = [
@@ -112,7 +113,17 @@ export default function PromotionsPopup() {
     const code = `JASMAN10-${randomSuffix}`;
     setCouponCode(code);
 
-    // Save lead to localStorage
+    // Save lead to Wix CMS Contactoweb and localStorage
+    saveContactoWeb({
+      nombre: nombre.trim(),
+      telefono: telefono.replace(/\D/g, ''),
+      email: correo.trim(),
+      ciudad,
+      cupon: code,
+      asunto: `Cupón 10% Descuento: ${code}`,
+      origen: 'Popup Descuento 10%',
+    }).catch(err => console.warn('Wix save error in popup:', err));
+
     try {
       const existingLeads = JSON.parse(localStorage.getItem('jasman_10_leads') || '[]');
       existingLeads.push({

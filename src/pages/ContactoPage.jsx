@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import PageHero from '../components/PageHero';
 import { C, F, useCountUp } from '../hooks/useAnimations';
 import { Link } from 'react-router-dom';
+import { saveContactoWeb } from '../services/wixService';
 import {
   Phone, Mail, MessageCircle, MapPin, Clock, Send, ArrowRight,
   Building2, User, FileText, ChevronDown, CheckCircle2,
@@ -172,7 +173,19 @@ export default function ContactoPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Build WhatsApp message from form data
+
+    // 1. Send to Wix CMS collection Contactoweb
+    saveContactoWeb({
+      nombre: formData.name,
+      email: formData.email,
+      telefono: formData.phone,
+      asunto: formData.subject,
+      sucursal: formData.sucursal,
+      mensaje: formData.message,
+      origen: 'Página de Contacto',
+    }).catch(err => console.warn('Wix save error:', err));
+
+    // 2. Build WhatsApp message from form data
     const lines = [
       `SW -Contacto desde sitio web`,
       `*Nombre:* ${formData.name}`,

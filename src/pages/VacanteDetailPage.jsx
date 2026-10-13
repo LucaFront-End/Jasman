@@ -1,15 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageHero from '../components/PageHero';
 import { C, F } from '../hooks/useAnimations';
-import { vacantes } from '../data/vacantesData';
+import { vacantes as localVacantes } from '../data/vacantesData';
+import { getWixVacantes, saveBolsaTrabajo } from '../services/wixService';
 import { MapPin, Clock, Check, ArrowLeft, User, Mail, Phone, FileText, Send, CheckCircle2 } from 'lucide-react';
 
 export default function VacanteDetailPage() {
   const { id } = useParams();
-  const vacancy = vacantes.find(v => v.id === id);
+  const [wixVacantes, setWixVacantes] = useState([]);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', city: '', experience: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    getWixVacantes().then(list => {
+      if (list && list.length > 0) setWixVacantes(list);
+    });
+  }, []);
+
+  const vacancy = wixVacantes.find(v => v.id === id) || localVacantes.find(v => v.id === id);
 
   if (!vacancy) {
     return (
@@ -22,7 +32,26 @@ export default function VacanteDetailPage() {
     );
   }
 
-  const handleSubmit = (e) => { e.preventDefault(); setSubmitted(true); };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await saveBolsaTrabajo({
+        nombre: formData.name,
+        email: formData.email,
+        telefono: formData.phone,
+        ciudad: formData.city,
+        puesto: vacancy.title,
+        experiencia: formData.experience,
+        origen: `Vacante: ${vacancy.title}`,
+      });
+    } catch (err) {
+      console.warn('Wix save error in vacante detail:', err);
+    } finally {
+      setSubmitting(false);
+      setSubmitted(true);
+    }
+  };
 
   return (
     <>
@@ -34,7 +63,7 @@ export default function VacanteDetailPage() {
       />
 
       <section style={{ padding: 'clamp(3rem, 6vw, 5rem) 1.5rem', background: C.light }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 40, alignItems: 'start' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 32, alignItems: 'start' }}>
           {/* Left: Details */}
           <div>
             <div style={{

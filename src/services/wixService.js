@@ -191,7 +191,21 @@ export async function saveBookingLead(booking) {
     existing.unshift(leadRecord);
     localStorage.setItem('jasman_cms_bookings', JSON.stringify(existing.slice(0, 50)));
 
-    // 2. Try to insert in Wix CMS if collection exists
+    // 2. Also register in Contactoweb CMS collection
+    try {
+      await saveContactoWeb({
+        nombre: leadRecord.nombre,
+        telefono: leadRecord.telefono,
+        sucursal: leadRecord.sucursalNombre,
+        asunto: `Cita: ${leadRecord.vehiculo || 'Automóvil'} - ${leadRecord.fechaVisita || 'Por agendar'}`,
+        mensaje: `Folio: ${leadRecord.folio} | Promo: ${leadRecord.promocion || 'Alineación y Balanceo'}`,
+        origen: 'Landing Promociones',
+      });
+    } catch {
+      // Ignored
+    }
+
+    // 3. Try to insert in Wix CMS 'Citas' if collection exists
     try {
       await wixClient.items.insert('Citas', {
         title: `${leadRecord.nombre} - ${leadRecord.folio}`,
@@ -212,3 +226,134 @@ export async function saveBookingLead(booking) {
 
   return leadRecord;
 }
+
+/**
+ * Saves ANY web contact form submission into Wix CMS collection "Contactoweb"
+ * and local cache.
+ */
+export async function saveContactoWeb(contactData) {
+  const folio = 'CW-' + Math.floor(100000 + Math.random() * 900000);
+  const record = {
+    title: `${contactData.nombre || contactData.name || 'Contacto'} - ${contactData.origen || 'Web'} - ${folio}`,
+    nombre: contactData.nombre || contactData.name || '',
+    email: contactData.email || contactData.correo || '',
+    telefono: contactData.telefono || contactData.phone || '',
+    ciudad: contactData.ciudad || contactData.city || '',
+    sucursal: contactData.sucursal || contactData.sucursalNombre || '',
+    asunto: contactData.asunto || contactData.subject || '',
+    mensaje: contactData.mensaje || contactData.message || '',
+    empresa: contactData.empresa || contactData.company || '',
+    rfc: contactData.rfc || '',
+    tipo: contactData.tipo || contactData.type || '',
+    cupon: contactData.cupon || contactData.couponCode || '',
+    origen: contactData.origen || 'Sitio Web',
+    folio,
+    fecha: new Date().toISOString(),
+  };
+
+  // 1. Always save in localStorage queue
+  try {
+    const existing = JSON.parse(localStorage.getItem('jasman_cms_contactoweb') || '[]');
+    existing.unshift(record);
+    localStorage.setItem('jasman_cms_contactoweb', JSON.stringify(existing.slice(0, 100)));
+  } catch (e) {
+    console.warn('Local storage save error:', e);
+  }
+
+  // 2. Insert into Wix CMS collection Contactoweb
+  try {
+    const inserted = await wixClient.items.insert('Contactoweb', record);
+    console.log('Contacto guardado exitosamente en Wix CMS Contactoweb:', inserted._id);
+    return { success: true, id: inserted._id, record };
+  } catch (err) {
+    console.warn('Wix Headless: Aviso al insertar en Contactoweb (asegúrate de que los permisos de la colección en Wix permitan agregar contenido):', err?.message || err);
+    return { success: false, error: err?.message, record };
+  }
+}
+
+/**
+ * Normalizes a job opening item from Wix CMS collection "Vacantes"
+ */
+export function normalizeVacanteItem(item) {
+  const requirements = Array.isArray(item.requirements || item.requisitos)
+    ? (item.requirements || item.requisitos)
+    : (typeof (item.requirements || item.requisitos) === 'string'
+      ? (item.requirements || item.requisitos).split('\n').filter(Boolean)
+      : []);
+
+  const benefits = Array.isArray(item.benefits || item.beneficios)
+    ? (item.benefits || item.beneficios)
+    : (typeof (item.benefits || item.beneficios) === 'string'
+      ? (item.benefits || item.beneficios).split('\n').filter(Boolean)
+      : []);
+
+  return {
+    id: item.slug || item._id,
+    title: item.title || item.titulo || item.puesto || 'Vacante',
+    category: item.category || item.categoria || 'Operaciones',
+    city: item.city || item.ciudad || item.ubicacion || 'Ciudad de México',
+    type: item.type || item.tipo || item.jornada || 'Tiempo Completo',
+    description: item.description || item.descripcion || item.detalle || '',
+    requirements: requirements.length > 0 ? requirements : ['Experiencia en el área', 'Ganas de crecer'],
+    benefits: benefits.length > 0 ? benefits : ['Prestaciones de ley', 'Excelente ambiente laboral'],
+    source: 'wix-cms',
+    raw: item,
+  };
+}
+
+/**
+ * Fetches job openings stored in Wix CMS collection "Vacantes".
+ * Returns empty array if collection has no items.
+ */
+export async function getWixVacantes() {
+  try {
+    const res = await wixClient.items.query('Vacantes').limit(50).find();
+    if (res.items && res.items.length > 0) {
+      return res.items.map(normalizeVacanteItem);
+    }
+  } catch (err) {
+    console.warn('Wix Headless: Error fetching Vacantes:', err?.message || err);
+  }
+  return [];
+}
+
+/**
+ * Saves job application into Wix CMS collection "Bolsadetrabajo"
+ * and local cache.
+ */
+export async function saveBolsaTrabajo(applicationData) {
+  const folio = 'BT-' + Math.floor(100000 + Math.random() * 900000);
+  const record = {
+    title: `${applicationData.nombre || applicationData.name || 'Candidato'} - ${applicationData.puesto || applicationData.vacante || 'Postulación'} - ${folio}`,
+    nombre: applicationData.nombre || applicationData.name || '',
+    email: applicationData.email || '',
+    telefono: applicationData.telefono || applicationData.phone || '',
+    ciudad: applicationData.ciudad || applicationData.city || '',
+    puesto: applicationData.puesto || applicationData.vacante || '',
+    experiencia: applicationData.experiencia || applicationData.experience || '',
+    cvUrl: applicationData.cvUrl || '',
+    origen: applicationData.origen || 'Bolsa de Trabajo',
+    folio,
+    fecha: new Date().toISOString(),
+  };
+
+  // 1. Always save in localStorage queue
+  try {
+    const existing = JSON.parse(localStorage.getItem('jasman_cms_bolsadetrabajo') || '[]');
+    existing.unshift(record);
+    localStorage.setItem('jasman_cms_bolsadetrabajo', JSON.stringify(existing.slice(0, 100)));
+  } catch (e) {
+    console.warn('Local storage save error:', e);
+  }
+
+  // 2. Insert into Wix CMS collection Bolsadetrabajo
+  try {
+    const inserted = await wixClient.items.insert('Bolsadetrabajo', record);
+    console.log('Postulación guardada exitosamente en Wix CMS Bolsadetrabajo:', inserted._id);
+    return { success: true, id: inserted._id, record };
+  } catch (err) {
+    console.warn('Wix Headless: Aviso al insertar en Bolsadetrabajo (asegúrate de que los permisos de la colección en Wix permitan agregar contenido):', err?.message || err);
+    return { success: false, error: err?.message, record };
+  }
+}
+

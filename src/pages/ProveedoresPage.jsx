@@ -3,6 +3,7 @@ import PageHero from '../components/PageHero';
 import { C, F } from '../hooks/useAnimations';
 import Icon from '../components/Icon';
 import { Factory, Briefcase, Truck, User2, Wrench, FileCheck2, Check, ChevronDown, ChevronUp, Send, CheckCircle2, Building2, Mail, Phone, FileText, Shield, Eye } from 'lucide-react';
+import { saveContactoWeb } from '../services/wixService';
 
 const whoCanRegister = [
   { icon: Factory, title: 'Fabricantes', text: 'Empresas que fabrican productos automotrices, llantas, refacciones o insumos.' },
@@ -45,7 +46,21 @@ export default function ProveedoresPage() {
   const [formData, setFormData] = useState({ name: '', company: '', rfc: '', email: '', phone: '', type: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e) => { e.preventDefault(); setSubmitted(true); };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    saveContactoWeb({
+      nombre: formData.name,
+      empresa: formData.company,
+      rfc: formData.rfc,
+      email: formData.email,
+      telefono: formData.phone,
+      tipo: formData.type,
+      asunto: `Registro Proveedor: ${formData.company} (${formData.type})`,
+      mensaje: formData.message,
+      origen: 'Registro Proveedores',
+    }).catch(err => console.warn('Wix save error in proveedores:', err));
+    setSubmitted(true);
+  };
 
   return (
     <>
