@@ -13,16 +13,19 @@ delete L.Icon.Default.prototype._getIconUrl;
 
 const createIcon = (isActive) => new L.DivIcon({
   className: 'map-pin-icon',
-  html: `<div style="
-    width:${isActive ? 32 : 20}px;height:${isActive ? 32 : 20}px;
+  html: `<div class="map-pin" style="
+    width:${isActive ? 32 : 22}px;height:${isActive ? 32 : 22}px;
     background:#C41E24;border-radius:50%;
-    box-shadow:0 0 0 ${isActive ? 7 : 3}px rgba(196,30,36,${isActive ? 0.3 : 0.15}), 0 4px 14px rgba(196,30,36,0.5);
-    border:3px solid white;cursor:pointer;transition:all 0.3s;
+    box-shadow:0 0 0 ${isActive ? 6 : 3}px rgba(196,30,36,${isActive ? 0.35 : 0.18}), 0 4px 12px rgba(196,30,36,0.5);
+    border:2.5px solid white;
+    transition:all 0.3s;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:white;font-family:'Montserrat',sans-serif;font-weight:900;font-size:${isActive ? 13 : 10}px;
     ${isActive ? 'animation:pulseGlow 2s infinite;' : ''}
-  "></div>`,
-  iconSize: [isActive ? 32 : 20, isActive ? 32 : 20],
-  iconAnchor: [isActive ? 16 : 10, isActive ? 16 : 10],
-  popupAnchor: [0, isActive ? -20 : -14],
+  ">J</div>`,
+  iconSize: [isActive ? 32 : 22, isActive ? 32 : 22],
+  iconAnchor: [isActive ? 16 : 11, isActive ? 16 : 11],
+  popupAnchor: [0, isActive ? -18 : -14],
 });
 
 const cityGeo = {
@@ -57,16 +60,31 @@ const regionCoords = {
   'Michoacan': [19.75, -101.80, 8],
 };
 
-function MapController({ activeRegion }) {
+function MapController({ activeRegion, selectedLoc, sucursalesList, getCoords }) {
   const map = useMap();
   useEffect(() => {
-    if (activeRegion && regionCoords[activeRegion]) {
+    map.invalidateSize();
+    const t1 = setTimeout(() => map.invalidateSize(), 150);
+    const t2 = setTimeout(() => map.invalidateSize(), 500);
+
+    if (selectedLoc) {
+      const branch = sucursalesList.find(s => s.id === selectedLoc);
+      if (branch) {
+        const coords = getCoords(branch);
+        map.flyTo(coords, 14, { duration: 1.0 });
+      }
+    } else if (activeRegion && regionCoords[activeRegion]) {
       const [lat, lng, zoom] = regionCoords[activeRegion];
       map.flyTo([lat, lng], zoom, { duration: 1.2 });
     } else {
       map.flyTo([23.5, -102.5], 5, { duration: 1.2 });
     }
-  }, [activeRegion, map]);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [activeRegion, selectedLoc, map]);
   return null;
 }
 
@@ -95,6 +113,13 @@ export default function SucursalesPage() {
   const [activeRegion, setActiveRegion] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLoc, setSelectedLoc] = useState(null);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 900 : false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 900);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const filtered = useMemo(() => {
     let list = sucursales;
@@ -117,8 +142,8 @@ export default function SucursalesPage() {
   }, [filtered]);
 
   const getCoords = (b) => {
-    const exact = branchCoordinates[b.id];
-    if (exact) return [exact.lat, exact.lng];
+    if (b.id && branchCoordinates[b.id]) return [branchCoordinates[b.id].lat, branchCoordinates[b.id].lng];
+    if (branchCoordinates[b.name]) return [branchCoordinates[b.name].lat, branchCoordinates[b.name].lng];
     const geo = cityGeo[b.city];
     if (geo) return [geo[0], geo[1]];
     return [19.43, -99.13];
@@ -137,7 +162,7 @@ export default function SucursalesPage() {
 
       {/* Stats strip */}
       <section style={{ padding: '28px 1.5rem', background: C.navy, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 16 }}>
           <StatBadge number={sucursales.length} suffix="" label="Sucursales en México" icon={<Building2 size={20} color={C.redLight} />} />
           <StatBadge number={regions.length} suffix="" label="Regiones Cubiertas" icon={<MapPin size={20} color={C.redLight} />} />
           <StatBadge number={30} suffix="+" label="Servicios Disponibles" icon={<Wrench size={20} color={C.redLight} />} />
@@ -146,7 +171,7 @@ export default function SucursalesPage() {
       </section>
 
       {/* Interactive map section */}
-      <section style={{ padding: 'clamp(2rem, 4vw, 3rem) 1.5rem', background: C.navy }}>
+      <section style={{ padding: isMobile ? '2rem 1rem 3rem' : 'clamp(2rem, 4vw, 3rem) 1.5rem', background: C.navy }}>
         <div style={{ maxWidth: 1400, margin: '0 auto' }}>
           {/* Search + Region filters */}
           <div style={{
@@ -155,7 +180,9 @@ export default function SucursalesPage() {
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
               borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-              minWidth: 260,
+              width: isMobile ? '100%' : 'auto',
+              minWidth: isMobile ? '100%' : 260,
+              boxSizing: 'border-box',
             }}>
               <Search size={16} color="rgba(255,255,255,0.3)" />
               <input type="text" placeholder="Buscar sucursal, ciudad o estado..."
@@ -163,7 +190,7 @@ export default function SucursalesPage() {
                 style={{ border: 'none', background: 'none', outline: 'none', flex: 1, fontSize: 14, color: C.white }}
               />
             </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
               <button onClick={() => { setActiveRegion(null); setSelectedLoc(null); }} style={{
                 padding: '9px 18px', borderRadius: 12,
                 border: `1px solid ${!activeRegion ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
@@ -184,22 +211,34 @@ export default function SucursalesPage() {
           </div>
 
           {/* Full-width map + sidebar */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 24, alignItems: 'start' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : '1fr 420px',
+            gap: 24,
+            alignItems: 'start',
+          }}>
             {/* Map */}
             <div style={{
-              borderRadius: 28, overflow: 'hidden', height: 640,
+              borderRadius: isMobile ? 20 : 28,
+              overflow: 'hidden',
+              height: isMobile ? 380 : 640,
+              width: '100%',
               border: '1px solid rgba(255,255,255,0.06)',
-              boxShadow: '0 24px 64px rgba(0,0,0,0.3)', position: 'relative',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
+              position: 'relative',
             }}>
               <MapContainer
                 center={[23.5, -102.5]} zoom={5}
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: '100%', minHeight: isMobile ? 380 : 640 }}
                 zoomControl={true} dragging={true} touchZoom={true}
-                doubleClickZoom={true} scrollWheelZoom={true}
+                doubleClickZoom={true} scrollWheelZoom={false}
                 attributionControl={false}
               >
-                <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-                <MapController activeRegion={activeRegion} />
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapController activeRegion={activeRegion} selectedLoc={selectedLoc} sucursalesList={filtered} getCoords={getCoords} />
                 {filtered.map((loc) => {
                   const coords = getCoords(loc);
                   return (

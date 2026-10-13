@@ -61,14 +61,20 @@ const regionCoords = {
   'Michoacan': [19.75, -101.80, 9],
 };
 
-function MapController({ activeRegion }) {
+function MapController({ activeRegion, selectedLoc, sucursalesList, getCoords }) {
   const map = useMap();
   useEffect(() => {
     map.invalidateSize();
     const t1 = setTimeout(() => map.invalidateSize(), 150);
     const t2 = setTimeout(() => map.invalidateSize(), 500);
 
-    if (activeRegion && regionCoords[activeRegion]) {
+    if (selectedLoc) {
+      const branch = sucursalesList?.find(s => s.id === selectedLoc);
+      if (branch) {
+        const coords = getCoords(branch);
+        map.flyTo(coords, 14, { duration: 1.0 });
+      }
+    } else if (activeRegion && regionCoords[activeRegion]) {
       const [lat, lng, zoom] = regionCoords[activeRegion];
       map.flyTo([lat, lng], zoom, { duration: 1.2 });
     } else {
@@ -79,7 +85,7 @@ function MapController({ activeRegion }) {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [activeRegion, map]);
+  }, [activeRegion, selectedLoc, map]);
   return null;
 }
 
@@ -119,6 +125,9 @@ export default function Locations() {
   regions.forEach(r => { regionCounts[r] = sucursales.filter(s => s.region === r).length; });
 
   const getCoords = (b) => {
+    if (b.id && branchCoordinates[b.id]) {
+      return [branchCoordinates[b.id].lat, branchCoordinates[b.id].lng];
+    }
     if (branchCoordinates[b.name]) {
       return [branchCoordinates[b.name].lat, branchCoordinates[b.name].lng];
     }
@@ -219,7 +228,7 @@ export default function Locations() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              <MapController activeRegion={activeRegion} />
+              <MapController activeRegion={activeRegion} selectedLoc={selectedLoc} sucursalesList={mapLocations} getCoords={getCoords} />
               {mapLocations.map((loc) => {
                 const coords = getCoords(loc);
                 return (
