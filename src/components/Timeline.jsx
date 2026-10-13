@@ -193,11 +193,18 @@ export default function Timeline() {
             Conoce los hitos que transformaron una modesta refaccionaria familiar en la red automotriz de mayor confianza en México.
           </p>
 
-          {/* Milestone Buttons / Year Pills Bar */}
+          {/* Milestone Buttons / Year Pills Bar (Horizontally scrollable on mobile) */}
           <div style={{
-            display: 'flex', justifyContent: 'center', alignItems: 'center',
-            gap: 'clamp(4px, 1vw, 8px)', flexWrap: 'wrap',
-            marginTop: 14,
+            display: 'flex',
+            justifyContent: windowWidth < 640 ? 'flex-start' : 'center',
+            alignItems: 'center',
+            gap: 6,
+            overflowX: windowWidth < 640 ? 'auto' : 'visible',
+            flexWrap: windowWidth < 640 ? 'nowrap' : 'wrap',
+            padding: windowWidth < 640 ? '4px 6px 10px' : '0',
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch',
+            marginTop: 10,
           }}>
             {timeline.map((t, idx) => {
               const isActive = idx === activeIndex;
@@ -219,6 +226,8 @@ export default function Timeline() {
                     transition: 'all 0.25s ease',
                     boxShadow: isActive ? '0 4px 14px rgba(196,30,36,0.28)' : '0 2px 4px rgba(0,0,0,0.02)',
                     transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {t.year}

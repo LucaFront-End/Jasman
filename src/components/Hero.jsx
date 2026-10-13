@@ -30,10 +30,19 @@ export default function Hero() {
 
   const parallaxOffset = Math.min(scrollY * 0.25, 180);
 
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 640 : false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <section style={{
       position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       overflow: 'hidden', background: '#0a0c14',
+      padding: isMobile ? '80px 12px 60px' : '0',
     }}>
       {/* Poster image (fallback while YouTube loads) */}
       <img
@@ -107,31 +116,34 @@ export default function Hero() {
       {/* Glassmorphism card */}
       <div style={{
         position: 'relative', zIndex: 10, width: '100%',
-        maxWidth: 780, margin: '0 auto', padding: '0 24px',
+        maxWidth: 780, margin: '0 auto', padding: isMobile ? '0 4px' : '0 24px',
+        boxSizing: 'border-box',
       }}>
         <div className="hero-glass" style={{
           background: 'rgba(255,255,255,0.04)',
           backdropFilter: 'blur(40px) saturate(1.5)',
           WebkitBackdropFilter: 'blur(40px) saturate(1.5)',
-          borderRadius: 32, padding: 'clamp(32px, 5vw, 56px)',
+          borderRadius: isMobile ? 24 : 32,
+          padding: isMobile ? '28px 18px 24px' : 'clamp(32px, 5vw, 56px)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 32px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
           textAlign: 'center',
           transform: loaded ? 'translateY(0)' : 'translateY(30px)',
           opacity: loaded ? 1 : 0,
           transition: 'transform 1s 0.3s cubic-bezier(0.16,1,0.3,1), opacity 1s 0.3s',
+          boxSizing: 'border-box',
         }}>
           {/* Tag */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '7px 18px', borderRadius: 9999,
+            padding: '6px 16px', borderRadius: 9999,
             background: 'rgba(196,30,36,0.12)', border: '1px solid rgba(196,30,36,0.2)',
-            marginBottom: 28,
+            marginBottom: isMobile ? 18 : 28,
             opacity: 0, animation: loaded ? 'heroFadeUp 0.6s 0.6s cubic-bezier(0.16,1,0.3,1) forwards' : 'none',
           }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.red, animation: 'pulseGlow 2s infinite' }} />
             <span style={{
-              fontFamily: F.heading, fontWeight: 600, fontSize: 11, letterSpacing: '0.1em',
+              fontFamily: F.heading, fontWeight: 700, fontSize: isMobile ? 10 : 11, letterSpacing: '0.1em',
               textTransform: 'uppercase', color: C.redLight,
             }}>{heroContent.tag}</span>
           </div>
@@ -139,8 +151,8 @@ export default function Hero() {
           {/* Title */}
           <h1 style={{
             fontFamily: F.heading, fontWeight: 900, color: C.white,
-            fontSize: 'clamp(2rem, 6vw, 3.8rem)', lineHeight: 1.08,
-            letterSpacing: '-0.025em', marginBottom: 20,
+            fontSize: 'clamp(1.9rem, 5.5vw, 3.8rem)', lineHeight: 1.1,
+            letterSpacing: '-0.025em', marginBottom: isMobile ? 14 : 20,
             opacity: 0, animation: loaded ? 'heroFadeUp 0.7s 0.75s cubic-bezier(0.16,1,0.3,1) forwards' : 'none',
           }}>
             {heroContent.title}<br />
@@ -154,24 +166,27 @@ export default function Hero() {
 
           {/* Subtitle */}
           <p style={{
-            fontSize: 'clamp(0.95rem, 1.8vw, 1.1rem)',
-            color: 'rgba(255,255,255,0.55)', lineHeight: 1.8,
-            maxWidth: 520, margin: '0 auto 36px', fontWeight: 300,
+            fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)',
+            color: 'rgba(255,255,255,0.7)', lineHeight: 1.65,
+            maxWidth: 520, margin: isMobile ? '0 auto 24px' : '0 auto 36px', fontWeight: 300,
             opacity: 0, animation: loaded ? 'heroFadeUp 0.7s 0.9s cubic-bezier(0.16,1,0.3,1) forwards' : 'none',
           }}>{heroContent.subtitle}</p>
 
           {/* CTAs */}
           <div style={{
-            display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap',
-            marginBottom: 40,
+            display: 'flex', gap: 12, justifyContent: 'center',
+            flexDirection: isMobile ? 'column' : 'row',
+            marginBottom: isMobile ? 26 : 40,
             opacity: 0, animation: loaded ? 'heroFadeUp 0.7s 1.05s cubic-bezier(0.16,1,0.3,1) forwards' : 'none',
           }}>
             <a href="#cta" className="glow-btn" style={{
+              width: isMobile ? '100%' : 'auto',
               padding: '16px 32px', borderRadius: 16, color: C.white,
-              fontFamily: F.heading, fontWeight: 700, fontSize: 15,
+              fontFamily: F.heading, fontWeight: 800, fontSize: 15,
               background: `linear-gradient(135deg, ${C.red}, ${C.redLight})`,
               boxShadow: '0 8px 32px rgba(196,30,36,0.4)',
-              transition: 'all 0.3s', display: 'inline-flex', alignItems: 'center', gap: 8,
+              transition: 'all 0.3s', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              textDecoration: 'none', boxSizing: 'border-box',
             }}
               onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 14px 44px rgba(196,30,36,0.5)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(196,30,36,0.4)'; }}
@@ -180,12 +195,14 @@ export default function Hero() {
               <ArrowRight size={16} />
             </a>
             <a href="#locations" style={{
+              width: isMobile ? '100%' : 'auto',
               padding: '16px 32px', borderRadius: 16, color: C.white,
-              fontFamily: F.heading, fontWeight: 600, fontSize: 15,
+              fontFamily: F.heading, fontWeight: 700, fontSize: 15,
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.15)',
               backdropFilter: 'blur(8px)', transition: 'all 0.3s',
-              display: 'inline-flex', alignItems: 'center', gap: 8,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              textDecoration: 'none', boxSizing: 'border-box',
             }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
@@ -198,8 +215,8 @@ export default function Hero() {
           {/* Stats */}
           <div style={{
             borderTop: '1px solid rgba(255,255,255,0.08)',
-            paddingTop: 28,
-            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12,
+            paddingTop: isMobile ? 20 : 28,
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8,
           }}>
             {heroContent.stats.map((s, i) => (
               <HeroStat key={i} number={s.number} suffix={s.suffix} label={s.label} delay={1.2 + i * 0.15} />

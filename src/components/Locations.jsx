@@ -96,7 +96,14 @@ const homeSubset = (() => {
 export default function Locations() {
   const [activeRegion, setActiveRegion] = useState(null);
   const [selectedLoc, setSelectedLoc] = useState(null);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 900 : false);
   const header = useReveal();
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 900);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const mapLocations = useMemo(() => {
     if (!activeRegion) return sucursales;
@@ -122,7 +129,7 @@ export default function Locations() {
 
   return (
     <section id="locations" style={{
-      padding: 'clamp(4rem, 8vw, 7rem) 0',
+      padding: isMobile ? '4.5rem 1rem 3.5rem' : 'clamp(4rem, 8vw, 7rem) 0',
       background: C.navy, position: 'relative', overflow: 'hidden',
     }}>
       <div style={{
@@ -130,20 +137,20 @@ export default function Locations() {
         borderRadius: '50%', border: '1px solid rgba(196,30,36,0.06)', pointerEvents: 'none',
       }} />
 
-      <div style={{ maxWidth: 1300, margin: '0 auto', padding: '0 1.5rem' }}>
-        <div ref={header.ref} style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto 48px', ...header.style }}>
+      <div style={{ maxWidth: 1300, margin: '0 auto', padding: isMobile ? '0' : '0 1.5rem' }}>
+        <div ref={header.ref} style={{ textAlign: 'center', maxWidth: 600, margin: isMobile ? '0 auto 28px' : '0 auto 48px', ...header.style }}>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
             background: 'rgba(196,30,36,0.12)', color: C.redLight,
             fontFamily: F.heading, fontWeight: 600, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase',
-            marginBottom: 20,
+            marginBottom: 16,
           }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.red, animation: 'pulseGlow 2s infinite' }} />
             {locationsContent.tag}
           </span>
           <h2 style={{
-            fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(2rem, 5vw, 3rem)',
-            color: C.white, lineHeight: 1.12, letterSpacing: '-0.02em',
+            fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.8rem, 4.5vw, 3rem)',
+            color: C.white, lineHeight: 1.15, letterSpacing: '-0.02em',
           }}>
             {locationsContent.title}{' '}
             <span className="animated-gradient" style={{
@@ -153,27 +160,36 @@ export default function Locations() {
           </h2>
         </div>
 
-        {/* Region filter */}
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
+        {/* Region filter (Horizontally scrollable on mobile) */}
+        <div style={{
+          display: 'flex', gap: 6,
+          justifyContent: isMobile ? 'flex-start' : 'center',
+          overflowX: isMobile ? 'auto' : 'visible',
+          flexWrap: isMobile ? 'nowrap' : 'wrap',
+          marginBottom: isMobile ? 24 : 40,
+          padding: isMobile ? '4px 4px 12px' : '0',
+          scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch',
+        }}>
           <button onClick={() => { setActiveRegion(null); setSelectedLoc(null); }} style={{
-            padding: '10px 20px', borderRadius: 12,
+            padding: isMobile ? '8px 16px' : '10px 20px', borderRadius: 12,
             border: `1px solid ${!activeRegion ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
             background: !activeRegion ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
             color: !activeRegion ? C.white : 'rgba(255,255,255,0.5)',
-            fontFamily: F.heading, fontWeight: 600, fontSize: 13, cursor: 'pointer',
-            transition: 'all 0.3s',
+            fontFamily: F.heading, fontWeight: 600, fontSize: isMobile ? 12 : 13, cursor: 'pointer',
+            transition: 'all 0.3s', flexShrink: 0, whiteSpace: 'nowrap',
           }}
             onMouseEnter={e => { if (activeRegion) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = C.white; }}}
             onMouseLeave={e => { if (activeRegion) { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}}
           >Todas ({sucursales.length})</button>
           {regions.map(r => (
             <button key={r} onClick={() => { setActiveRegion(prev => prev === r ? null : r); setSelectedLoc(null); }} style={{
-              padding: '10px 20px', borderRadius: 12,
+              padding: isMobile ? '8px 16px' : '10px 20px', borderRadius: 12,
               border: `1px solid ${activeRegion === r ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
               background: activeRegion === r ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
               color: activeRegion === r ? C.white : 'rgba(255,255,255,0.5)',
-              fontFamily: F.heading, fontWeight: 600, fontSize: 13, cursor: 'pointer',
-              transition: 'all 0.3s',
+              fontFamily: F.heading, fontWeight: 600, fontSize: isMobile ? 12 : 13, cursor: 'pointer',
+              transition: 'all 0.3s', flexShrink: 0, whiteSpace: 'nowrap',
             }}
               onMouseEnter={e => { if (activeRegion !== r) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = C.white; }}}
               onMouseLeave={e => { if (activeRegion !== r) { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}}
@@ -181,16 +197,23 @@ export default function Locations() {
           ))}
         </div>
 
-        {/* Map + Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 32, alignItems: 'start' }}>
+        {/* Map + Cards Responsive Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1.1fr 0.9fr',
+          gap: isMobile ? 24 : 32,
+          alignItems: 'start',
+        }}>
           <div style={{
-            borderRadius: 28, overflow: 'hidden', height: 560,
+            borderRadius: isMobile ? 20 : 28, overflow: 'hidden',
+            height: isMobile ? 380 : 560,
+            width: '100%',
             border: '1px solid rgba(255,255,255,0.06)',
             boxShadow: '0 24px 64px rgba(0,0,0,0.3)', position: 'relative',
           }}>
             <MapContainer
               center={[23.5, -102.5]} zoom={5}
-              style={{ width: '100%', height: '100%', minHeight: 560 }}
+              style={{ width: '100%', height: '100%', minHeight: isMobile ? 380 : 560 }}
               zoomControl={true} dragging={true} touchZoom={true}
               doubleClickZoom={true} scrollWheelZoom={false}
             >
