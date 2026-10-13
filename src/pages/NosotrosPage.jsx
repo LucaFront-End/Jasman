@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import PageHero from '../components/PageHero';
 import { C, F, useReveal, useCountUp, useStaggerReveal } from '../hooks/useAnimations';
 import Icon from '../components/Icon';
-import { MapPin, Trophy, Settings, Flag, Heart, Eye, Shield, Star, Gem, Users, ArrowRight, Target, Lightbulb, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Building2, Calendar, Wrench, Award, TrendingUp, Handshake, Quote, Play } from 'lucide-react';
+import { MapPin, Trophy, Settings, Flag, Heart, Eye, Shield, Star, Gem, Users, ArrowRight, Target, Lightbulb, CheckCircle2, ChevronDown, Building2, Calendar, Wrench, Award, TrendingUp, Handshake, Quote, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 /* ═══ DATA ═══ */
@@ -72,12 +72,12 @@ function ParallaxSection({ children, speed = 0.3, bgColor }) {
   );
 }
 
-function StatCard({ number, suffix, label, icon, delay = 0, isMobile = false }) {
+function StatCard({ number, suffix, label, icon, delay = 0 }) {
   const { ref, count } = useCountUp(number, 2000);
   const [hovered, setHovered] = useState(false);
   return (
     <div ref={ref} style={{
-      textAlign: 'center', padding: isMobile ? '20px 12px' : 32, borderRadius: 20,
+      textAlign: 'center', padding: 32, borderRadius: 24,
       background: hovered ? 'rgba(196,30,36,0.08)' : 'rgba(255,255,255,0.04)',
       border: `1px solid ${hovered ? 'rgba(196,30,36,0.2)' : 'rgba(255,255,255,0.06)'}`,
       backdropFilter: 'blur(12px)',
@@ -91,15 +91,15 @@ function StatCard({ number, suffix, label, icon, delay = 0, isMobile = false }) 
       <div style={{
         transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)',
         transform: hovered ? 'scale(1.15) rotate(-8deg)' : 'scale(1) rotate(0)',
-        marginBottom: isMobile ? 8 : 12,
+        marginBottom: 12,
       }}>{icon}</div>
       <div style={{
         fontFamily: F.heading, fontWeight: 900,
-        fontSize: isMobile ? '1.8rem' : 'clamp(2.2rem, 4.5vw, 3.2rem)', color: C.redLight,
+        fontSize: 'clamp(2.2rem, 4.5vw, 3.2rem)', color: C.redLight,
         lineHeight: 1,
       }}>{count}{suffix}</div>
       <div style={{
-        fontSize: isMobile ? 11 : 13, color: 'rgba(255,255,255,0.4)', marginTop: 6,
+        fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 8,
         fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
       }}>{label}</div>
     </div>
@@ -267,16 +267,8 @@ function FAQItem({ item, index, isOpen, onToggle }) {
 export default function NosotrosPage() {
   const [activeValor, setActiveValor] = useState(null);
   const [activeTimeline, setActiveTimeline] = useState(0);
-  const [showAllMilestones, setShowAllMilestones] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 900 : false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 900);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     const handleMouse = (e) => {
@@ -298,7 +290,7 @@ export default function NosotrosPage() {
       />
 
       {/* ═══ Misión y Visión ═══ */}
-      <section style={{ padding: isMobile ? '3.5rem 1rem' : 'clamp(4rem, 8vw, 7rem) 1.5rem', background: C.light, position: 'relative', overflow: 'hidden' }}>
+      <section style={{ padding: 'clamp(4rem, 8vw, 7rem) 1.5rem', background: C.light, position: 'relative', overflow: 'hidden' }}>
         {/* Decorative floating element */}
         <div style={{
           position: 'absolute', top: '10%', right: '5%', width: 300, height: 300,
@@ -307,7 +299,7 @@ export default function NosotrosPage() {
           transition: 'transform 0.8s ease-out', pointerEvents: 'none',
         }} />
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: isMobile ? 36 : 56 }}>
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
               background: 'rgba(196,30,36,0.08)', color: C.red,
@@ -317,7 +309,7 @@ export default function NosotrosPage() {
               NUESTRA ESENCIA
             </span>
             <h2 style={{
-              fontFamily: F.heading, fontWeight: 800, fontSize: isMobile ? '1.8rem' : 'clamp(1.8rem, 4vw, 2.8rem)',
+              fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
               color: C.navy, lineHeight: 1.15, marginTop: 14,
             }}>
               Lo que nos mueve{' '}
@@ -327,12 +319,12 @@ export default function NosotrosPage() {
               }}>cada día</span>
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))', gap: 24 }}>
             {misionVision.map((mv, i) => {
               const IconComp = mv.icon;
               return (
                 <div key={i} className="card-hover" style={{
-                  padding: isMobile ? '28px 22px' : 40, borderRadius: 28, background: C.white,
+                  padding: 40, borderRadius: 28, background: C.white,
                   border: `1px solid ${C.border}`, position: 'relative', overflow: 'hidden',
                   opacity: 0, animation: `slideUp 0.7s ${0.2 * i}s cubic-bezier(0.16,1,0.3,1) forwards`,
                 }}>
@@ -342,17 +334,17 @@ export default function NosotrosPage() {
                     background: mv.gradient, borderRadius: '28px 28px 0 0',
                   }} />
                   <div style={{
-                    width: isMobile ? 54 : 64, height: isMobile ? 54 : 64, borderRadius: 18,
+                    width: 64, height: 64, borderRadius: 20,
                     background: mv.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    marginBottom: 20, boxShadow: `0 8px 32px ${i === 0 ? 'rgba(196,30,36,0.25)' : 'rgba(26,31,54,0.25)'}`,
+                    marginBottom: 24, boxShadow: `0 8px 32px ${i === 0 ? 'rgba(196,30,36,0.25)' : 'rgba(26,31,54,0.25)'}`,
                   }}>
-                    <IconComp size={isMobile ? 24 : 28} color={C.white} />
+                    <IconComp size={28} color={C.white} />
                   </div>
                   <h3 style={{
-                    fontFamily: F.heading, fontWeight: 800, fontSize: isMobile ? 20 : 22, color: C.navy, marginBottom: 12,
+                    fontFamily: F.heading, fontWeight: 800, fontSize: 22, color: C.navy, marginBottom: 14,
                   }}>{mv.title}</h3>
                   <p style={{
-                    fontSize: isMobile ? 14 : 15, color: C.gray, lineHeight: 1.8,
+                    fontSize: 15, color: C.gray, lineHeight: 1.85,
                   }}>{mv.text}</p>
                 </div>
               );
@@ -362,390 +354,108 @@ export default function NosotrosPage() {
       </section>
 
       {/* ═══ Historia — Interactive Timeline ═══ */}
-      <section style={{ padding: isMobile ? '3.5rem 1rem' : 'clamp(4rem, 8vw, 7rem) 1.5rem', background: C.white }}>
+      <section style={{ padding: 'clamp(4rem, 8vw, 7rem) 1.5rem', background: C.white }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          {isMobile ? (
-            /* ═══ Mobile Redesign (App-style story stepper + showcase card) ═══ */
-            <div>
-              {/* Header */}
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
-                  background: 'rgba(196,30,36,0.08)', color: C.red,
-                  fontFamily: F.heading, fontWeight: 600, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14,
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.red }} />
-                  NUESTRA HISTORIA
-                </span>
-                <h2 style={{
-                  fontFamily: F.heading, fontWeight: 800, fontSize: '1.85rem',
-                  color: C.navy, lineHeight: 1.2, marginBottom: 12,
-                }}>
-                  De una refaccionaria a <span style={{ color: C.red }}>líder nacional</span>
-                </h2>
-                <p style={{ fontSize: 14, color: C.gray, lineHeight: 1.7, margin: '0 auto', maxWidth: 440 }}>
-                  Descubre los hitos más trascendentes en nuestros más de 60 años de evolución en México.
-                </p>
-              </div>
-
-              {/* Horizontal Year Scrubber (Smooth touch pills) */}
-              <div style={{
-                display: 'flex',
-                gap: 8,
-                overflowX: 'auto',
-                padding: '4px 4px 14px',
-                scrollbarWidth: 'none',
-                WebkitOverflowScrolling: 'touch',
-                justifyContent: 'flex-start',
-                marginBottom: 16,
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 64, alignItems: 'start' }}>
+            {/* Left: header + image */}
+            <div style={{ position: 'sticky', top: 120 }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
+                background: 'rgba(196,30,36,0.08)', color: C.red,
+                fontFamily: F.heading, fontWeight: 600, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 20,
               }}>
-                {historia.map((h, i) => {
-                  const isCurrent = activeTimeline === i;
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setActiveTimeline(i)}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: 12,
-                        border: `1.5px solid ${isCurrent ? h.color : 'rgba(0,0,0,0.08)'}`,
-                        background: isCurrent ? `${h.color}15` : C.white,
-                        color: isCurrent ? (h.color === '#f59e0b' ? '#d97706' : h.color) : C.navy,
-                        fontFamily: F.heading,
-                        fontWeight: isCurrent ? 800 : 600,
-                        fontSize: 13,
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        boxShadow: isCurrent ? `0 4px 12px ${h.color}25` : '0 2px 4px rgba(0,0,0,0.04)',
-                        transition: 'all 0.25s',
-                      }}
-                    >
-                      <span style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: isCurrent ? h.color : 'transparent',
-                      }} />
-                      {h.year}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Active Milestone Showcase Card */}
-              <div style={{
-                borderRadius: 24,
-                overflow: 'hidden',
-                background: C.white,
-                border: `1.5px solid ${historia[activeTimeline].color}30`,
-                boxShadow: `0 16px 40px rgba(0,0,0,0.08), 0 2px 10px ${historia[activeTimeline].color}15`,
-                marginBottom: 20,
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.red }} />
+                NUESTRA HISTORIA
+              </span>
+              <h2 style={{
+                fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+                color: C.navy, lineHeight: 1.2, marginBottom: 20,
               }}>
-                {/* Top Banner with Progress & Year */}
+                De una refaccionaria a{' '}
+                <span style={{ color: C.red }}>líder nacional</span>
+              </h2>
+              <p style={{ fontSize: 16, color: C.gray, lineHeight: 1.85, marginBottom: 32 }}>
+                Somos una empresa orgullosamente 100% Mexicana que nació en 1960 mediante la venta de refacciones. Lo que comenzó como un modesto negocio familiar se convertiría en la red más grande del país.
+              </p>
+              {/* Active item image card */}
+              <div style={{
+                borderRadius: 24, overflow: 'hidden', position: 'relative',
+                border: `1px solid ${C.border}`,
+                boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
+              }}>
                 <div style={{
-                  padding: '12px 18px',
-                  background: `linear-gradient(90deg, ${historia[activeTimeline].color}15, transparent)`,
-                  borderBottom: `1px solid ${historia[activeTimeline].color}20`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                  height: 280, position: 'relative', overflow: 'hidden',
                 }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontFamily: F.heading,
-                    fontWeight: 700,
-                    fontSize: 12,
-                    color: historia[activeTimeline].color === '#f59e0b' ? '#d97706' : historia[activeTimeline].color,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                  }}>
-                    <span>Hito {activeTimeline + 1} de {historia.length}</span>
-                  </div>
-                  <span style={{
-                    padding: '4px 12px',
-                    borderRadius: 8,
-                    background: historia[activeTimeline].color,
-                    color: C.white,
-                    fontFamily: F.heading,
-                    fontWeight: 800,
-                    fontSize: 13,
-                  }}>
-                    {historia[activeTimeline].year}
-                  </span>
-                </div>
-
-                {/* Milestone Image */}
-                <div style={{ height: 210, position: 'relative', overflow: 'hidden' }}>
+                  {/* Actual image */}
                   <img
                     key={activeTimeline}
                     src={historia[activeTimeline].image}
                     alt={historia[activeTimeline].title}
                     style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      animation: 'fadeIn 0.35s ease-out',
+                      width: '100%', height: '100%', objectFit: 'cover',
+                      animation: 'fadeIn 0.5s ease-out',
                     }}
                   />
+                  {/* Color overlay */}
                   <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: `linear-gradient(180deg, transparent 40%, rgba(26,31,54,0.7) 100%)`,
+                    position: 'absolute', inset: 0,
+                    background: `linear-gradient(135deg, ${historia[activeTimeline].color}30, transparent 60%)`,
+                    transition: 'background 0.6s',
                   }} />
-                  {/* Floating Icon */}
+                  {/* Year badge */}
                   <div style={{
-                    position: 'absolute',
-                    bottom: 14,
-                    right: 14,
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
-                    background: 'rgba(255,255,255,0.95)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    position: 'absolute', top: 16, left: 16,
+                    padding: '6px 16px', borderRadius: 12,
+                    background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)',
+                    fontFamily: F.heading, fontWeight: 800, fontSize: 18, color: C.white,
+                    letterSpacing: '0.02em',
+                  }}>{historia[activeTimeline].year}</div>
+                  {/* Floating icon */}
+                  <div style={{
+                    position: 'absolute', bottom: 16, right: 16,
+                    width: 48, height: 48, borderRadius: 16,
+                    background: 'rgba(255,255,255,0.95)', boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    animation: 'float 3s ease-in-out infinite',
                   }}>
-                    {(() => {
-                      const IconC = historia[activeTimeline].icon;
-                      return <IconC size={22} color={historia[activeTimeline].color} />;
-                    })()}
+                    {(() => { const I = historia[activeTimeline].icon; return <I size={22} color={historia[activeTimeline].color} />; })()}
                   </div>
                 </div>
-
-                {/* Content */}
-                <div style={{ padding: '20px 18px 22px' }}>
-                  <h3 style={{
-                    fontFamily: F.heading,
-                    fontWeight: 800,
-                    fontSize: 19,
-                    color: C.navy,
-                    marginBottom: 8,
-                    lineHeight: 1.25,
-                  }}>
+                <div style={{ padding: '20px 24px', background: C.white }}>
+                  <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 16, color: C.navy, marginBottom: 4 }}>
                     {historia[activeTimeline].title}
-                  </h3>
-                  <p style={{
-                    fontSize: 14,
-                    color: C.charcoal,
-                    lineHeight: 1.7,
-                    margin: '0 0 18px',
-                  }}>
-                    {historia[activeTimeline].text}
-                  </p>
-
-                  {/* Navigation buttons: Prev / Next */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 10,
-                    paddingTop: 14,
-                    borderTop: '1px solid rgba(0,0,0,0.06)',
-                  }}>
-                    <button
-                      type="button"
-                      disabled={activeTimeline === 0}
-                      onClick={() => setActiveTimeline(prev => Math.max(0, prev - 1))}
-                      style={{
-                        padding: '12px 14px',
-                        borderRadius: 12,
-                        border: '1px solid #E2E8F0',
-                        background: activeTimeline === 0 ? '#F8FAFC' : C.white,
-                        color: activeTimeline === 0 ? '#94A3B8' : C.navy,
-                        fontFamily: F.heading,
-                        fontWeight: 700,
-                        fontSize: 13,
-                        cursor: activeTimeline === 0 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      <ChevronLeft size={16} /> Anterior
-                    </button>
-                    <button
-                      type="button"
-                      disabled={activeTimeline === historia.length - 1}
-                      onClick={() => setActiveTimeline(prev => Math.min(historia.length - 1, prev + 1))}
-                      style={{
-                        padding: '12px 14px',
-                        borderRadius: 12,
-                        border: 'none',
-                        background: activeTimeline === historia.length - 1 ? '#E2E8F0' : `linear-gradient(135deg, ${C.red}, ${C.redLight})`,
-                        color: activeTimeline === historia.length - 1 ? '#94A3B8' : C.white,
-                        fontFamily: F.heading,
-                        fontWeight: 700,
-                        fontSize: 13,
-                        cursor: activeTimeline === historia.length - 1 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        boxShadow: activeTimeline === historia.length - 1 ? 'none' : '0 4px 14px rgba(196,30,36,0.25)',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      Siguiente <ChevronRight size={16} />
-                    </button>
+                  </div>
+                  <div style={{ fontSize: 13, color: C.gray }}>
+                    {historia[activeTimeline].year === 'Hoy' ? 'Presente' : `Año ${historia[activeTimeline].year}`} · Hito #{activeTimeline + 1} de {historia.length}
                   </div>
                 </div>
               </div>
-
-              {/* Toggle button to view full vertical history */}
-              <div style={{ textAlign: 'center', marginTop: 14 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowAllMilestones(prev => !prev)}
-                  style={{
-                    padding: '12px 20px',
-                    borderRadius: 12,
-                    background: 'rgba(196,30,36,0.06)',
-                    border: '1px solid rgba(196,30,36,0.15)',
-                    color: C.red,
-                    fontFamily: F.heading,
-                    fontWeight: 700,
-                    fontSize: 13,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    transition: 'all 0.25s',
-                  }}
-                >
-                  <Calendar size={15} />
-                  {showAllMilestones ? 'Ocultar cronología completa' : 'Ver todos los 8 hitos en lista'}
-                  <ChevronDown size={15} style={{
-                    transform: showAllMilestones ? 'rotate(180deg)' : 'rotate(0)',
-                    transition: 'transform 0.3s',
-                  }} />
-                </button>
-
-                {showAllMilestones && (
-                  <div style={{ marginTop: 20, textAlign: 'left' }}>
-                    {historia.map((h, i) => (
-                      <TimelineItem
-                        key={i}
-                        item={h}
-                        index={i}
-                        isActive={activeTimeline === i}
-                        onClick={() => setActiveTimeline(i)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
-          ) : (
-            /* ═══ Desktop Layout (Unchanged) ═══ */
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 64, alignItems: 'start' }}>
-              {/* Left: header + image */}
-              <div style={{ position: 'sticky', top: 120 }}>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
-                  background: 'rgba(196,30,36,0.08)', color: C.red,
-                  fontFamily: F.heading, fontWeight: 600, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 20,
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.red }} />
-                  NUESTRA HISTORIA
-                </span>
-                <h2 style={{
-                  fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-                  color: C.navy, lineHeight: 1.2, marginBottom: 20,
-                }}>
-                  De una refaccionaria a{' '}
-                  <span style={{ color: C.red }}>líder nacional</span>
-                </h2>
-                <p style={{ fontSize: 16, color: C.gray, lineHeight: 1.85, marginBottom: 32 }}>
-                  Somos una empresa orgullosamente 100% Mexicana que nació en 1960 mediante la venta de refacciones. Lo que comenzó como un modesto negocio familiar se convertiría en la red más grande del país.
-                </p>
-                {/* Active item image card */}
-                <div style={{
-                  borderRadius: 24, overflow: 'hidden', position: 'relative',
-                  border: `1px solid ${C.border}`,
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
-                }}>
-                  <div style={{
-                    height: 280, position: 'relative', overflow: 'hidden',
-                  }}>
-                    {/* Actual image */}
-                    <img
-                      key={activeTimeline}
-                      src={historia[activeTimeline].image}
-                      alt={historia[activeTimeline].title}
-                      style={{
-                        width: '100%', height: '100%', objectFit: 'cover',
-                        animation: 'fadeIn 0.5s ease-out',
-                      }}
-                    />
-                    {/* Color overlay */}
-                    <div style={{
-                      position: 'absolute', inset: 0,
-                      background: `linear-gradient(135deg, ${historia[activeTimeline].color}30, transparent 60%)`,
-                      transition: 'background 0.6s',
-                    }} />
-                    {/* Year badge */}
-                    <div style={{
-                      position: 'absolute', top: 16, left: 16,
-                      padding: '6px 16px', borderRadius: 12,
-                      background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)',
-                      fontFamily: F.heading, fontWeight: 800, fontSize: 18, color: C.white,
-                      letterSpacing: '0.02em',
-                    }}>{historia[activeTimeline].year}</div>
-                    {/* Floating icon */}
-                    <div style={{
-                      position: 'absolute', bottom: 16, right: 16,
-                      width: 48, height: 48, borderRadius: 16,
-                      background: 'rgba(255,255,255,0.95)', boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      animation: 'float 3s ease-in-out infinite',
-                    }}>
-                      {(() => { const I = historia[activeTimeline].icon; return <I size={22} color={historia[activeTimeline].color} />; })()}
-                    </div>
-                  </div>
-                  <div style={{ padding: '20px 24px', background: C.white }}>
-                    <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 16, color: C.navy, marginBottom: 4 }}>
-                      {historia[activeTimeline].title}
-                    </div>
-                    <div style={{ fontSize: 13, color: C.gray }}>
-                      {historia[activeTimeline].year === 'Hoy' ? 'Presente' : `Año ${historia[activeTimeline].year}`} · Hito #{activeTimeline + 1} de {historia.length}
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Right: Interactive timeline */}
-              <div>
-                {historia.map((h, i) => (
-                  <TimelineItem
-                    key={i}
-                    item={h}
-                    index={i}
-                    isActive={activeTimeline === i}
-                    onClick={() => setActiveTimeline(i)}
-                  />
-                ))}
-              </div>
+            {/* Right: Interactive timeline */}
+            <div>
+              {historia.map((h, i) => (
+                <TimelineItem
+                  key={i}
+                  item={h}
+                  index={i}
+                  isActive={activeTimeline === i}
+                  onClick={() => setActiveTimeline(i)}
+                />
+              ))}
             </div>
-          )}
+          </div>
         </div>
       </section>
 
       {/* ═══ Nuestro Compromiso ═══ */}
       <section style={{
-        padding: isMobile ? '3.5rem 1rem' : 'clamp(4rem, 8vw, 7rem) 1.5rem',
+        padding: 'clamp(4rem, 8vw, 7rem) 1.5rem',
         background: `linear-gradient(135deg, ${C.light} 0%, rgba(196,30,36,0.03) 50%, ${C.light} 100%)`,
         position: 'relative',
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: isMobile ? 36 : 56 }}>
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
               background: 'rgba(196,30,36,0.08)', color: C.red,
@@ -755,7 +465,7 @@ export default function NosotrosPage() {
               NUESTRO COMPROMISO
             </span>
             <h2 style={{
-              fontFamily: F.heading, fontWeight: 800, fontSize: isMobile ? '1.8rem' : 'clamp(1.8rem, 4vw, 2.8rem)',
+              fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
               color: C.navy, lineHeight: 1.15, marginTop: 14,
             }}>
               ¿Por qué elegir{' '}
@@ -764,17 +474,17 @@ export default function NosotrosPage() {
                 backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               }}>Jasman?</span>
             </h2>
-            <p style={{ fontSize: isMobile ? 14 : 16, color: C.gray, marginTop: 14, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.75 }}>
+            <p style={{ fontSize: 16, color: C.gray, marginTop: 14, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.75 }}>
               Más allá de nuestros servicios, lo que nos distingue es nuestra obsesión por la excelencia y la seguridad de tu familia.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: isMobile ? 14 : 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
             {compromisos.map((c, i) => {
               const IconComp = c.icon;
               return (
                 <div key={i} className="card-hover" style={{
-                  padding: isMobile ? '24px 20px' : 32, borderRadius: 24, background: C.white,
+                  padding: 32, borderRadius: 24, background: C.white,
                   border: `1px solid ${C.border}`, position: 'relative', overflow: 'hidden',
                   opacity: 0, animation: `slideUp 0.6s ${0.12 * i}s cubic-bezier(0.16,1,0.3,1) forwards`,
                 }}>
@@ -803,7 +513,7 @@ export default function NosotrosPage() {
       </section>
 
       {/* ═══ Valores — Interactive Cards ═══ */}
-      <section style={{ padding: isMobile ? '3.5rem 1rem' : 'clamp(4rem, 8vw, 7rem) 1.5rem', background: C.navy, position: 'relative', overflow: 'hidden' }}>
+      <section style={{ padding: 'clamp(4rem, 8vw, 7rem) 1.5rem', background: C.navy, position: 'relative', overflow: 'hidden' }}>
         {/* Decorative elements */}
         <div style={{
           position: 'absolute', top: -200, right: -200, width: 500, height: 500,
@@ -817,7 +527,7 @@ export default function NosotrosPage() {
         }} />
 
         <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative' }}>
-          <div style={{ textAlign: 'center', marginBottom: isMobile ? 36 : 56 }}>
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
               background: 'rgba(196,30,36,0.12)', color: C.redLight,
@@ -826,19 +536,19 @@ export default function NosotrosPage() {
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.red, animation: 'pulseGlow 2s infinite' }} />
               NUESTROS VALORES
             </span>
-            <h2 style={{ fontFamily: F.heading, fontWeight: 800, fontSize: isMobile ? '2rem' : 'clamp(2rem, 5vw, 3rem)', color: C.white, lineHeight: 1.12 }}>
+            <h2 style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(2rem, 5vw, 3rem)', color: C.white, lineHeight: 1.12 }}>
               Lo que nos{' '}
               <span className="animated-gradient" style={{
                 background: `linear-gradient(135deg, ${C.redLight}, ${C.amber}, ${C.redLight})`,
                 backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               }}>define</span>
             </h2>
-            <p style={{ fontSize: isMobile ? 14 : 16, color: 'rgba(255,255,255,0.35)', marginTop: 14, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.75 }}>
+            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.35)', marginTop: 14, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.75 }}>
               Cada servicio que realizamos está guiado por estos seis principios fundamentales.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))', gap: isMobile ? 14 : 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
             {valores.map((v, i) => (
               <ValorCard
                 key={i}
@@ -853,22 +563,22 @@ export default function NosotrosPage() {
       </section>
 
       {/* ═══ Stats ═══ */}
-      <section style={{ padding: isMobile ? '2.5rem 1rem' : 'clamp(3rem, 6vw, 5rem) 1.5rem', background: C.navy, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+      <section style={{ padding: 'clamp(3rem, 6vw, 5rem) 1.5rem', background: C.navy, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: isMobile ? 32 : 48 }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <h2 style={{
-              fontFamily: F.heading, fontWeight: 800, fontSize: isMobile ? '1.6rem' : 'clamp(1.5rem, 3.5vw, 2.2rem)',
+              fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.5rem, 3.5vw, 2.2rem)',
               color: C.white, lineHeight: 1.2,
             }}>
               Cifras que hablan por{' '}
               <span style={{ color: C.redLight }}>nosotros</span>
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 12 : 20 }}>
-            <StatCard number={80} suffix="+" label="Sucursales" delay={0} icon={<MapPin size={26} color={C.redLight} />} isMobile={isMobile} />
-            <StatCard number={60} suffix="+" label="Años de Experiencia" delay={0.1} icon={<Calendar size={26} color={C.redLight} />} isMobile={isMobile} />
-            <StatCard number={1} suffix="M+" label="Servicios Realizados" delay={0.2} icon={<Settings size={26} color={C.redLight} />} isMobile={isMobile} />
-            <StatCard number={500} suffix="+" label="Técnicos Certificados" delay={0.3} icon={<Award size={26} color={C.redLight} />} isMobile={isMobile} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+            <StatCard number={80} suffix="+" label="Sucursales" delay={0} icon={<MapPin size={30} color={C.redLight} />} />
+            <StatCard number={60} suffix="+" label="Años de Experiencia" delay={0.1} icon={<Calendar size={30} color={C.redLight} />} />
+            <StatCard number={1} suffix="M+" label="Servicios Realizados" delay={0.2} icon={<Settings size={30} color={C.redLight} />} />
+            <StatCard number={500} suffix="+" label="Técnicos Certificados" delay={0.3} icon={<Award size={30} color={C.redLight} />} />
           </div>
         </div>
       </section>

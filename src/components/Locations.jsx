@@ -7,7 +7,7 @@ import { locationsContent } from '../data/content';
 import { sucursales, regions } from '../data/sucursalesData';
 import { branchCoordinates } from '../data/postalCodesData';
 import { C, F, useReveal } from '../hooks/useAnimations';
-import { Phone, MapPin, Clock, Navigation, MessageCircle, ArrowRight, ChevronDown } from 'lucide-react';
+import { Phone, MapPin, Clock, Navigation, MessageCircle, ArrowRight } from 'lucide-react';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -160,140 +160,42 @@ export default function Locations() {
           </h2>
         </div>
 
-        {/* Region filter: Mobile dropdown + quick shortcuts vs Desktop pills */}
-        {isMobile ? (
-          <div style={{ marginBottom: 20 }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 8,
-            }}>
-              <label style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: 'rgba(255,255,255,0.6)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}>
-                <MapPin size={13} color={C.redLight} /> Filtrar por Región o Estado:
-              </label>
-              <span style={{ fontSize: 11, color: C.redLight, fontWeight: 700 }}>
-                {activeRegion ? `${regionCounts[activeRegion]} sucursales` : `${sucursales.length} sucursales`}
-              </span>
-            </div>
-
-            {/* Native styled dropdown picker */}
-            <div style={{ position: 'relative', marginBottom: 10 }}>
-              <select
-                value={activeRegion || ''}
-                onChange={(e) => {
-                  setActiveRegion(e.target.value || null);
-                  setSelectedLoc(null);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '13px 44px 13px 16px',
-                  borderRadius: 14,
-                  background: 'rgba(26,31,54,0.95)',
-                  border: '1.5px solid rgba(196,30,36,0.6)',
-                  color: '#fff',
-                  fontFamily: F.heading,
-                  fontWeight: 700,
-                  fontSize: 14.5,
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  outline: 'none',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="" style={{ background: C.navy, color: '#fff' }}>
-                  📍 Todas las Regiones de México ({sucursales.length} sucursales)
-                </option>
-                {regions.map(r => (
-                  <option key={r} value={r} style={{ background: C.navy, color: '#fff' }}>
-                    {r} ({regionCounts[r]} sucursales)
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={18} color={C.redLight} style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-            </div>
-
-            {/* Quick-tap shortcut pills for top regions */}
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 4 }}>
-              <button
-                type="button"
-                onClick={() => { setActiveRegion(null); setSelectedLoc(null); }}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: 10,
-                  border: `1px solid ${!activeRegion ? C.red : 'rgba(255,255,255,0.1)'}`,
-                  background: !activeRegion ? 'rgba(196,30,36,0.2)' : 'rgba(255,255,255,0.04)',
-                  color: !activeRegion ? '#fff' : 'rgba(255,255,255,0.6)',
-                  fontSize: 11.5,
-                  fontWeight: 700,
-                  fontFamily: F.heading,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Todas ({sucursales.length})
-              </button>
-              {['CDMX', 'Estado de México', 'Jalisco', 'Guanajuato'].map(r => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => { setActiveRegion(prev => prev === r ? null : r); setSelectedLoc(null); }}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 10,
-                    border: `1px solid ${activeRegion === r ? C.red : 'rgba(255,255,255,0.1)'}`,
-                    background: activeRegion === r ? 'rgba(196,30,36,0.2)' : 'rgba(255,255,255,0.04)',
-                    color: activeRegion === r ? '#fff' : 'rgba(255,255,255,0.6)',
-                    fontSize: 11.5,
-                    fontWeight: 700,
-                    fontFamily: F.heading,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {r} ({regionCounts[r] || 0})
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          /* Desktop pills unchanged */
-          <div style={{
-            display: 'flex', gap: 6,
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            marginBottom: 40,
-          }}>
-            <button onClick={() => { setActiveRegion(null); setSelectedLoc(null); }} style={{
-              padding: '10px 20px', borderRadius: 12,
-              border: `1px solid ${!activeRegion ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
-              background: !activeRegion ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
-              color: !activeRegion ? C.white : 'rgba(255,255,255,0.5)',
-              fontFamily: F.heading, fontWeight: 600, fontSize: 13, cursor: 'pointer',
+        {/* Region filter (Horizontally scrollable on mobile) */}
+        <div style={{
+          display: 'flex', gap: 6,
+          justifyContent: isMobile ? 'flex-start' : 'center',
+          overflowX: isMobile ? 'auto' : 'visible',
+          flexWrap: isMobile ? 'nowrap' : 'wrap',
+          marginBottom: isMobile ? 24 : 40,
+          padding: isMobile ? '4px 4px 12px' : '0',
+          scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch',
+        }}>
+          <button onClick={() => { setActiveRegion(null); setSelectedLoc(null); }} style={{
+            padding: isMobile ? '8px 16px' : '10px 20px', borderRadius: 12,
+            border: `1px solid ${!activeRegion ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
+            background: !activeRegion ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
+            color: !activeRegion ? C.white : 'rgba(255,255,255,0.5)',
+            fontFamily: F.heading, fontWeight: 600, fontSize: isMobile ? 12 : 13, cursor: 'pointer',
+            transition: 'all 0.3s', flexShrink: 0, whiteSpace: 'nowrap',
+          }}
+            onMouseEnter={e => { if (activeRegion) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = C.white; }}}
+            onMouseLeave={e => { if (activeRegion) { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}}
+          >Todas ({sucursales.length})</button>
+          {regions.map(r => (
+            <button key={r} onClick={() => { setActiveRegion(prev => prev === r ? null : r); setSelectedLoc(null); }} style={{
+              padding: isMobile ? '8px 16px' : '10px 20px', borderRadius: 12,
+              border: `1px solid ${activeRegion === r ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
+              background: activeRegion === r ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
+              color: activeRegion === r ? C.white : 'rgba(255,255,255,0.5)',
+              fontFamily: F.heading, fontWeight: 600, fontSize: isMobile ? 12 : 13, cursor: 'pointer',
               transition: 'all 0.3s', flexShrink: 0, whiteSpace: 'nowrap',
-            }}>Todas ({sucursales.length})</button>
-            {regions.map(r => (
-              <button key={r} onClick={() => { setActiveRegion(prev => prev === r ? null : r); setSelectedLoc(null); }} style={{
-                padding: '10px 20px', borderRadius: 12,
-                border: `1px solid ${activeRegion === r ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
-                background: activeRegion === r ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
-                color: activeRegion === r ? C.white : 'rgba(255,255,255,0.5)',
-                fontFamily: F.heading, fontWeight: 600, fontSize: 13, cursor: 'pointer',
-                transition: 'all 0.3s', flexShrink: 0, whiteSpace: 'nowrap',
-              }}>{r} ({regionCounts[r]})</button>
-            ))}
-          </div>
-        )}
+            }}
+              onMouseEnter={e => { if (activeRegion !== r) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = C.white; }}}
+              onMouseLeave={e => { if (activeRegion !== r) { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}}
+            >{r} ({regionCounts[r]})</button>
+          ))}
+        </div>
 
         {/* Map + Cards Responsive Grid */}
         <div style={{

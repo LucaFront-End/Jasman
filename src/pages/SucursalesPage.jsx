@@ -7,7 +7,7 @@ import PageHero from '../components/PageHero';
 import { C, F, useCountUp } from '../hooks/useAnimations';
 import { sucursales, regions, states } from '../data/sucursalesData';
 import { branchCoordinates } from '../data/postalCodesData';
-import { MapPin, Phone, MessageCircle, Navigation, Search, ChevronRight, ChevronDown, Building2, Users, Wrench, Shield } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, Navigation, Search, ChevronRight, Building2, Users, Wrench, Shield } from 'lucide-react';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -95,13 +95,6 @@ export default function SucursalesPage() {
   const [activeRegion, setActiveRegion] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLoc, setSelectedLoc] = useState(null);
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 900 : false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 900);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const filtered = useMemo(() => {
     let list = sucursales;
@@ -143,8 +136,8 @@ export default function SucursalesPage() {
       />
 
       {/* Stats strip */}
-      <section style={{ padding: isMobile ? '20px 1rem' : '28px 1.5rem', background: C.navy, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 16 }}>
+      <section style={{ padding: '28px 1.5rem', background: C.navy, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           <StatBadge number={sucursales.length} suffix="" label="Sucursales en México" icon={<Building2 size={20} color={C.redLight} />} />
           <StatBadge number={regions.length} suffix="" label="Regiones Cubiertas" icon={<MapPin size={20} color={C.redLight} />} />
           <StatBadge number={30} suffix="+" label="Servicios Disponibles" icon={<Wrench size={20} color={C.redLight} />} />
@@ -153,16 +146,16 @@ export default function SucursalesPage() {
       </section>
 
       {/* Interactive map section */}
-      <section style={{ padding: isMobile ? '1.5rem 1rem 3rem' : 'clamp(2rem, 4vw, 3rem) 1.5rem', background: C.navy }}>
+      <section style={{ padding: 'clamp(2rem, 4vw, 3rem) 1.5rem', background: C.navy }}>
         <div style={{ maxWidth: 1400, margin: '0 auto' }}>
           {/* Search + Region filters */}
           <div style={{
-            display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 12, marginBottom: isMobile ? 20 : 28, alignItems: isMobile ? 'stretch' : 'center',
+            display: 'flex', gap: 12, marginBottom: 28, flexWrap: 'wrap', alignItems: 'center',
           }}>
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
               borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-              minWidth: isMobile ? 'auto' : 260, flex: isMobile ? 'none' : 1,
+              minWidth: 260,
             }}>
               <Search size={16} color="rgba(255,255,255,0.3)" />
               <input type="text" placeholder="Buscar sucursal, ciudad o estado..."
@@ -170,69 +163,31 @@ export default function SucursalesPage() {
                 style={{ border: 'none', background: 'none', outline: 'none', flex: 1, fontSize: 14, color: C.white }}
               />
             </div>
-
-            {/* Region Selector */}
-            {isMobile ? (
-              <div style={{ position: 'relative' }}>
-                <select
-                  value={activeRegion || ''}
-                  onChange={(e) => {
-                    setActiveRegion(e.target.value || null);
-                    setSelectedLoc(null);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '12px 40px 12px 14px',
-                    borderRadius: 12,
-                    background: 'rgba(26,31,54,0.95)',
-                    border: '1.5px solid rgba(196,30,36,0.5)',
-                    color: '#fff',
-                    fontFamily: F.heading,
-                    fontWeight: 700,
-                    fontSize: 14,
-                    appearance: 'none',
-                    WebkitAppearance: 'none',
-                    outline: 'none',
-                  }}
-                >
-                  <option value="" style={{ background: C.navy, color: '#fff' }}>
-                    📍 Todas las Regiones ({sucursales.length})
-                  </option>
-                  {regions.map(r => (
-                    <option key={r} value={r} style={{ background: C.navy, color: '#fff' }}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={18} color={C.redLight} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                <button onClick={() => { setActiveRegion(null); setSelectedLoc(null); }} style={{
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <button onClick={() => { setActiveRegion(null); setSelectedLoc(null); }} style={{
+                padding: '9px 18px', borderRadius: 12,
+                border: `1px solid ${!activeRegion ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                background: !activeRegion ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
+                color: !activeRegion ? C.white : 'rgba(255,255,255,0.5)',
+                fontFamily: F.heading, fontWeight: 600, fontSize: 12, cursor: 'pointer',
+              }}>Todas</button>
+              {regions.map(r => (
+                <button key={r} onClick={() => { setActiveRegion(prev => prev === r ? null : r); setSelectedLoc(null); }} style={{
                   padding: '9px 18px', borderRadius: 12,
-                  border: `1px solid ${!activeRegion ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
-                  background: !activeRegion ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
-                  color: !activeRegion ? C.white : 'rgba(255,255,255,0.5)',
+                  border: `1px solid ${activeRegion === r ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                  background: activeRegion === r ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
+                  color: activeRegion === r ? C.white : 'rgba(255,255,255,0.5)',
                   fontFamily: F.heading, fontWeight: 600, fontSize: 12, cursor: 'pointer',
-                }}>Todas</button>
-                {regions.map(r => (
-                  <button key={r} onClick={() => { setActiveRegion(prev => prev === r ? null : r); setSelectedLoc(null); }} style={{
-                    padding: '9px 18px', borderRadius: 12,
-                    border: `1px solid ${activeRegion === r ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
-                    background: activeRegion === r ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
-                    color: activeRegion === r ? C.white : 'rgba(255,255,255,0.5)',
-                    fontFamily: F.heading, fontWeight: 600, fontSize: 12, cursor: 'pointer',
-                  }}>{r}</button>
-                ))}
-              </div>
-            )}
+                }}>{r}</button>
+              ))}
+            </div>
           </div>
 
           {/* Full-width map + sidebar */}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 420px', gap: isMobile ? 20 : 24, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 24, alignItems: 'start' }}>
             {/* Map */}
             <div style={{
-              borderRadius: isMobile ? 20 : 28, overflow: 'hidden', height: isMobile ? 380 : 640,
+              borderRadius: 28, overflow: 'hidden', height: 640,
               border: '1px solid rgba(255,255,255,0.06)',
               boxShadow: '0 24px 64px rgba(0,0,0,0.3)', position: 'relative',
             }}>

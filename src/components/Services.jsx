@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { servicesContent } from '../data/content';
 import { C, F } from '../hooks/useAnimations';
 import Icon from './Icon';
-import { Star, Clock, ShieldCheck, Check, ChevronLeft, ChevronRight, ChevronDown, ArrowRight } from 'lucide-react';
+import { Star, Clock, ShieldCheck, Check, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
 const serviceDetails = {
   'Llantas': { time: '45 min', price: 'Desde $899', includes: ['Instalación profesional', 'Balanceo dinámico', 'Válvulas nuevas', 'Revisión de presión'], warranty: '1 año', rating: 4.8 },
@@ -97,94 +97,6 @@ export default function Services() {
             {servicesContent.tag}
           </span>
         </div>
-
-        {/* Top Mobile Service Selector - Eliminates awkward cut-off tabs */}
-        {isMobile && (
-          <div style={{ marginBottom: 20 }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 8,
-            }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Explora nuestros servicios ({active + 1}/{services.length})
-              </span>
-              {/* Quick Prev / Next Arrows */}
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button
-                  type="button"
-                  onClick={prev}
-                  aria-label="Servicio anterior"
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 10,
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.14)',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={next}
-                  aria-label="Siguiente servicio"
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 10,
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.14)',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-
-            {/* Native styled dropdown picker */}
-            <div style={{ position: 'relative' }}>
-              <select
-                value={active}
-                onChange={e => goTo(Number(e.target.value))}
-                style={{
-                  width: '100%',
-                  padding: '13px 44px 13px 16px',
-                  borderRadius: 14,
-                  background: 'rgba(26,31,54,0.95)',
-                  border: '1.5px solid rgba(196,30,36,0.6)',
-                  color: '#fff',
-                  fontFamily: F.heading,
-                  fontWeight: 700,
-                  fontSize: 14.5,
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  outline: 'none',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-                  cursor: 'pointer',
-                }}
-              >
-                {services.map((srv, i) => (
-                  <option key={i} value={i} style={{ background: C.navy, color: '#fff', padding: '10px' }}>
-                    0{i + 1}. {srv.title}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={18} color={C.redLight} style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-            </div>
-          </div>
-        )}
 
         {/* Main responsive grid: 2 columns on desktop, 1 column on mobile */}
         <div className="services-grid">
@@ -377,117 +289,76 @@ export default function Services() {
           </div>
         </div>
 
-        {/* Navigation Controls: Desktop pills vs Mobile indicators */}
-        {isMobile ? (
-          <div style={{
-            marginTop: 24,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 14,
-          }}>
-            {/* Dots Indicator */}
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {services.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => goTo(i)}
-                  aria-label={`Ir al servicio ${i + 1}`}
-                  style={{
-                    width: active === i ? 26 : 8,
-                    height: 8,
-                    borderRadius: 4,
-                    background: active === i ? C.redLight : 'rgba(255,255,255,0.2)',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                  }}
-                />
-              ))}
-            </div>
+        {/* Service category pills (Horizontally scrollable on mobile, centered flex on desktop) */}
+        <div style={{
+          display: 'flex',
+          gap: 8,
+          marginTop: isMobile ? 28 : 48,
+          justifyContent: isMobile ? 'flex-start' : 'center',
+          overflowX: 'auto',
+          padding: '6px 2px 14px',
+          scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch',
+        }}>
+          {services.map((srv, i) => (
+            <button key={i} onClick={() => goTo(i)} style={{
+              padding: isMobile ? '10px 16px' : '12px 20px',
+              borderRadius: 14,
+              border: `1.5px solid ${active === i ? C.red : 'rgba(255,255,255,0.08)'}`,
+              background: active === i ? `${C.red}25` : 'rgba(255,255,255,0.04)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              flexShrink: 0,
+              transition: 'all 0.3s ease',
+              backdropFilter: 'blur(8px)',
+            }}>
+              <Icon name={srv.icon} size={16} color={active === i ? C.redLight : 'rgba(255,255,255,0.45)'} />
+              <span style={{
+                fontFamily: F.heading, fontWeight: 700, fontSize: isMobile ? 12 : 13,
+                color: active === i ? C.white : 'rgba(255,255,255,0.5)',
+                whiteSpace: 'nowrap',
+              }}>{srv.title}</span>
+            </button>
+          ))}
+        </div>
 
-            {/* Mobile Nav buttons */}
-            <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 340 }}>
-              <button
-                type="button"
-                onClick={prev}
-                style={{
-                  flex: 1,
-                  padding: '12px 16px',
-                  borderRadius: 14,
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  color: C.white,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  fontFamily: F.heading,
-                  cursor: 'pointer',
-                }}
-              >
-                <ChevronLeft size={16} /> Anterior
-              </button>
-              <button
-                type="button"
-                onClick={next}
-                style={{
-                  flex: 1,
-                  padding: '12px 16px',
-                  borderRadius: 14,
-                  background: `linear-gradient(135deg, ${C.red}, ${C.redLight})`,
-                  border: 'none',
-                  color: C.white,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  fontFamily: F.heading,
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(196,30,36,0.3)',
-                }}
-              >
-                Siguiente <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* Desktop pills unchanged */
-          <div style={{
-            display: 'flex',
-            gap: 8,
-            marginTop: 48,
-            justifyContent: 'center',
-            padding: '6px 2px 14px',
-          }}>
-            {services.map((srv, i) => (
-              <button key={i} onClick={() => goTo(i)} style={{
-                padding: '12px 20px',
-                borderRadius: 14,
-                border: `1.5px solid ${active === i ? C.red : 'rgba(255,255,255,0.08)'}`,
-                background: active === i ? `${C.red}25` : 'rgba(255,255,255,0.04)',
+        {/* Mobile Nav arrows: sleek bottom bar on mobile */}
+        {isMobile && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 8 }}>
+            <button
+              onClick={prev}
+              aria-label="Servicio anterior"
+              style={{
+                padding: '8px 18px',
+                borderRadius: 12,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: C.white,
+                display: 'flex', alignItems: 'center', gap: 6,
+                fontSize: 12, fontWeight: 600, fontFamily: F.heading,
                 cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                flexShrink: 0,
-                transition: 'all 0.3s ease',
-                backdropFilter: 'blur(8px)',
-              }}>
-                <Icon name={srv.icon} size={16} color={active === i ? C.redLight : 'rgba(255,255,255,0.45)'} />
-                <span style={{
-                  fontFamily: F.heading, fontWeight: 700, fontSize: 13,
-                  color: active === i ? C.white : 'rgba(255,255,255,0.5)',
-                  whiteSpace: 'nowrap',
-                }}>{srv.title}</span>
-              </button>
-            ))}
+              }}
+            >
+              <ChevronLeft size={16} /> Anterior
+            </button>
+            <button
+              onClick={next}
+              aria-label="Siguiente servicio"
+              style={{
+                padding: '8px 18px',
+                borderRadius: 12,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: C.white,
+                display: 'flex', alignItems: 'center', gap: 6,
+                fontSize: 12, fontWeight: 600, fontFamily: F.heading,
+                cursor: 'pointer',
+              }}
+            >
+              Siguiente <ChevronRight size={16} />
+            </button>
           </div>
         )}
 

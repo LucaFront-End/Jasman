@@ -193,117 +193,48 @@ export default function Timeline() {
             Conoce los hitos que transformaron una modesta refaccionaria familiar en la red automotriz de mayor confianza en México.
           </p>
 
-          {/* Milestone Navigation: Mobile Stepper vs Desktop Pills */}
-          {windowWidth < 640 ? (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              marginTop: 10,
-            }}>
-              <button
-                type="button"
-                onClick={goToPrev}
-                disabled={activeIndex === 0}
-                aria-label="Hito anterior"
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: 10,
-                  background: activeIndex === 0 ? 'rgba(0,0,0,0.03)' : C.white,
-                  border: `1px solid ${C.border}`,
-                  color: activeIndex === 0 ? '#999' : C.navy,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  fontFamily: F.heading,
-                  cursor: activeIndex === 0 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <ChevronLeft size={15} /> Prev
-              </button>
-
-              <div style={{
-                padding: '6px 16px',
-                borderRadius: 9999,
-                background: C.red,
-                color: C.white,
-                fontFamily: F.heading,
-                fontWeight: 800,
-                fontSize: 12.5,
-                boxShadow: '0 4px 14px rgba(196,30,36,0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}>
-                <span>{timeline[activeIndex].year}</span>
-                <span style={{ fontSize: 10, opacity: 0.85 }}>({activeIndex + 1}/{timeline.length})</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={goToNext}
-                disabled={activeIndex === timeline.length - 1}
-                aria-label="Hito siguiente"
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: 10,
-                  background: activeIndex === timeline.length - 1 ? 'rgba(0,0,0,0.03)' : C.white,
-                  border: `1px solid ${C.border}`,
-                  color: activeIndex === timeline.length - 1 ? '#999' : C.navy,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  fontFamily: F.heading,
-                  cursor: activeIndex === timeline.length - 1 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Sig <ChevronRight size={15} />
-              </button>
-            </div>
-          ) : (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: 6,
-              flexWrap: 'wrap',
-              marginTop: 10,
-            }}>
-              {timeline.map((t, idx) => {
-                const isActive = idx === activeIndex;
-                return (
-                  <button
-                    key={t.year}
-                    type="button"
-                    onClick={() => scrollToMilestone(idx)}
-                    style={{
-                      padding: '5px 13px',
-                      borderRadius: 9999,
-                      border: `1.5px solid ${isActive ? C.red : C.border}`,
-                      background: isActive ? C.red : C.white,
-                      color: isActive ? C.white : C.navy,
-                      fontFamily: F.heading,
-                      fontWeight: isActive ? 800 : 600,
-                      fontSize: 12,
-                      cursor: 'pointer',
-                      transition: 'all 0.25s ease',
-                      boxShadow: isActive ? '0 4px 14px rgba(196,30,36,0.28)' : '0 2px 4px rgba(0,0,0,0.02)',
-                      transform: isActive ? 'scale(1.05)' : 'scale(1)',
-                      flexShrink: 0,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {t.year}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          {/* Milestone Buttons / Year Pills Bar (Horizontally scrollable on mobile) */}
+          <div style={{
+            display: 'flex',
+            justifyContent: windowWidth < 640 ? 'flex-start' : 'center',
+            alignItems: 'center',
+            gap: 6,
+            overflowX: windowWidth < 640 ? 'auto' : 'visible',
+            flexWrap: windowWidth < 640 ? 'nowrap' : 'wrap',
+            padding: windowWidth < 640 ? '4px 6px 10px' : '0',
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch',
+            marginTop: 10,
+          }}>
+            {timeline.map((t, idx) => {
+              const isActive = idx === activeIndex;
+              return (
+                <button
+                  key={t.year}
+                  type="button"
+                  onClick={() => scrollToMilestone(idx)}
+                  style={{
+                    padding: '5px 13px',
+                    borderRadius: 9999,
+                    border: `1.5px solid ${isActive ? C.red : C.border}`,
+                    background: isActive ? C.red : C.white,
+                    color: isActive ? C.white : C.navy,
+                    fontFamily: F.heading,
+                    fontWeight: isActive ? 800 : 600,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.25s ease',
+                    boxShadow: isActive ? '0 4px 14px rgba(196,30,36,0.28)' : '0 2px 4px rgba(0,0,0,0.02)',
+                    transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {t.year}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* 2. Sliding Track Area (Middle - Scroll Driven) */}
