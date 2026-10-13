@@ -110,6 +110,7 @@ function TimelineItem({ item, index, isActive, onClick }) {
   const IconComp = item.icon;
   return (
     <div
+      id={`timeline-item-${index}`}
       onClick={onClick}
       style={{
         position: 'relative', paddingLeft: 56, marginBottom: 8,
@@ -278,6 +279,27 @@ export default function NosotrosPage() {
     return () => window.removeEventListener('mousemove', handleMouse);
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (typeof window === 'undefined' || window.innerWidth > 900) return;
+      const triggerY = 220;
+      let currentActive = 0;
+      for (let i = 0; i < historia.length; i++) {
+        const el = document.getElementById(`timeline-item-${i}`);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= triggerY) {
+            currentActive = i;
+          }
+        }
+      }
+      setActiveTimeline(prev => (prev !== currentActive ? currentActive : prev));
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <>
       <PageHero
@@ -319,7 +341,7 @@ export default function NosotrosPage() {
               }}>cada día</span>
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))', gap: 24 }}>
+          <div className="nosotros-mv-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))', gap: 24 }}>
             {misionVision.map((mv, i) => {
               const IconComp = mv.icon;
               return (
@@ -356,9 +378,158 @@ export default function NosotrosPage() {
       {/* ═══ Historia — Interactive Timeline ═══ */}
       <section style={{ padding: 'clamp(4rem, 8vw, 7rem) 1.5rem', background: C.white }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 64, alignItems: 'start' }}>
-            {/* Left: header + image */}
-            <div style={{ position: 'sticky', top: 120 }}>
+          
+          {/* Header for Mobile (scrolls away naturally before the sticky card) */}
+          <div className="nosotros-mobile-header">
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
+              background: 'rgba(196,30,36,0.08)', color: C.red,
+              fontFamily: F.heading, fontWeight: 600, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14,
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.red }} />
+              NUESTRA HISTORIA
+            </span>
+            <h2 style={{
+              fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+              color: C.navy, lineHeight: 1.2, marginBottom: 14,
+            }}>
+              De una refaccionaria a{' '}
+              <span style={{ color: C.red }}>líder nacional</span>
+            </h2>
+            <p style={{ fontSize: 15, color: C.gray, lineHeight: 1.75, marginBottom: 16 }}>
+              Somos una empresa orgullosamente 100% Mexicana que nació en 1960 mediante la venta de refacciones. Lo que comenzó como un modesto negocio familiar se convertiría en la red más grande del país.
+            </p>
+          </div>
+
+          {/* Mobile Sticky Milestone Card (compact preview that sticks right beneath the navbar) */}
+          <div className="nosotros-mobile-sticky">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '10px 14px',
+              borderRadius: 18,
+              background: 'rgba(255, 255, 255, 0.96)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: `1.5px solid ${historia[activeTimeline].color}30`,
+              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0,0,0,0.04)',
+              transition: 'border-color 0.4s ease',
+            }}>
+              {/* Milestone image preview */}
+              <div style={{
+                position: 'relative',
+                width: 76,
+                height: 58,
+                borderRadius: 12,
+                overflow: 'hidden',
+                flexShrink: 0,
+                background: '#1a1f36',
+              }}>
+                <img
+                  key={activeTimeline}
+                  src={historia[activeTimeline].image}
+                  alt={historia[activeTimeline].title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    animation: 'fadeIn 0.35s ease-out',
+                  }}
+                />
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: `linear-gradient(135deg, ${historia[activeTimeline].color}35, transparent 60%)`,
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  bottom: 3,
+                  left: 3,
+                  padding: '2px 5px',
+                  borderRadius: 5,
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  backdropFilter: 'blur(4px)',
+                  fontFamily: F.heading,
+                  fontWeight: 800,
+                  fontSize: 10,
+                  color: '#ffffff',
+                  lineHeight: 1,
+                }}>
+                  {historia[activeTimeline].year}
+                </div>
+              </div>
+
+              {/* Milestone meta & title */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 2,
+                }}>
+                  <span style={{
+                    fontFamily: F.heading,
+                    fontWeight: 800,
+                    fontSize: 10.5,
+                    color: historia[activeTimeline].color,
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                  }}>
+                    {historia[activeTimeline].year === 'Hoy' ? 'Presente' : `Año ${historia[activeTimeline].year}`}
+                  </span>
+                  <span style={{
+                    fontSize: 10.5,
+                    color: C.gray,
+                    fontWeight: 700,
+                    fontFamily: F.heading,
+                  }}>
+                    Hito {activeTimeline + 1} de {historia.length}
+                  </span>
+                </div>
+                <div style={{
+                  fontFamily: F.heading,
+                  fontWeight: 700,
+                  fontSize: 13.5,
+                  color: C.navy,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}>
+                  {historia[activeTimeline].title}
+                </div>
+
+                {/* Segmented timeline progress bar */}
+                <div style={{
+                  display: 'flex',
+                  gap: 3,
+                  marginTop: 6,
+                  alignItems: 'center',
+                }}>
+                  {historia.map((_, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        height: 3,
+                        flex: 1,
+                        borderRadius: 2,
+                        background: idx === activeTimeline
+                          ? historia[activeTimeline].color
+                          : idx < activeTimeline
+                            ? 'rgba(0, 0, 0, 0.25)'
+                            : 'rgba(0, 0, 0, 0.08)',
+                        transition: 'all 0.3s ease',
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="nosotros-timeline-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 64, alignItems: 'start' }}>
+            {/* Left: header + image (DESKTOP ONLY - 100% untouched) */}
+            <div className="nosotros-desktop-col" style={{ position: 'sticky', top: 120 }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
                 background: 'rgba(196,30,36,0.08)', color: C.red,
@@ -479,7 +650,7 @@ export default function NosotrosPage() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+          <div className="nosotros-compromisos-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
             {compromisos.map((c, i) => {
               const IconComp = c.icon;
               return (
@@ -548,7 +719,7 @@ export default function NosotrosPage() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
+          <div className="nosotros-valores-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
             {valores.map((v, i) => (
               <ValorCard
                 key={i}
@@ -574,7 +745,7 @@ export default function NosotrosPage() {
               <span style={{ color: C.redLight }}>nosotros</span>
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+          <div className="nosotros-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
             <StatCard number={80} suffix="+" label="Sucursales" delay={0} icon={<MapPin size={30} color={C.redLight} />} />
             <StatCard number={60} suffix="+" label="Años de Experiencia" delay={0.1} icon={<Calendar size={30} color={C.redLight} />} />
             <StatCard number={1} suffix="M+" label="Servicios Realizados" delay={0.2} icon={<Settings size={30} color={C.redLight} />} />

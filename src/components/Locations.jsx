@@ -160,16 +160,14 @@ export default function Locations() {
           </h2>
         </div>
 
-        {/* Region filter (Horizontally scrollable on mobile) */}
-        <div style={{
+        {/* Region filter: clean wrap without horizontal scroll on all screens */}
+        <div className="locations-regions-bar" style={{
           display: 'flex', gap: 6,
-          justifyContent: isMobile ? 'flex-start' : 'center',
-          overflowX: isMobile ? 'auto' : 'visible',
-          flexWrap: isMobile ? 'nowrap' : 'wrap',
-          marginBottom: isMobile ? 24 : 40,
-          padding: isMobile ? '4px 4px 12px' : '0',
-          scrollbarWidth: 'none',
-          WebkitOverflowScrolling: 'touch',
+          justifyContent: 'center',
+          overflowX: 'visible',
+          flexWrap: 'wrap',
+          marginBottom: isMobile ? 20 : 40,
+          padding: 0,
         }}>
           <button onClick={() => { setActiveRegion(null); setSelectedLoc(null); }} style={{
             padding: isMobile ? '8px 16px' : '10px 20px', borderRadius: 12,

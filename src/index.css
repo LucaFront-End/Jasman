@@ -945,3 +945,128 @@ html, body, #root, main {
   }
 }
 
+/* ═══ NOSOTROS STICKY TIMELINE (VERTICAL ON MOBILE, 2-COL STICKY ON DESKTOP) ═══ */
+.nosotros-timeline-container {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 64px;
+  align-items: start;
+}
+
+.nosotros-desktop-col {
+  display: block;
+}
+
+.nosotros-mobile-header {
+  display: none;
+}
+
+.nosotros-mobile-sticky {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .nosotros-timeline-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+
+  .nosotros-desktop-col {
+    display: none !important;
+  }
+
+  .nosotros-mobile-header {
+    display: block !important;
+    text-align: center !important;
+    margin-bottom: 16px !important;
+  }
+
+  .nosotros-mobile-sticky {
+    display: block !important;
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 68px !important;
+    z-index: 25 !important;
+    margin-bottom: 20px !important;
+  }
+}
+
+/* Nosotros Grids */
+.nosotros-mv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+  gap: 24px;
+}
+@media (max-width: 640px) {
+  .nosotros-mv-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.nosotros-compromisos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+@media (max-width: 640px) {
+  .nosotros-compromisos-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.nosotros-valores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+@media (max-width: 640px) {
+  .nosotros-valores-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.nosotros-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+@media (max-width: 768px) {
+  .nosotros-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+}
+
+/* ═══ SERVICES TABS (2-COL ON MOBILE, NO HORIZONTAL SCROLL) ═══ */
+.services-tabs-bar {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 48px;
+}
+@media (max-width: 768px) {
+  .services-tabs-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    margin-top: 24px !important;
+  }
+}
+
+/* ═══ LOCATIONS REGIONS (WRAP ON MOBILE, NO HORIZONTAL SCROLL) ═══ */
+.locations-regions-bar {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+@media (max-width: 768px) {
+  .locations-regions-bar {
+    margin-bottom: 20px !important;
+    gap: 6px !important;
+  }
+}
+
+

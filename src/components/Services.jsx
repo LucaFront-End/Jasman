@@ -289,30 +289,31 @@ export default function Services() {
           </div>
         </div>
 
-        {/* Service category pills (Horizontally scrollable on mobile, centered flex on desktop) */}
-        <div style={{
-          display: 'flex',
+        {/* Service category pills: 2-col grid on mobile, centered flex on desktop */}
+        <div className="services-tabs-bar" style={{
+          display: isMobile ? 'grid' : 'flex',
+          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : undefined,
           gap: 8,
-          marginTop: isMobile ? 28 : 48,
-          justifyContent: isMobile ? 'flex-start' : 'center',
-          overflowX: 'auto',
-          padding: '6px 2px 14px',
-          scrollbarWidth: 'none',
-          WebkitOverflowScrolling: 'touch',
+          marginTop: isMobile ? 24 : 48,
+          justifyContent: isMobile ? undefined : 'center',
+          padding: '6px 2px',
         }}>
           {services.map((srv, i) => (
             <button key={i} onClick={() => goTo(i)} style={{
-              padding: isMobile ? '10px 16px' : '12px 20px',
+              width: isMobile ? '100%' : 'auto',
+              padding: isMobile ? '10px 12px' : '12px 20px',
               borderRadius: 14,
               border: `1.5px solid ${active === i ? C.red : 'rgba(255,255,255,0.08)'}`,
               background: active === i ? `${C.red}25` : 'rgba(255,255,255,0.04)',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
+              justifyContent: isMobile ? 'center' : 'flex-start',
               gap: 8,
               flexShrink: 0,
               transition: 'all 0.3s ease',
               backdropFilter: 'blur(8px)',
+              boxSizing: 'border-box',
             }}>
               <Icon name={srv.icon} size={16} color={active === i ? C.redLight : 'rgba(255,255,255,0.45)'} />
               <span style={{
