@@ -262,6 +262,10 @@ export default function PromotionsPopup() {
           borderTopLeftRadius: 25,
           borderTopRightRadius: 25,
           borderBottom: '3px solid #C41E24',
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
         }}>
           {/* Close button */}
           <button
@@ -317,6 +321,7 @@ export default function PromotionsPopup() {
             lineHeight: 1.15,
             color: C.white,
             margin: 0,
+            textAlign: 'center',
           }}>
             ¡Obtén <span style={{ color: '#FF4D4F' }}>10% de Descuento*</span>!
           </h3>
@@ -324,9 +329,10 @@ export default function PromotionsPopup() {
           <p style={{
             fontSize: 13,
             color: 'rgba(255,255,255,0.8)',
-            marginTop: 6,
+            marginTop: 8,
             lineHeight: 1.45,
             marginBottom: 0,
+            textAlign: 'center',
           }}>
             Déjanos tus datos para generar tu cupón digital válido en tu primer servicio automotriz en cualquiera de nuestras sucursales.
           </p>
