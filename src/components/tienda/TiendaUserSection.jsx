@@ -88,6 +88,13 @@ function UserAccountWorkspace() {
         }
 
         saveUser(res.member);
+        setForm({
+          nombre: res.member.nombre || '',
+          correo: res.member.correo || '',
+          password: '',
+          telefono: res.member.telefono || '',
+          sucursalPreferida: res.member.sucursalPreferida || 'jasman-satelite',
+        });
         if (res.member.sucursalPreferida) {
           setSelectedBranch(res.member.sucursalPreferida);
         }
@@ -112,6 +119,7 @@ function UserAccountWorkspace() {
           password: form.password,
           telefono: form.telefono,
           sucursalPreferida: form.sucursalPreferida,
+          isUpdate: Boolean(user),
         });
 
         if (!res.success) {
@@ -124,6 +132,14 @@ function UserAccountWorkspace() {
         }
 
         saveUser(res.member);
+        setForm((prev) => ({
+          ...prev,
+          nombre: res.member.nombre || prev.nombre,
+          correo: res.member.correo || prev.correo,
+          password: '',
+          telefono: res.member.telefono || prev.telefono,
+          sucursalPreferida: res.member.sucursalPreferida || prev.sucursalPreferida,
+        }));
         setSelectedBranch(form.sucursalPreferida);
 
         const { orders: remoteOrders } = await fetchWixMemberProfileAndOrders(form.correo);

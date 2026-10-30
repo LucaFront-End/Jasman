@@ -400,91 +400,92 @@ export function isWixMemberLoggedIn() {
 }
 
 /**
- * Fetches member profile & orders stored in Wix CMS ("ClientesTienda" / "Contactoweb" / "PedidosTienda")
- * by email so the user's account stays synced across devices.
+ * Deterministic password digest for verifying credentials stored in Contactoweb cloud collection
+ * when Wix Headless direct register is gated by reCAPTCHA.
  */
-export async function fetchWixMemberProfileAndOrders(email) {
-  const cleanEmail = String(email || '').trim().toLowerCase();
-  if (!cleanEmail) return { profile: null, orders: [] };
-
-  let profile = null;
-  let orders = [];
-
-  // 1. Try querying dedicated "ClientesTienda" collection first, then "Contactoweb"
-  try {
-    const res = await wixClient.items
-      .query('ClientesTienda')
-      .eq('email', cleanEmail)
-      .limit(1)
-      .find();
-    if (res.items && res.items.length > 0) {
-      const item = res.items[0];
-      profile = {
-        wixId: item._id,
-        nombre: item.nombre || item.title || cleanEmail.split('@')[0],
-        correo: item.email || cleanEmail,
-        telefono: item.telefono || '',
-        sucursalPreferida: item.sucursalPreferida || 'jasman-satelite',
-        wixMemberId: item.wixMemberId || item._id,
-        authProvider: 'wix-members',
-      };
-    }
-  } catch {
-    // Fallback to Contactoweb lookup
-    try {
-      const contactRes = await wixClient.items
-        .query('Contactoweb')
-        .eq('email', cleanEmail)
-        .limit(1)
-        .find();
-      if (contactRes.items && contactRes.items.length > 0) {
-        const c = contactRes.items[0];
-        profile = {
-          wixId: c._id,
-          nombre: c.nombre || cleanEmail.split('@')[0],
-          correo: c.email || cleanEmail,
-          telefono: c.telefono || '',
-          sucursalPreferida: c.sucursal || 'jasman-satelite',
-          wixMemberId: c._id,
-          authProvider: 'wix-cms',
-        };
-      }
-    } catch {
-      // Ignore if query restricted
-    }
+function computeCredentialDigest(email, password) {
+  const raw = `jasman_auth_v1::${String(email || '').trim().toLowerCase()}::${String(password || '')}`;
+  let h1 = 0xdeadbeef ^ raw.length;
+  let h2 = 0x41c6ce57 ^ raw.length;
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
   }
-
-  // 2. Try querying "PedidosTienda" collection for orders belonging to this member
-  try {
-    const ordersRes = await wixClient.items
-      .query('PedidosTienda')
-      .eq('email', cleanEmail)
-      .limit(25)
-      .find();
-    if (ordersRes.items && ordersRes.items.length > 0) {
-      orders = ordersRes.items.map((o) => ({
-        id: o.folio || o.title || o._id,
-        createdAt: o.fecha || o._createdDate || new Date().toISOString(),
-        status: o.status || 'Solicitud confirmada',
-        total: Number(o.total) || 0,
-        subtotal: Number(o.subtotal) || 0,
-        discountAmount: Number(o.descuento) || 0,
-        couponCode: o.cupon || null,
-        branchName: o.sucursal || 'Sucursal Jasman',
-        items: Array.isArray(o.items) ? o.items : [],
-        source: 'cloud',
-      }));
-    }
-  } catch {
-    // Ignore if collection "PedidosTienda" isn't created yet
-  }
-
-  return { profile, orders };
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (h2 >>> 0).toString(16).padStart(8, '0') + (h1 >>> 0).toString(16).padStart(8, '0');
 }
 
 /**
- * Registers a new member using Wix Headless OAuthStrategy (`wixClient.auth.register`)
- * and syncs their profile into Wix CMS (`ClientesTienda` + `Contactoweb`).
+ * Fetches member profile & orders stored in cloud collection ("Contactoweb")
+ * by email so the user's account and order history stay synced across devices.
+ */
+export async function fetchWixMemberProfileAndOrders(email) {
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  if (!cleanEmail) return { profile: null, orders: [], accountRecord: null };
+
+  let profile = null;
+  let accountRecord = null;
+  const orders = [];
+
+  try {
+    const contactRes = await wixClient.items
+      .query('Contactoweb')
+      .eq('email', cleanEmail)
+      .limit(50)
+      .find();
+
+    if (contactRes.items && contactRes.items.length > 0) {
+      // Sort newest first by _createdDate
+      const sorted = [...contactRes.items].sort(
+        (a, b) => new Date(b._createdDate || 0) - new Date(a._createdDate || 0)
+      );
+
+      // Find explicit CUENTA_TIENDA account record first
+      accountRecord =
+        sorted.find((item) => item.tipo === 'CUENTA_TIENDA') || sorted[0];
+
+      if (accountRecord) {
+        profile = {
+          wixId: accountRecord._id,
+          nombre: accountRecord.nombre || cleanEmail.split('@')[0],
+          correo: accountRecord.email || cleanEmail,
+          telefono: accountRecord.telefono || '',
+          sucursalPreferida: accountRecord.sucursal || 'jasman-satelite',
+          wixMemberId: accountRecord._id,
+          authProvider: 'jasman-cloud',
+        };
+      }
+
+      // Extract all store orders saved under this email
+      for (const item of sorted) {
+        if (item.tipo === 'PEDIDO_TIENDA' && item.mensaje) {
+          try {
+            const parsedOrder = JSON.parse(item.mensaje);
+            if (parsedOrder && parsedOrder.id) {
+              orders.push({
+                ...parsedOrder,
+                status: parsedOrder.status || 'Solicitud confirmada',
+                source: 'cloud',
+              });
+            }
+          } catch {
+            // ignore malformed JSON
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Error consultando perfil y pedidos:', err?.message || err);
+  }
+
+  return { profile, orders, accountRecord };
+}
+
+/**
+ * Registers a new member or updates an existing member profile,
+ * syncing credentials and profile into Wix Headless & Contactoweb cloud storage.
  */
 export async function registerWixMember({
   nombre,
@@ -492,17 +493,48 @@ export async function registerWixMember({
   password,
   telefono,
   sucursalPreferida = 'jasman-satelite',
+  isUpdate = false,
 }) {
   const cleanEmail = String(correo || '').trim().toLowerCase();
   const cleanName = String(nombre || '').trim();
   const cleanPhone = String(telefono || '').trim();
 
+  if (!cleanEmail) {
+    return {
+      success: false,
+      errorCode: 'invalidEmail',
+      message: 'Ingresa un correo electrónico válido.',
+    };
+  }
+
+  if (!isUpdate && (!password || password.length < 6)) {
+    return {
+      success: false,
+      errorCode: 'weakPassword',
+      message: 'La contraseña debe tener al menos 6 caracteres.',
+    };
+  }
+
+  // 1. Check if an account already exists in cloud storage when registering a new user
+  const existingData = await fetchWixMemberProfileAndOrders(cleanEmail);
+  if (
+    !isUpdate &&
+    existingData.accountRecord &&
+    existingData.accountRecord.tipo === 'CUENTA_TIENDA'
+  ) {
+    return {
+      success: false,
+      errorCode: 'emailAlreadyExists',
+      message: 'Este correo ya está registrado. Inicia sesión con tu contraseña.',
+    };
+  }
+
   let wixAuthState = null;
   let wixSessionToken = null;
   let memberTokens = null;
 
-  // 1. Attempt native Wix Members Identity Registration
-  if (password && password.length >= 6) {
+  // 2. Attempt native Wix Identity Registration (succeeds when captcha is not required on domain)
+  if (!isUpdate && password && password.length >= 6) {
     try {
       const response = await wixClient.auth.register({
         email: cleanEmail,
@@ -529,111 +561,160 @@ export async function registerWixMember({
           };
         }
       }
-    } catch (err) {
-      console.warn('Wix Members Direct Register aviso:', err?.message || err);
+    } catch {
+      // Fallback to Contactoweb cloud account storage
     }
   }
 
-  // 2. Sync Member Profile to Wix CMS ("ClientesTienda" & "Contactoweb")
-  let cmsId = null;
+  // 3. Persist Account & Password Digest in Contactoweb cloud collection
+  const previousAuthHash =
+    existingData.accountRecord?.asunto?.startsWith('AUTH_HASH:')
+      ? existingData.accountRecord.asunto
+      : null;
+
+  const authHashField = password
+    ? `AUTH_HASH:${computeCredentialDigest(cleanEmail, password)}`
+    : previousAuthHash || 'AUTH_HASH:OPEN';
+
+  let cloudId = existingData.accountRecord?._id || null;
   try {
-    const inserted = await wixClient.items.insert('ClientesTienda', {
-      title: `${cleanName} - ${cleanEmail}`,
+    const inserted = await wixClient.items.insert('Contactoweb', {
+      title: `Cuenta Cliente - ${cleanName} (${cleanEmail})`,
       nombre: cleanName,
       email: cleanEmail,
       telefono: cleanPhone,
-      sucursalPreferida,
-      wixAuthState: wixAuthState || 'CMS_MEMBER',
-      fechaRegistro: new Date().toISOString(),
+      sucursal: sucursalPreferida,
+      tipo: 'CUENTA_TIENDA',
+      asunto: authHashField,
+      mensaje: JSON.stringify({
+        nombre: cleanName,
+        correo: cleanEmail,
+        telefono: cleanPhone,
+        sucursalPreferida,
+        updatedAt: new Date().toISOString(),
+      }),
+      origen: 'Clientes Tienda Online',
+      fecha: new Date().toISOString(),
     });
-    cmsId = inserted?._id || null;
-  } catch {
-    // Also register in Contactoweb so it's always visible in Wix Dashboard
+    cloudId = inserted?._id || cloudId;
+  } catch (err) {
+    console.warn('Aviso al guardar cuenta en nube:', err?.message || err);
   }
-
-  const contactSync = await saveContactoWeb({
-    nombre: cleanName,
-    correo: cleanEmail,
-    telefono: cleanPhone,
-    sucursal: sucursalPreferida,
-    asunto: 'Registro Miembro Wix Tienda Jasman',
-    mensaje: `Miembro registrado en Tienda Online (${wixAuthState || 'Wix Headless SDK'})`,
-    origen: 'Wix Members Tienda',
-  });
 
   const memberProfile = {
     nombre: cleanName,
     correo: cleanEmail,
     telefono: cleanPhone,
     sucursalPreferida,
-    wixMemberId: cmsId || contactSync?.id || `wix-${Date.now()}`,
-    wixAuthState: wixAuthState || 'ACTIVE_CMS_MEMBER',
+    wixMemberId: cloudId || `usr-${Date.now()}`,
+    wixAuthState: wixAuthState || 'ACTIVE_ACCOUNT',
     hasMemberTokens: Boolean(memberTokens),
-    authProvider: 'wix-members',
+    authProvider: 'jasman-account',
     updatedAt: new Date().toISOString(),
   };
 
   return {
     success: true,
     member: memberProfile,
+    orders: existingData.orders || [],
     wixAuthState: memberProfile.wixAuthState,
   };
 }
 
 /**
- * Logs in an existing member using Wix Headless OAuthStrategy (`wixClient.auth.login`)
- * and retrieves their synced profile and orders from Wix CMS.
+ * Logs in an existing member by verifying credentials against both Wix Identity
+ * and the Contactoweb cloud account registry, then restores profile & orders.
  */
 export async function loginWixMember({ correo, password }) {
   const cleanEmail = String(correo || '').trim().toLowerCase();
-  let wixAuthState = null;
-  let memberTokens = null;
-
-  // 1. Attempt native Wix Members Direct Login
-  if (password) {
-    try {
-      const response = await wixClient.auth.login({
-        email: cleanEmail,
-        password,
-      });
-      wixAuthState = response?.loginState || null;
-
-      if (response?.loginState === 'SUCCESS' && response?.data?.sessionToken) {
-        memberTokens = await wixClient.auth.getMemberTokensForDirectLogin(
-          response.data.sessionToken
-        );
-        wixClient.auth.setTokens(memberTokens);
-        persistWixTokens(memberTokens);
-      } else if (response?.loginState === 'FAILURE') {
-        const errCode = response?.errorCode || response?.error;
-        if (errCode === 'invalidPassword' || errCode === 'invalidEmail') {
-          return {
-            success: false,
-            errorCode: errCode,
-            message:
-              errCode === 'invalidPassword'
-                ? 'Contraseña incorrecta. Verifica tus datos e intenta nuevamente.'
-                : 'No encontramos una cuenta con ese correo electrónico.',
-          };
-        }
-      }
-    } catch (err) {
-      console.warn('Wix Members Direct Login aviso:', err?.message || err);
-    }
+  if (!cleanEmail) {
+    return {
+      success: false,
+      errorCode: 'invalidEmail',
+      message: 'Ingresa tu correo electrónico.',
+    };
+  }
+  if (!password) {
+    return {
+      success: false,
+      errorCode: 'invalidPassword',
+      message: 'Ingresa tu contraseña para iniciar sesión.',
+    };
   }
 
-  // 2. Fetch synced profile and orders from Wix CMS
-  const { profile, orders } = await fetchWixMemberProfileAndOrders(cleanEmail);
+  let wixAuthState = null;
+  let memberTokens = null;
+  let nativeLoginSucceeded = false;
+
+  // 1. Attempt native Wix Identity Direct Login first
+  try {
+    const response = await wixClient.auth.login({
+      email: cleanEmail,
+      password,
+    });
+    wixAuthState = response?.loginState || null;
+
+    if (response?.loginState === 'SUCCESS' && response?.data?.sessionToken) {
+      nativeLoginSucceeded = true;
+      memberTokens = await wixClient.auth.getMemberTokensForDirectLogin(
+        response.data.sessionToken
+      );
+      wixClient.auth.setTokens(memberTokens);
+      persistWixTokens(memberTokens);
+    } else if (response?.loginState === 'FAILURE') {
+      const errCode = response?.errorCode || response?.error;
+      // If email exists in native Wix Members but password is wrong, reject immediately
+      if (errCode === 'invalidPassword') {
+        return {
+          success: false,
+          errorCode: 'invalidPassword',
+          message: 'Contraseña incorrecta. Verifica tus datos e intenta nuevamente.',
+        };
+      }
+    }
+  } catch {
+    // Continue to cloud account verification
+  }
+
+  // 2. Fetch synced profile, account record, and orders from Contactoweb cloud collection
+  const { profile, orders, accountRecord } = await fetchWixMemberProfileAndOrders(cleanEmail);
+
+  if (!nativeLoginSucceeded) {
+    // Verify that the account exists in our cloud registry
+    if (!accountRecord) {
+      return {
+        success: false,
+        errorCode: 'invalidEmail',
+        message: 'No encontramos una cuenta con ese correo electrónico. Crea tu cuenta primero.',
+      };
+    }
+
+    // Verify password hash if stored on the account record
+    if (
+      accountRecord.asunto &&
+      accountRecord.asunto.startsWith('AUTH_HASH:') &&
+      accountRecord.asunto !== 'AUTH_HASH:OPEN'
+    ) {
+      const expectedHash = `AUTH_HASH:${computeCredentialDigest(cleanEmail, password)}`;
+      if (accountRecord.asunto !== expectedHash) {
+        return {
+          success: false,
+          errorCode: 'invalidPassword',
+          message: 'Contraseña incorrecta. Verifica tus datos e intenta nuevamente.',
+        };
+      }
+    }
+  }
 
   const memberProfile = {
     nombre: profile?.nombre || cleanEmail.split('@')[0],
     correo: cleanEmail,
     telefono: profile?.telefono || '',
     sucursalPreferida: profile?.sucursalPreferida || 'jasman-satelite',
-    wixMemberId: profile?.wixMemberId || `wix-${Date.now()}`,
-    wixAuthState: wixAuthState || (profile ? 'SYNCED_WIX_CMS' : 'ACTIVE_SESSION'),
+    wixMemberId: profile?.wixMemberId || `usr-${Date.now()}`,
+    wixAuthState: wixAuthState || 'ACTIVE_SESSION',
     hasMemberTokens: Boolean(memberTokens) || isWixMemberLoggedIn(),
-    authProvider: 'wix-members',
+    authProvider: 'jasman-account',
     updatedAt: new Date().toISOString(),
   };
 
@@ -740,29 +821,31 @@ export async function logoutWixMember() {
 }
 
 /**
- * Saves a store order into Wix CMS ("PedidosTienda" & "Contactoweb") linked to the Wix Member.
+ * Saves a store order into the cloud collection ("Contactoweb") linked to the customer's email.
  */
 export async function saveWixTiendaOrder(orderRecord) {
   if (!orderRecord) return null;
+  const cleanEmail = String(orderRecord.customer?.correo || '').trim().toLowerCase();
+  const cleanName = orderRecord.customer?.nombre || 'Cliente Tienda';
+  const cleanPhone = orderRecord.customer?.telefono || '';
+
   try {
-    await wixClient.items.insert('PedidosTienda', {
-      title: `${orderRecord.id} - ${orderRecord.customer?.nombre || 'Cliente'}`,
+    await wixClient.items.insert('Contactoweb', {
+      title: `Pedido Tienda ${orderRecord.id} - ${cleanName}`,
       folio: orderRecord.id,
-      nombre: orderRecord.customer?.nombre || 'Cliente Tienda',
-      email: (orderRecord.customer?.correo || '').toLowerCase(),
-      telefono: orderRecord.customer?.telefono || '',
+      nombre: cleanName,
+      email: cleanEmail,
+      telefono: cleanPhone,
       sucursal: orderRecord.branchName || '',
-      subtotal: orderRecord.subtotal || 0,
-      descuento: orderRecord.discountAmount || 0,
-      descuentoVolumen: orderRecord.volumeDiscountAmount || 0,
-      total: orderRecord.total || 0,
       cupon: orderRecord.couponCode || '',
-      items: orderRecord.items || [],
-      status: orderRecord.status || 'Solicitud recibida',
+      tipo: 'PEDIDO_TIENDA',
+      asunto: orderRecord.id,
+      mensaje: JSON.stringify(orderRecord),
+      origen: 'Pedido Tienda Online',
       fecha: orderRecord.createdAt || new Date().toISOString(),
     });
-  } catch {
-    // Ignored if PedidosTienda collection is not yet created
+  } catch (err) {
+    console.warn('Aviso al guardar pedido en nube:', err?.message || err);
   }
   return orderRecord;
 }
