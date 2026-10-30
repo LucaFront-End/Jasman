@@ -465,14 +465,14 @@ export async function fetchWixMemberProfileAndOrders(email) {
       orders = ordersRes.items.map((o) => ({
         id: o.folio || o.title || o._id,
         createdAt: o.fecha || o._createdDate || new Date().toISOString(),
-        status: o.status || 'Confirmado en Wix CMS',
+        status: o.status || 'Solicitud confirmada',
         total: Number(o.total) || 0,
         subtotal: Number(o.subtotal) || 0,
         discountAmount: Number(o.descuento) || 0,
         couponCode: o.cupon || null,
         branchName: o.sucursal || 'Sucursal Jasman',
         items: Array.isArray(o.items) ? o.items : [],
-        source: 'wix-cms',
+        source: 'cloud',
       }));
     }
   } catch {
@@ -525,7 +525,7 @@ export async function registerWixMember({
           return {
             success: false,
             errorCode: 'emailAlreadyExists',
-            message: 'Este correo ya está registrado en Wix Members. Inicia sesión con tu contraseña.',
+            message: 'Este correo ya está registrado. Inicia sesión con tu contraseña.',
           };
         }
       }
@@ -612,8 +612,8 @@ export async function loginWixMember({ correo, password }) {
             errorCode: errCode,
             message:
               errCode === 'invalidPassword'
-                ? 'Contraseña incorrecta en Wix Members.'
-                : 'No encontramos una cuenta con ese correo en Wix Members.',
+                ? 'Contraseña incorrecta. Verifica tus datos e intenta nuevamente.'
+                : 'No encontramos una cuenta con ese correo electrónico.',
           };
         }
       }
@@ -714,14 +714,14 @@ export async function sendWixPasswordReset(email) {
     await wixClient.auth.sendPasswordResetEmail(cleanEmail, redirectUri);
     return {
       success: true,
-      message: `Enviamos un enlace de recuperación de Wix Members a ${cleanEmail}.`,
+      message: `Enviamos un enlace de recuperación de contraseña a ${cleanEmail}.`,
     };
   } catch (err) {
-    console.warn('Wix Password Reset aviso:', err?.message || err);
+    console.warn('Password Reset aviso:', err?.message || err);
     return {
       success: false,
       message:
-        'Solicitud registrada. Si tu correo está dado de alta en Wix Members, recibirás las instrucciones en breve.',
+        'Solicitud recibida. Si tu correo está registrado, recibirás las instrucciones en breve.',
     };
   }
 }

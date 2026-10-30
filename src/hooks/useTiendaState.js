@@ -35,6 +35,13 @@ function writeJSON(key, value) {
 
 export function triggerTiendaUI(action) {
   if (typeof window === 'undefined') return;
+  if (action?.type === 'OPEN_USER') {
+    const el = document.getElementById('seccion-usuario');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+  }
   window.dispatchEvent(new CustomEvent(UI_EVENT, { detail: action }));
 }
 
@@ -195,11 +202,11 @@ export function useTiendaState() {
     const newOrder = {
       id: `JSM-${Math.floor(100000 + Math.random() * 900000)}`,
       createdAt: new Date().toISOString(),
-      status: 'Confirmado · Wix Members',
+      status: 'Solicitud confirmada',
       ...orderPayload,
     };
     writeJSON(STORAGE_KEYS.ORDERS, [newOrder, ...currentOrders]);
-    saveWixTiendaOrder(newOrder).catch(() => {});
+    saveWixTiendaOrder(newOrder).catch(() => { });
     return newOrder;
   }, []);
 

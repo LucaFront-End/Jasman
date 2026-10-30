@@ -11,7 +11,7 @@ import Promotions from '../components/Promotions';
 import CTA from '../components/CTA';
 import TiendaCatalogSection from '../components/tienda/TiendaCatalogSection';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
-import { TiendaUserDrawer } from '../components/tienda/TiendaUserSection';
+import TiendaUserSection from '../components/tienda/TiendaUserSection';
 import FirstPurchasePopup from '../components/tienda/FirstPurchasePopup';
 import { C, F } from '../hooks/useAnimations';
 import { useTiendaState, triggerTiendaUI } from '../hooks/useTiendaState';
@@ -25,7 +25,6 @@ export default function HomeTiendaPreviewPage() {
       {/* Store Drawers & First-Purchase Popup available directly on this Home copy */}
       <FirstPurchasePopup />
       <TiendaCartDrawer />
-      <TiendaUserDrawer />
 
       {/* Floating Store Quick-Access Pill for the Home Preview */}
       <div
@@ -159,9 +158,10 @@ export default function HomeTiendaPreviewPage() {
       {/* 2. Original Production Brands Marquee */}
       <BrandsMarquee />
 
-      {/* 3. NEW INTEGRATED STORE & PRODUCTS SECTION */}
+      {/* 3. NEW INTEGRATED STORE & PRODUCTS SECTION + USER ACCOUNT SECTION */}
       <div id="tienda-home-section">
         <TiendaCatalogSection id="catalogo-home-preview" isHomePreview />
+        <TiendaUserSection />
       </div>
 
       {/* 4. Remaining Original Production Home Sections Preserved Intact */}

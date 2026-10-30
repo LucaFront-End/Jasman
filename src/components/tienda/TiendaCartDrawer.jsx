@@ -102,7 +102,7 @@ export default function TiendaCartDrawer() {
         : null,
       `Total estimado (sin IVA): ${formatMXN(totalAfterDiscount)}`,
       `Sucursal seleccionada: ${selectedBranch?.name || 'Por definir'}`,
-      user?.nombre ? `Miembro Wix: ${user.nombre} (${user.telefono || user.correo || ''})` : null,
+      user?.nombre ? `Cliente: ${user.nombre} (${user.telefono || user.correo || ''})` : null,
     ]
       .filter(Boolean)
       .join('\n');
@@ -138,7 +138,7 @@ export default function TiendaCartDrawer() {
       cupon: coupon?.code || '',
       asunto: `Pedido Tienda ${orderRecord.id} (${cartCount} uds) - ${selectedBranch?.name}`,
       origen: 'Carrito Tienda Preview',
-    }).catch(() => {});
+    }).catch(() => { });
 
     setOrderCompleted(orderRecord);
     clearCart();
@@ -244,7 +244,7 @@ export default function TiendaCartDrawer() {
                   color: '#16A34A',
                 }}
               >
-                Orden sincronizada en Wix · {orderCompleted.id}
+                Orden confirmada · {orderCompleted.id}
               </span>
               <h3
                 style={{
@@ -258,7 +258,7 @@ export default function TiendaCartDrawer() {
                 Solicitud de compra generada
               </h3>
               <p style={{ fontSize: 13.5, color: C.gray, lineHeight: 1.6, margin: '0 0 20px' }}>
-                Tu orden quedó guardada en <strong>Mi Cuenta Wix Members → Mis Pedidos</strong> con
+                Tu orden quedó guardada en <strong>Mi Cuenta → Mis Pedidos</strong> con
                 entrega/instalación en <strong>{orderCompleted.branchName}</strong>.
               </p>
               <button
@@ -361,8 +361,8 @@ export default function TiendaCartDrawer() {
                     {totalTireUnits >= 4
                       ? '¡10% OFF por juego completo + Envío Gratis!'
                       : totalTireUnits >= 2
-                      ? `¡5% OFF activo! Agrega ${4 - totalTireUnits} más para 10% OFF`
-                      : 'Agrega 1 llanta más y obtén 5% OFF adicional'}
+                        ? `¡5% OFF activo! Agrega ${4 - totalTireUnits} más para 10% OFF`
+                        : 'Agrega 1 llanta más y obtén 5% OFF adicional'}
                   </span>
                   <span
                     style={{

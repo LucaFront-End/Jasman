@@ -16,7 +16,7 @@ import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import Tire3DStudioStage from '../components/tienda/Tire3DStudioStage';
 import TiendaStickyShowcase from '../components/tienda/TiendaStickyShowcase';
 import TiendaCatalogSection from '../components/tienda/TiendaCatalogSection';
-import TiendaUserSection, { TiendaUserDrawer } from '../components/tienda/TiendaUserSection';
+import TiendaUserSection from '../components/tienda/TiendaUserSection';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
 import FirstPurchasePopup from '../components/tienda/FirstPurchasePopup';
 import {
@@ -556,10 +556,9 @@ export default function LandingTiendaPreviewPage() {
 
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
-      {/* Floating Apple Frosted Glass Navbar & Drawers */}
+      {/* Floating Apple Frosted Glass Navbar & Cart Drawer */}
       <TiendaNavbar />
       <TiendaCartDrawer />
-      <TiendaUserDrawer />
 
       {/* Exclusive 10% First Purchase Popup (ONLY on /landing-tienda-preview) */}
       <FirstPurchasePopup />

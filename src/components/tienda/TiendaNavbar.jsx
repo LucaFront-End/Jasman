@@ -339,7 +339,7 @@ export default function TiendaNavbar() {
             <button
               type="button"
               onClick={() => triggerTiendaUI({ type: 'OPEN_USER' })}
-              aria-label="Mi Cuenta Wix Members"
+              aria-label="Mi Cuenta"
               style={{
                 padding: '7px 13px',
                 borderRadius: 9999,

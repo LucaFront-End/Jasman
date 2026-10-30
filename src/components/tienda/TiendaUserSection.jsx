@@ -4,14 +4,11 @@ import { formatMXN } from '../../data/productosMasterData';
 import { sucursales } from '../../data/sucursalesData';
 import { useTiendaState, triggerTiendaUI } from '../../hooks/useTiendaState';
 import {
-  WIX_CLIENT_ID,
   loginWixMember,
   registerWixMember,
-  startWixOAuthRedirect,
   completeWixOAuthCallbackIfPresent,
   sendWixPasswordReset,
   fetchWixMemberProfileAndOrders,
-  isWixMemberLoggedIn,
 } from '../../services/wixService';
 import {
   User,
@@ -20,17 +17,15 @@ import {
   Tag,
   LogOut,
   Check,
-  X,
   Sparkles,
   Lock,
   Mail,
   RefreshCw,
   ShieldCheck,
-  ExternalLink,
   KeyRound,
 } from 'lucide-react';
 
-function UserAccountWorkspace({ compact = false }) {
+function UserAccountWorkspace() {
   const {
     user,
     saveUser,
@@ -55,13 +50,12 @@ function UserAccountWorkspace({ compact = false }) {
   const [syncingOrders, setSyncingOrders] = useState(false);
   const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error' | 'info', text: '' }
 
-  // Complete Wix OAuth PKCE redirect callback if returning from Wix login
   useEffect(() => {
     completeWixOAuthCallbackIfPresent().then((tokens) => {
       if (tokens) {
         setFeedback({
           type: 'success',
-          text: 'Sesión OAuth de Wix Members vinculada correctamente.',
+          text: 'Tu sesión se ha vinculado correctamente.',
         });
       }
     });
@@ -72,7 +66,7 @@ function UserAccountWorkspace({ compact = false }) {
     setFeedback(null);
 
     if (!form.correo.trim()) {
-      setFeedback({ type: 'error', text: 'Ingresa tu correo electrónico de Wix Members.' });
+      setFeedback({ type: 'error', text: 'Ingresa tu correo electrónico.' });
       return;
     }
 
@@ -87,7 +81,7 @@ function UserAccountWorkspace({ compact = false }) {
         if (!res.success) {
           setFeedback({
             type: 'error',
-            text: res.message || 'No fue posible iniciar sesión en Wix Members.',
+            text: res.message || 'No fue posible iniciar sesión. Verifica tus datos.',
           });
           setLoading(false);
           return;
@@ -103,10 +97,9 @@ function UserAccountWorkspace({ compact = false }) {
 
         setFeedback({
           type: 'success',
-          text: '¡Bienvenido! Tu cuenta de Wix Members está conectada y sincronizada.',
+          text: '¡Bienvenido! Tu cuenta Jasman está activa y sincronizada.',
         });
       } else {
-        // Register new Wix Member or update existing profile
         if (!form.nombre.trim()) {
           setFeedback({ type: 'error', text: 'Ingresa tu nombre completo.' });
           setLoading(false);
@@ -124,7 +117,7 @@ function UserAccountWorkspace({ compact = false }) {
         if (!res.success) {
           setFeedback({
             type: 'error',
-            text: res.message || 'Aviso al registrar miembro en Wix.',
+            text: res.message || 'No fue posible completar el registro.',
           });
           setLoading(false);
           return;
@@ -133,7 +126,6 @@ function UserAccountWorkspace({ compact = false }) {
         saveUser(res.member);
         setSelectedBranch(form.sucursalPreferida);
 
-        // Also pull any existing orders for this email
         const { orders: remoteOrders } = await fetchWixMemberProfileAndOrders(form.correo);
         if (remoteOrders && remoteOrders.length > 0) {
           mergeSyncedOrders(remoteOrders);
@@ -142,14 +134,14 @@ function UserAccountWorkspace({ compact = false }) {
         setFeedback({
           type: 'success',
           text: user
-            ? 'Perfil actualizado y sincronizado con Wix Members & CMS.'
-            : 'Cuenta creada y vinculada con Wix Members.',
+            ? 'Tus datos y sucursal preferida se actualizaron correctamente.'
+            : '¡Cuenta creada con éxito! Ya puedes gestionar tus pedidos y beneficios.',
         });
       }
     } catch {
       setFeedback({
         type: 'error',
-        text: 'Ocurrió un error al conectar con Wix Headless.',
+        text: 'Ocurrió un error de conexión. Intenta nuevamente.',
       });
     } finally {
       setLoading(false);
@@ -160,7 +152,7 @@ function UserAccountWorkspace({ compact = false }) {
     if (!form.correo.trim()) {
       setFeedback({
         type: 'info',
-        text: 'Escribe tu correo electrónico arriba para enviarte el enlace de recuperación de Wix Members.',
+        text: 'Escribe tu correo electrónico arriba para enviarte el enlace de recuperación.',
       });
       return;
     }
@@ -171,17 +163,6 @@ function UserAccountWorkspace({ compact = false }) {
       type: res.success ? 'success' : 'info',
       text: res.message,
     });
-  };
-
-  const handleOAuthRedirect = async () => {
-    setFeedback({
-      type: 'info',
-      text: 'Conectando con el portal de autorización de Wix Members OAuth...',
-    });
-    const res = await startWixOAuthRedirect(window.location.pathname);
-    if (!res.success && res.message) {
-      setFeedback({ type: 'info', text: res.message });
-    }
   };
 
   const handleManualSync = async () => {
@@ -199,7 +180,7 @@ function UserAccountWorkspace({ compact = false }) {
       }
       setFeedback({
         type: 'success',
-        text: `Sincronización con Wix Members completada (${remoteOrders?.length || 0} pedidos en la nube).`,
+        text: 'Tus pedidos y perfil están actualizados al día.',
       });
     } finally {
       setSyncingOrders(false);
@@ -209,26 +190,24 @@ function UserAccountWorkspace({ compact = false }) {
   const selectedBranch =
     sucursales.find((s) => s.slug === selectedBranchSlug) || sucursales[0];
 
-  const hasNativeToken = isWixMemberLoggedIn() || Boolean(user?.hasMemberTokens);
-
   return (
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: compact ? '1fr' : '290px 1fr',
-        gap: 24,
+        gridTemplateColumns: '300px 1fr',
+        gap: 28,
         alignItems: 'start',
       }}
       className="tienda-user-grid"
     >
-      {/* Left Navigation / Wix Member Status Card */}
+      {/* Left Navigation / Account Card */}
       <div
         style={{
           background: C.white,
-          borderRadius: 24,
-          border: `1px solid ${C.border}`,
-          padding: 22,
-          boxShadow: '0 10px 30px rgba(26, 31, 54, 0.04)',
+          borderRadius: 28,
+          border: '1px solid rgba(26, 31, 54, 0.08)',
+          padding: 24,
+          boxShadow: '0 14px 36px rgba(26, 31, 54, 0.04)',
         }}
       >
         <div
@@ -243,8 +222,8 @@ function UserAccountWorkspace({ compact = false }) {
         >
           <div
             style={{
-              width: 46,
-              height: 46,
+              width: 48,
+              height: 48,
               borderRadius: '50%',
               background: user ? C.red : C.navy,
               color: C.white,
@@ -252,7 +231,7 @@ function UserAccountWorkspace({ compact = false }) {
               alignItems: 'center',
               justifyContent: 'center',
               fontFamily: F.heading,
-              fontSize: 16,
+              fontSize: 17,
               fontWeight: 800,
               flexShrink: 0,
             }}
@@ -263,7 +242,7 @@ function UserAccountWorkspace({ compact = false }) {
             <div
               style={{
                 fontFamily: F.heading,
-                fontSize: 14,
+                fontSize: 14.5,
                 fontWeight: 800,
                 color: C.navy,
                 whiteSpace: 'nowrap',
@@ -271,11 +250,11 @@ function UserAccountWorkspace({ compact = false }) {
                 textOverflow: 'ellipsis',
               }}
             >
-              {user ? user.nombre : 'Wix Members'}
+              {user ? user.nombre : 'Mi Cuenta Jasman'}
             </div>
             <div
               style={{
-                fontSize: 11.5,
+                fontSize: 12,
                 color: C.gray,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -287,16 +266,16 @@ function UserAccountWorkspace({ compact = false }) {
           </div>
         </div>
 
-        {/* Wix Headless Connection Status Pill */}
+        {/* Account Status Pill */}
         <div
           style={{
-            padding: '10px 12px',
+            padding: '10px 14px',
             borderRadius: 14,
             background: user ? 'rgba(22, 163, 74, 0.07)' : '#F8FAFC',
             border: user
               ? '1px solid rgba(22, 163, 74, 0.22)'
               : '1px solid rgba(26, 31, 54, 0.07)',
-            marginBottom: 14,
+            marginBottom: 16,
           }}
         >
           <div
@@ -310,45 +289,40 @@ function UserAccountWorkspace({ compact = false }) {
             <span
               style={{
                 fontFamily: F.heading,
-                fontSize: 9.5,
+                fontSize: 10,
                 fontWeight: 800,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
                 color: user ? '#15803D' : C.navy,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 5,
+                gap: 6,
               }}
             >
-              <ShieldCheck size={13} color={user ? '#16A34A' : C.red} />
-              {user ? 'Wix Members Activo' : 'Wix Headless OAuth'}
+              <ShieldCheck size={14} color={user ? '#16A34A' : C.red} />
+              {user ? 'Cliente Verificado' : 'Acceso Clientes'}
             </span>
             <span
               style={{
                 width: 7,
                 height: 7,
                 borderRadius: '50%',
-                background: user ? '#16A34A' : '#F59E0B',
+                background: user ? '#16A34A' : '#CBD5E1',
               }}
             />
           </div>
-          <div style={{ fontSize: 10.5, color: '#64748B', marginTop: 4, lineHeight: 1.4 }}>
-            {user ? (
-              <>
-                ID: <strong>{String(user.wixMemberId || 'wix-member').slice(0, 14)}</strong>
-                {hasNativeToken ? ' · Token OAuth' : ' · Sincronizado CMS'}
-              </>
-            ) : (
-              <>Client ID: {WIX_CLIENT_ID.slice(0, 8)}… conectado</>
-            )}
+          <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+            {user
+              ? `Sucursal: ${selectedBranch?.name || 'Jasman Satélite'}`
+              : 'Guarda tus pedidos, facturas y medidas'}
           </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {[
-            { id: 'perfil', label: user ? 'Mi Perfil Wix' : 'Acceso Wix Members', icon: User },
+            { id: 'perfil', label: user ? 'Mis Datos Personales' : 'Iniciar Sesión / Registro', icon: User },
             { id: 'pedidos', label: `Mis Pedidos (${orders.length})`, icon: Package },
-            { id: 'beneficios', label: 'Cupones & Sucursal', icon: Tag },
+            { id: 'beneficios', label: 'Cupones y Sucursal', icon: Tag },
           ].map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -359,13 +333,13 @@ function UserAccountWorkspace({ compact = false }) {
                 onClick={() => setActiveTab(tab.id)}
                 style={{
                   width: '100%',
-                  padding: '11px 14px',
-                  borderRadius: 12,
+                  padding: '12px 14px',
+                  borderRadius: 14,
                   border: 'none',
                   background: active ? '#FFF1F2' : 'transparent',
                   color: active ? C.red : C.navy,
                   fontFamily: F.heading,
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: active ? 800 : 600,
                   display: 'flex',
                   alignItems: 'center',
@@ -390,13 +364,13 @@ function UserAccountWorkspace({ compact = false }) {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  marginTop: 4,
+                  marginTop: 6,
                   borderRadius: 12,
                   border: '1px solid rgba(26, 31, 54, 0.08)',
                   background: '#F8FAFC',
                   color: C.navy,
                   fontFamily: F.heading,
-                  fontSize: 11,
+                  fontSize: 11.5,
                   fontWeight: 700,
                   display: 'flex',
                   alignItems: 'center',
@@ -404,8 +378,8 @@ function UserAccountWorkspace({ compact = false }) {
                   cursor: 'pointer',
                 }}
               >
-                <RefreshCw size={13} className={syncingOrders ? 'wix-spin' : ''} />
-                <span>{syncingOrders ? 'Sincronizando...' : 'Sincronizar con Wix'}</span>
+                <RefreshCw size={13} />
+                <span>{syncingOrders ? 'Actualizando...' : 'Actualizar mis pedidos'}</span>
               </button>
 
               <button
@@ -421,7 +395,7 @@ function UserAccountWorkspace({ compact = false }) {
                   });
                   setFeedback({
                     type: 'info',
-                    text: 'Sesión de Wix Members cerrada correctamente.',
+                    text: 'Has cerrado sesión correctamente.',
                   });
                 }}
                 style={{
@@ -442,7 +416,7 @@ function UserAccountWorkspace({ compact = false }) {
                 }}
               >
                 <LogOut size={14} />
-                <span>Cerrar sesión Wix</span>
+                <span>Cerrar sesión</span>
               </button>
             </>
           )}
@@ -453,10 +427,10 @@ function UserAccountWorkspace({ compact = false }) {
       <div
         style={{
           background: C.white,
-          borderRadius: 24,
-          border: `1px solid ${C.border}`,
-          padding: compact ? 22 : 30,
-          boxShadow: '0 10px 30px rgba(26, 31, 54, 0.04)',
+          borderRadius: 28,
+          border: '1px solid rgba(26, 31, 54, 0.08)',
+          padding: '32px 36px',
+          boxShadow: '0 14px 36px rgba(26, 31, 54, 0.04)',
         }}
       >
         {activeTab === 'perfil' && (
@@ -483,22 +457,23 @@ function UserAccountWorkspace({ compact = false }) {
                     color: C.red,
                   }}
                 >
-                  Wix Members · Headless Identity
+                  Portal de Clientes Jasman
                 </span>
                 <h3
                   style={{
                     fontFamily: F.heading,
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: 900,
                     color: C.navy,
                     margin: '4px 0 0',
+                    letterSpacing: '-0.02em',
                   }}
                 >
                   {user
-                    ? 'Tu Perfil de Miembro Wix'
+                    ? 'Tus Datos y Sucursal Preferida'
                     : authMode === 'login'
-                    ? 'Iniciar Sesión con Wix Members'
-                    : 'Crear Cuenta en Wix Members'}
+                    ? 'Inicia Sesión en tu Cuenta'
+                    : 'Crea tu Cuenta de Cliente'}
                 </h3>
               </div>
 
@@ -518,13 +493,13 @@ function UserAccountWorkspace({ compact = false }) {
                       setFeedback(null);
                     }}
                     style={{
-                      padding: '7px 14px',
+                      padding: '8px 16px',
                       borderRadius: 9999,
                       border: 'none',
                       background: authMode === 'login' ? C.navy : 'transparent',
                       color: authMode === 'login' ? '#FFFFFF' : '#64748B',
                       fontFamily: F.heading,
-                      fontSize: 11,
+                      fontSize: 11.5,
                       fontWeight: 800,
                       cursor: 'pointer',
                     }}
@@ -538,13 +513,13 @@ function UserAccountWorkspace({ compact = false }) {
                       setFeedback(null);
                     }}
                     style={{
-                      padding: '7px 14px',
+                      padding: '8px 16px',
                       borderRadius: 9999,
                       border: 'none',
                       background: authMode === 'register' ? C.red : 'transparent',
                       color: authMode === 'register' ? '#FFFFFF' : '#64748B',
                       fontFamily: F.heading,
-                      fontSize: 11,
+                      fontSize: 11.5,
                       fontWeight: 800,
                       cursor: 'pointer',
                     }}
@@ -555,17 +530,17 @@ function UserAccountWorkspace({ compact = false }) {
               )}
             </div>
 
-            <p style={{ fontSize: 13, color: C.gray, margin: '0 0 20px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 13.5, color: C.gray, margin: '0 0 22px', lineHeight: 1.55 }}>
               {user
-                ? 'Tus datos, sucursal preferida y pedidos están sincronizados con Wix Members y el CMS de Jasman Automotriz.'
+                ? 'Tus datos, sucursal de instalación y pedidos se mantienen guardados para agilizar tus próximas compras.'
                 : authMode === 'login'
-                ? 'Accede con tu correo y contraseña de miembro Wix para recuperar tu historial de pedidos, medidas guardadas y beneficios.'
-                : 'Regístrate en Wix Members para guardar tus pedidos, agilizar tu instalación en sucursal y activar descuentos exclusivos.'}
+                ? 'Accede con tu correo y contraseña para consultar el estado de tus pedidos, citas de montaje y cupones disponibles.'
+                : 'Regístrate para dar seguimiento a tus compras en línea, elegir tu sucursal Jasman preferida y activar descuentos exclusivos.'}
             </p>
 
             <form
               onSubmit={handleAuthSubmit}
-              style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
             >
               {(authMode === 'register' || user) && (
                 <div>
@@ -591,11 +566,11 @@ function UserAccountWorkspace({ compact = false }) {
                     placeholder="Ej. Roberto Sánchez"
                     style={{
                       width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: 12,
+                      padding: '13px 16px',
+                      borderRadius: 14,
                       border: `1px solid ${C.border}`,
                       fontFamily: F.body,
-                      fontSize: 13.5,
+                      fontSize: 14,
                       color: C.navy,
                       outline: 'none',
                     }}
@@ -606,10 +581,10 @@ function UserAccountWorkspace({ compact = false }) {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns:
-                    compact || (authMode === 'login' && !user) ? '1fr' : '1fr 1fr',
-                  gap: 14,
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 16,
                 }}
+                className="tienda-user-form-row"
               >
                 <div>
                   <label
@@ -626,7 +601,7 @@ function UserAccountWorkspace({ compact = false }) {
                       marginBottom: 6,
                     }}
                   >
-                    <Mail size={12} color={C.red} /> Correo Wix Members *
+                    <Mail size={12} color={C.red} /> Correo Electrónico *
                   </label>
                   <input
                     type="email"
@@ -636,11 +611,11 @@ function UserAccountWorkspace({ compact = false }) {
                     placeholder="cliente@correo.com"
                     style={{
                       width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: 12,
+                      padding: '13px 16px',
+                      borderRadius: 14,
                       border: `1px solid ${C.border}`,
                       fontFamily: F.body,
-                      fontSize: 13.5,
+                      fontSize: 14,
                       color: C.navy,
                       outline: 'none',
                     }}
@@ -675,7 +650,7 @@ function UserAccountWorkspace({ compact = false }) {
                             background: 'transparent',
                             color: C.red,
                             fontFamily: F.heading,
-                            fontSize: 9.5,
+                            fontSize: 10,
                             fontWeight: 800,
                             cursor: 'pointer',
                             padding: 0,
@@ -692,15 +667,15 @@ function UserAccountWorkspace({ compact = false }) {
                       placeholder={
                         authMode === 'register'
                           ? 'Mínimo 6 caracteres'
-                          : 'Tu contraseña de Wix Members'
+                          : 'Ingresa tu contraseña'
                       }
                       style={{
                         width: '100%',
-                        padding: '12px 14px',
-                        borderRadius: 12,
+                        padding: '13px 16px',
+                        borderRadius: 14,
                         border: `1px solid ${C.border}`,
                         fontFamily: F.body,
-                        fontSize: 13.5,
+                        fontSize: 14,
                         color: C.navy,
                         outline: 'none',
                       }}
@@ -722,7 +697,7 @@ function UserAccountWorkspace({ compact = false }) {
                         marginBottom: 6,
                       }}
                     >
-                      Teléfono WhatsApp
+                      Teléfono / WhatsApp
                     </label>
                     <input
                       type="tel"
@@ -731,11 +706,11 @@ function UserAccountWorkspace({ compact = false }) {
                       placeholder="55 1234 5678"
                       style={{
                         width: '100%',
-                        padding: '12px 14px',
-                        borderRadius: 12,
+                        padding: '13px 16px',
+                        borderRadius: 14,
                         border: `1px solid ${C.border}`,
                         fontFamily: F.body,
-                        fontSize: 13.5,
+                        fontSize: 14,
                         color: C.navy,
                         outline: 'none',
                       }}
@@ -767,11 +742,11 @@ function UserAccountWorkspace({ compact = false }) {
                     }
                     style={{
                       width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: 12,
+                      padding: '13px 16px',
+                      borderRadius: 14,
                       border: `1px solid ${C.border}`,
                       fontFamily: F.body,
-                      fontSize: 13.5,
+                      fontSize: 14,
                       color: C.navy,
                       background: C.white,
                       outline: 'none',
@@ -789,8 +764,8 @@ function UserAccountWorkspace({ compact = false }) {
               {feedback && (
                 <div
                   style={{
-                    padding: '11px 14px',
-                    borderRadius: 12,
+                    padding: '12px 16px',
+                    borderRadius: 14,
                     background:
                       feedback.type === 'error'
                         ? '#FEF2F2'
@@ -809,7 +784,7 @@ function UserAccountWorkspace({ compact = false }) {
                         : feedback.type === 'info'
                         ? C.navy
                         : '#15803D',
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: 600,
                     display: 'flex',
                     alignItems: 'center',
@@ -826,7 +801,7 @@ function UserAccountWorkspace({ compact = false }) {
                   display: 'flex',
                   alignItems: 'center',
                   flexWrap: 'wrap',
-                  gap: 10,
+                  gap: 12,
                   marginTop: 4,
                 }}
               >
@@ -834,8 +809,8 @@ function UserAccountWorkspace({ compact = false }) {
                   type="submit"
                   disabled={loading}
                   style={{
-                    padding: '13px 22px',
-                    borderRadius: 12,
+                    padding: '14px 26px',
+                    borderRadius: 14,
                     border: 'none',
                     background: C.red,
                     color: C.white,
@@ -854,38 +829,14 @@ function UserAccountWorkspace({ compact = false }) {
                   <KeyRound size={14} />
                   <span>
                     {loading
-                      ? 'Conectando con Wix...'
+                      ? 'Procesando...'
                       : user
-                      ? 'Guardar y Sincronizar en Wix'
+                      ? 'Guardar Cambios'
                       : authMode === 'login'
-                      ? 'Iniciar Sesión Wix Members'
-                      : 'Registrar en Wix Members'}
+                      ? 'Iniciar Sesión'
+                      : 'Crear mi Cuenta'}
                   </span>
                 </button>
-
-                {!user && (
-                  <button
-                    type="button"
-                    onClick={handleOAuthRedirect}
-                    style={{
-                      padding: '13px 18px',
-                      borderRadius: 12,
-                      border: '1px solid rgba(26, 31, 54, 0.12)',
-                      background: '#F8FAFC',
-                      color: C.navy,
-                      fontFamily: F.heading,
-                      fontSize: 11.5,
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 7,
-                    }}
-                  >
-                    <ExternalLink size={13} color={C.red} />
-                    <span>Acceso OAuth Wix SSO</span>
-                  </button>
-                )}
               </div>
             </form>
           </div>
@@ -913,10 +864,10 @@ function UserAccountWorkspace({ compact = false }) {
                     margin: '0 0 4px',
                   }}
                 >
-                  Historial de Pedidos Wix Members
+                  Mis Pedidos
                 </h3>
                 <p style={{ fontSize: 13, color: C.gray, margin: 0 }}>
-                  Órdenes vinculadas a tu cuenta de miembro y sucursal seleccionada.
+                  Órdenes de compra y solicitudes de instalación registradas en tu cuenta.
                 </p>
               </div>
 
@@ -940,7 +891,7 @@ function UserAccountWorkspace({ compact = false }) {
                     gap: 6,
                   }}
                 >
-                  <RefreshCw size={12} /> Actualizar desde Wix CMS
+                  <RefreshCw size={12} /> Actualizar historial
                 </button>
               )}
             </div>
@@ -1081,7 +1032,7 @@ function UserAccountWorkspace({ compact = false }) {
                 margin: 0,
               }}
             >
-              Mis Beneficios Wix Members & Sucursal
+              Mis Beneficios y Sucursal
             </h3>
 
             {/* Coupon status card */}
@@ -1201,13 +1152,13 @@ export default function TiendaUserSection() {
     <section
       id="seccion-usuario"
       style={{
-        padding: '84px 24px',
-        background: '#F4F5F8',
-        borderTop: `1px solid ${C.border}`,
+        padding: '96px 24px',
+        background: '#F8F9FA',
+        borderTop: '1px solid rgba(26, 31, 54, 0.07)',
       }}
     >
       <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-        <div style={{ marginBottom: 32 }}>
+        <div style={{ marginBottom: 36 }}>
           <div
             style={{
               display: 'inline-flex',
@@ -1216,7 +1167,7 @@ export default function TiendaUserSection() {
               padding: '6px 14px',
               borderRadius: 9999,
               background: C.white,
-              border: `1px solid ${C.border}`,
+              border: '1px solid rgba(26, 31, 54, 0.08)',
               marginBottom: 12,
             }}
           >
@@ -1231,33 +1182,36 @@ export default function TiendaUserSection() {
                 color: C.navy,
               }}
             >
-              Área de Cliente · Wix Members Conectado
+              Área de Cliente Jasman
             </span>
           </div>
           <h2
             style={{
               fontFamily: F.heading,
-              fontSize: 'clamp(1.75rem, 3vw, 2.5rem)',
+              fontSize: 'clamp(1.85rem, 3.2vw, 2.6rem)',
               fontWeight: 900,
               color: C.navy,
-              letterSpacing: '-0.025em',
+              letterSpacing: '-0.03em',
               margin: '0 0 8px',
             }}
           >
-            Tu Cuenta, Pedidos y Beneficios Wix Members
+            Mi Cuenta, Pedidos y Beneficios
           </h2>
-          <p style={{ fontSize: 14.5, color: C.gray, margin: 0, maxWidth: 640 }}>
-            Inicia sesión o regístrate con Wix Members para sincronizar tus órdenes de compra,
-            sucursal Jasman preferida y cupones activos.
+          <p style={{ fontSize: 14.5, color: C.gray, margin: 0, maxWidth: 620 }}>
+            Inicia sesión o crea tu cuenta para gestionar tus órdenes de compra, elegir tu
+            sucursal Jasman preferida y aplicar tus descuentos activos.
           </p>
         </div>
 
-        <UserAccountWorkspace compact={false} />
+        <UserAccountWorkspace />
       </div>
 
       <style>{`
         @media (max-width: 860px) {
           .tienda-user-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .tienda-user-form-row {
             grid-template-columns: 1fr !important;
           }
         }
@@ -1266,95 +1220,7 @@ export default function TiendaUserSection() {
   );
 }
 
+// Legacy export kept as null so no sidebar is ever rendered
 export function TiendaUserDrawer() {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const handleUI = (e) => {
-      if (e.detail?.type === 'OPEN_USER') {
-        setOpen(true);
-      }
-    };
-    window.addEventListener('jasman-tienda-ui', handleUI);
-    return () => window.removeEventListener('jasman-tienda-ui', handleUI);
-  }, []);
-
-  if (!open) return null;
-
-  return (
-    <div
-      onClick={(e) => {
-        if (e.target === e.currentTarget) setOpen(false);
-      }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9998,
-        background: 'rgba(13, 16, 28, 0.58)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        display: 'flex',
-        justifyContent: 'flex-end',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 540,
-          height: '100%',
-          background: '#F4F5F8',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '-24px 0 60px rgba(0,0,0,0.22)',
-        }}
-      >
-        <div
-          style={{
-            padding: '20px 24px',
-            background: C.white,
-            borderBottom: `1px solid ${C.border}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <User size={18} color={C.red} />
-            <span
-              style={{
-                fontFamily: F.heading,
-                fontSize: 15,
-                fontWeight: 800,
-                color: C.navy,
-              }}
-            >
-              Mi Cuenta · Wix Members
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: '50%',
-              border: `1px solid ${C.border}`,
-              background: C.white,
-              color: C.navy,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-          <UserAccountWorkspace compact={true} />
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }

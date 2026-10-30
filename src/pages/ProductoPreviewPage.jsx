@@ -7,7 +7,7 @@ import { useTiendaState, getVolumeDiscountTier } from '../hooks/useTiendaState';
 import { useAppleTilt } from '../hooks/useAppleScrollPhysics';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
-import { TiendaUserDrawer } from '../components/tienda/TiendaUserSection';
+import TiendaUserSection from '../components/tienda/TiendaUserSection';
 import {
   ArrowLeft,
   ShoppingBag,
@@ -351,7 +351,6 @@ export default function ProductoPreviewPage() {
     <div style={{ background: '#F8F9FA', minHeight: '100vh', color: C.navy }}>
       <TiendaNavbar />
       <TiendaCartDrawer />
-      <TiendaUserDrawer />
 
       <div
         style={{
@@ -1341,14 +1340,14 @@ export default function ProductoPreviewPage() {
                         activeVolumeTier.percent >= 10
                           ? '#16A34A'
                           : activeVolumeTier.percent >= 5
-                          ? 'rgba(22, 163, 74, 0.12)'
-                          : 'rgba(196, 30, 36, 0.09)',
+                            ? 'rgba(22, 163, 74, 0.12)'
+                            : 'rgba(196, 30, 36, 0.09)',
                       color:
                         activeVolumeTier.percent >= 10
                           ? '#FFFFFF'
                           : activeVolumeTier.percent >= 5
-                          ? '#15803D'
-                          : C.red,
+                            ? '#15803D'
+                            : C.red,
                       fontFamily: F.heading,
                       fontSize: 9.5,
                       fontWeight: 800,
@@ -1359,8 +1358,8 @@ export default function ProductoPreviewPage() {
                     {activeVolumeTier.percent >= 10
                       ? '✓ 10% OFF Máximo Activo'
                       : activeVolumeTier.percent >= 5
-                      ? '✓ 5% OFF Activo'
-                      : 'Hasta −10% Extra'}
+                        ? '✓ 5% OFF Activo'
+                        : 'Hasta −10% Extra'}
                   </span>
                 </div>
 
@@ -1470,14 +1469,14 @@ export default function ProductoPreviewPage() {
                               opt.rate >= 0.1
                                 ? C.red
                                 : opt.rate >= 0.05
-                                ? 'rgba(22, 163, 74, 0.14)'
-                                : 'rgba(26, 31, 54, 0.07)',
+                                  ? 'rgba(22, 163, 74, 0.14)'
+                                  : 'rgba(26, 31, 54, 0.07)',
                             color:
                               opt.rate >= 0.1
                                 ? '#FFFFFF'
                                 : opt.rate >= 0.05
-                                ? '#15803D'
-                                : '#64748B',
+                                  ? '#15803D'
+                                  : '#64748B',
                             fontFamily: F.heading,
                             fontSize: 8.5,
                             fontWeight: 800,
@@ -1749,7 +1748,7 @@ export default function ProductoPreviewPage() {
               {[
                 {
                   id: 'ficha',
-                  title: 'Ficha Técnica Oficial (CSV)',
+                  title: 'Ficha Técnica Oficial',
                   content: (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {specRows.map((row) => (
@@ -2259,6 +2258,9 @@ export default function ProductoPreviewPage() {
           </div>
         </div>
       </div>
+
+      {/* Dedicated Full-Width User Account Section */}
+      <TiendaUserSection />
 
       <style>{`
         @media (max-width: 940px) {
