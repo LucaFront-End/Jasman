@@ -16,6 +16,9 @@ import VacanteDetailPage from './pages/VacanteDetailPage';
 import ProveedoresPage from './pages/ProveedoresPage';
 import ContactoPage from './pages/ContactoPage';
 import LandingAlineacionPage from './pages/LandingAlineacionPage';
+import LandingTiendaPreviewPage from './pages/LandingTiendaPreviewPage';
+import ProductoPreviewPage from './pages/ProductoPreviewPage';
+import HomeTiendaPreviewPage from './pages/HomeTiendaPreviewPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -35,10 +38,13 @@ export default function App() {
     hostname.startsWith('alineacion.') ||
     hostname.startsWith('landing.');
 
+  const isDedicatedStoreLanding = pathname.startsWith('/landing-tienda-preview');
+  const isStorePreviewRoute = pathname.includes('tienda-preview');
+
   return (
     <>
       <ScrollToTop />
-      <Navbar />
+      {!isDedicatedStoreLanding && <Navbar />}
       <ScrollProgress />
       <main>
         <Routes>
@@ -62,13 +68,21 @@ export default function App() {
           <Route path="/bolsa-de-trabajo/:id" element={<VacanteDetailPage />} />
           <Route path="/proveedores" element={<ProveedoresPage />} />
           <Route path="/contacto" element={<ContactoPage />} />
+          {/* Preview routes (isolated from production menus) */}
+          <Route path="/landing-tienda-preview" element={<LandingTiendaPreviewPage />} />
+          <Route path="/landing-tienda-preview/producto/:id" element={<ProductoPreviewPage />} />
+          <Route path="/home-tienda-preview" element={<HomeTiendaPreviewPage />} />
         </Routes>
       </main>
       <Footer />
-      {/* Hide general promotion popup when already on a dedicated landing page */}
-      {!isLandingSubdomain && !pathname.includes('alineacion') && !pathname.includes('alineación') && !pathname.includes('llantas') && (
-        <PromotionsPopup />
-      )}
+      {/* Hide general promotion popup when already on a dedicated landing or store preview page */}
+      {!isLandingSubdomain &&
+        !isStorePreviewRoute &&
+        !pathname.includes('alineacion') &&
+        !pathname.includes('alineación') &&
+        !pathname.includes('llantas') && (
+          <PromotionsPopup />
+        )}
     </>
   );
 }

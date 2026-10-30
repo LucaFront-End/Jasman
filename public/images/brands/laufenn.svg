@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 56" fill="none">
+  <!-- Laufenn dynamic red shield/wing crest -->
+  <g transform="translate(4, 8)">
+    <path d="M4 6 L34 6 L26 36 L0 36 Z" fill="#C41E24"/>
+    <path d="M15 12 L27 12 L22 30 L10 30 Z" fill="#FFFFFF"/>
+    <path d="M26 6 L42 6 L34 36 L22 36 Z" fill="#1A1F36" opacity="0.9"/>
+  </g>
+  <!-- Laufenn italic wordmark -->
+  <g transform="translate(56, 39) skewX(-10)">
+    <text x="0" y="0" font-family="'Montserrat', 'Helvetica Neue', sans-serif" font-weight="900" font-size="35" letter-spacing="-0.5" fill="#C41E24">Laufenn</text>
+  </g>
+  <text x="58" y="51" font-family="'Inter', sans-serif" font-weight="700" font-size="8.5" letter-spacing="3" fill="#6B7280">BY HANKOOK</text>
+</svg>
+

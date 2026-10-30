@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 56" fill="none">
+  <!-- Euzkadi iconic geometric diamond/tread emblem -->
+  <g transform="translate(4, 6)">
+    <polygon points="22,0 44,22 22,44 0,22" fill="#C41E24"/>
+    <polygon points="22,8 36,22 22,36 8,22" fill="#FFFFFF"/>
+    <polygon points="22,14 30,22 22,30 14,22" fill="#1A1F36"/>
+  </g>
+  <!-- Bold slanted industrial Euzkadi wordmark -->
+  <g transform="translate(60, 40) skewX(-11)">
+    <text x="0" y="0" font-family="'Montserrat', 'Arial Black', sans-serif" font-weight="900" font-size="36" letter-spacing="2" fill="#1A1F36">EUZKADI</text>
+  </g>
+  <rect x="60" y="45" width="234" height="4" rx="2" fill="#C41E24"/>
+</svg>
+
