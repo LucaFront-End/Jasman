@@ -586,7 +586,7 @@ export default function LandingTiendaPreviewPage() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            padding: '104px 24px 32px',
+            padding: '124px 24px 28px',
             color: C.navy,
           }}
         >

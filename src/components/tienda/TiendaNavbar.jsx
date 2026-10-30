@@ -52,18 +52,19 @@ export default function TiendaNavbar() {
       <div
         style={{
           width: '100%',
-          height: 30,
+          height: scrolled ? 0 : 28,
+          opacity: scrolled ? 0 : 1,
           background: C.navy,
           color: '#FFFFFF',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          borderBottom: scrolled ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
-          pointerEvents: 'auto',
+          pointerEvents: scrolled ? 'none' : 'auto',
           position: 'relative',
+          transition: 'height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
         }}
       >
-        {/* Left & Right subtle fade masks */}
         <div
           style={{
             position: 'absolute',
@@ -109,11 +110,12 @@ export default function TiendaNavbar() {
                     alignItems: 'center',
                     gap: 8,
                     fontFamily: F.heading,
-                    fontSize: 10,
+                    fontSize: 9.5,
                     fontWeight: 800,
-                    letterSpacing: '0.16em',
+                    letterSpacing: '0.15em',
                     textTransform: 'uppercase',
                     color: idx === 0 ? '#FFFFFF' : 'rgba(255, 255, 255, 0.85)',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {idx === 0 ? (
@@ -126,7 +128,7 @@ export default function TiendaNavbar() {
                         borderRadius: 9999,
                         background: C.red,
                         color: '#FFFFFF',
-                        fontSize: 9,
+                        fontSize: 8.5,
                         fontWeight: 900,
                         letterSpacing: '0.12em',
                         gap: 4,
@@ -156,27 +158,27 @@ export default function TiendaNavbar() {
       {/* Main Floating Apple-Style Glass Pill Navbar */}
       <div
         style={{
-          padding: scrolled ? '8px 20px 0' : '12px 20px 0',
+          padding: scrolled ? '10px 20px 0' : '10px 20px 0',
           transition: 'padding 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
         <div
           style={{
-            maxWidth: scrolled ? 1080 : 1220,
+            maxWidth: scrolled ? 1140 : 1240,
             margin: '0 auto',
-            padding: scrolled ? '10px 16px 10px 22px' : '12px 18px 12px 24px',
+            padding: scrolled ? '9px 16px 9px 20px' : '10px 18px 10px 22px',
             borderRadius: 9999,
-            background: 'rgba(255, 255, 255, 0.90)',
+            background: 'rgba(255, 255, 255, 0.92)',
             backdropFilter: 'saturate(180%) blur(24px)',
             WebkitBackdropFilter: 'saturate(180%) blur(24px)',
             border: '1px solid rgba(26, 31, 54, 0.08)',
             boxShadow: scrolled
               ? '0 18px 44px rgba(26, 31, 54, 0.09)'
-              : '0 12px 32px rgba(26, 31, 54, 0.05)',
+              : '0 10px 28px rgba(26, 31, 54, 0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 16,
+            gap: 14,
             pointerEvents: 'auto',
             transition: 'all 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
@@ -189,15 +191,18 @@ export default function TiendaNavbar() {
               alignItems: 'center',
               gap: 10,
               textDecoration: 'none',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
             }}
           >
             <img
               src="/images/logo/logo-01.png"
               alt="Jasman Automotriz"
               style={{
-                height: 32,
+                height: 30,
                 width: 'auto',
                 objectFit: 'contain',
+                flexShrink: 0,
               }}
             />
             <span
@@ -205,24 +210,28 @@ export default function TiendaNavbar() {
                 fontFamily: F.heading,
                 fontSize: 9.5,
                 fontWeight: 800,
-                letterSpacing: '0.24em',
+                letterSpacing: '0.22em',
                 textTransform: 'uppercase',
                 color: C.red,
                 borderLeft: '1px solid rgba(26, 31, 54, 0.12)',
                 paddingLeft: 10,
+                whiteSpace: 'nowrap',
               }}
             >
               Tienda
             </span>
           </Link>
 
-          {/* Center: Minimalist Apple-style navigation with Mega-Dropdown for Medidas & Marcas */}
+          {/* Center: Minimalist Apple-style navigation (strictly single-line nowrap) */}
           <nav
             className="tienda-apple-nav"
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: 4,
+              flex: 1,
+              minWidth: 0,
             }}
           >
             {navItems.map((item) => {
@@ -230,7 +239,7 @@ export default function TiendaNavbar() {
                 item.href.startsWith('/landing-tienda-preview#') &&
                 pathname === '/landing-tienda-preview';
               const linkStyle = {
-                padding: '7px 14px',
+                padding: '7px 13px',
                 borderRadius: 9999,
                 fontFamily: F.heading,
                 fontSize: 12,
@@ -241,6 +250,8 @@ export default function TiendaNavbar() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 4,
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
                 transition: 'all 0.25s ease',
               };
 
@@ -283,8 +294,15 @@ export default function TiendaNavbar() {
             })}
           </nav>
 
-          {/* Right: Minimalist Action Pills */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Right: Minimalist Action Pills (strictly single-line nowrap) */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              flexShrink: 0,
+            }}
+          >
             {!isProductPage && (
               <button
                 type="button"
@@ -303,11 +321,13 @@ export default function TiendaNavbar() {
                   fontFamily: F.heading,
                   fontSize: 10.5,
                   fontWeight: 800,
-                  letterSpacing: '0.06em',
+                  letterSpacing: '0.04em',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 6,
+                  gap: 5,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                   transition: 'all 0.25s ease',
                 }}
               >
@@ -335,6 +355,8 @@ export default function TiendaNavbar() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
                 transition: 'all 0.25s ease',
               }}
             >
@@ -360,7 +382,9 @@ export default function TiendaNavbar() {
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 7,
+                gap: 6,
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
                 boxShadow: '0 6px 20px rgba(196, 30, 36, 0.3)',
                 transition: 'transform 0.25s ease',
               }}
@@ -384,6 +408,7 @@ export default function TiendaNavbar() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                flexShrink: 0,
               }}
             >
               {mobileMenu ? <X size={16} /> : <Menu size={16} />}
@@ -469,7 +494,7 @@ export default function TiendaNavbar() {
         .tienda-shipping-marquee-track:hover {
           animation-play-state: paused;
         }
-        @media (max-width: 880px) {
+        @media (max-width: 960px) {
           .tienda-apple-nav { display: none !important; }
           .tienda-apple-burger { display: inline-flex !important; }
         }
