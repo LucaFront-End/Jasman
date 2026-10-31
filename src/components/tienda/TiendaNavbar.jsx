@@ -33,7 +33,7 @@ export default function TiendaNavbar() {
     { label: 'Medidas más pedidas', href: '/landing-tienda-preview#catalogo-tienda', hasMega: true },
     { label: 'Marcas', href: '/landing-tienda-preview#marcas-tienda', hasMega: true },
     { label: 'Catálogo', href: '/landing-tienda-preview#catalogo-tienda' },
-    { label: 'Cuenta', href: '/landing-tienda-preview#seccion-usuario' },
+    { label: 'Cuenta', href: '/landing-tienda-preview/cuenta' },
   ];
 
   return (
@@ -336,9 +336,8 @@ export default function TiendaNavbar() {
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={() => triggerTiendaUI({ type: 'OPEN_USER' })}
+            <Link
+              to="/landing-tienda-preview/cuenta"
               aria-label="Mi Cuenta"
               style={{
                 padding: '7px 13px',
@@ -351,7 +350,7 @@ export default function TiendaNavbar() {
                 fontFamily: F.heading,
                 fontSize: 11.5,
                 fontWeight: 700,
-                cursor: 'pointer',
+                textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
@@ -364,7 +363,7 @@ export default function TiendaNavbar() {
               <span className="tienda-apple-user-txt">
                 {user ? user.nombre.split(' ')[0] : 'Cuenta'}
               </span>
-            </button>
+            </Link>
 
             <button
               type="button"

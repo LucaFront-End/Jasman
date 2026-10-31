@@ -11,7 +11,6 @@ import Promotions from '../components/Promotions';
 import CTA from '../components/CTA';
 import TiendaCatalogSection from '../components/tienda/TiendaCatalogSection';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
-import TiendaUserSection from '../components/tienda/TiendaUserSection';
 import FirstPurchasePopup from '../components/tienda/FirstPurchasePopup';
 import { C, F } from '../hooks/useAnimations';
 import { useTiendaState, triggerTiendaUI } from '../hooks/useTiendaState';
@@ -109,9 +108,8 @@ export default function HomeTiendaPreviewPage() {
           {coupon ? '10% Activo' : '−10%'}
         </button>
 
-        <button
-          type="button"
-          onClick={() => triggerTiendaUI({ type: 'OPEN_USER' })}
+        <Link
+          to="/landing-tienda-preview/cuenta"
           style={{
             padding: '9px 13px',
             borderRadius: 9999,
@@ -121,14 +119,14 @@ export default function HomeTiendaPreviewPage() {
             fontFamily: F.heading,
             fontSize: 11,
             fontWeight: 700,
-            cursor: 'pointer',
+            textDecoration: 'none',
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
           }}
         >
           <User size={13} /> {user ? user.nombre.split(' ')[0] : 'Cuenta'}
-        </button>
+        </Link>
 
         <button
           type="button"
@@ -158,10 +156,9 @@ export default function HomeTiendaPreviewPage() {
       {/* 2. Original Production Brands Marquee */}
       <BrandsMarquee />
 
-      {/* 3. NEW INTEGRATED STORE & PRODUCTS SECTION + USER ACCOUNT SECTION */}
+      {/* 3. NEW INTEGRATED STORE & PRODUCTS SECTION */}
       <div id="tienda-home-section">
         <TiendaCatalogSection id="catalogo-home-preview" isHomePreview />
-        <TiendaUserSection />
       </div>
 
       {/* 4. Remaining Original Production Home Sections Preserved Intact */}

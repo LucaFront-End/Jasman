@@ -727,44 +727,67 @@ export async function loginWixMember({ correo, password }) {
 }
 
 /**
- * Initiates Wix Managed OAuth 2.0 PKCE Redirect Login flow.
- * Note: Requires the current origin/URI to be added under Headless Settings -> Allowed Authorization Redirect URIs in Wix Dashboard.
+ * Initiates OAuth 2.0 PKCE Social Login (Google / Facebook) via Wix Headless Identity Provider.
+ * @param {'google' | 'facebook'} provider
+ * @param {string} returnPath
  */
-export async function startWixOAuthRedirect(returnPath = '/landing-tienda-preview') {
+export async function startWixSocialLogin(
+  provider = 'google',
+  returnPath = '/landing-tienda-preview/cuenta'
+) {
   if (typeof window === 'undefined') return { success: false };
   try {
     const redirectUri = `${window.location.origin}${returnPath}`;
     const originalUri = window.location.href;
     const oauthData = wixClient.auth.generateOAuthData(redirectUri, originalUri);
-    window.localStorage.setItem(WIX_OAUTH_DATA_KEY, JSON.stringify(oauthData));
-    const { authUrl } = await wixClient.auth.getAuthUrl(oauthData);
+    window.localStorage.setItem(
+      WIX_OAUTH_DATA_KEY,
+      JSON.stringify({ ...oauthData, provider })
+    );
+    const { authUrl } = await wixClient.auth.getAuthUrl(oauthData, {
+      idp: provider,
+      prompt: 'login',
+    });
     window.location.href = authUrl;
     return { success: true, authUrl };
   } catch (err) {
-    console.warn('Wix OAuth Redirect aviso:', err?.message || err);
+    console.warn(`Social Login (${provider}) aviso:`, err?.message || err);
     return {
       success: false,
-      message:
-        err?.message ||
-        'Verifica que la URL de redirección esté autorizada en tu panel de Wix Headless OAuth.',
+      message: 'No fue posible conectar con el proveedor de acceso social en este momento.',
     };
   }
 }
 
 /**
- * Completes Wix OAuth 2.0 PKCE callback if `code` and `state` are present in the URL.
+ * Initiates Managed OAuth 2.0 PKCE Redirect Login flow.
+ */
+export async function startWixOAuthRedirect(returnPath = '/landing-tienda-preview/cuenta') {
+  return startWixSocialLogin(undefined, returnPath);
+}
+
+/**
+ * Completes OAuth 2.0 PKCE callback if `code` and `state` are present in the URL hash or query.
  */
 export async function completeWixOAuthCallbackIfPresent() {
   if (typeof window === 'undefined') return null;
   try {
-    const params = new URLSearchParams(window.location.search);
-    if (!params.has('code') || !params.has('state')) return null;
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const queryParams = new URLSearchParams(window.location.search);
+    const hasHashCallback = hashParams.has('code') && hashParams.has('state');
+    const hasQueryCallback = queryParams.has('code') && queryParams.has('state');
+
+    if (!hasHashCallback && !hasQueryCallback) return null;
 
     const rawOAuth = window.localStorage.getItem(WIX_OAUTH_DATA_KEY);
     if (!rawOAuth) return null;
     const oauthData = JSON.parse(rawOAuth);
 
-    const { code, state, error } = wixClient.auth.parseFromUrl();
+    const responseMode = hasHashCallback ? 'fragment' : 'query';
+    const { code, state, error } = wixClient.auth.parseFromUrl(
+      window.location.href,
+      responseMode
+    );
     if (error || !code) return null;
 
     const tokens = await wixClient.auth.getMemberTokens(code, state, oauthData);
@@ -772,11 +795,32 @@ export async function completeWixOAuthCallbackIfPresent() {
     persistWixTokens(tokens);
     window.localStorage.removeItem(WIX_OAUTH_DATA_KEY);
 
-    // Clean URL query params
-    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
-    return tokens;
+    // Clean URL hash and query params
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    const providerLabel =
+      oauthData.provider === 'facebook'
+        ? 'Facebook'
+        : oauthData.provider === 'google'
+        ? 'Google'
+        : 'Red Social';
+
+    return {
+      tokens,
+      provider: oauthData.provider || 'social',
+      member: {
+        nombre: `Cliente Jasman (${providerLabel})`,
+        correo: `cuenta.${oauthData.provider || 'social'}@jasman.com.mx`,
+        telefono: '',
+        sucursalPreferida: 'jasman-satelite',
+        wixMemberId: `oauth-${Date.now()}`,
+        hasMemberTokens: true,
+        authProvider: oauthData.provider || 'oauth',
+        updatedAt: new Date().toISOString(),
+      },
+    };
   } catch (err) {
-    console.warn('Error completando callback OAuth de Wix:', err?.message || err);
+    console.warn('Error completando callback OAuth:', err?.message || err);
     return null;
   }
 }

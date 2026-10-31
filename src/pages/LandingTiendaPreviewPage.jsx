@@ -16,7 +16,6 @@ import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import Tire3DStudioStage from '../components/tienda/Tire3DStudioStage';
 import TiendaStickyShowcase from '../components/tienda/TiendaStickyShowcase';
 import TiendaCatalogSection from '../components/tienda/TiendaCatalogSection';
-import TiendaUserSection from '../components/tienda/TiendaUserSection';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
 import FirstPurchasePopup from '../components/tienda/FirstPurchasePopup';
 import {
@@ -1078,10 +1077,7 @@ export default function LandingTiendaPreviewPage() {
         externalBrand={quickBrand}
       />
 
-      {/* 5. USER ACCOUNT SECTION (Sección de Usuario) */}
-      <TiendaUserSection />
-
-      {/* 6. MINIMALIST INSTALLATION CONCIERGE BANNER (Light Brand Theme) */}
+      {/* 5. MINIMALIST INSTALLATION CONCIERGE BANNER (Light Brand Theme) */}
       <section
         style={{
           background: '#FFFFFF',

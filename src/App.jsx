@@ -19,6 +19,7 @@ import LandingAlineacionPage from './pages/LandingAlineacionPage';
 import LandingTiendaPreviewPage from './pages/LandingTiendaPreviewPage';
 import ProductoPreviewPage from './pages/ProductoPreviewPage';
 import HomeTiendaPreviewPage from './pages/HomeTiendaPreviewPage';
+import CuentaPreviewPage from './pages/CuentaPreviewPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -71,6 +72,7 @@ export default function App() {
           {/* Preview routes (isolated from production menus) */}
           <Route path="/landing-tienda-preview" element={<LandingTiendaPreviewPage />} />
           <Route path="/landing-tienda-preview/producto/:id" element={<ProductoPreviewPage />} />
+          <Route path="/landing-tienda-preview/cuenta" element={<CuentaPreviewPage />} />
           <Route path="/home-tienda-preview" element={<HomeTiendaPreviewPage />} />
         </Routes>
       </main>

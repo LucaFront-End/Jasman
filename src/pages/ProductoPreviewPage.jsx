@@ -7,7 +7,6 @@ import { useTiendaState, getVolumeDiscountTier } from '../hooks/useTiendaState';
 import { useAppleTilt } from '../hooks/useAppleScrollPhysics';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
-import TiendaUserSection from '../components/tienda/TiendaUserSection';
 import {
   ArrowLeft,
   ShoppingBag,
@@ -2258,9 +2257,6 @@ export default function ProductoPreviewPage() {
           </div>
         </div>
       </div>
-
-      {/* Dedicated Full-Width User Account Section */}
-      <TiendaUserSection />
 
       <style>{`
         @media (max-width: 940px) {
