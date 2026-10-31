@@ -17,6 +17,7 @@ import ProveedoresPage from './pages/ProveedoresPage';
 import ContactoPage from './pages/ContactoPage';
 import LandingAlineacionPage from './pages/LandingAlineacionPage';
 import LandingTiendaPreviewPage from './pages/LandingTiendaPreviewPage';
+import CatalogoPreviewPage from './pages/CatalogoPreviewPage';
 import ProductoPreviewPage from './pages/ProductoPreviewPage';
 import HomeTiendaPreviewPage from './pages/HomeTiendaPreviewPage';
 import CuentaPreviewPage from './pages/CuentaPreviewPage';
@@ -71,6 +72,7 @@ export default function App() {
           <Route path="/contacto" element={<ContactoPage />} />
           {/* Preview routes (isolated from production menus) */}
           <Route path="/landing-tienda-preview" element={<LandingTiendaPreviewPage />} />
+          <Route path="/landing-tienda-preview/catalogo" element={<CatalogoPreviewPage />} />
           <Route path="/landing-tienda-preview/producto/:id" element={<ProductoPreviewPage />} />
           <Route path="/landing-tienda-preview/cuenta" element={<CuentaPreviewPage />} />
           <Route path="/home-tienda-preview" element={<HomeTiendaPreviewPage />} />

@@ -126,6 +126,7 @@ const VEHICLE_TYPES = ['Auto', 'Camioneta', 'Camión'];
 export default function TiendaCatalogSection({
   id = 'catalogo-tienda',
   isHomePreview = false,
+  isFullCatalogPage = false,
   initialCategory = 'Todos',
   initialBrand = 'Todas',
   initialRim = 'Todos',
@@ -157,7 +158,9 @@ export default function TiendaCatalogSection({
   const [searchQuery, setSearchQuery] = useState(initialUrlParams.measure);
   const [sortBy, setSortBy] = useState('featured');
   const [onlyInStock, setOnlyInStock] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(isHomePreview ? 7 : 12);
+  const [visibleCount, setVisibleCount] = useState(
+    isFullCatalogPage ? PRODUCTOS_MASTER.length : isHomePreview ? 7 : 12
+  );
   const [filtersExpanded, setFiltersExpanded] = useState(true);
 
   // Sync when URL query params change (e.g. navigating from Home or Navbar Mega-Menu)
@@ -216,7 +219,7 @@ export default function TiendaCatalogSection({
     }
   }, [isHomePreview, location.search, location.hash, id]);
 
-  // Helper to navigate to the full Store/Catalog page (/landing-tienda-preview) with active filters
+  // Helper to navigate to the dedicated Catalog page (/landing-tienda-preview/catalogo) with active filters
   const navigateToStoreCatalog = useCallback(
     (overrides = {}) => {
       const nextBrand = overrides.brand !== undefined ? overrides.brand : brand;
@@ -235,7 +238,7 @@ export default function TiendaCatalogSection({
       if (nextProfile && nextProfile !== 'Todos') params.set('profile', nextProfile);
 
       const queryString = params.toString();
-      const targetUrl = `/landing-tienda-preview${queryString ? `?${queryString}` : ''}#catalogo-tienda`;
+      const targetUrl = `/landing-tienda-preview/catalogo${queryString ? `?${queryString}` : ''}`;
       navigate(targetUrl);
     },
     [brand, searchQuery, vehicleType, rim, width, profile, navigate]
@@ -435,7 +438,7 @@ export default function TiendaCatalogSection({
               );
             })}
 
-            {isHomePreview && (
+            {!isFullCatalogPage && (
               <button
                 type="button"
                 onClick={() => navigateToStoreCatalog()}
@@ -456,7 +459,7 @@ export default function TiendaCatalogSection({
                   gap: 8,
                 }}
               >
-                Tienda Completa <ArrowRight size={14} />
+                Catálogo Completo <ArrowRight size={14} />
               </button>
             )}
           </div>
@@ -571,7 +574,7 @@ export default function TiendaCatalogSection({
                       key={m.raw}
                       type="button"
                       onClick={() => {
-                        if (isHomePreview) {
+                        if (!isFullCatalogPage) {
                           navigateToStoreCatalog({ measure: m.raw });
                           return;
                         }
@@ -684,7 +687,7 @@ export default function TiendaCatalogSection({
                       key={brandName}
                       type="button"
                       onClick={() => {
-                        if (isHomePreview) {
+                        if (!isFullCatalogPage) {
                           navigateToStoreCatalog({ brand: brandName });
                           return;
                         }
@@ -976,7 +979,7 @@ export default function TiendaCatalogSection({
                 <button
                   type="button"
                   onClick={() => {
-                    if (isHomePreview) {
+                    if (!isFullCatalogPage) {
                       navigateToStoreCatalog();
                       return;
                     }
@@ -1004,7 +1007,7 @@ export default function TiendaCatalogSection({
                   <button
                     type="button"
                     onClick={() => {
-                      if (isHomePreview) {
+                      if (!isFullCatalogPage) {
                         navigateToStoreCatalog();
                         return;
                       }

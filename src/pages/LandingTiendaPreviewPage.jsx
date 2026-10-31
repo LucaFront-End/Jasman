@@ -17,7 +17,9 @@ import Tire3DStudioStage from '../components/tienda/Tire3DStudioStage';
 import TiendaStickyShowcase from '../components/tienda/TiendaStickyShowcase';
 import TiendaCatalogSection from '../components/tienda/TiendaCatalogSection';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
+import TiendaAuthModal from '../components/tienda/TiendaAuthModal';
 import FirstPurchasePopup from '../components/tienda/FirstPurchasePopup';
+import TiendaLiveChatWidget from '../components/tienda/TiendaLiveChatWidget';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -26,6 +28,10 @@ import {
   MapPin,
   Check,
   ChevronDown,
+  Star,
+  Zap,
+  Award,
+  ShieldCheck,
 } from 'lucide-react';
 
 const HERO_SPOTLIGHTS = [
@@ -98,14 +104,13 @@ const BRAND_BENTO_SPECS = {
   },
 };
 
-function BentoBrandCard({ brand, count, totalStock, meta, sample, isFeatured, onSelectBrand }) {
+function BentoBrandCard({ brand, count, totalStock, meta, sample, isFeatured }) {
   const { tilt, onMouseMove, onMouseLeave } = useAppleTilt(4.5);
   const spec = BRAND_BENTO_SPECS[brand] || {};
 
   return (
-    <a
-      href="#catalogo-tienda"
-      onClick={() => onSelectBrand(brand)}
+    <Link
+      to={`/landing-tienda-preview/catalogo?brand=${encodeURIComponent(brand)}`}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
       style={{
@@ -515,7 +520,7 @@ function BentoBrandCard({ brand, count, totalStock, meta, sample, isFeatured, on
           </span>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
 
@@ -528,8 +533,6 @@ export default function LandingTiendaPreviewPage() {
   const [selectedHeroId, setSelectedHeroId] = useState(HERO_SPOTLIGHTS[0].id);
   const [heroPaused, setHeroPaused] = useState(false);
   const [heroAdded, setHeroAdded] = useState(false);
-  const [quickMeasure, setQuickMeasure] = useState('');
-  const [quickBrand, setQuickBrand] = useState('');
 
   // Auto-rotate hero spotlight tires & promotions every 4.2s
   useEffect(() => {
@@ -588,9 +591,11 @@ export default function LandingTiendaPreviewPage() {
 
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
-      {/* Floating Apple Frosted Glass Navbar & Cart Drawer */}
+      {/* Floating Apple Frosted Glass Navbar, Cart Drawer, Auth Popup & Store Chat */}
       <TiendaNavbar />
       <TiendaCartDrawer />
+      <TiendaAuthModal />
+      <TiendaLiveChatWidget />
 
       {/* Exclusive 10% First Purchase Popup (ONLY on /landing-tienda-preview) */}
       <FirstPurchasePopup />
@@ -973,6 +978,52 @@ export default function LandingTiendaPreviewPage() {
               </div>
             </div>
 
+            {/* Product Excerpt right below the Ficha / Command Bar */}
+            {heroProduct?.excerpt && (
+              <div
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 16,
+                  background: 'rgba(255, 255, 255, 0.82)',
+                  border: '1px solid rgba(26, 31, 54, 0.06)',
+                  fontSize: 12,
+                  color: '#475569',
+                  lineHeight: 1.45,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                }}
+              >
+                <span
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <strong style={{ color: C.navy, fontFamily: F.heading }}>
+                    Resumen técnico:
+                  </strong>{' '}
+                  {heroProduct.excerpt}
+                </span>
+                <Link
+                  to={`/landing-tienda-preview/producto/${heroProduct.id}`}
+                  style={{
+                    fontFamily: F.heading,
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    color: C.red,
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  Ver ficha completa →
+                </Link>
+              </div>
+            )}
+
             {/* Quick Measure Shortcuts + Scroll Hint */}
             <div
               style={{
@@ -999,16 +1050,15 @@ export default function LandingTiendaPreviewPage() {
                   Medidas rápidas:
                 </span>
                 {HERO_QUICK_MEASURES.map((m) => (
-                  <a
+                  <Link
                     key={m}
-                    href="#catalogo-tienda"
-                    onClick={() => setQuickMeasure(m)}
+                    to={`/landing-tienda-preview/catalogo?measure=${encodeURIComponent(m)}`}
                     style={{
                       padding: '4px 11px',
                       borderRadius: 9999,
-                      background: quickMeasure === m ? C.red : '#FFFFFF',
+                      background: '#FFFFFF',
                       border: '1px solid rgba(26, 31, 54, 0.1)',
-                      color: quickMeasure === m ? C.white : C.navy,
+                      color: C.navy,
                       fontFamily: F.heading,
                       fontSize: 10.5,
                       fontWeight: 700,
@@ -1017,7 +1067,7 @@ export default function LandingTiendaPreviewPage() {
                     }}
                   >
                     {m}
-                  </a>
+                  </Link>
                 ))}
               </div>
 
@@ -1095,9 +1145,8 @@ export default function LandingTiendaPreviewPage() {
               </h2>
             </div>
 
-            <a
-              href="#catalogo-tienda"
-              onClick={() => setQuickBrand('Todas')}
+            <Link
+              to="/landing-tienda-preview/catalogo"
               style={{
                 padding: '12px 22px',
                 borderRadius: 9999,
@@ -1116,7 +1165,7 @@ export default function LandingTiendaPreviewPage() {
               }}
             >
               Explorar las {PRODUCTOS_MASTER.length} referencias <ArrowRight size={14} />
-            </a>
+            </Link>
           </div>
 
           <div
@@ -1132,7 +1181,6 @@ export default function LandingTiendaPreviewPage() {
                 key={item.brand}
                 {...item}
                 isFeatured={idx === 0}
-                onSelectBrand={setQuickBrand}
               />
             ))}
           </div>
@@ -1140,13 +1188,373 @@ export default function LandingTiendaPreviewPage() {
       </section>
 
       {/* 4. UNIFIED CATALOG, MEDIDAS MÁS PEDIDAS & MARCAS MÁS PEDIDAS */}
-      <TiendaCatalogSection
-        id="catalogo-tienda"
-        externalMeasure={quickMeasure}
-        externalBrand={quickBrand}
-      />
+      <TiendaCatalogSection id="catalogo-tienda" />
 
-      {/* 5. MINIMALIST INSTALLATION CONCIERGE BANNER (Light Brand Theme) */}
+      {/* 5. RESEÑAS DE CONDUCTORES VERIFICADOS EN LA LANDING */}
+      <section
+        id="resenas-tienda"
+        style={{
+          padding: '104px 24px 88px',
+          background: '#FFFFFF',
+          borderTop: '1px solid rgba(26, 31, 54, 0.06)',
+        }}
+      >
+        <div style={{ maxWidth: 1260, margin: '0 auto' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 20,
+              marginBottom: 44,
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: '0.24em',
+                  textTransform: 'uppercase',
+                  color: C.red,
+                  display: 'block',
+                  marginBottom: 8,
+                }}
+              >
+                Experiencias Reales · +80 Sucursales
+              </span>
+              <h2
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 'clamp(2rem, 3.8vw, 3.1rem)',
+                  fontWeight: 900,
+                  color: C.navy,
+                  letterSpacing: '-0.04em',
+                  lineHeight: 1.05,
+                  margin: 0,
+                }}
+              >
+                Lo que opinan nuestros conductores.
+              </h2>
+            </div>
+
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '10px 18px',
+                borderRadius: 9999,
+                background: '#F8F9FA',
+                border: '1px solid rgba(26, 31, 54, 0.08)',
+              }}
+            >
+              <div style={{ display: 'flex', gap: 3 }}>
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={14} fill="#F59E0B" color="#F59E0B" />
+                ))}
+              </div>
+              <span
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 13,
+                  fontWeight: 900,
+                  color: C.navy,
+                }}
+              >
+                4.9 / 5.0
+              </span>
+              <span style={{ fontSize: 12, color: C.gray }}>
+                · Clientes verificados
+              </span>
+            </div>
+          </div>
+
+          <div
+            className="landing-reviews-bento-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 22,
+            }}
+          >
+            {[
+              {
+                name: 'Alejandro M.',
+                city: 'Sucursal Jasman Satélite',
+                tire: 'Continental 205/55R16',
+                quote:
+                  'Compré el juego de 4 llantas en línea con el descuento por volumen y elegí instalación en sucursal. En menos de 45 minutos quedaron montadas, balanceadas y alineadas.',
+              },
+              {
+                name: 'Valeria R.',
+                city: 'Entrega a Domicilio CDMX',
+                tire: 'Hankook Kinergy ST 185/65R15',
+                quote:
+                  'El envío a domicilio gratis llegó súper rápido y con fecha de fabricación reciente (DOT nuevo). El agarre en lluvia mejoró muchísimo desde el primer día.',
+              },
+              {
+                name: 'Carlos G.',
+                city: 'Sucursal Jasman Monterrey',
+                tire: 'General Tire Grabber 245/75R17',
+                quote:
+                  'Excelente atención y precios directos. Poder comparar medidas en el catálogo y elegir entre entrega gratis o montaje en sucursal hace toda la diferencia.',
+              },
+            ].map((rev) => (
+              <div
+                key={rev.name}
+                style={{
+                  padding: '30px 28px',
+                  borderRadius: 28,
+                  background: '#F8F9FA',
+                  border: '1px solid rgba(26, 31, 54, 0.07)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: 20,
+                  boxShadow: '0 12px 34px rgba(26, 31, 54, 0.03)',
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 14,
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: 3 }}>
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={13} fill="#F59E0B" color="#F59E0B" />
+                      ))}
+                    </div>
+                    <span
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 9999,
+                        background: 'rgba(196, 30, 36, 0.08)',
+                        color: C.red,
+                        fontFamily: F.heading,
+                        fontSize: 10,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {rev.tire}
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: C.navy,
+                      lineHeight: 1.65,
+                      margin: 0,
+                      fontWeight: 500,
+                    }}
+                  >
+                    “{rev.quote}”
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    paddingTop: 14,
+                    borderTop: '1px solid rgba(26, 31, 54, 0.07)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        fontFamily: F.heading,
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: C.navy,
+                      }}
+                    >
+                      {rev.name}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: C.gray }}>{rev.city}</div>
+                  </div>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      color: '#15803D',
+                    }}
+                  >
+                    <ShieldCheck size={13} /> Compra Verificada
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6. FRANJA OFICIAL DE PATROCINIO: FÓRMULA E & EVENTOS AUTOMOVILÍSTICOS (Entre Reseñas y CTA Final) */}
+      <section
+        id="patrocinador-formula-e"
+        style={{
+          padding: '24px 24px 16px',
+          background: '#FFFFFF',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: '0 auto',
+            borderRadius: 32,
+            padding: '38px 42px',
+            background:
+              'linear-gradient(125deg, #101528 0%, #1A1F36 55%, #2D1622 100%)',
+            color: '#FFFFFF',
+            border: '1px solid rgba(255, 255, 255, 0.10)',
+            boxShadow: '0 26px 64px rgba(16, 21, 40, 0.18)',
+            position: 'relative',
+            overflow: 'hidden',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 28,
+          }}
+        >
+          {/* Subtle Motorsport Telemetry Grid Accent */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage:
+                'radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px)',
+              backgroundSize: '20px 20px',
+              pointerEvents: 'none',
+            }}
+          />
+
+          <div style={{ position: 'relative', zIndex: 2, maxWidth: 660 }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '5px 13px',
+                borderRadius: 9999,
+                background: 'rgba(196, 30, 36, 0.25)',
+                border: '1px solid rgba(248, 113, 113, 0.35)',
+                color: '#FCA5A5',
+                fontFamily: F.heading,
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                marginBottom: 12,
+              }}
+            >
+              <Zap size={12} /> Patrocinador Oficial & Presencia en Pista · ABB FIA Formula E
+            </div>
+
+            <h3
+              style={{
+                fontFamily: F.heading,
+                fontSize: 'clamp(1.6rem, 2.9vw, 2.35rem)',
+                fontWeight: 900,
+                color: '#FFFFFF',
+                letterSpacing: '-0.03em',
+                lineHeight: 1.1,
+                margin: '0 0 10px',
+              }}
+            >
+              Del circuito de la Fórmula E directo a tu vehículo.
+            </h3>
+
+            <p
+              style={{
+                fontSize: 13.5,
+                color: '#CBD5E1',
+                lineHeight: 1.6,
+                margin: 0,
+              }}
+            >
+              Junto a <strong style={{ color: '#FFFFFF' }}>Hankook Tire</strong> —Socio Técnico y Proveedor Oficial del{' '}
+              <strong style={{ color: '#FFFFFF' }}>ABB FIA Formula E World Championship</strong> y el{' '}
+              <strong style={{ color: '#FFFFFF' }}>Hankook Mexico City E-Prix</strong>— llevamos la tecnología de competición y eventos internacionales a cada sucursal Jasman.
+            </p>
+          </div>
+
+          {/* Right Motorsport Badges */}
+          <div
+            style={{
+              position: 'relative',
+              zIndex: 2,
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            {[
+              {
+                title: 'ABB FIA Formula E',
+                sub: 'Hankook iON Race · Partner Oficial',
+              },
+              {
+                title: 'Mexico City E-Prix',
+                sub: 'Autódromo Hnos. Rodríguez',
+              },
+              {
+                title: 'Eventos & Track Days',
+                sub: 'Patrocinador Oficial Jasman',
+              },
+            ].map((badge) => (
+              <div
+                key={badge.title}
+                style={{
+                  padding: '14px 18px',
+                  borderRadius: 18,
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  backdropFilter: 'blur(12px)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontFamily: F.heading,
+                    fontSize: 12,
+                    fontWeight: 900,
+                    color: '#FFFFFF',
+                  }}
+                >
+                  <Award size={14} color="#F87171" />
+                  <span>{badge.title}</span>
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: '#94A3B8',
+                    marginTop: 3,
+                    fontWeight: 600,
+                  }}
+                >
+                  {badge.sub}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 7. MINIMALIST INSTALLATION CONCIERGE BANNER (CTA FINAL) */}
       <section
         style={{
           background: '#FFFFFF',
@@ -1263,6 +1671,9 @@ export default function LandingTiendaPreviewPage() {
           }
           .apple-bento-brands > a {
             grid-column: span 1 !important;
+          }
+          .landing-reviews-bento-grid {
+            grid-template-columns: 1fr !important;
           }
         }
       `}</style>

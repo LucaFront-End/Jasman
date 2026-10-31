@@ -1273,6 +1273,25 @@ export function parseTireSpecs(product) {
     vehicleType = 'Camioneta';
   }
 
+  const brandExcerpts = {
+    Hankook:
+      'Compuesto de sílice de alta dispersión desarrollado por Hankook como proveedor técnico oficial de la ABB FIA Formula E World Championship, optimizado para frenado preciso en piso seco y mojado, baja resistencia al rodamiento y máximo confort acústico.',
+    Continental:
+      'Ingeniería alemana con compuesto SafetySilica y diseño macro-bloque que maximiza el área de contacto en curvas, reduce la distancia de frenado y prolonga el kilometraje útil en ciudad y autopista.',
+    Euzkadi:
+      'Estructura reforzada de alta resistencia diseñada para las condiciones de los caminos en México, con hombros robustos que protegen contra impactos y brindan tracción confiable en todo terreno.',
+    'General Tire':
+      'Tecnología estadounidense con carcasa Duragen™ de ultra alta resistencia, ideal para SUVs y Pick-Ups que exigen estabilidad en carretera, capacidad de carga superior y desempeño todo terreno.',
+    Laufenn:
+      'Línea de alto desempeño respaldada por la ingeniería de Hankook Tire, con dibujo asimétrico de 4 canales longitudinales para evacuación rápida de agua y respuesta deportiva.',
+  };
+
+  const excerpt = `${cleanTitle} (${measure || 'Medida Oficial'}${
+    loadSpeed ? ` · Índice ${loadSpeed}` : ''
+  }) para ${vehicleType.toLowerCase()}. ${
+    brandExcerpts[product.brand] || brandExcerpts.Hankook
+  }`;
+
   return {
     ...product,
     category: normalizedCategory,
@@ -1283,6 +1302,7 @@ export function parseTireSpecs(product) {
     measure,
     loadSpeed,
     model: model || cleanTitle,
+    excerpt,
     isPackage,
     unitsPerItem: 1,
     inStock,

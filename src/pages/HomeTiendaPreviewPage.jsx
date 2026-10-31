@@ -11,7 +11,9 @@ import Promotions from '../components/Promotions';
 import CTA from '../components/CTA';
 import TiendaCatalogSection from '../components/tienda/TiendaCatalogSection';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
+import TiendaAuthModal from '../components/tienda/TiendaAuthModal';
 import FirstPurchasePopup from '../components/tienda/FirstPurchasePopup';
+import TiendaLiveChatWidget from '../components/tienda/TiendaLiveChatWidget';
 import { C, F } from '../hooks/useAnimations';
 import { useTiendaState, triggerTiendaUI } from '../hooks/useTiendaState';
 import { ShoppingBag, User, Store, Sparkles } from 'lucide-react';
@@ -21,9 +23,11 @@ export default function HomeTiendaPreviewPage() {
 
   return (
     <>
-      {/* Store Drawers & First-Purchase Popup available directly on this Home copy */}
+      {/* Store Drawers, Auth Popup, Chat & First-Purchase Popup available directly on this Home copy */}
       <FirstPurchasePopup />
       <TiendaCartDrawer />
+      <TiendaAuthModal />
+      <TiendaLiveChatWidget positionLeft={true} />
 
       {/* Floating Store Quick-Access Pill for the Home Preview */}
       <div
@@ -44,8 +48,8 @@ export default function HomeTiendaPreviewPage() {
           boxShadow: '0 20px 50px rgba(0,0,0,0.32)',
         }}
       >
-        <a
-          href="#tienda-home-section"
+        <Link
+          to="/landing-tienda-preview/catalogo"
           style={{
             padding: '9px 14px',
             borderRadius: 9999,
@@ -63,7 +67,7 @@ export default function HomeTiendaPreviewPage() {
           }}
         >
           <Store size={13} color={C.redLight} /> Catálogo
-        </a>
+        </Link>
 
         <Link
           to="/landing-tienda-preview"
@@ -110,6 +114,12 @@ export default function HomeTiendaPreviewPage() {
 
         <Link
           to="/landing-tienda-preview/cuenta"
+          onClick={(e) => {
+            if (!user) {
+              e.preventDefault();
+              triggerTiendaUI({ type: 'OPEN_AUTH', redirectToAccount: true });
+            }
+          }}
           style={{
             padding: '9px 13px',
             borderRadius: 9999,

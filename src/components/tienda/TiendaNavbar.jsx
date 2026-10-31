@@ -54,11 +54,20 @@ export default function TiendaNavbar() {
 
   const navItems = [
     { label: 'Experiencia', href: '/landing-tienda-preview#hero-stage' },
-    { label: 'Medidas más pedidas', href: '/landing-tienda-preview#catalogo-tienda', hasMega: true },
-    { label: 'Marcas', href: '/landing-tienda-preview#marcas-tienda', hasMega: true },
-    { label: 'Catálogo', href: '/landing-tienda-preview#catalogo-tienda' },
-    { label: 'Cuenta', href: '/landing-tienda-preview/cuenta' },
+    { label: 'Medidas más pedidas', href: '/landing-tienda-preview/catalogo', hasMega: true },
+    { label: 'Marcas', href: '/landing-tienda-preview/catalogo', hasMega: true },
+    { label: 'Catálogo', href: '/landing-tienda-preview/catalogo' },
+    { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
   ];
+
+  const handleAccountAction = (e) => {
+    setMegaOpen(false);
+    setMobileMenu(false);
+    if (!user) {
+      e.preventDefault();
+      triggerTiendaUI({ type: 'OPEN_AUTH', redirectToAccount: true });
+    }
+  };
 
   return (
     <header
@@ -322,7 +331,7 @@ export default function TiendaNavbar() {
                   style={linkStyle}
                   onMouseEnter={handleEnter}
                   onMouseLeave={handleLeave}
-                  onClick={() => setMegaOpen(false)}
+                  onClick={item.isAccount ? handleAccountAction : () => setMegaOpen(false)}
                 >
                   <span>{item.label}</span>
                   {item.hasMega && <ChevronDown size={12} />}
@@ -375,6 +384,7 @@ export default function TiendaNavbar() {
 
             <Link
               to="/landing-tienda-preview/cuenta"
+              onClick={handleAccountAction}
               aria-label="Mi Cuenta"
               style={{
                 padding: '7px 13px',
@@ -504,10 +514,10 @@ export default function TiendaNavbar() {
           }}
         >
           {navItems.map((item) => (
-            <a
+            <Link
               key={item.label}
-              href={item.href}
-              onClick={() => setMobileMenu(false)}
+              to={item.href}
+              onClick={item.isAccount ? handleAccountAction : () => setMobileMenu(false)}
               style={{
                 fontFamily: F.heading,
                 fontSize: 13,
@@ -518,7 +528,7 @@ export default function TiendaNavbar() {
               }}
             >
               {item.label}
-            </a>
+            </Link>
           ))}
         </div>
       )}

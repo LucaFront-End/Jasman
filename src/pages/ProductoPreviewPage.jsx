@@ -10,12 +10,15 @@ import {
 import { sucursales } from '../data/sucursalesData';
 import {
   useTiendaState,
+  triggerTiendaUI,
   getVolumeDiscountTier,
   BRANCH_INSTALLATION_FEE,
 } from '../hooks/useTiendaState';
 import { useAppleTilt } from '../hooks/useAppleScrollPhysics';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
+import TiendaAuthModal from '../components/tienda/TiendaAuthModal';
+import TiendaLiveChatWidget from '../components/tienda/TiendaLiveChatWidget';
 import {
   ArrowLeft,
   ShoppingBag,
@@ -225,32 +228,6 @@ export default function ProductoPreviewPage() {
     setTimeout(() => setQuickAddedId(null), 1500);
   };
 
-  const handleWhatsAppQuote = () => {
-    const msg = [
-      '¡Hola Jasman! Me interesa adquirir este modelo desde la tienda en línea:',
-      `• Producto: ${product.cleanTitle}`,
-      `• Marca: ${product.brand}`,
-      `• Referencia / SKU: ${product.reference}`,
-      `• Cantidad: ${qty} ${qty === 1 ? 'unidad' : 'unidades'} (${effectiveTiresCount} llantas)`,
-      activeVolumeTier.percent > 0
-        ? `• Descuento por volumen aplicado: -${activeVolumeTier.percent}%`
-        : null,
-      basePrice > 0
-        ? `• Total estimado (sin IVA): ${formatMXN(finalTotalForSelection)}`
-        : '• Solicito cotización y disponibilidad',
-      coupon ? `• Cupón 10% primera compra: ${coupon.code}` : null,
-      deliveryMode === 'branch'
-        ? `• Modalidad: Instalación en Sucursal (+${formatMXN(BRANCH_INSTALLATION_FEE)}) — ${selectedBranch?.name || 'Por definir'}`
-        : '• Modalidad: Entrega a Domicilio Gratis',
-    ]
-      .filter(Boolean)
-      .join('\n');
-    window.open(
-      `https://wa.me/525543317799?text=${encodeURIComponent(msg)}`,
-      '_blank'
-    );
-  };
-
   const nextImage = () => {
     setSelectedImageIdx((prev) => (prev + 1) % galleryImages.length);
   };
@@ -330,6 +307,8 @@ export default function ProductoPreviewPage() {
     <div style={{ background: '#F8F9FA', minHeight: '100vh', color: C.navy }}>
       <TiendaNavbar />
       <TiendaCartDrawer />
+      <TiendaAuthModal />
+      <TiendaLiveChatWidget />
 
       <div
         style={{
@@ -350,7 +329,7 @@ export default function ProductoPreviewPage() {
           }}
         >
           <Link
-            to="/landing-tienda-preview#catalogo-tienda"
+            to="/landing-tienda-preview/catalogo"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -1567,17 +1546,22 @@ export default function ProductoPreviewPage() {
               </div>
             )}
 
-            {/* Direct WhatsApp Quick Quote Button */}
+            {/* Direct Live Store Chat Button (No WhatsApp) */}
             <button
               type="button"
-              onClick={handleWhatsAppQuote}
+              onClick={() =>
+                triggerTiendaUI({
+                  type: 'OPEN_CHAT',
+                  initialMessage: `Hola, me interesa información sobre ${product.cleanTitle} (${product.measure})`,
+                })
+              }
               style={{
                 width: '100%',
                 padding: '14px 22px',
                 borderRadius: 16,
-                border: '1.5px solid rgba(22, 163, 74, 0.35)',
-                background: 'rgba(22, 163, 74, 0.08)',
-                color: '#15803D',
+                border: '1.5px solid rgba(26, 31, 54, 0.14)',
+                background: '#FFFFFF',
+                color: C.navy,
                 fontFamily: F.heading,
                 fontSize: 12,
                 fontWeight: 800,
@@ -1592,7 +1576,7 @@ export default function ProductoPreviewPage() {
                 transition: 'all 0.25s ease',
               }}
             >
-              <Zap size={15} /> Cotizar o Agendar Instalación por WhatsApp
+              <Zap size={15} color={C.red} /> Consultar con Asesor en Chat en Línea
             </button>
 
             {/* Interactive Glass Accordions Deck */}
@@ -1689,6 +1673,47 @@ export default function ProductoPreviewPage() {
                   </div>
                 );
               })}
+
+              {/* Product Excerpt right below the Ficha Técnica */}
+              {product.excerpt && (
+                <div
+                  style={{
+                    marginTop: 6,
+                    padding: '18px 22px',
+                    borderRadius: 20,
+                    background: '#FFFFFF',
+                    border: '1px solid rgba(26, 31, 54, 0.07)',
+                    boxShadow: '0 8px 24px rgba(26, 31, 54, 0.025)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontFamily: F.heading,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: '0.16em',
+                      textTransform: 'uppercase',
+                      color: C.red,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Sparkles size={12} /> Resumen del Producto
+                  </div>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 13.5,
+                      color: '#475569',
+                      lineHeight: 1.65,
+                    }}
+                  >
+                    {product.excerpt}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -31,24 +31,20 @@ export default function TiendaMostRequestedSection({
 
   const handleSelectMeasure = (rawMeasure) => {
     if (onAfterSelect) onAfterSelect();
-    const targetUrl = `/landing-tienda-preview?measure=${encodeURIComponent(rawMeasure)}#catalogo-tienda`;
+    const targetUrl = `/landing-tienda-preview/catalogo?measure=${encodeURIComponent(rawMeasure)}`;
     navigate(targetUrl);
     setTimeout(() => {
       triggerTiendaUI({ type: 'FILTER_CATALOG', measure: rawMeasure });
-      const el = document.getElementById('catalogo-tienda');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    }, 80);
   };
 
   const handleSelectBrand = (brandName) => {
     if (onAfterSelect) onAfterSelect();
-    const targetUrl = `/landing-tienda-preview?brand=${encodeURIComponent(brandName)}#catalogo-tienda`;
+    const targetUrl = `/landing-tienda-preview/catalogo?brand=${encodeURIComponent(brandName)}`;
     navigate(targetUrl);
     setTimeout(() => {
       triggerTiendaUI({ type: 'FILTER_CATALOG', brand: brandName });
-      const el = document.getElementById('catalogo-tienda');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    }, 80);
   };
 
   return (

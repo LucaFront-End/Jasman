@@ -81,40 +81,6 @@ export default function TiendaCartDrawer() {
     }
   };
 
-  const buildWhatsAppCheckoutUrl = () => {
-    const itemsText = cartItems
-      .map(
-        (item) =>
-          `• ${item.quantity}x ${item.product.cleanTitle} (Ref: ${item.product.reference}) - ${formatMXN(
-            item.lineTotal
-          )}`
-      )
-      .join('\n');
-
-    const msg = [
-      '¡Hola Jasman! Quiero confirmar mi pedido de tienda en línea:',
-      '',
-      itemsText,
-      '',
-      `Subtotal (sin IVA): ${formatMXN(subtotal)}`,
-      volumeDiscountAmount > 0
-        ? `Descuento por volumen (${volumeTier.percent}% OFF): -${formatMXN(volumeDiscountAmount)}`
-        : null,
-      coupon
-        ? `Descuento 10% (${coupon.code}): -${formatMXN(discountAmount)}`
-        : null,
-      deliveryMode === 'branch'
-        ? `Instalación en sucursal (${selectedBranch?.name || 'Por definir'}): +${formatMXN(installationFee)}`
-        : 'Modalidad: Entrega a Domicilio GRATIS',
-      `Total estimado (sin IVA): ${formatMXN(totalAfterDiscount)}`,
-      user?.nombre ? `Cliente: ${user.nombre} (${user.telefono || user.correo || ''})` : null,
-    ]
-      .filter(Boolean)
-      .join('\n');
-
-    return `https://wa.me/525543317799?text=${encodeURIComponent(msg)}`;
-  };
-
   const handleConfirmOrder = () => {
     if (cartItems.length === 0) return;
 
@@ -840,10 +806,15 @@ export default function TiendaCartDrawer() {
                 Confirmar Orden de Compra <ArrowRight size={15} />
               </button>
 
-              <a
-                href={buildWhatsAppCheckoutUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  triggerTiendaUI({
+                    type: 'OPEN_CHAT',
+                    initialMessage: 'Hola, tengo una consulta sobre mi carrito de compra.',
+                  });
+                }}
                 style={{
                   width: '100%',
                   padding: '13px 18px',
@@ -854,15 +825,15 @@ export default function TiendaCartDrawer() {
                   fontFamily: F.heading,
                   fontSize: 12,
                   fontWeight: 700,
-                  textDecoration: 'none',
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
                 }}
               >
-                <MessageCircle size={15} color="#16A34A" /> Finalizar Pedido por WhatsApp
-              </a>
+                <MessageCircle size={15} color={C.red} /> Consultar con Asesor en Chat
+              </button>
             </div>
           </div>
         )}
