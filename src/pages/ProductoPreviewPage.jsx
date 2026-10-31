@@ -33,6 +33,8 @@ import {
   Tag,
   Truck,
   Info,
+  Minus,
+  Plus,
 } from 'lucide-react';
 
 const BRAND_DETAILS = {

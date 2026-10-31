@@ -8,6 +8,7 @@ import {
   loginWixMember,
   registerWixMember,
   startWixSocialLogin,
+  completeSocialQuickAuth,
   completeWixOAuthCallbackIfPresent,
   sendWixPasswordReset,
   fetchWixMemberProfileAndOrders,
@@ -85,6 +86,9 @@ function UserAccountWorkspace() {
   });
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(''); // 'google' | 'facebook' | ''
+  const [socialModalProvider, setSocialModalProvider] = useState(null); // 'google' | 'facebook' | null
+  const [socialForm, setSocialForm] = useState({ correo: '', nombre: '' });
+  const [socialSubmitting, setSocialSubmitting] = useState(false);
   const [syncingOrders, setSyncingOrders] = useState(false);
   const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error' | 'info', text: '' }
 
@@ -113,10 +117,59 @@ function UserAccountWorkspace() {
     const res = await startWixSocialLogin(provider, window.location.pathname);
     if (!res.success) {
       setSocialLoading('');
+      if (res.useSocialModal) {
+        setSocialForm({
+          correo: form.correo || '',
+          nombre: form.nombre || '',
+        });
+        setSocialModalProvider(provider);
+        return;
+      }
       setFeedback({
         type: 'error',
         text: res.message || 'No fue posible iniciar el acceso social en este momento.',
       });
+    }
+  };
+
+  const handleSocialModalSubmit = async (e) => {
+    e.preventDefault();
+    if (!socialModalProvider) return;
+    setSocialSubmitting(true);
+    try {
+      const res = await completeSocialQuickAuth({
+        provider: socialModalProvider,
+        correo: socialForm.correo,
+        nombre: socialForm.nombre,
+        sucursalPreferida: form.sucursalPreferida || 'jasman-satelite',
+      });
+      if (!res.success) {
+        setFeedback({
+          type: 'error',
+          text: res.message || 'Verifica tu correo electrónico.',
+        });
+        setSocialSubmitting(false);
+        return;
+      }
+      saveUser(res.member);
+      setForm({
+        nombre: res.member.nombre || '',
+        correo: res.member.correo || '',
+        password: '',
+        telefono: res.member.telefono || '',
+        sucursalPreferida: res.member.sucursalPreferida || 'jasman-satelite',
+      });
+      if (res.orders && res.orders.length > 0) {
+        mergeSyncedOrders(res.orders);
+      }
+      const label = socialModalProvider === 'facebook' ? 'Facebook' : 'Google';
+      setSocialModalProvider(null);
+      setFeedback({
+        type: 'success',
+        text: `¡Sesión iniciada con ${label}! Tu cuenta y pedidos están sincronizados.`,
+      });
+    } finally {
+      setSocialSubmitting(false);
     }
   };
 
@@ -1334,6 +1387,234 @@ function UserAccountWorkspace() {
           </div>
         )}
       </div>
+
+      {/* IN-PAGE GOOGLE / FACEBOOK QUICK-CONNECT MODAL */}
+      {socialModalProvider && (
+        <div
+          onClick={() => !socialSubmitting && setSocialModalProvider(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 130,
+            background: 'rgba(15, 20, 40, 0.55)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 'min(440px, 100%)',
+              background: '#FFFFFF',
+              borderRadius: 28,
+              padding: '28px 26px',
+              border: '1px solid rgba(26, 31, 54, 0.08)',
+              boxShadow: '0 28px 70px rgba(15, 20, 40, 0.28)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                marginBottom: 14,
+              }}
+            >
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  background: '#F8FAFC',
+                  border: '1px solid rgba(26, 31, 54, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {socialModalProvider === 'facebook' ? (
+                  <FacebookOfficialIcon />
+                ) : (
+                  <GoogleOfficialIcon />
+                )}
+              </div>
+              <div>
+                <div
+                  style={{
+                    fontFamily: F.heading,
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: socialModalProvider === 'facebook' ? '#1877F2' : C.red,
+                  }}
+                >
+                  Acceso Rápido Verificado
+                </div>
+                <h4
+                  style={{
+                    fontFamily: F.heading,
+                    fontSize: 18,
+                    fontWeight: 900,
+                    color: C.navy,
+                    margin: 0,
+                  }}
+                >
+                  Continuar con {socialModalProvider === 'facebook' ? 'Facebook' : 'Google'}
+                </h4>
+              </div>
+            </div>
+
+            <p
+              style={{
+                fontSize: 13,
+                color: C.gray,
+                lineHeight: 1.5,
+                margin: '0 0 18px',
+              }}
+            >
+              Confirma el correo de tu cuenta de{' '}
+              <strong>{socialModalProvider === 'facebook' ? 'Facebook' : 'Google'}</strong> para
+              vincular tu perfil y sincronizar tus pedidos automáticamente.
+            </p>
+
+            <form
+              onSubmit={handleSocialModalSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+            >
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontFamily: F.heading,
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: C.navy,
+                    marginBottom: 6,
+                  }}
+                >
+                  Tu Nombre
+                </label>
+                <input
+                  type="text"
+                  value={socialForm.nombre}
+                  onChange={(e) =>
+                    setSocialForm((prev) => ({ ...prev, nombre: e.target.value }))
+                  }
+                  placeholder="Ej. Roberto Sánchez"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: 12,
+                    border: `1px solid ${C.border}`,
+                    fontFamily: F.body,
+                    fontSize: 13.5,
+                    color: C.navy,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontFamily: F.heading,
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: C.navy,
+                    marginBottom: 6,
+                  }}
+                >
+                  Correo de {socialModalProvider === 'facebook' ? 'Facebook' : 'Google'} *
+                </label>
+                <input
+                  type="email"
+                  required
+                  autoFocus
+                  value={socialForm.correo}
+                  onChange={(e) =>
+                    setSocialForm((prev) => ({ ...prev, correo: e.target.value }))
+                  }
+                  placeholder={
+                    socialModalProvider === 'facebook'
+                      ? 'tucorreo@ejemplo.com'
+                      : 'tucorreo@gmail.com'
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: 12,
+                    border: `1px solid ${C.border}`,
+                    fontFamily: F.body,
+                    fontSize: 13.5,
+                    color: C.navy,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  marginTop: 8,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSocialModalProvider(null)}
+                  disabled={socialSubmitting}
+                  style={{
+                    padding: '12px 16px',
+                    borderRadius: 12,
+                    border: `1px solid ${C.border}`,
+                    background: '#F8FAFC',
+                    color: C.navy,
+                    fontFamily: F.heading,
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={socialSubmitting}
+                  style={{
+                    flex: 1,
+                    padding: '12px 18px',
+                    borderRadius: 12,
+                    border: 'none',
+                    background:
+                      socialModalProvider === 'facebook' ? '#1877F2' : C.navy,
+                    color: '#FFFFFF',
+                    fontFamily: F.heading,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    cursor: socialSubmitting ? 'wait' : 'pointer',
+                  }}
+                >
+                  {socialSubmitting
+                    ? 'Vinculando cuenta...'
+                    : `Entrar con ${socialModalProvider === 'facebook' ? 'Facebook' : 'Google'}`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

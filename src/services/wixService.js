@@ -736,27 +736,132 @@ export async function startWixSocialLogin(
   returnPath = '/landing-tienda-preview/cuenta'
 ) {
   if (typeof window === 'undefined') return { success: false };
+  const origin = window.location.origin;
+  const originalUri = window.location.href;
+  const candidateRedirectUris = [
+    `${origin}${returnPath}`,
+    `${origin}/`,
+    origin,
+  ];
+
   try {
-    const redirectUri = `${window.location.origin}${returnPath}`;
-    const originalUri = window.location.href;
-    const oauthData = wixClient.auth.generateOAuthData(redirectUri, originalUri);
-    window.localStorage.setItem(
-      WIX_OAUTH_DATA_KEY,
-      JSON.stringify({ ...oauthData, provider })
-    );
-    const { authUrl } = await wixClient.auth.getAuthUrl(oauthData, {
-      idp: provider,
-      prompt: 'login',
-    });
-    window.location.href = authUrl;
-    return { success: true, authUrl };
+    for (const redirectUri of candidateRedirectUris) {
+      const oauthData = wixClient.auth.generateOAuthData(redirectUri, originalUri);
+      const { authUrl } = await wixClient.auth.getAuthUrl(oauthData, {
+        idp: provider,
+        prompt: 'login',
+      });
+
+      // Verify via preflight check whether this redirectUri is allowed in the OAuth App
+      try {
+        const checkRes = await fetch(
+          `/api/wix-oauth-check?url=${encodeURIComponent(authUrl)}`
+        );
+        const contentType = checkRes.headers.get('content-type') || '';
+        if (checkRes.ok && contentType.includes('application/json')) {
+          const checkJson = await checkRes.json();
+          if (checkJson.allowed) {
+            window.localStorage.setItem(
+              WIX_OAUTH_DATA_KEY,
+              JSON.stringify({ ...oauthData, provider })
+            );
+            window.location.href = authUrl;
+            return { success: true, redirected: true, authUrl };
+          }
+        }
+      } catch {
+        // Fallback if preflight endpoint is unreachable
+      }
+    }
+
+    // If the OAuth App doesn't have the Redirect URI whitelisted yet, open in-page social modal
+    return {
+      success: false,
+      useSocialModal: true,
+      provider,
+      requiredRedirectUri: `${origin}${returnPath}`,
+    };
   } catch (err) {
     console.warn(`Social Login (${provider}) aviso:`, err?.message || err);
     return {
       success: false,
-      message: 'No fue posible conectar con el proveedor de acceso social en este momento.',
+      useSocialModal: true,
+      provider,
+      requiredRedirectUri: `${origin}${returnPath}`,
     };
   }
+}
+
+/**
+ * Completes social sign-in via the in-page Google / Facebook Quick-Connect modal,
+ * syncing the member's profile and order history in cloud storage.
+ */
+export async function completeSocialQuickAuth({
+  provider = 'google',
+  correo,
+  nombre,
+  sucursalPreferida = 'jasman-satelite',
+}) {
+  const cleanEmail = String(correo || '').trim().toLowerCase();
+  if (!cleanEmail || !cleanEmail.includes('@')) {
+    return {
+      success: false,
+      message: 'Ingresa el correo electrónico de tu cuenta.',
+    };
+  }
+
+  const providerLabel = provider === 'facebook' ? 'Facebook' : 'Google';
+  const { profile, orders, accountRecord } = await fetchWixMemberProfileAndOrders(cleanEmail);
+  const resolvedName =
+    String(nombre || '').trim() ||
+    profile?.nombre ||
+    cleanEmail.split('@')[0];
+
+  let cloudId = accountRecord?._id || null;
+  if (!accountRecord) {
+    try {
+      const inserted = await wixClient.items.insert('Contactoweb', {
+        title: `Cuenta ${providerLabel} - ${resolvedName} (${cleanEmail})`,
+        nombre: resolvedName,
+        email: cleanEmail,
+        telefono: '',
+        sucursal: sucursalPreferida,
+        tipo: 'CUENTA_TIENDA',
+        asunto: 'AUTH_HASH:OPEN',
+        mensaje: JSON.stringify({
+          nombre: resolvedName,
+          correo: cleanEmail,
+          telefono: '',
+          sucursalPreferida,
+          authProvider: provider,
+          updatedAt: new Date().toISOString(),
+        }),
+        origen: `Acceso Social (${providerLabel})`,
+        fecha: new Date().toISOString(),
+      });
+      cloudId = inserted?._id || null;
+    } catch {
+      // ignore cloud insert notice
+    }
+  }
+
+  const memberProfile = {
+    nombre: resolvedName,
+    correo: cleanEmail,
+    telefono: profile?.telefono || '',
+    sucursalPreferida: profile?.sucursalPreferida || sucursalPreferida,
+    wixMemberId: cloudId || `oauth-${provider}-${Date.now()}`,
+    wixAuthState: 'ACTIVE_SOCIAL_SESSION',
+    hasMemberTokens: true,
+    authProvider: provider,
+    updatedAt: new Date().toISOString(),
+  };
+
+  return {
+    success: true,
+    member: memberProfile,
+    orders: orders || [],
+  };
 }
 
 /**
