@@ -738,13 +738,33 @@ export async function startWixSocialLogin(
   if (typeof window === 'undefined') return { success: false };
   const origin = window.location.origin;
   const originalUri = window.location.href;
-  const candidateRedirectUris = [
-    `${origin}${returnPath}`,
-    `${origin}/`,
-    origin,
-  ];
+  const primaryRedirectUri = `${origin}/landing-tienda-preview/cuenta`;
+  const isWhitelistedDomain =
+    origin.includes('jasman-delta.vercel.app') ||
+    origin.includes('jasman.com.mx');
 
   try {
+    // Direct instant OAuth redirect on production & Vercel preview domains where Redirect URI is registered
+    if (isWhitelistedDomain) {
+      const oauthData = wixClient.auth.generateOAuthData(primaryRedirectUri, originalUri);
+      window.localStorage.setItem(
+        WIX_OAUTH_DATA_KEY,
+        JSON.stringify({ ...oauthData, provider })
+      );
+      const { authUrl } = await wixClient.auth.getAuthUrl(oauthData, {
+        idp: provider,
+        prompt: 'login',
+      });
+      window.location.href = authUrl;
+      return { success: true, redirected: true, authUrl };
+    }
+
+    const candidateRedirectUris = [
+      `${origin}${returnPath}`,
+      primaryRedirectUri,
+      origin,
+    ];
+
     for (const redirectUri of candidateRedirectUris) {
       const oauthData = wixClient.auth.generateOAuthData(redirectUri, originalUri);
       const { authUrl } = await wixClient.auth.getAuthUrl(oauthData, {
@@ -752,7 +772,6 @@ export async function startWixSocialLogin(
         prompt: 'login',
       });
 
-      // Verify via preflight check whether this redirectUri is allowed in the OAuth App
       try {
         const checkRes = await fetch(
           `/api/wix-oauth-check?url=${encodeURIComponent(authUrl)}`
@@ -774,12 +793,11 @@ export async function startWixSocialLogin(
       }
     }
 
-    // If the OAuth App doesn't have the Redirect URI whitelisted yet, open in-page social modal
     return {
       success: false,
       useSocialModal: true,
       provider,
-      requiredRedirectUri: `${origin}${returnPath}`,
+      requiredRedirectUri: primaryRedirectUri,
     };
   } catch (err) {
     console.warn(`Social Login (${provider}) aviso:`, err?.message || err);
@@ -787,7 +805,7 @@ export async function startWixSocialLogin(
       success: false,
       useSocialModal: true,
       provider,
-      requiredRedirectUri: `${origin}${returnPath}`,
+      requiredRedirectUri: primaryRedirectUri,
     };
   }
 }
@@ -903,24 +921,89 @@ export async function completeWixOAuthCallbackIfPresent() {
     // Clean URL hash and query params
     window.history.replaceState({}, document.title, window.location.pathname);
 
+    const provider = oauthData.provider || 'google';
     const providerLabel =
-      oauthData.provider === 'facebook'
+      provider === 'facebook'
         ? 'Facebook'
-        : oauthData.provider === 'google'
+        : provider === 'google'
         ? 'Google'
         : 'Red Social';
 
+    // Fetch real authenticated member profile (email, name, phone) using OAuth access token
+    let realEmail = '';
+    let realName = '';
+    let realPhone = '';
+    let wixMemberId = `oauth-${Date.now()}`;
+
+    try {
+      const accessTokenValue = tokens?.accessToken?.value;
+      if (accessTokenValue) {
+        const meRes = await fetch(
+          'https://www.wixapis.com/members/v1/members/my?fieldsets=FULL',
+          {
+            headers: {
+              Authorization: accessTokenValue,
+            },
+          }
+        );
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          const m = meData?.member;
+          if (m) {
+            wixMemberId = m.id || wixMemberId;
+            realEmail =
+              m.loginEmail ||
+              m.contact?.emails?.[0] ||
+              '';
+            const fullContactName = [m.contact?.firstName, m.contact?.lastName]
+              .filter(Boolean)
+              .join(' ')
+              .trim();
+            realName =
+              fullContactName ||
+              m.profile?.nickname ||
+              '';
+            realPhone = m.contact?.phones?.[0] || '';
+          }
+        }
+      }
+    } catch {
+      // Fallback if member profile endpoint is unavailable
+    }
+
+    if (realEmail) {
+      const synced = await completeSocialQuickAuth({
+        provider,
+        correo: realEmail,
+        nombre: realName || `Cliente Jasman (${providerLabel})`,
+      });
+      if (synced.success && synced.member) {
+        return {
+          tokens,
+          provider,
+          orders: synced.orders || [],
+          member: {
+            ...synced.member,
+            telefono: synced.member.telefono || realPhone,
+            wixMemberId,
+            hasMemberTokens: true,
+          },
+        };
+      }
+    }
+
     return {
       tokens,
-      provider: oauthData.provider || 'social',
+      provider,
+      orders: [],
       member: {
-        nombre: `Cliente Jasman (${providerLabel})`,
-        correo: `cuenta.${oauthData.provider || 'social'}@jasman.com.mx`,
-        telefono: '',
+        nombre: realName || `Cliente Jasman (${providerLabel})`,
+        correo: realEmail || `cuenta.${provider}@jasman.com.mx`,
+        telefono: realPhone,
         sucursalPreferida: 'jasman-satelite',
-        wixMemberId: `oauth-${Date.now()}`,
+        wixMemberId,
         hasMemberTokens: true,
-        authProvider: oauthData.provider || 'oauth',
+        authProvider: provider,
         updatedAt: new Date().toISOString(),
       },
     };

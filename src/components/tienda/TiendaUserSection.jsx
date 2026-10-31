@@ -96,6 +96,9 @@ function UserAccountWorkspace() {
     completeWixOAuthCallbackIfPresent().then((result) => {
       if (result && result.member) {
         saveUser(result.member);
+        if (result.orders && result.orders.length > 0) {
+          mergeSyncedOrders(result.orders);
+        }
         setForm({
           nombre: result.member.nombre || '',
           correo: result.member.correo || '',
@@ -109,7 +112,7 @@ function UserAccountWorkspace() {
         });
       }
     });
-  }, [saveUser]);
+  }, [saveUser, mergeSyncedOrders]);
 
   const handleSocialAuth = async (provider) => {
     setFeedback(null);
