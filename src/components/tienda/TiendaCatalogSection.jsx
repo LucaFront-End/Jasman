@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
 import {
   PRODUCTOS_MASTER,
@@ -10,7 +10,14 @@ import {
   BRAND_META,
 } from '../../data/productosMasterData';
 import TiendaProductCard from './TiendaProductCard';
-import { Search, RotateCcw, ArrowRight, Package } from 'lucide-react';
+import {
+  Search,
+  RotateCcw,
+  ArrowRight,
+  ChevronUp,
+  ChevronDown,
+  SlidersHorizontal,
+} from 'lucide-react';
 
 function RealisticVehicleSvg({ type, active }) {
   const strokeColor = active ? C.red : C.navy;
@@ -125,16 +132,53 @@ export default function TiendaCatalogSection({
   externalMeasure = '',
   externalBrand = '',
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Read initial filters from URL query parameters (?brand=..., ?measure=..., etc.)
+  const initialUrlParams = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return {
+      brand: params.get('brand') || initialBrand,
+      measure: params.get('measure') || params.get('q') || externalMeasure || '',
+      vehicle: params.get('vehicle') || 'Todos',
+      rim: params.get('rim') || initialRim,
+      width: params.get('width') || 'Todos',
+      profile: params.get('profile') || 'Todos',
+    };
+  }, [location.search, initialBrand, initialRim, externalMeasure]);
+
   const [category, setCategory] = useState(initialCategory);
-  const [vehicleType, setVehicleType] = useState('Todos');
-  const [brand, setBrand] = useState(initialBrand);
-  const [rim, setRim] = useState(initialRim);
-  const [width, setWidth] = useState('Todos');
-  const [profile, setProfile] = useState('Todos');
-  const [searchQuery, setSearchQuery] = useState(externalMeasure || '');
+  const [vehicleType, setVehicleType] = useState(initialUrlParams.vehicle);
+  const [brand, setBrand] = useState(initialUrlParams.brand);
+  const [rim, setRim] = useState(initialUrlParams.rim);
+  const [width, setWidth] = useState(initialUrlParams.width);
+  const [profile, setProfile] = useState(initialUrlParams.profile);
+  const [searchQuery, setSearchQuery] = useState(initialUrlParams.measure);
   const [sortBy, setSortBy] = useState('featured');
   const [onlyInStock, setOnlyInStock] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(isHomePreview ? 7 : 10);
+  const [visibleCount, setVisibleCount] = useState(isHomePreview ? 7 : 12);
+  const [filtersExpanded, setFiltersExpanded] = useState(true);
+
+  // Sync when URL query params change (e.g. navigating from Home or Navbar Mega-Menu)
+  const [prevSearchStr, setPrevSearchStr] = useState(location.search);
+  if (location.search !== prevSearchStr) {
+    setPrevSearchStr(location.search);
+    const params = new URLSearchParams(location.search);
+    const qBrand = params.get('brand');
+    const qMeasure = params.get('measure') || params.get('q');
+    const qVehicle = params.get('vehicle');
+    const qRim = params.get('rim');
+    const qWidth = params.get('width');
+    const qProfile = params.get('profile');
+
+    if (qBrand) setBrand(qBrand);
+    if (qMeasure !== null && qMeasure !== undefined) setSearchQuery(qMeasure);
+    if (qVehicle) setVehicleType(qVehicle);
+    if (qRim) setRim(qRim);
+    if (qWidth) setWidth(qWidth);
+    if (qProfile) setProfile(qProfile);
+  }
 
   // Sync if parent passes a quick measure or brand selection
   const [prevExtMeasure, setPrevExtMeasure] = useState(externalMeasure);
@@ -148,6 +192,54 @@ export default function TiendaCatalogSection({
     setPrevExtBrand(externalBrand);
     if (externalBrand) setBrand(externalBrand);
   }
+
+  // Scroll smoothly to catalog when arriving at /landing-tienda-preview with filter query params or hash
+  useEffect(() => {
+    if (isHomePreview) return;
+    const hasFilterQuery =
+      location.search.includes('brand=') ||
+      location.search.includes('measure=') ||
+      location.search.includes('vehicle=') ||
+      location.search.includes('rim=') ||
+      location.search.includes('width=') ||
+      location.search.includes('profile=') ||
+      location.hash === `#${id}`;
+
+    if (hasFilterQuery) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [isHomePreview, location.search, location.hash, id]);
+
+  // Helper to navigate to the full Store/Catalog page (/landing-tienda-preview) with active filters
+  const navigateToStoreCatalog = useCallback(
+    (overrides = {}) => {
+      const nextBrand = overrides.brand !== undefined ? overrides.brand : brand;
+      const nextMeasure = overrides.measure !== undefined ? overrides.measure : searchQuery;
+      const nextVehicle = overrides.vehicle !== undefined ? overrides.vehicle : vehicleType;
+      const nextRim = overrides.rim !== undefined ? overrides.rim : rim;
+      const nextWidth = overrides.width !== undefined ? overrides.width : width;
+      const nextProfile = overrides.profile !== undefined ? overrides.profile : profile;
+
+      const params = new URLSearchParams();
+      if (nextBrand && nextBrand !== 'Todas') params.set('brand', nextBrand);
+      if (nextMeasure && nextMeasure.trim()) params.set('measure', nextMeasure.trim());
+      if (nextVehicle && nextVehicle !== 'Todos') params.set('vehicle', nextVehicle);
+      if (nextRim && nextRim !== 'Todos') params.set('rim', nextRim);
+      if (nextWidth && nextWidth !== 'Todos') params.set('width', nextWidth);
+      if (nextProfile && nextProfile !== 'Todos') params.set('profile', nextProfile);
+
+      const queryString = params.toString();
+      const targetUrl = `/landing-tienda-preview${queryString ? `?${queryString}` : ''}#catalogo-tienda`;
+      navigate(targetUrl);
+    },
+    [brand, searchQuery, vehicleType, rim, width, profile, navigate]
+  );
 
   useEffect(() => {
     const onUiEvent = (e) => {
@@ -266,7 +358,7 @@ export default function TiendaCatalogSection({
                 marginBottom: 8,
               }}
             >
-              Catálogo Oficial · 54 Referencias
+              Catálogo Oficial · {PRODUCTOS_MASTER.length} Referencias
             </span>
             <h2
               style={{
@@ -344,11 +436,13 @@ export default function TiendaCatalogSection({
             })}
 
             {isHomePreview && (
-              <Link
-                to="/landing-tienda-preview"
+              <button
+                type="button"
+                onClick={() => navigateToStoreCatalog()}
                 style={{
                   padding: '14px 22px',
                   borderRadius: 9999,
+                  border: 'none',
                   background: C.navy,
                   color: C.white,
                   fontFamily: F.heading,
@@ -356,31 +450,37 @@ export default function TiendaCatalogSection({
                   fontWeight: 800,
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  textDecoration: 'none',
+                  cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 8,
                 }}
               >
                 Tienda Completa <ArrowRight size={14} />
-              </Link>
+              </button>
             )}
           </div>
         </div>
 
-        {/* 2. UNIFIED MINIMALIST CONSOLE: MEDIDAS MÁS PEDIDAS + MARCAS MÁS PEDIDAS + BUSCADOR */}
+        {/* 2. UNIFIED MINIMALIST CONSOLE: MEDIDAS MÁS PEDIDAS + MARCAS MÁS PEDIDAS + BUSCADOR (Collapsible / Expandable) */}
         <div
           id="medidas-pedidas"
           style={{
-            background: '#FFFFFF',
+            position: !filtersExpanded ? 'sticky' : 'relative',
+            top: !filtersExpanded ? 82 : 'auto',
+            zIndex: 35,
+            background: 'rgba(255, 255, 255, 0.96)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             borderRadius: 32,
-            border: '1px solid rgba(26, 31, 54, 0.06)',
-            padding: '26px 28px',
+            border: '1px solid rgba(26, 31, 54, 0.07)',
+            padding: filtersExpanded ? '26px 28px' : '16px 24px',
             marginBottom: 32,
-            boxShadow: '0 20px 54px rgba(15, 23, 42, 0.04)',
+            boxShadow: '0 20px 54px rgba(15, 23, 42, 0.05)',
             display: 'flex',
             flexDirection: 'column',
-            gap: 24,
+            gap: filtersExpanded ? 24 : 0,
+            transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
           {/* Top Split Bento: Medidas más pedidas (Left) + Marcas más pedidas (Right) */}
@@ -391,6 +491,11 @@ export default function TiendaCatalogSection({
               gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 0.85fr)',
               gap: 28,
               alignItems: 'stretch',
+              maxHeight: filtersExpanded ? 480 : 0,
+              opacity: filtersExpanded ? 1 : 0,
+              overflow: 'hidden',
+              pointerEvents: filtersExpanded ? 'auto' : 'none',
+              transition: 'max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
             }}
           >
             {/* LEFT: Medidas más pedidas */}
@@ -465,7 +570,13 @@ export default function TiendaCatalogSection({
                     <button
                       key={m.raw}
                       type="button"
-                      onClick={() => setSearchQuery(isSelected ? '' : m.raw)}
+                      onClick={() => {
+                        if (isHomePreview) {
+                          navigateToStoreCatalog({ measure: m.raw });
+                          return;
+                        }
+                        setSearchQuery(isSelected ? '' : m.raw);
+                      }}
                       style={{
                         padding: '10px 8px',
                         borderRadius: 9999,
@@ -572,7 +683,13 @@ export default function TiendaCatalogSection({
                     <button
                       key={brandName}
                       type="button"
-                      onClick={() => setBrand(active ? 'Todas' : brandName)}
+                      onClick={() => {
+                        if (isHomePreview) {
+                          navigateToStoreCatalog({ brand: brandName });
+                          return;
+                        }
+                        setBrand(active ? 'Todas' : brandName);
+                      }}
                       title={brandName}
                       style={{
                         minHeight: 68,
@@ -610,11 +727,11 @@ export default function TiendaCatalogSection({
             </div>
           </div>
 
-          {/* Bottom Slim Precision Search & Parameter Bar */}
+          {/* Bottom Slim Precision Search, Parameter Bar & Subir/Bajar Filtros Toggle */}
           <div
             style={{
-              paddingTop: 18,
-              borderTop: '1px solid rgba(26, 31, 54, 0.06)',
+              paddingTop: filtersExpanded ? 18 : 0,
+              borderTop: filtersExpanded ? '1px solid rgba(26, 31, 54, 0.06)' : 'none',
               display: 'flex',
               flexWrap: 'wrap',
               alignItems: 'center',
@@ -622,7 +739,7 @@ export default function TiendaCatalogSection({
               gap: 10,
             }}
           >
-            {/* Search + Ancho / Perfil / Rin + Paquetes */}
+            {/* Search + Ancho / Perfil / Rin */}
             <div
               style={{
                 display: 'flex',
@@ -733,35 +850,10 @@ export default function TiendaCatalogSection({
                   </option>
                 ))}
               </select>
-
-              {/* Paquetes ×2 Quick Chip */}
-              <button
-                type="button"
-                onClick={() =>
-                  setCategory(category === 'Paquetes' ? 'Todos' : 'Paquetes')
-                }
-                style={{
-                  padding: '9px 14px',
-                  borderRadius: 9999,
-                  border: 'none',
-                  background: category === 'Paquetes' ? C.red : '#F5F5F7',
-                  color: category === 'Paquetes' ? C.white : C.navy,
-                  fontFamily: F.heading,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <Package size={12} /> Paquetes ×2
-              </button>
             </div>
 
-            {/* Right: Count + Sort + Reset */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Right: Count + Sort + Reset + Subir/Bajar Filtros */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               {activeFilterCount > 0 && (
                 <button
                   type="button"
@@ -810,6 +902,37 @@ export default function TiendaCatalogSection({
                 <option value="price-desc">Mayor precio</option>
                 <option value="stock-desc">Mayor stock</option>
               </select>
+
+              <button
+                type="button"
+                onClick={() => setFiltersExpanded((prev) => !prev)}
+                style={{
+                  padding: '9px 14px',
+                  borderRadius: 9999,
+                  border: '1px solid rgba(26, 31, 54, 0.10)',
+                  background: filtersExpanded ? '#F5F5F7' : C.navy,
+                  color: filtersExpanded ? C.navy : C.white,
+                  fontFamily: F.heading,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.22s ease',
+                }}
+              >
+                <SlidersHorizontal size={12} />
+                {filtersExpanded ? (
+                  <>
+                    Subir filtros <ChevronUp size={13} />
+                  </>
+                ) : (
+                  <>
+                    Bajar filtros <ChevronDown size={13} />
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -852,7 +975,13 @@ export default function TiendaCatalogSection({
               >
                 <button
                   type="button"
-                  onClick={() => setVisibleCount((prev) => prev + 12)}
+                  onClick={() => {
+                    if (isHomePreview) {
+                      navigateToStoreCatalog();
+                      return;
+                    }
+                    setVisibleCount((prev) => prev + 12);
+                  }}
                   style={{
                     padding: '15px 32px',
                     borderRadius: 9999,
@@ -874,7 +1003,13 @@ export default function TiendaCatalogSection({
                 {filteredProducts.length - visibleCount > 12 && (
                   <button
                     type="button"
-                    onClick={() => setVisibleCount(filteredProducts.length)}
+                    onClick={() => {
+                      if (isHomePreview) {
+                        navigateToStoreCatalog();
+                        return;
+                      }
+                      setVisibleCount(filteredProducts.length);
+                    }}
                     style={{
                       padding: '15px 28px',
                       borderRadius: 9999,
@@ -892,6 +1027,35 @@ export default function TiendaCatalogSection({
                     Ver todos ({filteredProducts.length})
                   </button>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFiltersExpanded(true);
+                    const el = document.getElementById('medidas-pedidas');
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }}
+                  style={{
+                    padding: '15px 22px',
+                    borderRadius: 9999,
+                    border: '1px solid rgba(26, 31, 54, 0.12)',
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    color: C.navy,
+                    fontFamily: F.heading,
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <ChevronUp size={14} color={C.red} /> Subir a filtros
+                </button>
               </div>
             )}
           </>
@@ -916,7 +1080,7 @@ export default function TiendaCatalogSection({
               Sin resultados para esta combinación
             </h3>
             <p style={{ fontSize: 14, color: C.gray, margin: '0 0 22px' }}>
-              Restablece los filtros para explorar las 54 referencias disponibles.
+              Restablece los filtros para explorar las {PRODUCTOS_MASTER.length} referencias disponibles.
             </p>
             <button
               type="button"

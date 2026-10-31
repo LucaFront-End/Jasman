@@ -156,18 +156,20 @@ export default function HomeTiendaPreviewPage() {
       {/* 2. Original Production Brands Marquee */}
       <BrandsMarquee />
 
-      {/* 3. NEW INTEGRATED STORE & PRODUCTS SECTION */}
-      <div id="tienda-home-section">
-        <TiendaCatalogSection id="catalogo-home-preview" isHomePreview />
-      </div>
-
-      {/* 4. Remaining Original Production Home Sections Preserved Intact */}
+      {/* 3. Original Production Home Sections Up To Nuestros Clientes */}
       <About />
       <Timeline />
       <Services />
       <Process />
       <Locations />
       <Testimonials />
+
+      {/* 4. INTEGRATED STORE & PRODUCTS SECTION (Placed right after Nuestros Clientes) */}
+      <div id="tienda-home-section">
+        <TiendaCatalogSection id="catalogo-home-preview" isHomePreview />
+      </div>
+
+      {/* 5. Remaining Original Production Home Sections */}
       <Promotions />
       <CTA />
     </>

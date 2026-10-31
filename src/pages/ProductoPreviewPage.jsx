@@ -1,7 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { C, F } from '../hooks/useAnimations';
-import { PRODUCTOS_MASTER, BRAND_META, formatMXN } from '../data/productosMasterData';
+import {
+  PRODUCTOS_MASTER,
+  PACKAGE_TO_SINGLE_ID_MAP,
+  BRAND_META,
+  formatMXN,
+} from '../data/productosMasterData';
 import { sucursales } from '../data/sucursalesData';
 import { useTiendaState, getVolumeDiscountTier } from '../hooks/useTiendaState';
 import { useAppleTilt } from '../hooks/useAppleScrollPhysics';
@@ -20,7 +25,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Quote,
-  Package,
   Sparkles,
   Tag,
   Truck,
@@ -92,13 +96,14 @@ export default function ProductoPreviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const product = useMemo(
-    () =>
+  const product = useMemo(() => {
+    const resolvedId = PACKAGE_TO_SINGLE_ID_MAP[Number(id)] || id;
+    return (
       PRODUCTOS_MASTER.find(
-        (p) => String(p.id) === String(id) || p.slug === id
-      ) || PRODUCTOS_MASTER[0],
-    [id]
-  );
+        (p) => String(p.id) === String(resolvedId) || p.slug === resolvedId
+      ) || PRODUCTOS_MASTER[0]
+    );
+  }, [id]);
 
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [prevProdId, setPrevProdId] = useState(product.id);
@@ -156,30 +161,6 @@ export default function ProductoPreviewPage() {
 
   // Volume discount options ("Agrega más y obtén un descuento")
   const volumeOptions = useMemo(() => {
-    if (product.isPackage) {
-      // Package already has 2 tires per unit
-      return [
-        {
-          qty: 1,
-          tires: 2,
-          title: '1 Paquete (2 Llantas)',
-          subtitle: 'Eje completo',
-          discountBadge: '−5% OFF',
-          rate: 0.05,
-          popular: false,
-        },
-        {
-          qty: 2,
-          tires: 4,
-          title: '2 Paquetes (4 Llantas)',
-          subtitle: 'Juego completo + Envío Gratis',
-          discountBadge: '−10% OFF · MÁS ELEGIDO',
-          rate: 0.1,
-          popular: true,
-        },
-      ].filter((o) => o.qty <= Math.max(1, product.quantity));
-    }
-
     return [
       {
         qty: 1,
@@ -339,10 +320,7 @@ export default function ProductoPreviewPage() {
     { label: 'Perfil / Serie', value: product.profile || '—' },
     { label: 'Diámetro de Rin', value: product.rim || '—' },
     { label: 'Índice Carga / Velocidad', value: product.loadSpeed || 'Oficial' },
-    {
-      label: 'Presentación',
-      value: product.isPackage ? 'Paquete de 2 Llantas' : 'Llanta individual',
-    },
+    { label: 'Presentación', value: 'Llanta individual' },
     { label: 'Disponibilidad en Red', value: `${product.quantity} unidades` },
   ];
 
@@ -532,26 +510,6 @@ export default function ProductoPreviewPage() {
                       }}
                     >
                       {product.measure}
-                    </span>
-                  )}
-                  {product.isPackage && (
-                    <span
-                      style={{
-                        padding: '5px 11px',
-                        borderRadius: 9999,
-                        background: C.red,
-                        color: C.white,
-                        fontFamily: F.heading,
-                        fontSize: 10,
-                        fontWeight: 800,
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <Package size={11} /> Paquete ×2
                     </span>
                   )}
                 </div>

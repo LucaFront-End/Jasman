@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
 import {
   MOST_REQUESTED_MEASURES,
@@ -9,7 +9,7 @@ import {
 import { triggerTiendaUI } from '../../hooks/useTiendaState';
 import { ArrowUpRight } from 'lucide-react';
 
-const TOP_REQUESTED_TIRE_IDS = [572, 590, 568, 591];
+const TOP_REQUESTED_TIRE_IDS = [572, 590, 568, 539];
 
 const BRAND_TILE_STYLES = {
   Hankook: { bg: '#111827', darkBg: true },
@@ -24,7 +24,6 @@ export default function TiendaMostRequestedSection({
   onAfterSelect,
 }) {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
 
   const topTires = TOP_REQUESTED_TIRE_IDS.map((id) =>
     PRODUCTOS_MASTER.find((p) => p.id === id)
@@ -32,26 +31,24 @@ export default function TiendaMostRequestedSection({
 
   const handleSelectMeasure = (rawMeasure) => {
     if (onAfterSelect) onAfterSelect();
-    if (pathname !== '/landing-tienda-preview') {
-      navigate('/landing-tienda-preview#catalogo-tienda');
-      setTimeout(() => {
-        triggerTiendaUI({ type: 'FILTER_CATALOG', measure: rawMeasure });
-      }, 120);
-    } else {
+    const targetUrl = `/landing-tienda-preview?measure=${encodeURIComponent(rawMeasure)}#catalogo-tienda`;
+    navigate(targetUrl);
+    setTimeout(() => {
       triggerTiendaUI({ type: 'FILTER_CATALOG', measure: rawMeasure });
-    }
+      const el = document.getElementById('catalogo-tienda');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   const handleSelectBrand = (brandName) => {
     if (onAfterSelect) onAfterSelect();
-    if (pathname !== '/landing-tienda-preview') {
-      navigate('/landing-tienda-preview#catalogo-tienda');
-      setTimeout(() => {
-        triggerTiendaUI({ type: 'FILTER_CATALOG', brand: brandName });
-      }, 120);
-    } else {
+    const targetUrl = `/landing-tienda-preview?brand=${encodeURIComponent(brandName)}#catalogo-tienda`;
+    navigate(targetUrl);
+    setTimeout(() => {
       triggerTiendaUI({ type: 'FILTER_CATALOG', brand: brandName });
-    }
+      const el = document.getElementById('catalogo-tienda');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   return (

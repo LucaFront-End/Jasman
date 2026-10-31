@@ -643,7 +643,7 @@ export default function LandingTiendaPreviewPage() {
                   color: C.red,
                 }}
               >
-                Jasman Store · 54 Referencias Oficiales
+                Jasman Store · {PRODUCTOS_MASTER.length} Referencias Oficiales
               </span>
             </div>
 
@@ -1046,7 +1046,7 @@ export default function LandingTiendaPreviewPage() {
                 gap: 8,
               }}
             >
-              Explorar las 54 referencias <ArrowRight size={14} />
+              Explorar las {PRODUCTOS_MASTER.length} referencias <ArrowRight size={14} />
             </a>
           </div>
 

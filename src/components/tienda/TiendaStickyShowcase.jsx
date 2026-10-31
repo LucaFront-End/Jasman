@@ -19,12 +19,12 @@ const CHAPTERS = [
   },
   {
     step: '02',
-    tag: 'Paquete ×2 Unidades',
+    tag: 'Confort & Autopista',
     watermark: 'PREMIUM 6',
-    headline: 'Doble tracción.',
-    sub: 'Paquete de 2 Llantas 195/65R15 Continental Premium Contact 6',
+    headline: 'Control total.',
+    sub: '195/65R15 Continental Premium Contact 6 91 H',
     glow: 'rgba(26, 31, 54, 0.08)',
-    productId: 591,
+    productId: 539,
   },
   {
     step: '03',

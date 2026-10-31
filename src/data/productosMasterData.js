@@ -1193,7 +1193,10 @@ export const RAW_PRODUCTOS_MASTER = [
 // Parse real tire specifications strictly from the CSV product name
 export function parseTireSpecs(product) {
   const rawName = product.name || '';
-  const cleanTitle = rawName.replace(/^copia de\s+/i, '').trim();
+  const cleanTitle = rawName
+    .replace(/^copia de\s+/i, '')
+    .replace(/^Paquete de 2 Llantas\s+/i, 'Llanta ')
+    .trim();
 
   let width = null;
   let profile = null;
@@ -1246,7 +1249,9 @@ export function parseTireSpecs(product) {
     .replace(/\s+/g, ' ')
     .trim();
 
-  const isPackage = /paquete de 2/i.test(cleanTitle);
+  const isPackage = false;
+  const normalizedCategory =
+    product.category === 'Paquetes' ? 'Llanta de automóvil' : product.category;
   const inStock = product.quantity > 0 && product.finalPriceTaxExcluded > 0;
   const hasPngCutout = true;
   const cutoutImage = `/images/tires/tire-${product.id}.png`;
@@ -1254,7 +1259,7 @@ export function parseTireSpecs(product) {
   // Classify each tire into Auto, Camioneta (SUV/Pickup), or Camión (Carga/Van)
   let vehicleType = 'Auto';
   if (
-    product.category === 'Llanta de camión' ||
+    normalizedCategory === 'Llanta de camión' ||
     /19\.5|17\.5|10R15|VanContact|Vantra|RA08|RA18|AH11|DH35|Smart Work|SMaRT FLeX|6PR|8PR/i.test(
       cleanTitle
     )
@@ -1270,6 +1275,7 @@ export function parseTireSpecs(product) {
 
   return {
     ...product,
+    category: normalizedCategory,
     cleanTitle,
     width,
     profile,
@@ -1278,7 +1284,7 @@ export function parseTireSpecs(product) {
     loadSpeed,
     model: model || cleanTitle,
     isPackage,
-    unitsPerItem: isPackage ? 2 : 1,
+    unitsPerItem: 1,
     inStock,
     hasPngCutout,
     cutoutImage,
@@ -1287,7 +1293,30 @@ export function parseTireSpecs(product) {
   };
 }
 
-export const PRODUCTOS_MASTER = RAW_PRODUCTOS_MASTER.map(parseTireSpecs);
+// Map legacy 2-tire bundle IDs from the CSV to their exact single-tire equivalents
+export const PACKAGE_TO_SINGLE_ID_MAP = {
+  591: 539,
+  580: 589,
+  579: 547,
+  578: 588,
+  577: 572,
+  576: 586,
+  575: 542,
+  574: 590,
+  573: 587,
+};
+
+const EXCLUDED_PACKAGE_IDS = new Set(Object.keys(PACKAGE_TO_SINGLE_ID_MAP).map(Number));
+
+const ALL_SINGLE_TIRES = RAW_PRODUCTOS_MASTER.filter(
+  (p) => !EXCLUDED_PACKAGE_IDS.has(p.id)
+).map(parseTireSpecs);
+
+// Place Continental Premium Contact 6 195/65R15 (single tire #539) first as the flagship spotlight
+export const PRODUCTOS_MASTER = [
+  ...ALL_SINGLE_TIRES.filter((p) => p.id === 539),
+  ...ALL_SINGLE_TIRES.filter((p) => p.id !== 539),
+];
 
 // Top requested measures derived from the master catalog (formatted for "205 / 55" + "R16" pills)
 export const MOST_REQUESTED_MEASURES = [
@@ -1306,7 +1335,7 @@ export const MOST_REQUESTED_MEASURES = [
 ];
 
 // Dynamic filter facets derived strictly from the CSV dataset
-export const TIENDA_CATEGORIES = ['Todos', 'Llanta de automóvil', 'Paquetes', 'Llanta de camión'];
+export const TIENDA_CATEGORIES = ['Todos', 'Llanta de automóvil', 'Llanta de camión'];
 
 export const TIENDA_BRANDS = ['Todas', 'Hankook', 'Continental', 'Euzkadi', 'General Tire', 'Laufenn'];
 

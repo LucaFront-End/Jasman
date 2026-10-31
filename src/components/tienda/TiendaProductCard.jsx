@@ -4,7 +4,7 @@ import { C, F } from '../../hooks/useAnimations';
 import { formatMXN, BRAND_META } from '../../data/productosMasterData';
 import { useTiendaState } from '../../hooks/useTiendaState';
 import { useAppleTilt } from '../../hooks/useAppleScrollPhysics';
-import { Plus, Check, ArrowUpRight, Package } from 'lucide-react';
+import { Plus, Check, ArrowUpRight } from 'lucide-react';
 
 export default function TiendaProductCard({
   product,
@@ -145,7 +145,7 @@ export default function TiendaProductCard({
                     textTransform: 'uppercase',
                   }}
                 >
-                  {product.isPackage ? 'Paquete ×2' : 'Destacado'}
+                  Destacado
                 </span>
                 {product.measure && (
                   <span
@@ -458,27 +458,6 @@ export default function TiendaProductCard({
               }}
             >
               {product.brand}
-            </span>
-          )}
-
-          {product.isPackage && (
-            <span
-              style={{
-                padding: '2px 7px',
-                borderRadius: 9999,
-                background: C.red,
-                color: C.white,
-                fontFamily: F.heading,
-                fontSize: 9,
-                fontWeight: 800,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 3,
-              }}
-            >
-              <Package size={10} /> ×2
             </span>
           )}
         </div>
