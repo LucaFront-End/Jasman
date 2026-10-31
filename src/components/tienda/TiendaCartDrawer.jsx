@@ -28,11 +28,14 @@ export default function TiendaCartDrawer() {
     volumeTier,
     volumeDiscountAmount,
     discountAmount,
+    installationFee,
     totalAfterDiscount,
     coupon,
     user,
     selectedBranchSlug,
+    deliveryMode,
     setSelectedBranch,
+    setDeliveryMode,
     updateCartQuantity,
     removeFromCart,
     clearCart,
@@ -100,8 +103,10 @@ export default function TiendaCartDrawer() {
       coupon
         ? `Descuento 10% (${coupon.code}): -${formatMXN(discountAmount)}`
         : null,
+      deliveryMode === 'branch'
+        ? `Instalación en sucursal (${selectedBranch?.name || 'Por definir'}): +${formatMXN(installationFee)}`
+        : 'Modalidad: Entrega a Domicilio GRATIS',
       `Total estimado (sin IVA): ${formatMXN(totalAfterDiscount)}`,
-      `Sucursal seleccionada: ${selectedBranch?.name || 'Por definir'}`,
       user?.nombre ? `Cliente: ${user.nombre} (${user.telefono || user.correo || ''})` : null,
     ]
       .filter(Boolean)
@@ -124,10 +129,15 @@ export default function TiendaCartDrawer() {
       subtotal,
       volumeDiscountAmount,
       discountAmount,
+      installationFee,
+      deliveryMode,
       total: totalAfterDiscount,
       couponCode: coupon?.code || null,
-      branchName: selectedBranch?.name || 'Por definir',
-      branchSlug: selectedBranch?.slug || '',
+      branchName:
+        deliveryMode === 'branch'
+          ? selectedBranch?.name || 'Por definir'
+          : 'Entrega a Domicilio Gratis',
+      branchSlug: deliveryMode === 'branch' ? selectedBranch?.slug || '' : 'envio-domicilio',
       customer: user || { nombre: 'Cliente Web' },
     });
 
@@ -556,52 +566,129 @@ export default function TiendaCartDrawer() {
                 </div>
               ))}
 
-              {/* Branch selector for pickup / installation */}
+              {/* Delivery vs Branch Installation Selector */}
               <div
                 style={{
                   padding: 14,
                   borderRadius: 14,
                   background: '#F8FAFC',
                   border: `1px solid ${C.border}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
                 }}
               >
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontFamily: F.heading,
-                    fontSize: 10.5,
-                    fontWeight: 800,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: C.navy,
-                    marginBottom: 8,
-                  }}
-                >
-                  <MapPin size={13} color={C.red} /> Sucursal para instalación o recolección
-                </label>
-                <select
-                  value={selectedBranchSlug}
-                  onChange={(e) => setSelectedBranch(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: 8,
-                    border: `1px solid ${C.border}`,
-                    background: C.white,
-                    fontFamily: F.body,
-                    fontSize: 12.5,
-                    color: C.navy,
-                    outline: 'none',
-                  }}
-                >
-                  {sucursales.map((s) => (
-                    <option key={s.slug} value={s.slug}>
-                      {s.name} ({s.zone})
-                    </option>
-                  ))}
-                </select>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMode('shipping')}
+                    style={{
+                      padding: '10px 10px',
+                      borderRadius: 10,
+                      border:
+                        deliveryMode === 'shipping'
+                          ? `1.5px solid ${C.red}`
+                          : `1px solid ${C.border}`,
+                      background: deliveryMode === 'shipping' ? '#FFF5F5' : C.white,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: F.heading,
+                        fontSize: 11,
+                        fontWeight: 800,
+                        color: C.navy,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span>Entrega</span>
+                      <span style={{ color: '#15803D', fontSize: 10 }}>GRATIS</span>
+                    </div>
+                    <div style={{ fontSize: 10, color: C.gray, marginTop: 2 }}>
+                      Envío a domicilio
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMode('branch')}
+                    style={{
+                      padding: '10px 10px',
+                      borderRadius: 10,
+                      border:
+                        deliveryMode === 'branch'
+                          ? `1.5px solid ${C.red}`
+                          : `1px solid ${C.border}`,
+                      background: deliveryMode === 'branch' ? '#FFF5F5' : C.white,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: F.heading,
+                        fontSize: 11,
+                        fontWeight: 800,
+                        color: C.navy,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span>Sucursal</span>
+                      <span style={{ color: C.red, fontSize: 10 }}>+$999</span>
+                    </div>
+                    <div style={{ fontSize: 10, color: C.gray, marginTop: 2 }}>
+                      Montaje e instalación
+                    </div>
+                  </button>
+                </div>
+
+                {deliveryMode === 'branch' && (
+                  <div>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontFamily: F.heading,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: C.navy,
+                        marginBottom: 6,
+                      }}
+                    >
+                      <MapPin size={12} color={C.red} /> Elige tu sucursal Jasman
+                    </label>
+                    <select
+                      value={selectedBranchSlug}
+                      onChange={(e) => setSelectedBranch(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: 8,
+                        border: `1px solid ${C.border}`,
+                        background: C.white,
+                        fontFamily: F.body,
+                        fontSize: 12.5,
+                        color: C.navy,
+                        outline: 'none',
+                      }}
+                    >
+                      {sucursales.map((s) => (
+                        <option key={s.slug} value={s.slug}>
+                          {s.name} ({s.zone})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Coupon box */}
@@ -697,10 +784,17 @@ export default function TiendaCartDrawer() {
                   <span>−{formatMXN(discountAmount)}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: '#15803D', fontWeight: 700 }}>
-                <span>Envío Nacional</span>
-                <span>GRATIS</span>
-              </div>
+              {deliveryMode === 'branch' ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: C.navy, fontWeight: 700 }}>
+                  <span>Instalación en Sucursal ({selectedBranch?.name})</span>
+                  <span>+{formatMXN(installationFee)}</span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: '#15803D', fontWeight: 700 }}>
+                  <span>Entrega a Domicilio Nacional</span>
+                  <span>GRATIS</span>
+                </div>
+              )}
               <div
                 style={{
                   display: 'flex',

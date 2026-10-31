@@ -8,7 +8,11 @@ import {
   formatMXN,
 } from '../data/productosMasterData';
 import { sucursales } from '../data/sucursalesData';
-import { useTiendaState, getVolumeDiscountTier } from '../hooks/useTiendaState';
+import {
+  useTiendaState,
+  getVolumeDiscountTier,
+  BRANCH_INSTALLATION_FEE,
+} from '../hooks/useTiendaState';
 import { useAppleTilt } from '../hooks/useAppleScrollPhysics';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
@@ -28,6 +32,7 @@ import {
   Sparkles,
   Tag,
   Truck,
+  Info,
 } from 'lucide-react';
 
 const BRAND_DETAILS = {
@@ -112,7 +117,10 @@ export default function ProductoPreviewPage() {
   const [quickAddedId, setQuickAddedId] = useState(null);
   const [openAccordion, setOpenAccordion] = useState('ficha');
   const [activeReviewIdx, setActiveReviewIdx] = useState(0);
+  const [showDiscountFloat, setShowDiscountFloat] = useState(false);
+  const [showFloatingBuyBar, setShowFloatingBuyBar] = useState(false);
   const carouselRef = useRef(null);
+  const buyButtonRef = useRef(null);
 
   if (product.id !== prevProdId) {
     setPrevProdId(product.id);
@@ -126,8 +134,25 @@ export default function ProductoPreviewPage() {
     addToCart,
     coupon,
     selectedBranchSlug,
+    deliveryMode,
     setSelectedBranch,
+    setDeliveryMode,
   } = useTiendaState();
+
+  // Show bottom floating buy bar when user scrolls past the main buy button
+  useEffect(() => {
+    const onScroll = () => {
+      if (buyButtonRef.current) {
+        const rect = buyButtonRef.current.getBoundingClientRect();
+        setShowFloatingBuyBar(rect.bottom < 70);
+      } else {
+        setShowFloatingBuyBar(window.scrollY > 520);
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const brandMeta = BRAND_META[product.brand];
   const brandExtra = BRAND_DETAILS[product.brand] || {
@@ -156,41 +181,14 @@ export default function ProductoPreviewPage() {
   );
 
   const rawTotalWithoutDiscounts = basePrice * qty;
-  const finalTotalForSelection = unitEffectivePrice * qty;
-  const totalSavingsForSelection = Math.max(0, rawTotalWithoutDiscounts - finalTotalForSelection);
-
-  // Volume discount options ("Agrega más y obtén un descuento")
-  const volumeOptions = useMemo(() => {
-    return [
-      {
-        qty: 1,
-        tires: 1,
-        title: '1 Llanta',
-        subtitle: 'Reemplazo individual',
-        discountBadge: 'Precio Base',
-        rate: 0,
-        popular: false,
-      },
-      {
-        qty: 2,
-        tires: 2,
-        title: 'Agrega 2 (Par)',
-        subtitle: 'Descuento por par + Envío Gratis',
-        discountBadge: 'AHORRA 5% EXTRA',
-        rate: 0.05,
-        popular: false,
-      },
-      {
-        qty: 4,
-        tires: 4,
-        title: 'Agrega 4 (Juego)',
-        subtitle: 'Máximo ahorro + Envío Gratis',
-        discountBadge: 'AHORRA 10% EXTRA',
-        rate: 0.1,
-        popular: true,
-      },
-    ].filter((o) => o.qty <= Math.max(1, product.quantity));
-  }, [product]);
+  const tiresSubtotalForSelection = unitEffectivePrice * qty;
+  const activeInstallationCost =
+    deliveryMode === 'branch' ? BRANCH_INSTALLATION_FEE : 0;
+  const finalTotalForSelection = tiresSubtotalForSelection + activeInstallationCost;
+  const totalSavingsForSelection = Math.max(
+    0,
+    rawTotalWithoutDiscounts - tiresSubtotalForSelection
+  );
 
   // Build gallery: first image prefers the transparent PNG cutout, followed by all CSV angles
   const galleryImages = useMemo(() => {
@@ -239,7 +237,9 @@ export default function ProductoPreviewPage() {
         ? `• Total estimado (sin IVA): ${formatMXN(finalTotalForSelection)}`
         : '• Solicito cotización y disponibilidad',
       coupon ? `• Cupón 10% primera compra: ${coupon.code}` : null,
-      `• Sucursal de preferencia: ${selectedBranch?.name || 'Por definir'}`,
+      deliveryMode === 'branch'
+        ? `• Modalidad: Instalación en Sucursal (+${formatMXN(BRANCH_INSTALLATION_FEE)}) — ${selectedBranch?.name || 'Por definir'}`
+        : '• Modalidad: Entrega a Domicilio Gratis',
     ]
       .filter(Boolean)
       .join('\n');
@@ -1005,14 +1005,15 @@ export default function ProductoPreviewPage() {
               {product.cleanTitle}
             </h1>
 
-            {/* Rating + SKU Row */}
+            {/* Rating + SKU + Discount Legend with Floating Popover Row */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 flexWrap: 'wrap',
-                gap: 12,
-                marginBottom: 20,
+                gap: 10,
+                marginBottom: 16,
+                position: 'relative',
               }}
             >
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -1029,541 +1030,441 @@ export default function ProductoPreviewPage() {
                     fontFamily: F.heading,
                   }}
                 >
-                  5.0
+                  5.0 Reseñas
                 </span>
               </div>
+
               <span style={{ color: '#CBD5E1' }}>·</span>
+
               <span style={{ fontSize: 12, color: '#64748B', fontFamily: F.body }}>
-                SKU Oficial: <strong style={{ color: C.navy }}>{product.reference}</strong>
+                SKU: <strong style={{ color: C.navy }}>{product.reference}</strong>
               </span>
+
+              {basePrice > 0 && (
+                <>
+                  <span style={{ color: '#CBD5E1' }}>·</span>
+
+                  <div
+                    onMouseEnter={() => setShowDiscountFloat(true)}
+                    onMouseLeave={() => setShowDiscountFloat(false)}
+                    style={{ position: 'relative', display: 'inline-flex' }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setShowDiscountFloat((v) => !v)}
+                      style={{
+                        padding: '4px 11px',
+                        borderRadius: 9999,
+                        border:
+                          activeVolumeTier.percent > 0
+                            ? '1px solid rgba(22, 163, 74, 0.3)'
+                            : '1px solid rgba(196, 30, 36, 0.22)',
+                        background:
+                          activeVolumeTier.percent > 0
+                            ? 'rgba(22, 163, 74, 0.1)'
+                            : 'rgba(196, 30, 36, 0.07)',
+                        color: activeVolumeTier.percent > 0 ? '#15803D' : C.red,
+                        fontFamily: F.heading,
+                        fontSize: 10.5,
+                        fontWeight: 800,
+                        letterSpacing: '0.03em',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <Tag size={11} />
+                      <span>
+                        {activeVolumeTier.percent > 0
+                          ? `−${activeVolumeTier.percent}% Descuento activo`
+                          : 'Agrega más y obtén descuento'}
+                      </span>
+                      <Info size={11} />
+                    </button>
+
+                    {/* Floating Discount Info Popover ("la info aparezca con un flotante") */}
+                    {showDiscountFloat && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 8px)',
+                          left: 0,
+                          zIndex: 45,
+                          width: 290,
+                          padding: '14px 16px',
+                          borderRadius: 18,
+                          background: 'rgba(26, 31, 54, 0.97)',
+                          backdropFilter: 'blur(16px)',
+                          WebkitBackdropFilter: 'blur(16px)',
+                          color: '#FFFFFF',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          boxShadow: '0 20px 44px rgba(15, 23, 42, 0.28)',
+                          animation: 'heroFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontFamily: F.heading,
+                            fontSize: 10,
+                            fontWeight: 800,
+                            letterSpacing: '0.14em',
+                            textTransform: 'uppercase',
+                            color: '#FCA5A5',
+                            marginBottom: 8,
+                          }}
+                        >
+                          Descuento automático por volumen
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 6,
+                            fontSize: 11.5,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '6px 9px',
+                              borderRadius: 10,
+                              background:
+                                qty >= 2 && qty < 4
+                                  ? 'rgba(22, 163, 74, 0.25)'
+                                  : 'rgba(255, 255, 255, 0.07)',
+                            }}
+                          >
+                            <span>2 a 3 llantas (Par)</span>
+                            <strong style={{ color: '#86EFAC' }}>
+                              −5% OFF ({formatMXN(basePrice * 0.95)} c/u)
+                            </strong>
+                          </div>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '6px 9px',
+                              borderRadius: 10,
+                              background:
+                                qty >= 4
+                                  ? 'rgba(22, 163, 74, 0.25)'
+                                  : 'rgba(255, 255, 255, 0.07)',
+                            }}
+                          >
+                            <span>4+ llantas (Juego)</span>
+                            <strong style={{ color: '#86EFAC' }}>
+                              −10% OFF ({formatMXN(basePrice * 0.9)} c/u)
+                            </strong>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 10.5,
+                            color: '#CBD5E1',
+                            marginTop: 8,
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          Se aplica automáticamente al subir la cantidad de llantas.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Minimalist Price & Inventory Card */}
+            {/* Compact Price Card (Inline Unit Price + Subtitle as indicated in IMG1) */}
             <div
               style={{
                 width: '100%',
-                padding: '20px 24px',
-                borderRadius: 24,
+                padding: '16px 22px',
+                borderRadius: 22,
                 background: '#FFFFFF',
                 border: '1px solid rgba(26, 31, 54, 0.07)',
-                boxShadow: '0 14px 36px rgba(26, 31, 54, 0.04)',
-                marginBottom: 20,
+                boxShadow: '0 10px 28px rgba(26, 31, 54, 0.035)',
+                marginBottom: 16,
+                display: 'flex',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 10,
               }}
             >
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'baseline',
-                  justifyContent: 'space-between',
                   flexWrap: 'wrap',
                   gap: 12,
                 }}
               >
-                <div>
-                  {(activeVolumeTier.rate > 0 || coupon) && basePrice > 0 ? (
-                    <>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          flexWrap: 'wrap',
-                          gap: 6,
-                          marginBottom: 4,
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 13.5,
-                            color: '#94A3B8',
-                            textDecoration: 'line-through',
-                          }}
-                        >
-                          {formatMXN(basePrice)}
-                        </span>
-                        {activeVolumeTier.percent > 0 && (
-                          <span
-                            style={{
-                              padding: '3px 9px',
-                              borderRadius: 9999,
-                              background: 'rgba(22, 163, 74, 0.12)',
-                              color: '#15803D',
-                              fontFamily: F.heading,
-                              fontSize: 9.5,
-                              fontWeight: 800,
-                            }}
-                          >
-                            −{activeVolumeTier.percent}% POR VOLUMEN
-                          </span>
-                        )}
-                        {coupon && (
-                          <span
-                            style={{
-                              padding: '3px 9px',
-                              borderRadius: 9999,
-                              background: '#FFF1F2',
-                              color: C.red,
-                              fontFamily: F.heading,
-                              fontSize: 9.5,
-                              fontWeight: 800,
-                            }}
-                          >
-                            −10% 1ª COMPRA ({coupon.code})
-                          </span>
-                        )}
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: F.heading,
-                          fontSize: 'clamp(2rem, 3vw, 2.55rem)',
-                          fontWeight: 900,
-                          color: C.red,
-                          letterSpacing: '-0.035em',
-                        }}
-                      >
-                        {formatMXN(unitEffectivePrice)}
-                      </div>
-                    </>
-                  ) : (
-                    <div
-                      style={{
-                        fontFamily: F.heading,
-                        fontSize: basePrice > 0 ? 'clamp(2rem, 3vw, 2.55rem)' : 20,
-                        fontWeight: 900,
-                        color: basePrice > 0 ? C.navy : C.gray,
-                        letterSpacing: '-0.035em',
-                      }}
-                    >
-                      {formatMXN(basePrice)}
-                    </div>
-                  )}
-                  <span style={{ fontSize: 11, color: '#64748B' }}>
-                    Precio unitario en MXN · Sin IVA
-                  </span>
-                </div>
-
-                {basePrice > 0 && (
-                  <div
-                    style={{
-                      padding: '10px 14px',
-                      borderRadius: 16,
-                      background: '#F8F9FA',
-                      textAlign: 'right',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 9.5,
-                        fontFamily: F.heading,
-                        fontWeight: 800,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.1em',
-                        color: '#64748B',
-                      }}
-                    >
-                      Total ({qty} {qty === 1 ? 'unidad' : 'unidades'})
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 17,
-                        fontFamily: F.heading,
-                        fontWeight: 900,
-                        color: C.navy,
-                        marginTop: 2,
-                      }}
-                    >
-                      {formatMXN(finalTotalForSelection)}
-                    </div>
-                    {totalSavingsForSelection > 0 && (
-                      <div
-                        style={{
-                          fontSize: 10.5,
-                          fontFamily: F.heading,
-                          fontWeight: 800,
-                          color: '#15803D',
-                          marginTop: 2,
-                        }}
-                      >
-                        Ahorras {formatMXN(totalSavingsForSelection)}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div
-                style={{
-                  marginTop: 14,
-                  paddingTop: 12,
-                  borderTop: '1px solid rgba(26, 31, 54, 0.06)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 8,
-                  fontSize: 12,
-                }}
-              >
-                <span
-                  style={{
-                    color: '#15803D',
-                    fontWeight: 700,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <Sparkles size={13} color={C.red} />
-                  {product.quantity} unidades listas para entrega o instalación hoy
-                </span>
                 <span
                   style={{
                     fontFamily: F.heading,
-                    fontSize: 10.5,
-                    fontWeight: 800,
-                    color: C.navy,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
+                    fontSize: basePrice > 0 ? 'clamp(1.9rem, 2.8vw, 2.4rem)' : 20,
+                    fontWeight: 900,
+                    color:
+                      (activeVolumeTier.rate > 0 || coupon) && basePrice > 0
+                        ? C.red
+                        : basePrice > 0
+                          ? C.navy
+                          : C.gray,
+                    letterSpacing: '-0.035em',
+                    lineHeight: 1,
                   }}
                 >
-                  <Truck size={13} color={C.red} /> Envío Gratis Incluido
+                  {formatMXN(unitEffectivePrice)}
                 </span>
-              </div>
-            </div>
 
-            {/* "AGREGA MÁS Y OBTÉN UN DESCUENTO" TIERED VOLUME MODULE */}
-            {product.inStock && basePrice > 0 && (
-              <div
-                style={{
-                  width: '100%',
-                  padding: '20px 22px',
-                  borderRadius: 24,
-                  background: '#FFFFFF',
-                  border:
-                    activeVolumeTier.percent > 0
-                      ? '1.5px solid rgba(22, 163, 74, 0.32)'
-                      : '1.5px solid rgba(196, 30, 36, 0.18)',
-                  boxShadow: '0 14px 34px rgba(26, 31, 54, 0.045)',
-                  marginBottom: 20,
-                }}
-              >
-                {/* Header */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: 8,
-                    marginBottom: 10,
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 9,
-                        background:
-                          activeVolumeTier.percent > 0
-                            ? 'rgba(22, 163, 74, 0.12)'
-                            : 'rgba(196, 30, 36, 0.1)',
-                        color: activeVolumeTier.percent > 0 ? '#15803D' : C.red,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Tag size={14} />
-                    </div>
-                    <span
-                      style={{
-                        fontFamily: F.heading,
-                        fontSize: 13,
-                        fontWeight: 900,
-                        color: C.navy,
-                        letterSpacing: '-0.01em',
-                      }}
-                    >
-                      Agrega más y obtén un descuento
-                    </span>
-                  </div>
-
+                {(activeVolumeTier.rate > 0 || coupon) && basePrice > 0 && (
                   <span
                     style={{
-                      padding: '4px 10px',
-                      borderRadius: 9999,
-                      background:
-                        activeVolumeTier.percent >= 10
-                          ? '#16A34A'
-                          : activeVolumeTier.percent >= 5
-                            ? 'rgba(22, 163, 74, 0.12)'
-                            : 'rgba(196, 30, 36, 0.09)',
-                      color:
-                        activeVolumeTier.percent >= 10
-                          ? '#FFFFFF'
-                          : activeVolumeTier.percent >= 5
-                            ? '#15803D'
-                            : C.red,
-                      fontFamily: F.heading,
-                      fontSize: 9.5,
-                      fontWeight: 800,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
+                      fontSize: 13.5,
+                      color: '#94A3B8',
+                      textDecoration: 'line-through',
+                      fontWeight: 600,
                     }}
                   >
-                    {activeVolumeTier.percent >= 10
-                      ? '✓ 10% OFF Máximo Activo'
-                      : activeVolumeTier.percent >= 5
-                        ? '✓ 5% OFF Activo'
-                        : 'Hasta −10% Extra'}
+                    {formatMXN(basePrice)}
                   </span>
-                </div>
+                )}
 
-                {/* Dynamic Progress Message */}
-                <p
-                  style={{
-                    fontFamily: F.body,
-                    fontSize: 12,
-                    color: '#475569',
-                    margin: '0 0 10px',
-                    lineHeight: 1.45,
-                  }}
-                >
-                  {effectiveTiresCount >= 4 ? (
-                    <>
-                      ¡Descuento máximo desbloqueado! Tienes{' '}
-                      <strong style={{ color: '#15803D' }}>10% OFF adicional</strong> en tu
-                      juego completo + <strong>Envío Gratis Prioritario</strong>.
-                    </>
-                  ) : effectiveTiresCount >= 2 ? (
-                    <>
-                      ¡Ya tienes <strong style={{ color: '#15803D' }}>5% OFF extra</strong>!
-                      Agrega{' '}
-                      <strong style={{ color: C.red }}>
-                        {4 - effectiveTiresCount}{' '}
-                        {4 - effectiveTiresCount === 1 ? 'llanta más' : 'llantas más'}
-                      </strong>{' '}
-                      para desbloquear <strong>10% OFF</strong> en el juego completo.
-                    </>
-                  ) : (
-                    <>
-                      Agrega <strong style={{ color: C.red }}>1 llanta más</strong> para
-                      desbloquear <strong>5% OFF adicional</strong>, o lleva las{' '}
-                      <strong style={{ color: C.navy }}>4 llantas con 10% OFF</strong>.
-                    </>
-                  )}
-                </p>
-
-                {/* Animated Progress Bar */}
-                <div
-                  style={{
-                    width: '100%',
-                    height: 6,
-                    borderRadius: 999,
-                    background: '#F1F5F9',
-                    overflow: 'hidden',
-                    marginBottom: 14,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${activeVolumeTier.progress}%`,
-                      height: '100%',
-                      borderRadius: 999,
-                      background:
-                        activeVolumeTier.percent > 0
-                          ? 'linear-gradient(90deg, #16A34A 0%, #15803D 100%)'
-                          : `linear-gradient(90deg, ${C.red} 0%, #E11D48 100%)`,
-                      transition: 'width 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                  />
-                </div>
-
-                {/* Interactive Tier Cards */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: `repeat(${volumeOptions.length}, 1fr)`,
-                    gap: 10,
-                  }}
-                >
-                  {volumeOptions.map((opt) => {
-                    const isSelected = qty === opt.qty;
-                    const optUnitAfterVol = basePrice * (1 - opt.rate);
-                    const optUnitFinal = coupon ? optUnitAfterVol * 0.9 : optUnitAfterVol;
-                    const optTotal = optUnitFinal * opt.qty;
-                    const optSavings = basePrice * opt.qty - optTotal;
-
-                    return (
-                      <button
-                        key={opt.qty}
-                        type="button"
-                        onClick={() => setQty(opt.qty)}
-                        style={{
-                          position: 'relative',
-                          padding: '13px 12px 12px',
-                          borderRadius: 16,
-                          border: isSelected
-                            ? `2px solid ${opt.rate > 0 ? '#16A34A' : C.red}`
-                            : '1px solid rgba(26, 31, 54, 0.09)',
-                          background: isSelected
-                            ? opt.rate > 0
-                              ? 'rgba(22, 163, 74, 0.05)'
-                              : '#FFF5F5'
-                            : '#F8F9FA',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          transition: 'all 0.22s ease',
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'inline-block',
-                            padding: '2px 7px',
-                            borderRadius: 9999,
-                            background:
-                              opt.rate >= 0.1
-                                ? C.red
-                                : opt.rate >= 0.05
-                                  ? 'rgba(22, 163, 74, 0.14)'
-                                  : 'rgba(26, 31, 54, 0.07)',
-                            color:
-                              opt.rate >= 0.1
-                                ? '#FFFFFF'
-                                : opt.rate >= 0.05
-                                  ? '#15803D'
-                                  : '#64748B',
-                            fontFamily: F.heading,
-                            fontSize: 8.5,
-                            fontWeight: 800,
-                            letterSpacing: '0.06em',
-                            textTransform: 'uppercase',
-                            marginBottom: 6,
-                          }}
-                        >
-                          {opt.discountBadge}
-                        </div>
-
-                        <div
-                          style={{
-                            fontFamily: F.heading,
-                            fontSize: 12.5,
-                            fontWeight: 800,
-                            color: C.navy,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <span>{opt.title}</span>
-                          {isSelected && (
-                            <Check
-                              size={13}
-                              color={opt.rate > 0 ? '#16A34A' : C.red}
-                            />
-                          )}
-                        </div>
-
-                        <div
-                          style={{
-                            fontFamily: F.heading,
-                            fontSize: 12,
-                            fontWeight: 900,
-                            color: C.navy,
-                            marginTop: 4,
-                          }}
-                        >
-                          {formatMXN(optUnitFinal)}{' '}
-                          <span style={{ fontSize: 10, fontWeight: 600, color: '#64748B' }}>
-                            c/u
-                          </span>
-                        </div>
-
-                        {optSavings > 0 ? (
-                          <div
-                            style={{
-                              fontSize: 10,
-                              fontWeight: 800,
-                              color: '#15803D',
-                              marginTop: 3,
-                            }}
-                          >
-                            Ahorras {formatMXN(optSavings)}
-                          </div>
-                        ) : (
-                          <div
-                            style={{
-                              fontSize: 10,
-                              color: '#64748B',
-                              marginTop: 3,
-                            }}
-                          >
-                            {opt.subtitle}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                <span style={{ fontSize: 11.5, color: '#64748B', fontWeight: 500 }}>
+                  Precio unitario en MXN · Sin IVA
+                </span>
               </div>
-            )}
 
-            {/* Branch Selector Card */}
+              {totalSavingsForSelection > 0 && (
+                <span
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 9999,
+                    background: 'rgba(22, 163, 74, 0.1)',
+                    color: '#15803D',
+                    fontFamily: F.heading,
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                  }}
+                >
+                  Ahorras {formatMXN(totalSavingsForSelection)}
+                </span>
+              )}
+            </div>
+
+            {/* Entrega Gratis (Predeterminado) vs Instalación en Sucursal (+$999) Selector */}
             <div
               style={{
                 width: '100%',
-                padding: '14px 18px',
-                borderRadius: 18,
+                padding: '16px 18px',
+                borderRadius: 22,
                 background: '#FFFFFF',
-                border: '1px solid rgba(26, 31, 54, 0.07)',
-                marginBottom: 20,
+                border: '1px solid rgba(26, 31, 54, 0.08)',
+                boxShadow: '0 10px 28px rgba(26, 31, 54, 0.03)',
+                marginBottom: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
               }}
             >
-              <label
+              <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
                   fontFamily: F.heading,
                   fontSize: 10.5,
                   fontWeight: 800,
                   letterSpacing: '0.12em',
                   textTransform: 'uppercase',
                   color: C.navy,
-                  marginBottom: 8,
                 }}
               >
-                <MapPin size={13} color={C.red} /> Sucursal para montaje o entrega
-              </label>
-              <select
-                value={selectedBranchSlug}
-                onChange={(e) => setSelectedBranch(e.target.value)}
+                Modalidad de Entrega o Instalación
+              </div>
+
+              <div
                 style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: 12,
-                  border: '1px solid rgba(26, 31, 54, 0.09)',
-                  background: '#F8F9FA',
-                  fontFamily: F.body,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: C.navy,
-                  outline: 'none',
-                  cursor: 'pointer',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: 10,
                 }}
               >
-                {sucursales.map((s) => (
-                  <option key={s.slug} value={s.slug}>
-                    {s.name} ({s.zone})
-                  </option>
-                ))}
-              </select>
+                {/* Option 1: Default Free Shipping */}
+                <button
+                  type="button"
+                  onClick={() => setDeliveryMode('shipping')}
+                  style={{
+                    padding: '13px 14px',
+                    borderRadius: 16,
+                    border:
+                      deliveryMode === 'shipping'
+                        ? `2px solid ${C.red}`
+                        : '1px solid rgba(26, 31, 54, 0.1)',
+                    background: deliveryMode === 'shipping' ? '#FFF5F5' : '#F8F9FA',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 6,
+                      marginBottom: 4,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontFamily: F.heading,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        color: C.navy,
+                      }}
+                    >
+                      <Truck size={14} color={C.red} /> Entrega a Domicilio
+                    </span>
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: 9999,
+                        background: 'rgba(22, 163, 74, 0.12)',
+                        color: '#15803D',
+                        fontFamily: F.heading,
+                        fontSize: 9.5,
+                        fontWeight: 900,
+                        letterSpacing: '0.06em',
+                      }}
+                    >
+                      GRATIS
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11, color: '#64748B' }}>
+                    Envío sin costo a todo México
+                  </div>
+                </button>
+
+                {/* Option 2: Branch Installation (+$999) */}
+                <button
+                  type="button"
+                  onClick={() => setDeliveryMode('branch')}
+                  style={{
+                    padding: '13px 14px',
+                    borderRadius: 16,
+                    border:
+                      deliveryMode === 'branch'
+                        ? `2px solid ${C.red}`
+                        : '1px solid rgba(26, 31, 54, 0.1)',
+                    background: deliveryMode === 'branch' ? '#FFF5F5' : '#F8F9FA',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 6,
+                      marginBottom: 4,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontFamily: F.heading,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        color: C.navy,
+                      }}
+                    >
+                      <MapPin size={14} color={C.red} /> Instalación en Sucursal
+                    </span>
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: 9999,
+                        background: 'rgba(196, 30, 36, 0.1)',
+                        color: C.red,
+                        fontFamily: F.heading,
+                        fontSize: 9.5,
+                        fontWeight: 900,
+                      }}
+                    >
+                      +{formatMXN(BRANCH_INSTALLATION_FEE)}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11, color: '#64748B' }}>
+                    Montaje, balanceo y válvulas
+                  </div>
+                </button>
+              </div>
+
+              {/* Branch Dropdown (Shown when "Instalación en Sucursal" is selected) */}
+              {deliveryMode === 'branch' && (
+                <div
+                  style={{
+                    paddingTop: 8,
+                    borderTop: '1px solid rgba(26, 31, 54, 0.06)',
+                  }}
+                >
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontFamily: F.heading,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: C.navy,
+                      marginBottom: 6,
+                    }}
+                  >
+                    <MapPin size={12} color={C.red} /> Elige tu Sucursal Jasman
+                  </label>
+                  <select
+                    value={selectedBranchSlug}
+                    onChange={(e) => setSelectedBranch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 12,
+                      border: '1px solid rgba(26, 31, 54, 0.1)',
+                      background: '#F8F9FA',
+                      fontFamily: F.body,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: C.navy,
+                      outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {sucursales.map((s) => (
+                      <option key={s.slug} value={s.slug}>
+                        {s.name} ({s.zone})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
-            {/* Quantity Picker + Primary Add to Cart Button */}
+            {/* Quantity Picker + Primary Add to Cart Button (Moved right up into first view!) */}
             {product.inStock && (
               <div
+                ref={buyButtonRef}
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -1657,8 +1558,7 @@ export default function ProductoPreviewPage() {
                     </>
                   ) : (
                     <>
-                      <ShoppingBag size={17} /> Añadir al Carrito ·{' '}
-                      {formatMXN(finalTotalForSelection)}
+                      <ShoppingBag size={17} /> Comprar · {formatMXN(finalTotalForSelection)}
                     </>
                   )}
                 </button>
@@ -2215,6 +2115,235 @@ export default function ProductoPreviewPage() {
           </div>
         </div>
       </div>
+
+      {/* FLOATING STICKY BUY BAR WHEN SCROLLING PAST THE MAIN BUY BUTTON */}
+      {showFloatingBuyBar && product.inStock && (
+        <div
+          style={{
+            position: 'fixed',
+            left: '50%',
+            bottom: 20,
+            transform: 'translateX(-50%)',
+            zIndex: 92,
+            width: 'min(940px, calc(100vw - 28px))',
+            background: 'rgba(26, 31, 54, 0.96)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderRadius: 24,
+            padding: '12px 18px',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            boxShadow: '0 24px 56px rgba(15, 20, 40, 0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap',
+            color: '#FFFFFF',
+          }}
+        >
+          {/* Left: Tire Thumbnail + Title + Delivery Badge */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              minWidth: 0,
+              flex: '1 1 260px',
+            }}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 14,
+                background: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 4,
+                flexShrink: 0,
+              }}
+            >
+              <img
+                src={product.cutoutImage || product.primaryImage}
+                alt={product.cleanTitle}
+                onError={(e) => {
+                  if (e.currentTarget.src !== product.primaryImage) {
+                    e.currentTarget.src = product.primaryImage;
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                }}
+              />
+            </div>
+
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  marginBottom: 3,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: F.heading,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: '#FCA5A5',
+                  }}
+                >
+                  {product.brand} · {product.measure}
+                </span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                    background:
+                      deliveryMode === 'shipping'
+                        ? 'rgba(22, 163, 74, 0.22)'
+                        : 'rgba(255, 255, 255, 0.12)',
+                    color: deliveryMode === 'shipping' ? '#86EFAC' : '#E2E8F0',
+                  }}
+                >
+                  {deliveryMode === 'shipping'
+                    ? 'Entrega Gratis'
+                    : `Instalación en Sucursal (+${formatMXN(BRANCH_INSTALLATION_FEE)})`}
+                </span>
+              </div>
+              <div
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 14,
+                  fontWeight: 800,
+                  color: '#FFFFFF',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {product.cleanTitle}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Quantity Selector + Add to Cart Button */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                height: 44,
+                padding: '0 6px',
+                borderRadius: 14,
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#FFFFFF',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Minus size={14} />
+              </button>
+              <span
+                style={{
+                  minWidth: 28,
+                  textAlign: 'center',
+                  fontFamily: F.heading,
+                  fontSize: 14,
+                  fontWeight: 800,
+                  color: '#FFFFFF',
+                }}
+              >
+                {qty}
+              </span>
+              <button
+                type="button"
+                onClick={() => setQty((q) => Math.min(product.quantity, q + 1))}
+                disabled={qty >= product.quantity}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  border: 'none',
+                  background: 'transparent',
+                  color: qty >= product.quantity ? 'rgba(255,255,255,0.3)' : '#FFFFFF',
+                  cursor: qty >= product.quantity ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              style={{
+                height: 44,
+                padding: '0 20px',
+                borderRadius: 14,
+                border: 'none',
+                background: added ? '#16A34A' : C.red,
+                color: '#FFFFFF',
+                fontFamily: F.heading,
+                fontSize: 12.5,
+                fontWeight: 800,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                boxShadow: '0 10px 24px rgba(196, 30, 36, 0.35)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {added ? (
+                <>
+                  <Check size={15} /> ¡Agregado!
+                </>
+              ) : (
+                <>
+                  <ShoppingBag size={15} /> Agregar
+                  {basePrice > 0 ? ` · ${formatMXN(finalTotalForSelection)}` : ''}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @media (max-width: 940px) {

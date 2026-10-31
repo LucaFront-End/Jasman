@@ -8,7 +8,10 @@ const STORAGE_KEYS = {
   USER: 'jasman_tienda_user_v1',
   ORDERS: 'jasman_tienda_orders_v1',
   BRANCH: 'jasman_tienda_branch_v1',
+  DELIVERY_MODE: 'jasman_tienda_delivery_mode_v1',
 };
+
+export const BRANCH_INSTALLATION_FEE = 999;
 
 const SYNC_EVENT = 'jasman-tienda-sync';
 const UI_EVENT = 'jasman-tienda-ui';
@@ -93,6 +96,10 @@ export function useTiendaState() {
   const [selectedBranchSlug, setSelectedBranchSlugState] = useState(() =>
     readJSON(STORAGE_KEYS.BRANCH, 'jasman-satelite')
   );
+  // Default delivery mode is 'shipping' (Entrega Gratis); 'branch' adds $999 installation fee
+  const [deliveryMode, setDeliveryModeState] = useState(() =>
+    readJSON(STORAGE_KEYS.DELIVERY_MODE, 'shipping')
+  );
 
   useEffect(() => {
     const syncAll = () => {
@@ -101,6 +108,7 @@ export function useTiendaState() {
       setUserState(readJSON(STORAGE_KEYS.USER, null));
       setOrdersState(readJSON(STORAGE_KEYS.ORDERS, []));
       setSelectedBranchSlugState(readJSON(STORAGE_KEYS.BRANCH, 'jasman-satelite'));
+      setDeliveryModeState(readJSON(STORAGE_KEYS.DELIVERY_MODE, 'shipping'));
     };
     window.addEventListener(SYNC_EVENT, syncAll);
     window.addEventListener('storage', syncAll);
@@ -199,6 +207,10 @@ export function useTiendaState() {
     writeJSON(STORAGE_KEYS.BRANCH, slug);
   }, []);
 
+  const setDeliveryMode = useCallback((mode) => {
+    writeJSON(STORAGE_KEYS.DELIVERY_MODE, mode === 'branch' ? 'branch' : 'shipping');
+  }, []);
+
   const createOrderRecord = useCallback((orderPayload) => {
     const currentOrders = readJSON(STORAGE_KEYS.ORDERS, []);
     const newOrder = {
@@ -266,9 +278,14 @@ export function useTiendaState() {
     return subtotalAfterVolume * 0.1;
   }, [coupon, subtotalAfterVolume]);
 
+  const installationFee = useMemo(
+    () => (cartItems.length > 0 && deliveryMode === 'branch' ? BRANCH_INSTALLATION_FEE : 0),
+    [cartItems.length, deliveryMode]
+  );
+
   const totalAfterDiscount = useMemo(
-    () => Math.max(0, subtotalAfterVolume - discountAmount),
-    [subtotalAfterVolume, discountAmount]
+    () => Math.max(0, subtotalAfterVolume - discountAmount) + installationFee,
+    [subtotalAfterVolume, discountAmount, installationFee]
   );
 
   return {
@@ -279,11 +296,13 @@ export function useTiendaState() {
     volumeTier,
     volumeDiscountAmount,
     discountAmount,
+    installationFee,
     totalAfterDiscount,
     coupon,
     user,
     orders,
     selectedBranchSlug,
+    deliveryMode,
     addToCart,
     updateCartQuantity,
     removeFromCart,
@@ -294,6 +313,7 @@ export function useTiendaState() {
     logoutUser,
     mergeSyncedOrders,
     setSelectedBranch,
+    setDeliveryMode,
     createOrderRecord,
   };
 }

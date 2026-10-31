@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { C, F } from '../hooks/useAnimations';
 import {
@@ -29,9 +29,26 @@ import {
 } from 'lucide-react';
 
 const HERO_SPOTLIGHTS = [
-  { id: 572, label: 'Continental 205/55R16' },
-  { id: 561, label: 'Hankook SUV 285/45R21' },
-  { id: 568, label: 'General Tire 245/75R17' },
+  {
+    id: 572,
+    label: 'Continental 205/55R16',
+    promoTag: 'Promo: −10% en Juego de 4 + Envío Gratis',
+  },
+  {
+    id: 561,
+    label: 'Hankook SUV 285/45R21',
+    promoTag: 'Promo SUV · −10% en tu 1ª Compra',
+  },
+  {
+    id: 568,
+    label: 'General Tire 245/75R17',
+    promoTag: 'Todo Terreno · Entrega Gratis Nacional',
+  },
+  {
+    id: 543,
+    label: 'Euzkadi 27X8.50R14',
+    promoTag: 'Promoción Especial · Stock Inmediato',
+  },
 ];
 
 const HERO_QUICK_MEASURES = [
@@ -508,11 +525,27 @@ export default function LandingTiendaPreviewPage() {
   const heroProgress = useStickyScrollProgress(heroTrackRef, 0.14);
   const { tilt: heroTilt, onMouseMove: onHeroMove, onMouseLeave: onHeroLeave } = useAppleTilt(7);
 
-  const [selectedHeroId, setSelectedHeroId] = useState(572);
+  const [selectedHeroId, setSelectedHeroId] = useState(HERO_SPOTLIGHTS[0].id);
+  const [heroPaused, setHeroPaused] = useState(false);
   const [heroAdded, setHeroAdded] = useState(false);
   const [quickMeasure, setQuickMeasure] = useState('');
   const [quickBrand, setQuickBrand] = useState('');
 
+  // Auto-rotate hero spotlight tires & promotions every 4.2s
+  useEffect(() => {
+    if (heroPaused) return undefined;
+    const timer = setInterval(() => {
+      setSelectedHeroId((prevId) => {
+        const idx = HERO_SPOTLIGHTS.findIndex((s) => s.id === prevId);
+        const nextIdx = (idx + 1) % HERO_SPOTLIGHTS.length;
+        return HERO_SPOTLIGHTS[nextIdx].id;
+      });
+    }, 4200);
+    return () => clearInterval(timer);
+  }, [heroPaused]);
+
+  const activeSpotlight =
+    HERO_SPOTLIGHTS.find((s) => s.id === selectedHeroId) || HERO_SPOTLIGHTS[0];
   const heroProduct =
     PRODUCTOS_MASTER.find((p) => p.id === selectedHeroId) || PRODUCTOS_MASTER[0];
 
@@ -761,6 +794,25 @@ export default function LandingTiendaPreviewPage() {
                 <div style={{ fontSize: 22, fontFamily: F.heading, fontWeight: 900, color: C.navy, marginTop: 2 }}>
                   {heroProduct.measure}
                 </div>
+                <div
+                  style={{
+                    marginTop: 6,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '3px 8px',
+                    borderRadius: 9999,
+                    background: 'rgba(196, 30, 36, 0.08)',
+                    color: C.red,
+                    fontFamily: F.heading,
+                    fontSize: 9,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  <Sparkles size={10} /> {activeSpotlight.promoTag}
+                </div>
               </div>
 
               {/* Right X-Ray Pill */}
@@ -805,6 +857,8 @@ export default function LandingTiendaPreviewPage() {
           >
             {/* Model Switcher + Quick Buy Dock */}
             <div
+              onMouseEnter={() => setHeroPaused(true)}
+              onMouseLeave={() => setHeroPaused(false)}
               style={{
                 padding: '12px 18px',
                 borderRadius: 9999,
@@ -820,7 +874,7 @@ export default function LandingTiendaPreviewPage() {
                 gap: 12,
               }}
             >
-              {/* Live Hero Model Selector Pills */}
+              {/* Live Hero Model Selector Pills (Auto-Rotating) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 {HERO_SPOTLIGHTS.map((spot) => {
                   const active = spot.id === selectedHeroId;
@@ -830,6 +884,8 @@ export default function LandingTiendaPreviewPage() {
                       type="button"
                       onClick={() => setSelectedHeroId(spot.id)}
                       style={{
+                        position: 'relative',
+                        overflow: 'hidden',
                         padding: '8px 15px',
                         borderRadius: 9999,
                         border: 'none',
@@ -842,7 +898,20 @@ export default function LandingTiendaPreviewPage() {
                         transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                       }}
                     >
-                      {spot.label}
+                      <span style={{ position: 'relative', zIndex: 2 }}>{spot.label}</span>
+                      {active && !heroPaused && (
+                        <span
+                          key={`progress-${spot.id}`}
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            bottom: 0,
+                            height: 2.5,
+                            background: C.red,
+                            animation: 'jasmanHeroSlideProgress 4.2s linear forwards',
+                          }}
+                        />
+                      )}
                     </button>
                   );
                 })}
@@ -1181,6 +1250,10 @@ export default function LandingTiendaPreviewPage() {
       </section>
 
       <style>{`
+        @keyframes jasmanHeroSlideProgress {
+          0% { width: 0%; }
+          100% { width: 100%; }
+        }
         @media (max-width: 920px) {
           .hero-xray-callouts {
             display: none !important;

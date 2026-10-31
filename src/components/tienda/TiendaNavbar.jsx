@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
 import { useTiendaState, triggerTiendaUI } from '../../hooks/useTiendaState';
@@ -17,8 +17,32 @@ export default function TiendaNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
+  const closeMegaTimerRef = useRef(null);
   const { cartCount, user, coupon } = useTiendaState();
   const { pathname } = useLocation();
+
+  const openMegaMenu = () => {
+    if (closeMegaTimerRef.current) {
+      clearTimeout(closeMegaTimerRef.current);
+      closeMegaTimerRef.current = null;
+    }
+    setMegaOpen(true);
+  };
+
+  const scheduleCloseMegaMenu = () => {
+    if (closeMegaTimerRef.current) {
+      clearTimeout(closeMegaTimerRef.current);
+    }
+    closeMegaTimerRef.current = setTimeout(() => {
+      setMegaOpen(false);
+    }, 320);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (closeMegaTimerRef.current) clearTimeout(closeMegaTimerRef.current);
+    };
+  }, []);
 
   const isProductPage = pathname.includes('/producto/');
 
@@ -38,7 +62,13 @@ export default function TiendaNavbar() {
 
   return (
     <header
-      onMouseLeave={() => setMegaOpen(false)}
+      onMouseEnter={() => {
+        if (closeMegaTimerRef.current) {
+          clearTimeout(closeMegaTimerRef.current);
+          closeMegaTimerRef.current = null;
+        }
+      }}
+      onMouseLeave={scheduleCloseMegaMenu}
       style={{
         position: 'fixed',
         top: 0,
@@ -258,12 +288,19 @@ export default function TiendaNavbar() {
               const handleEnter = (e) => {
                 e.currentTarget.style.background = 'rgba(196, 30, 36, 0.07)';
                 e.currentTarget.style.color = C.red;
-                if (item.hasMega) setMegaOpen(true);
+                if (item.hasMega) {
+                  openMegaMenu();
+                } else {
+                  scheduleCloseMegaMenu();
+                }
               };
 
               const handleLeave = (e) => {
                 e.currentTarget.style.background = 'transparent';
                 e.currentTarget.style.color = C.navy;
+                if (item.hasMega) {
+                  scheduleCloseMegaMenu();
+                }
               };
 
               return isLocalAnchor ? (
@@ -416,29 +453,35 @@ export default function TiendaNavbar() {
         </div>
       </div>
 
-      {/* Frosted Glass Mega-Menu Dropdown for Medidas más pedidas, Marcas más pedidas & Llantas más pedidas */}
+      {/* Frosted Glass Mega-Menu Dropdown with Invisible Hover Bridge so cursor never loses hover */}
       {megaOpen && (
         <div
-          onMouseEnter={() => setMegaOpen(true)}
-          onMouseLeave={() => setMegaOpen(false)}
+          onMouseEnter={openMegaMenu}
+          onMouseLeave={scheduleCloseMegaMenu}
           style={{
-            maxWidth: 1060,
-            margin: '10px auto 0',
-            padding: '28px 32px',
-            borderRadius: 28,
-            background: 'rgba(255, 255, 255, 0.96)',
-            backdropFilter: 'saturate(180%) blur(28px)',
-            WebkitBackdropFilter: 'saturate(180%) blur(28px)',
-            border: '1px solid rgba(26, 31, 54, 0.08)',
-            boxShadow: '0 32px 70px rgba(26, 31, 54, 0.14)',
+            maxWidth: 1080,
+            margin: '0 auto',
+            padding: '12px 10px 0',
             pointerEvents: 'auto',
-            animation: 'heroFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          <TiendaMostRequestedSection
-            isCompactDropdown
-            onAfterSelect={() => setMegaOpen(false)}
-          />
+          <div
+            style={{
+              padding: '28px 32px',
+              borderRadius: 28,
+              background: 'rgba(255, 255, 255, 0.96)',
+              backdropFilter: 'saturate(180%) blur(28px)',
+              WebkitBackdropFilter: 'saturate(180%) blur(28px)',
+              border: '1px solid rgba(26, 31, 54, 0.08)',
+              boxShadow: '0 32px 70px rgba(26, 31, 54, 0.14)',
+              animation: 'heroFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
+            <TiendaMostRequestedSection
+              isCompactDropdown
+              onAfterSelect={() => setMegaOpen(false)}
+            />
+          </div>
         </div>
       )}
 
