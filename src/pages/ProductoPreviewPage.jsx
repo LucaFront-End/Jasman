@@ -1160,21 +1160,15 @@ export default function ProductoPreviewPage() {
               )}
             </div>
 
-            {/* Compact Price Card (Inline Unit Price + Subtitle as indicated in IMG1) */}
+            {/* Price Directly Below (No Container Box) */}
             <div
               style={{
                 width: '100%',
-                padding: '16px 22px',
-                borderRadius: 22,
-                background: '#FFFFFF',
-                border: '1px solid rgba(26, 31, 54, 0.07)',
-                boxShadow: '0 10px 28px rgba(26, 31, 54, 0.035)',
-                marginBottom: 16,
+                marginTop: 4,
+                marginBottom: 18,
                 display: 'flex',
-                alignItems: 'baseline',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: 10,
+                flexDirection: 'column',
+                gap: 6,
               }}
             >
               <div
@@ -1188,7 +1182,7 @@ export default function ProductoPreviewPage() {
                 <span
                   style={{
                     fontFamily: F.heading,
-                    fontSize: basePrice > 0 ? 'clamp(1.9rem, 2.8vw, 2.4rem)' : 20,
+                    fontSize: basePrice > 0 ? 'clamp(2.1rem, 3.1vw, 2.65rem)' : 20,
                     fontWeight: 900,
                     color:
                       (activeVolumeTier.rate > 0 || coupon) && basePrice > 0
@@ -1206,7 +1200,7 @@ export default function ProductoPreviewPage() {
                 {(activeVolumeTier.rate > 0 || coupon) && basePrice > 0 && (
                   <span
                     style={{
-                      fontSize: 13.5,
+                      fontSize: 14,
                       color: '#94A3B8',
                       textDecoration: 'line-through',
                       fontWeight: 600,
@@ -1216,216 +1210,180 @@ export default function ProductoPreviewPage() {
                   </span>
                 )}
 
-                <span style={{ fontSize: 11.5, color: '#64748B', fontWeight: 500 }}>
-                  Precio unitario en MXN · Sin IVA
-                </span>
+                {totalSavingsForSelection > 0 && (
+                  <span
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 9999,
+                      background: 'rgba(22, 163, 74, 0.1)',
+                      color: '#15803D',
+                      fontFamily: F.heading,
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                    }}
+                  >
+                    Ahorras {formatMXN(totalSavingsForSelection)}
+                  </span>
+                )}
               </div>
 
-              {totalSavingsForSelection > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 10,
+                  fontSize: 12,
+                  color: '#64748B',
+                  fontWeight: 500,
+                }}
+              >
+                <span>Precio unitario en MXN · Sin IVA</span>
+                <span style={{ color: '#CBD5E1' }}>•</span>
                 <span
                   style={{
-                    padding: '4px 10px',
-                    borderRadius: 9999,
-                    background: 'rgba(22, 163, 74, 0.1)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
                     color: '#15803D',
-                    fontFamily: F.heading,
-                    fontSize: 10.5,
-                    fontWeight: 800,
+                    fontWeight: 700,
                   }}
                 >
-                  Ahorras {formatMXN(totalSavingsForSelection)}
+                  <Truck size={13} /> Envío gratis a domicilio incluido
                 </span>
-              )}
+              </div>
             </div>
 
-            {/* Entrega Gratis (Predeterminado) vs Instalación en Sucursal (+$999) Selector */}
+            {/* Kamibi-style Checkbox Add-on for Branch Installation (Containerless) */}
             <div
               style={{
                 width: '100%',
-                padding: '16px 18px',
-                borderRadius: 22,
-                background: '#FFFFFF',
-                border: '1px solid rgba(26, 31, 54, 0.08)',
-                boxShadow: '0 10px 28px rgba(26, 31, 54, 0.03)',
-                marginBottom: 16,
+                marginBottom: 20,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 12,
+                gap: 10,
               }}
             >
-              <div
+              <label
+                onClick={() =>
+                  setDeliveryMode(deliveryMode === 'branch' ? 'shipping' : 'branch')
+                }
                 style={{
-                  fontFamily: F.heading,
-                  fontSize: 10.5,
-                  fontWeight: 800,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: C.navy,
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  cursor: 'pointer',
+                  userSelect: 'none',
                 }}
               >
-                Modalidad de Entrega o Instalación
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: 10,
-                }}
-              >
-                {/* Option 1: Default Free Shipping */}
-                <button
-                  type="button"
-                  onClick={() => setDeliveryMode('shipping')}
-                  style={{
-                    padding: '13px 14px',
-                    borderRadius: 16,
-                    border:
-                      deliveryMode === 'shipping'
-                        ? `2px solid ${C.red}`
-                        : '1px solid rgba(26, 31, 54, 0.1)',
-                    background: deliveryMode === 'shipping' ? '#FFF5F5' : '#F8F9FA',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.2s ease',
+                <span
+                  role="checkbox"
+                  aria-checked={deliveryMode === 'branch'}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                      e.preventDefault();
+                      setDeliveryMode(deliveryMode === 'branch' ? 'shipping' : 'branch');
+                    }
                   }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 6,
-                      marginBottom: 4,
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        fontFamily: F.heading,
-                        fontSize: 12,
-                        fontWeight: 800,
-                        color: C.navy,
-                      }}
-                    >
-                      <Truck size={14} color={C.red} /> Entrega a Domicilio
-                    </span>
-                    <span
-                      style={{
-                        padding: '2px 8px',
-                        borderRadius: 9999,
-                        background: 'rgba(22, 163, 74, 0.12)',
-                        color: '#15803D',
-                        fontFamily: F.heading,
-                        fontSize: 9.5,
-                        fontWeight: 900,
-                        letterSpacing: '0.06em',
-                      }}
-                    >
-                      GRATIS
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 11, color: '#64748B' }}>
-                    Envío sin costo a todo México
-                  </div>
-                </button>
-
-                {/* Option 2: Branch Installation (+$999) */}
-                <button
-                  type="button"
-                  onClick={() => setDeliveryMode('branch')}
                   style={{
-                    padding: '13px 14px',
-                    borderRadius: 16,
+                    width: 22,
+                    height: 22,
+                    borderRadius: 7,
                     border:
                       deliveryMode === 'branch'
                         ? `2px solid ${C.red}`
-                        : '1px solid rgba(26, 31, 54, 0.1)',
-                    background: deliveryMode === 'branch' ? '#FFF5F5' : '#F8F9FA',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.2s ease',
+                        : '2px solid rgba(26, 31, 54, 0.25)',
+                    background: deliveryMode === 'branch' ? C.red : '#FFFFFF',
+                    color: '#FFFFFF',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    marginTop: 1,
+                    transition: 'all 0.18s ease',
+                    boxShadow:
+                      deliveryMode === 'branch'
+                        ? '0 4px 12px rgba(196, 30, 36, 0.25)'
+                        : 'none',
                   }}
                 >
+                  {deliveryMode === 'branch' && <Check size={14} strokeWidth={3} />}
+                </span>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 6,
-                      marginBottom: 4,
+                      flexWrap: 'wrap',
+                      gap: 8,
                     }}
                   >
                     <span
                       style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
                         fontFamily: F.heading,
-                        fontSize: 12,
+                        fontSize: 13.5,
                         fontWeight: 800,
                         color: C.navy,
                       }}
                     >
-                      <MapPin size={14} color={C.red} /> Instalación en Sucursal
+                      Agregar instalación en sucursal
                     </span>
                     <span
                       style={{
-                        padding: '2px 8px',
-                        borderRadius: 9999,
-                        background: 'rgba(196, 30, 36, 0.1)',
-                        color: C.red,
                         fontFamily: F.heading,
-                        fontSize: 9.5,
+                        fontSize: 12,
                         fontWeight: 900,
+                        color: C.red,
                       }}
                     >
                       +{formatMXN(BRANCH_INSTALLATION_FEE)}
                     </span>
                   </div>
-                  <div style={{ fontSize: 11, color: '#64748B' }}>
-                    Montaje, balanceo y válvulas
-                  </div>
-                </button>
-              </div>
+                  <span style={{ fontSize: 12, color: '#64748B', lineHeight: 1.45 }}>
+                    Incluye montaje, balanceo y válvulas en +80 sucursales Jasman
+                  </span>
+                </div>
+              </label>
 
-              {/* Branch Dropdown (Shown when "Instalación en Sucursal" is selected) */}
               {deliveryMode === 'branch' && (
                 <div
                   style={{
-                    paddingTop: 8,
-                    borderTop: '1px solid rgba(26, 31, 54, 0.06)',
+                    paddingLeft: 34,
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 10,
                   }}
                 >
-                  <label
+                  <span
                     style={{
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 6,
+                      gap: 5,
                       fontFamily: F.heading,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: 800,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
                       color: C.navy,
-                      marginBottom: 6,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
                     }}
                   >
-                    <MapPin size={12} color={C.red} /> Elige tu Sucursal Jasman
-                  </label>
+                    <MapPin size={12} color={C.red} /> Sucursal:
+                  </span>
                   <select
                     value={selectedBranchSlug}
                     onChange={(e) => setSelectedBranch(e.target.value)}
                     style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: 12,
-                      border: '1px solid rgba(26, 31, 54, 0.1)',
-                      background: '#F8F9FA',
+                      flex: 1,
+                      minWidth: 210,
+                      padding: '8px 12px',
+                      borderRadius: 10,
+                      border: '1px solid rgba(26, 31, 54, 0.14)',
+                      background: '#FFFFFF',
                       fontFamily: F.body,
-                      fontSize: 13,
+                      fontSize: 12.5,
                       fontWeight: 600,
                       color: C.navy,
                       outline: 'none',

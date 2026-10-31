@@ -532,112 +532,95 @@ export default function TiendaCartDrawer() {
                 </div>
               ))}
 
-              {/* Delivery vs Branch Installation Selector */}
+              {/* Kamibi-style Checkbox Add-on for Branch Installation */}
               <div
                 style={{
-                  padding: 14,
-                  borderRadius: 14,
-                  background: '#F8FAFC',
-                  border: `1px solid ${C.border}`,
+                  padding: '6px 2px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 10,
                 }}
               >
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <button
-                    type="button"
-                    onClick={() => setDeliveryMode('shipping')}
-                    style={{
-                      padding: '10px 10px',
-                      borderRadius: 10,
-                      border:
-                        deliveryMode === 'shipping'
-                          ? `1.5px solid ${C.red}`
-                          : `1px solid ${C.border}`,
-                      background: deliveryMode === 'shipping' ? '#FFF5F5' : C.white,
-                      cursor: 'pointer',
-                      textAlign: 'left',
+                <label
+                  onClick={() =>
+                    setDeliveryMode(deliveryMode === 'branch' ? 'shipping' : 'branch')
+                  }
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 10,
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                >
+                  <span
+                    role="checkbox"
+                    aria-checked={deliveryMode === 'branch'}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        setDeliveryMode(deliveryMode === 'branch' ? 'shipping' : 'branch');
+                      }
                     }}
-                  >
-                    <div
-                      style={{
-                        fontFamily: F.heading,
-                        fontSize: 11,
-                        fontWeight: 800,
-                        color: C.navy,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <span>Entrega</span>
-                      <span style={{ color: '#15803D', fontSize: 10 }}>GRATIS</span>
-                    </div>
-                    <div style={{ fontSize: 10, color: C.gray, marginTop: 2 }}>
-                      Envío a domicilio
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setDeliveryMode('branch')}
                     style={{
-                      padding: '10px 10px',
-                      borderRadius: 10,
+                      width: 20,
+                      height: 20,
+                      borderRadius: 6,
                       border:
                         deliveryMode === 'branch'
-                          ? `1.5px solid ${C.red}`
-                          : `1px solid ${C.border}`,
-                      background: deliveryMode === 'branch' ? '#FFF5F5' : C.white,
-                      cursor: 'pointer',
-                      textAlign: 'left',
+                          ? `2px solid ${C.red}`
+                          : '2px solid rgba(26, 31, 54, 0.25)',
+                      background: deliveryMode === 'branch' ? C.red : C.white,
+                      color: C.white,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      marginTop: 1,
                     }}
                   >
-                    <div
-                      style={{
-                        fontFamily: F.heading,
-                        fontSize: 11,
-                        fontWeight: 800,
-                        color: C.navy,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <span>Sucursal</span>
-                      <span style={{ color: C.red, fontSize: 10 }}>+$999</span>
+                    {deliveryMode === 'branch' && <Check size={13} strokeWidth={3} />}
+                  </span>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span
+                        style={{
+                          fontFamily: F.heading,
+                          fontSize: 12.5,
+                          fontWeight: 800,
+                          color: C.navy,
+                        }}
+                      >
+                        Agregar instalación en sucursal
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: F.heading,
+                          fontSize: 11.5,
+                          fontWeight: 900,
+                          color: C.red,
+                        }}
+                      >
+                        +$999.00
+                      </span>
                     </div>
-                    <div style={{ fontSize: 10, color: C.gray, marginTop: 2 }}>
-                      Montaje e instalación
-                    </div>
-                  </button>
-                </div>
+                    <span style={{ fontSize: 11, color: C.gray }}>
+                      Montaje, balanceo y válvulas (sin marcar = envío gratis a domicilio)
+                    </span>
+                  </div>
+                </label>
 
                 {deliveryMode === 'branch' && (
-                  <div>
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        fontFamily: F.heading,
-                        fontSize: 10,
-                        fontWeight: 800,
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase',
-                        color: C.navy,
-                        marginBottom: 6,
-                      }}
-                    >
-                      <MapPin size={12} color={C.red} /> Elige tu sucursal Jasman
-                    </label>
+                  <div style={{ paddingLeft: 30, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <MapPin size={13} color={C.red} style={{ flexShrink: 0 }} />
                     <select
                       value={selectedBranchSlug}
                       onChange={(e) => setSelectedBranch(e.target.value)}
                       style={{
-                        width: '100%',
-                        padding: '9px 12px',
+                        flex: 1,
+                        padding: '8px 12px',
                         borderRadius: 8,
                         border: `1px solid ${C.border}`,
                         background: C.white,
