@@ -1810,8 +1810,11 @@ export default function LandingTiendaPreviewPage() {
               }}
             >
               <img
-                src="/productos/cutouts/561-hankook-suv-285-45r21-v1.png"
+                src="/images/tires/tire-561.png"
                 alt="Hankook Formula E Technology"
+                onError={(e) => {
+                  e.currentTarget.src = '/images/service-tires.png';
+                }}
                 style={{
                   width: 'clamp(195px, 22vw, 255px)',
                   height: 'clamp(195px, 22vw, 255px)',
