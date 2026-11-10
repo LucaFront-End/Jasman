@@ -337,7 +337,7 @@ export default function LandingTiendaPreviewPage() {
           style={{
             position: 'relative',
             zIndex: 5,
-            maxWidth: 1140,
+            maxWidth: 1260,
             width: '100%',
             margin: '0 auto',
             display: 'flex',
@@ -413,13 +413,13 @@ export default function LandingTiendaPreviewPage() {
             </div>
           </div>
 
-          {/* Model Switcher + Quick Buy Dock + Catálogo Completo Route */}
+          {/* Model Switcher + Quick Buy Dock + Catálogo Completo Route (Single Row on Desktop) */}
           <div
             className="jasman-hero-command-dock"
             onMouseEnter={() => setHeroPaused(true)}
             onMouseLeave={() => setHeroPaused(false)}
             style={{
-              padding: '12px 18px',
+              padding: '8px 12px',
               borderRadius: 9999,
               background: 'rgba(255, 255, 255, 0.92)',
               backdropFilter: 'saturate(180%) blur(24px)',
@@ -429,14 +429,23 @@ export default function LandingTiendaPreviewPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 10,
+              flexWrap: 'nowrap',
+              gap: 8,
             }}
           >
             {/* Live Hero Model Selector Pills (Auto-Rotating) */}
             <div
               className="jasman-hero-spotlights-row"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                flexWrap: 'nowrap',
+                minWidth: 0,
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+              }}
             >
               {HERO_SPOTLIGHTS.map((spot) => {
                 const active = spot.id === selectedHeroId;
@@ -448,13 +457,13 @@ export default function LandingTiendaPreviewPage() {
                     style={{
                       position: 'relative',
                       overflow: 'hidden',
-                      padding: '8px 14px',
+                      padding: '8px 11px',
                       borderRadius: 9999,
                       border: 'none',
                       background: active ? C.navy : 'transparent',
                       color: active ? C.white : C.gray,
                       fontFamily: F.heading,
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: 800,
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
@@ -484,38 +493,45 @@ export default function LandingTiendaPreviewPage() {
             {/* Action Buttons: Agregar + Ficha + Catálogo Completo */}
             <div
               className="jasman-hero-actions-row"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                flexWrap: 'nowrap',
+                flexShrink: 0,
+              }}
             >
               <button
                 type="button"
                 onClick={handleHeroBuy}
                 className="jasman-hero-primary-buy"
                 style={{
-                  padding: '11px 20px',
+                  padding: '10px 16px',
                   borderRadius: 9999,
                   border: 'none',
                   background: heroAdded ? '#16A34A' : C.red,
                   color: C.white,
                   fontFamily: F.heading,
-                  fontSize: 11.5,
+                  fontSize: 11,
                   fontWeight: 800,
-                  letterSpacing: '0.08em',
+                  letterSpacing: '0.06em',
                   textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 8,
+                  gap: 6,
                   boxShadow: '0 8px 24px rgba(196, 30, 36, 0.32)',
                 }}
               >
                 {heroAdded ? (
                   <>
-                    <Check size={14} /> Agregado
+                    <Check size={13} /> Agregado
                   </>
                 ) : (
                   <>
-                    <ShoppingBag size={14} /> Agregar · {formatMXN(heroPrice)}
+                    <ShoppingBag size={13} /> Agregar · {formatMXN(heroPrice)}
                   </>
                 )}
               </button>
@@ -524,14 +540,40 @@ export default function LandingTiendaPreviewPage() {
                 to={`/landing-tienda-preview/producto/${heroProduct.id}`}
                 className="jasman-hero-secondary-btn"
                 style={{
-                  padding: '11px 15px',
+                  padding: '10px 13px',
                   borderRadius: 9999,
                   border: '1px solid rgba(26, 31, 54, 0.10)',
                   background: '#F8F9FA',
                   color: C.navy,
                   fontFamily: F.heading,
-                  fontSize: 11,
+                  fontSize: 10.5,
                   fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 4,
+                }}
+              >
+                Ficha <ArrowUpRight size={13} />
+              </Link>
+
+              <Link
+                to="/landing-tienda-preview/catalogo"
+                className="jasman-hero-catalog-cta jasman-hero-secondary-btn"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 9999,
+                  border: '1px solid rgba(26, 31, 54, 0.16)',
+                  background: C.navy,
+                  color: C.white,
+                  fontFamily: F.heading,
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -539,31 +581,7 @@ export default function LandingTiendaPreviewPage() {
                   gap: 5,
                 }}
               >
-                Ficha <ArrowUpRight size={14} />
-              </Link>
-
-              <Link
-                to="/landing-tienda-preview/catalogo"
-                className="jasman-hero-catalog-cta jasman-hero-secondary-btn"
-                style={{
-                  padding: '11px 16px',
-                  borderRadius: 9999,
-                  border: '1px solid rgba(26, 31, 54, 0.16)',
-                  background: C.navy,
-                  color: C.white,
-                  fontFamily: F.heading,
-                  fontSize: 10.5,
-                  fontWeight: 800,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                }}
-              >
-                Catálogo Completo <ArrowRight size={13} />
+                Catálogo Completo <ArrowRight size={12} />
               </Link>
             </div>
           </div>
@@ -1633,6 +1651,9 @@ export default function LandingTiendaPreviewPage() {
         .fe-minimal-pulse-dot {
           animation: feMinimalPulseDot 2.2s ease-in-out infinite;
         }
+        .jasman-hero-spotlights-row::-webkit-scrollbar {
+          display: none;
+        }
         .jasman-hero-catalog-cta {
           transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -1674,6 +1695,7 @@ export default function LandingTiendaPreviewPage() {
           .jasman-hero-actions-row {
             width: 100%;
             justify-content: space-between;
+            flex-wrap: wrap !important;
           }
           .fe-minimal-callout {
             display: none !important;

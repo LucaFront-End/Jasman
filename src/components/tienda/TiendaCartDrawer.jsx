@@ -59,6 +59,24 @@ export default function TiendaCartDrawer() {
   const selectedBranch =
     sucursales.find((s) => s.slug === selectedBranchSlug) || sucursales[0];
 
+  const cartWhatsappMessage = [
+    'SW- Hola, quisiera asesoría sobre mi carrito en Jasman Tienda:',
+    ...cartItems.map(
+      (i) =>
+        `• ${i.quantity}x ${i.product.cleanTitle} (SKU: ${i.product.reference}) — ${formatMXN(
+          i.unitPrice * i.quantity
+        )}`
+    ),
+    coupon?.code ? `• Cupón activo: ${coupon.code}` : null,
+    `• Total Con IVA: ${formatMXN(totalAfterDiscount)}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const cartWhatsappUrl = `https://api.whatsapp.com/send/?phone=5215579337994&text=${encodeURIComponent(
+    cartWhatsappMessage
+  )}`;
+
   const handleManualCoupon = (e) => {
     e.preventDefault();
     const clean = manualCode.trim().toUpperCase();
@@ -667,34 +685,45 @@ export default function TiendaCartDrawer() {
                 Confirmar Orden de Compra <ArrowRight size={15} />
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  triggerTiendaUI({
-                    type: 'OPEN_CHAT',
-                    initialMessage: 'Hola, tengo una consulta sobre mi carrito de compra.',
-                  });
-                }}
+              <a
+                href={cartWhatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
                   width: '100%',
                   padding: '13px 18px',
                   borderRadius: 12,
-                  border: `1px solid ${C.border}`,
+                  border: '1.5px solid rgba(22, 163, 74, 0.28)',
                   background: C.white,
                   color: C.navy,
                   fontFamily: F.heading,
                   fontSize: 12,
-                  fontWeight: 700,
+                  fontWeight: 800,
                   cursor: 'pointer',
+                  textDecoration: 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
+                  boxSizing: 'border-box',
+                  transition: 'all 0.24s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#16A34A';
+                  e.currentTarget.style.borderColor = '#16A34A';
+                  e.currentTarget.style.color = '#FFFFFF';
+                  e.currentTarget.style.boxShadow = '0 10px 24px rgba(22, 163, 74, 0.24)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = C.white;
+                  e.currentTarget.style.borderColor = 'rgba(22, 163, 74, 0.28)';
+                  e.currentTarget.style.color = C.navy;
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <MessageCircle size={15} color={C.red} /> Consultar con Asesor en Chat
-              </button>
+                <MessageCircle size={15} color="currentColor" style={{ color: 'inherit' }} />
+                <span>Consultar con Asesor por WhatsApp</span>
+              </a>
             </div>
           </div>
         )}

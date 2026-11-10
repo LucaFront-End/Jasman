@@ -154,6 +154,8 @@ export default function ProductoPreviewPage() {
   const [showDiscountFloat, setShowDiscountFloat] = useState(false);
   const [showFloatingBuyBar, setShowFloatingBuyBar] = useState(false);
   const carouselRef = useRef(null);
+  const thumbsTrackRef = useRef(null);
+  const thumbsPausedRef = useRef(false);
   const buyButtonRef = useRef(null);
 
   if (product.id !== prevProdId) {
@@ -225,9 +227,41 @@ export default function ProductoPreviewPage() {
       url: idx === 0 && product.hasPngCutout ? product.cutoutImage : url,
       fallbackUrl: url,
       isCutout: idx === 0 && product.hasPngCutout,
-      label: idx === 0 ? 'Vista 3/4' : `Vista 0${idx + 1}`,
+      label:
+        idx === 0
+          ? 'Vista 3/4'
+          : `Vista ${String(idx + 1).padStart(2, '0')}`,
+      originalIdx: idx,
     }));
   }, [product]);
+
+  const isContinuousThumbs = galleryImages.length >= 4;
+  const loopGalleryImages = useMemo(
+    () =>
+      isContinuousThumbs
+        ? [...galleryImages, ...galleryImages]
+        : galleryImages,
+    [galleryImages, isContinuousThumbs]
+  );
+
+  useEffect(() => {
+    const el = thumbsTrackRef.current;
+    if (!el || !isContinuousThumbs) return undefined;
+    el.scrollLeft = 0;
+    let rafId;
+    const step = () => {
+      if (!thumbsPausedRef.current && el.scrollWidth > el.clientWidth) {
+        el.scrollLeft += 0.44;
+        const halfWidth = el.scrollWidth / 2;
+        if (halfWidth > 0 && el.scrollLeft >= halfWidth) {
+          el.scrollLeft -= halfWidth;
+        }
+      }
+      rafId = window.requestAnimationFrame(step);
+    };
+    rafId = window.requestAnimationFrame(step);
+    return () => window.cancelAnimationFrame(rafId);
+  }, [isContinuousThumbs, product.id]);
 
   const activeSlide = galleryImages[selectedImageIdx] || galleryImages[0];
 
@@ -556,7 +590,8 @@ export default function ProductoPreviewPage() {
                         letterSpacing: '0.08em',
                       }}
                     >
-                      0{selectedImageIdx + 1} / 0{galleryImages.length}
+                      {String(selectedImageIdx + 1).padStart(2, '0')} /{' '}
+                      {String(galleryImages.length).padStart(2, '0')}
                     </span>
                   )}
                   <span
@@ -761,73 +796,183 @@ export default function ProductoPreviewPage() {
               </div>
             </div>
 
-            {/* 2. INTERACTIVE GALLERY THUMBNAIL STRIP */}
+            {/* 2. INTERACTIVE CONTINUOUS GALLERY THUMBNAIL CAROUSEL */}
             {galleryImages.length > 1 && (
               <div
+                onMouseEnter={() => {
+                  thumbsPausedRef.current = true;
+                }}
+                onMouseLeave={() => {
+                  thumbsPausedRef.current = false;
+                }}
+                onTouchStart={() => {
+                  thumbsPausedRef.current = true;
+                }}
+                onTouchEnd={() => {
+                  thumbsPausedRef.current = false;
+                }}
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: `repeat(${Math.min(galleryImages.length, 4)}, 1fr)`,
-                  gap: 12,
+                  position: 'relative',
+                  width: '100%',
                 }}
               >
-                {galleryImages.map((imgItem, idx) => {
-                  const isActive = idx === selectedImageIdx;
-                  return (
+                {isContinuousThumbs && (
+                  <>
                     <button
-                      key={idx}
                       type="button"
-                      onClick={() => setSelectedImageIdx(idx)}
+                      aria-label="Vistas anteriores"
+                      onClick={() => {
+                        if (thumbsTrackRef.current) {
+                          thumbsTrackRef.current.scrollBy({
+                            left: -250,
+                            behavior: 'smooth',
+                          });
+                        }
+                      }}
                       style={{
-                        height: 88,
-                        borderRadius: 20,
-                        border: isActive
-                          ? `2px solid ${C.red}`
-                          : '1px solid rgba(26, 31, 54, 0.08)',
-                        background: '#FFFFFF',
-                        padding: '8px 12px',
-                        cursor: 'pointer',
+                        position: 'absolute',
+                        left: -8,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        zIndex: 5,
+                        width: 30,
+                        height: 30,
+                        borderRadius: '50%',
+                        border: '1px solid rgba(26, 31, 54, 0.12)',
+                        background: 'rgba(255, 255, 255, 0.96)',
+                        color: C.navy,
+                        boxShadow: '0 6px 16px rgba(26, 31, 54, 0.10)',
                         display: 'flex',
-                        flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 4,
-                        boxShadow: isActive
-                          ? '0 12px 26px rgba(196, 30, 36, 0.12)'
-                          : '0 4px 12px rgba(26, 31, 54, 0.03)',
-                        transform: isActive ? 'translateY(-2px)' : 'translateY(0)',
-                        transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                        cursor: 'pointer',
                       }}
                     >
-                      <img
-                        src={imgItem.url}
-                        alt={`${product.cleanTitle} ${imgItem.label}`}
-                        onError={(e) => {
-                          e.currentTarget.src = imgItem.fallbackUrl;
-                        }}
+                      <ChevronLeft size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Siguientes vistas"
+                      onClick={() => {
+                        if (thumbsTrackRef.current) {
+                          thumbsTrackRef.current.scrollBy({
+                            left: 250,
+                            behavior: 'smooth',
+                          });
+                        }
+                      }}
+                      style={{
+                        position: 'absolute',
+                        right: -8,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        zIndex: 5,
+                        width: 30,
+                        height: 30,
+                        borderRadius: '50%',
+                        border: '1px solid rgba(26, 31, 54, 0.12)',
+                        background: 'rgba(255, 255, 255, 0.96)',
+                        color: C.navy,
+                        boxShadow: '0 6px 16px rgba(26, 31, 54, 0.10)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <ChevronRight size={15} />
+                    </button>
+                  </>
+                )}
+
+                <div
+                  ref={thumbsTrackRef}
+                  className="jasman-product-thumbs-carousel"
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'nowrap',
+                    gap: 10,
+                    overflowX: 'auto',
+                    padding: '4px 2px 6px',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    maskImage: isContinuousThumbs
+                      ? 'linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%)'
+                      : 'none',
+                    WebkitMaskImage: isContinuousThumbs
+                      ? 'linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%)'
+                      : 'none',
+                  }}
+                >
+                  {loopGalleryImages.map((imgItem, renderIdx) => {
+                    const realIdx = imgItem.originalIdx ?? renderIdx;
+                    const isActive = realIdx === selectedImageIdx;
+                    return (
+                      <button
+                        key={`${realIdx}-${renderIdx}`}
+                        type="button"
+                        onClick={() => setSelectedImageIdx(realIdx)}
                         style={{
-                          height: 48,
-                          width: 'auto',
-                          maxWidth: '85%',
-                          objectFit: 'contain',
-                          mixBlendMode: imgItem.isCutout ? 'normal' : 'multiply',
-                          opacity: isActive ? 1 : 0.7,
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontFamily: F.heading,
-                          fontSize: 9.5,
-                          fontWeight: 800,
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          color: isActive ? C.red : '#64748B',
+                          flex: isContinuousThumbs
+                            ? '0 0 116px'
+                            : `1 1 ${Math.floor(100 / galleryImages.length)}%`,
+                          minWidth: isContinuousThumbs ? 116 : 96,
+                          height: 86,
+                          borderRadius: 18,
+                          border: isActive
+                            ? `2px solid ${C.red}`
+                            : '1px solid rgba(26, 31, 54, 0.08)',
+                          background: '#FFFFFF',
+                          padding: '8px 10px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 4,
+                          boxShadow: isActive
+                            ? '0 10px 22px rgba(196, 30, 36, 0.12)'
+                            : '0 4px 12px rgba(26, 31, 54, 0.03)',
+                          transition: 'border-color 0.22s ease, box-shadow 0.22s ease',
                         }}
                       >
-                        {imgItem.label}
-                      </span>
-                    </button>
-                  );
-                })}
+                        <img
+                          src={imgItem.url}
+                          alt={`${product.cleanTitle} ${imgItem.label}`}
+                          onError={(e) => {
+                            e.currentTarget.src = imgItem.fallbackUrl;
+                          }}
+                          style={{
+                            height: 46,
+                            width: 'auto',
+                            maxWidth: '85%',
+                            objectFit: 'contain',
+                            mixBlendMode: imgItem.isCutout ? 'normal' : 'multiply',
+                            opacity: isActive ? 1 : 0.76,
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontFamily: F.heading,
+                            fontSize: 9.5,
+                            fontWeight: 800,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: isActive ? C.red : '#64748B',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {imgItem.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <style>{`
+                  .jasman-product-thumbs-carousel::-webkit-scrollbar {
+                    display: none;
+                  }
+                `}</style>
               </div>
             )}
 
@@ -1331,7 +1476,7 @@ export default function ProductoPreviewPage() {
                     borderRadius: 16,
                     border: '1px solid rgba(26, 31, 54, 0.12)',
                     background: '#FFFFFF',
-                    padding: '0 6px',
+                    padding: 6,
                   }}
                 >
                   <button
@@ -1339,7 +1484,8 @@ export default function ProductoPreviewPage() {
                     onClick={() => setQty((q) => Math.max(1, q - 1))}
                     style={{
                       width: 38,
-                      height: 52,
+                      height: 40,
+                      borderRadius: 11,
                       border: 'none',
                       background: 'transparent',
                       fontSize: 18,
@@ -1367,7 +1513,8 @@ export default function ProductoPreviewPage() {
                     onClick={() => setQty((q) => Math.min(product.quantity, q + 1))}
                     style={{
                       width: 38,
-                      height: 52,
+                      height: 40,
+                      borderRadius: 11,
                       border: 'none',
                       background: 'transparent',
                       fontSize: 18,
@@ -1615,19 +1762,22 @@ export default function ProductoPreviewPage() {
                 return (
                   <div
                     key={acc.id}
+                    className="jasman-accordion-card"
                     style={{
                       borderRadius: 18,
                       background: '#FFFFFF',
                       border: '1px solid rgba(26, 31, 54, 0.07)',
-                      padding: '0 20px',
+                      padding: 0,
+                      overflow: 'hidden',
                     }}
                   >
                     <button
                       type="button"
                       onClick={() => setOpenAccordion(isOpen ? '' : acc.id)}
+                      className="jasman-accordion-trigger"
                       style={{
                         width: '100%',
-                        padding: '15px 0',
+                        padding: '16px 20px',
                         border: 'none',
                         background: 'transparent',
                         display: 'flex',
@@ -1640,6 +1790,7 @@ export default function ProductoPreviewPage() {
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
                         color: C.navy,
+                        boxSizing: 'border-box',
                       }}
                     >
                       <span>{acc.title}</span>
@@ -1651,7 +1802,9 @@ export default function ProductoPreviewPage() {
                         }}
                       />
                     </button>
-                    {isOpen && <div style={{ paddingBottom: 16 }}>{acc.content}</div>}
+                    {isOpen && (
+                      <div style={{ padding: '4px 20px 18px' }}>{acc.content}</div>
+                    )}
                   </div>
                 );
               })}

@@ -1162,9 +1162,31 @@ a[style*="border-radius: 9999px"][style*="background: rgba(196, 30, 36"]:hover {
 }
 
 /* 5. Transparent / Ghost Buttons (Quantity steppers, inactive tabs, close buttons) */
-button:not(:disabled)[style*="background: transparent"]:hover {
+button:not(:disabled):not(.jasman-accordion-trigger)[style*="background: transparent"]:hover {
   background: rgba(196, 30, 36, 0.09) !important;
   color: #C41E24 !important;
+}
+
+/* Full-bleed Accordion Header Trigger (edge-to-edge fit, no vertical jump) */
+.jasman-accordion-card {
+  transition: border-color 0.24s ease, box-shadow 0.24s ease !important;
+}
+.jasman-accordion-card:hover {
+  border-color: rgba(196, 30, 36, 0.26) !important;
+  box-shadow: 0 10px 26px rgba(26, 31, 54, 0.045) !important;
+}
+.jasman-accordion-trigger {
+  translate: 0 0 !important;
+  scale: 1 !important;
+}
+.jasman-accordion-trigger:hover {
+  translate: 0 0 !important;
+  background: rgba(196, 30, 36, 0.055) !important;
+  color: #C41E24 !important;
+}
+.jasman-accordion-trigger:active {
+  translate: 0 0 !important;
+  scale: 1 !important;
 }
 
 /* 6. Measure Pills & Brand Tiles Specific Hover Enhancements */
