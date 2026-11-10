@@ -460,10 +460,10 @@ export default function TiendaCategoriesAccordion() {
                   >
                     <div
                       style={{
-                        height: 38,
+                        height: 42,
                         padding: '6px 16px',
                         borderRadius: 9999,
-                        background: 'rgba(255, 255, 255, 0.96)',
+                        background: 'rgba(255, 255, 255, 0.97)',
                         boxShadow: '0 10px 26px rgba(0, 0, 0, 0.22)',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -475,10 +475,11 @@ export default function TiendaCategoriesAccordion() {
                           src={panel.logo}
                           alt={panel.label}
                           style={{
-                            height: 20,
-                            maxWidth: 120,
+                            height: 24,
+                            maxWidth: 132,
                             width: 'auto',
                             objectFit: 'contain',
+                            borderRadius: 3,
                           }}
                         />
                       ) : (
@@ -824,10 +825,10 @@ export default function TiendaCategoriesAccordion() {
                         {panel.logo && (
                           <div
                             style={{
-                              height: 30,
-                              padding: '4px 12px',
+                              height: 34,
+                              padding: '5px 13px',
                               borderRadius: 9999,
-                              background: 'rgba(255, 255, 255, 0.96)',
+                              background: 'rgba(255, 255, 255, 0.97)',
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -838,10 +839,11 @@ export default function TiendaCategoriesAccordion() {
                               src={panel.logo}
                               alt={panel.label}
                               style={{
-                                height: 15,
-                                maxWidth: 96,
+                                height: 18,
+                                maxWidth: 108,
                                 width: 'auto',
                                 objectFit: 'contain',
+                                borderRadius: 3,
                               }}
                             />
                           </div>

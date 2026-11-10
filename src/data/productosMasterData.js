@@ -1703,11 +1703,9 @@ export function parseTireSpecs(product) {
       'Diseño de banda de rodamiento simétrica de larga duración respaldado por la ingeniería de Goodyear para conducción diaria confiable.',
   };
 
-  const defaultExcerpt = `${cleanTitle} (${measure || 'Medida Oficial'}${
-    loadSpeed ? ` · Índice ${loadSpeed}` : ''
-  }) para ${primaryVehicleType.toLowerCase()}. ${
-    brandExcerpts[product.brand] || brandExcerpts.Hankook
-  }`;
+  const defaultExcerpt = `${cleanTitle} (${measure || 'Medida Oficial'}${loadSpeed ? ` · Índice ${loadSpeed}` : ''
+    }) para ${primaryVehicleType.toLowerCase()}. ${brandExcerpts[product.brand] || brandExcerpts.Hankook
+    }`;
 
   const excerpt = product.customExcerpt || defaultExcerpt;
   const hasPngCutout =
@@ -1719,21 +1717,21 @@ export function parseTireSpecs(product) {
     Array.isArray(product.wixTableSpecs) && product.wixTableSpecs.length > 0
       ? product.wixTableSpecs
       : [
-          { label: 'Marca', value: product.brand },
-          { label: 'Modelo / línea', value: model || cleanTitle },
-          { label: 'Medida', value: measure || 'Estándar' },
-          { label: 'Ancho de sección', value: width ? `${width} mm` : '—' },
-          { label: 'Perfil', value: profile || '—' },
-          {
-            label: 'Diámetro del rin',
-            value: rim ? `${rim.replace('R', '')} pulgadas (${rim})` : '—',
-          },
-          { label: 'Índice de carga', value: loadIndex || 'Oficial' },
-          { label: 'Índice de velocidad', value: speedIndex || 'Oficial' },
-          { label: 'Segmento', value: primaryVehicleType },
-          { label: 'Contenido', value: '1 llanta' },
-          { label: 'SKU', value: String(product.reference || product.id) },
-        ];
+        { label: 'Marca', value: product.brand },
+        { label: 'Modelo / línea', value: model || cleanTitle },
+        { label: 'Medida', value: measure || 'Estándar' },
+        { label: 'Ancho de sección', value: width ? `${width} mm` : '—' },
+        { label: 'Perfil', value: profile || '—' },
+        {
+          label: 'Diámetro del rin',
+          value: rim ? `${rim.replace('R', '')} pulgadas (${rim})` : '—',
+        },
+        { label: 'Índice de carga', value: loadIndex || 'Oficial' },
+        { label: 'Índice de velocidad', value: speedIndex || 'Oficial' },
+        { label: 'Segmento', value: primaryVehicleType },
+        { label: 'Contenido', value: '1 llanta' },
+        { label: 'SKU', value: String(product.reference || product.id) },
+      ];
 
   return {
     ...product,
@@ -1857,8 +1855,8 @@ export function normalizeWixStoreProduct(wixItem, index = 0) {
 
   const wixCollections = Array.isArray(wixItem.collections)
     ? wixItem.collections
-        .map((col) => (typeof col === 'string' ? col : col?.name))
-        .filter(Boolean)
+      .map((col) => (typeof col === 'string' ? col : col?.name))
+      .filter(Boolean)
     : [];
 
   const regularPrice = Number(wixItem.price || 0);
@@ -1881,8 +1879,8 @@ export function normalizeWixStoreProduct(wixItem, index = 0) {
 
   const wixGalleryUrls = Array.isArray(wixItem.mediaItems)
     ? wixItem.mediaItems
-        .map((m) => formatWixImageUrl(m?.src, null))
-        .filter((url) => url && !url.includes('missing-media'))
+      .map((m) => formatWixImageUrl(m?.src, null))
+      .filter((url) => url && !url.includes('missing-media'))
     : [];
 
   if (hasUploadedWixMedia && wixGalleryUrls.length === 0) {
@@ -2194,73 +2192,78 @@ export function formatMXN(value) {
   }).format(num);
 }
 
-// Brand logos & official metadata available in project (5 Featured + 8 Extended Wix Brands)
+// Brand logos & official metadata available in project (13 Official Store Brands)
 export const BRAND_META = {
   Hankook: {
     name: 'Hankook',
-    logo: '/images/brands/hankook.svg',
-    accent: '#FF6B00',
+    logo: '/images/brands/hankook.png',
+    accent: '#EB611B',
   },
   Continental: {
     name: 'Continental',
-    logo: '/images/brands/continental.svg',
-    accent: '#FFA500',
+    logo: '/images/brands/continental.png',
+    accent: '#F39200',
   },
   Euzkadi: {
     name: 'Euzkadi',
-    logo: '/images/brands/euzkadi.svg',
-    accent: '#C41E24',
+    logo: '/images/brands/euzkadi.png',
+    accent: '#0C5497',
   },
   'General Tire': {
     name: 'General Tire',
-    logo: '/images/brands/generaltire.svg',
-    accent: '#C41E24',
+    logo: '/images/brands/generaltire.png',
+    accent: '#D71920',
   },
   Laufenn: {
     name: 'Laufenn',
-    logo: '/images/brands/laufenn.svg',
-    accent: '#E8353B',
+    logo: '/images/brands/laufenn.png',
+    accent: '#4E267E',
   },
   Firestone: {
     name: 'Firestone',
-    logo: '/images/brands/firestone.svg',
-    accent: '#C41E24',
+    logo: '/images/brands/firestone.png',
+    accent: '#D71920',
   },
   Bridgestone: {
     name: 'Bridgestone',
-    logo: '/images/brands/bridgestone.svg',
-    accent: '#1A1F36',
+    logo: '/images/brands/bridgestone.png',
+    accent: '#E60012',
   },
   Michelin: {
     name: 'Michelin',
-    logo: '/images/brands/michelin.svg',
-    accent: '#004990',
+    logo: '/images/brands/michelin.png',
+    accent: '#005BAA',
   },
   Pirelli: {
     name: 'Pirelli',
-    logo: '/images/brands/pirelli.svg',
+    logo: '/images/brands/pirelli.png',
     accent: '#D50000',
   },
   Goodyear: {
     name: 'Goodyear',
-    logo: '/images/brands/goodyear.svg',
-    accent: '#003399',
+    logo: '/images/brands/goodyear.png',
+    accent: '#23509A',
   },
   BFGoodrich: {
     name: 'BFGoodrich',
-    logo: '/images/brands/bfgoodrich.svg',
-    accent: '#1A1F36',
+    logo: '/images/brands/bfgoodrich.png',
+    accent: '#1D428A',
   },
   Barum: {
     name: 'Barum',
-    logo: '/images/brands/barum.svg',
-    accent: '#004990',
+    logo: '/images/brands/barum.png',
+    accent: '#183571',
   },
   Kelly: {
     name: 'Kelly',
     logo: '/images/brands/kelly.svg',
-    accent: '#006633',
+    accent: '#006838',
   },
+};
+
+export const JASMAN_STORE_LOGOS = {
+  light: '/images/brands/jasman-tires.png',
+  dark: '/images/brands/jasman-tires-white.png',
 };
 
 export const ALL_OFFICIAL_MENU_BRANDS = [

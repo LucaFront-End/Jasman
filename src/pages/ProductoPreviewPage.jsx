@@ -316,15 +316,15 @@ export default function ProductoPreviewPage() {
       Array.isArray(product.tableSpecs) && product.tableSpecs.length > 0
         ? product.tableSpecs
         : [
-            { label: 'Marca', value: product.brand },
-            { label: 'Modelo / línea', value: product.model || product.cleanTitle },
-            { label: 'Medida', value: product.measure || 'Estándar' },
-            { label: 'Ancho de sección', value: product.width ? `${product.width} mm` : '—' },
-            { label: 'Perfil', value: product.profile || '—' },
-            { label: 'Diámetro del rin', value: product.rim || '—' },
-            { label: 'Índice Carga / Velocidad', value: product.loadSpeed || 'Oficial' },
-            { label: 'SKU', value: product.reference },
-          ];
+          { label: 'Marca', value: product.brand },
+          { label: 'Modelo / línea', value: product.model || product.cleanTitle },
+          { label: 'Medida', value: product.measure || 'Estándar' },
+          { label: 'Ancho de sección', value: product.width ? `${product.width} mm` : '—' },
+          { label: 'Perfil', value: product.profile || '—' },
+          { label: 'Diámetro del rin', value: product.rim || '—' },
+          { label: 'Índice Carga / Velocidad', value: product.loadSpeed || 'Oficial' },
+          { label: 'SKU', value: product.reference },
+        ];
 
     const hasVehicleRow = baseTableRows.some((r) =>
       /veh[ií]culo/i.test(r.label)
@@ -512,7 +512,13 @@ export default function ProductoPreviewPage() {
                       <img
                         src={brandMeta.logo}
                         alt={product.brand}
-                        style={{ height: 18, width: 'auto', objectFit: 'contain' }}
+                        style={{
+                          height: 20,
+                          maxWidth: 102,
+                          width: 'auto',
+                          objectFit: 'contain',
+                          borderRadius: 3,
+                        }}
                       />
                     )}
                   </div>
@@ -950,11 +956,12 @@ export default function ProductoPreviewPage() {
                       src={brandMeta.logo}
                       alt={`Marca ${product.brand}`}
                       style={{
-                        maxHeight: 28,
-                        maxWidth: 92,
+                        maxHeight: 30,
+                        maxWidth: 102,
                         width: 'auto',
                         height: 'auto',
                         objectFit: 'contain',
+                        borderRadius: 3,
                       }}
                     />
                   ) : (
@@ -2050,9 +2057,11 @@ export default function ProductoPreviewPage() {
                         src={relBrandLogo}
                         alt={rel.brand}
                         style={{
-                          height: 15,
+                          height: 17,
+                          maxWidth: 96,
                           width: 'auto',
                           objectFit: 'contain',
+                          borderRadius: 2.5,
                           marginBottom: 8,
                         }}
                       />

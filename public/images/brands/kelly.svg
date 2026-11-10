@@ -1,8 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 56" fill="none">
-  <rect x="6" y="10" width="12" height="36" rx="3" fill="#006633"/>
-  <g transform="translate(26, 39) skewX(-8)">
-    <text x="0" y="0" font-family="'Montserrat', 'Arial Black', sans-serif" font-weight="900" font-size="34" letter-spacing="2" fill="#1A1F36">KELLY</text>
-    <text x="142" y="0" font-family="'Montserrat', sans-serif" font-weight="700" font-size="22" letter-spacing="1" fill="#006633">TIRES</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 404 84" fill="none">
+  <g transform="translate(18, 8) skewX(-11)">
+    <path d="M0 0H40L25 31L40 62H0L15 31L0 0Z" fill="#006838"/>
+    <path d="M47 0H59L44 31L59 62H47L32 31L47 0Z" fill="#008749"/>
   </g>
+  <g transform="translate(92, 8) skewX(-11)" fill="#111827">
+    <path d="M0 0H18V62H0V0ZM18 27L39 0H59L35 29.5L61 62H40L18 33.5V27Z"/>
+    <path d="M69 0H119V13H87V24.5H114V37H87V49H120V62H69V0Z"/>
+    <path d="M130 0H148V48.5H177V62H130V0Z"/>
+    <path d="M186 0H204V48.5H233V62H186V0Z"/>
+    <path d="M236 0H256L267 22.5L278 0H298L276 38V62H258V38L236 0Z"/>
+  </g>
+  <path d="M90 74H386L384.8 80H88.8L90 74Z" fill="#006838"/>
 </svg>
-

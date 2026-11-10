@@ -117,7 +117,13 @@ export default function TiendaProductCard({
                 <img
                   src={brandMeta.logo}
                   alt={product.brand}
-                  style={{ height: 22, width: 'auto', objectFit: 'contain' }}
+                  style={{
+                    height: 24,
+                    maxWidth: 118,
+                    width: 'auto',
+                    objectFit: 'contain',
+                    borderRadius: 3,
+                  }}
                 />
               ) : (
                 <span
@@ -452,10 +458,11 @@ export default function TiendaProductCard({
               src={brandMeta.logo}
               alt={product.brand}
               style={{
-                height: 16,
-                maxWidth: 96,
+                height: 18,
+                maxWidth: 102,
                 width: 'auto',
                 objectFit: 'contain',
+                borderRadius: 3,
               }}
             />
           ) : (

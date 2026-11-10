@@ -1157,30 +1157,52 @@ export default function TiendaNavbar({ legacyMode = false }) {
                     >
                       Marcas Oficiales (13)
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {ALL_OFFICIAL_MENU_BRANDS.map((brandName) => (
-                        <button
-                          key={brandName}
-                          type="button"
-                          onClick={() => handleQuickBrand(brandName)}
-                          className="tienda-search-quick-pill"
-                          style={{
-                            padding: '5px 11px',
-                            borderRadius: 9999,
-                            border: '1px solid rgba(26, 31, 54, 0.10)',
-                            background: '#F8FAFC',
-                            cursor: 'pointer',
-                            fontFamily: F.heading,
-                            fontSize: 10.5,
-                            fontWeight: 800,
-                            letterSpacing: '0.04em',
-                            textTransform: 'uppercase',
-                            color: C.navy,
-                          }}
-                        >
-                          {brandName}
-                        </button>
-                      ))}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                      {ALL_OFFICIAL_MENU_BRANDS.map((brandName) => {
+                        const meta = BRAND_META[brandName];
+                        return (
+                          <button
+                            key={brandName}
+                            type="button"
+                            onClick={() => handleQuickBrand(brandName)}
+                            className="tienda-search-quick-pill"
+                            title={brandName}
+                            style={{
+                              height: 32,
+                              padding: '5px 12px',
+                              borderRadius: 9999,
+                              border: '1px solid rgba(26, 31, 54, 0.11)',
+                              background: '#FFFFFF',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontFamily: F.heading,
+                              fontSize: 10.5,
+                              fontWeight: 800,
+                              letterSpacing: '0.04em',
+                              textTransform: 'uppercase',
+                              color: C.navy,
+                            }}
+                          >
+                            {meta?.logo ? (
+                              <img
+                                src={meta.logo}
+                                alt={brandName}
+                                style={{
+                                  height: 16,
+                                  maxWidth: 82,
+                                  width: 'auto',
+                                  objectFit: 'contain',
+                                  borderRadius: 2.5,
+                                }}
+                              />
+                            ) : (
+                              brandName
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -1428,11 +1450,11 @@ export default function TiendaNavbar({ legacyMode = false }) {
                           type="button"
                           onClick={() => handleQuickBrand(brandName)}
                           style={{
-                            height: 44,
+                            height: 46,
                             padding: '6px 10px',
                             borderRadius: 12,
                             border: '1px solid rgba(26, 31, 54, 0.10)',
-                            background: '#F8FAFC',
+                            background: '#FFFFFF',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -1444,10 +1466,11 @@ export default function TiendaNavbar({ legacyMode = false }) {
                               src={meta.logo}
                               alt={brandName}
                               style={{
-                                height: 17,
+                                height: 20,
                                 maxWidth: '88%',
                                 width: 'auto',
                                 objectFit: 'contain',
+                                borderRadius: 3,
                               }}
                             />
                           ) : (

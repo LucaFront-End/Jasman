@@ -18,19 +18,19 @@ import { ArrowUpRight } from 'lucide-react';
 const TOP_REQUESTED_TIRE_IDS = [572, 590, 568, 539];
 
 const BRAND_TILE_STYLES = {
-  Michelin: { accent: '#004990' },
-  BFGoodrich: { accent: '#1A1F36' },
-  Goodyear: { accent: '#003399' },
-  Kelly: { accent: '#15803D' },
-  Hankook: { accent: '#111827' },
-  Laufenn: { accent: '#E8353B' },
+  Michelin: { accent: '#005BAA' },
+  BFGoodrich: { accent: '#1D428A' },
+  Goodyear: { accent: '#23509A' },
+  Kelly: { accent: '#006838' },
+  Hankook: { accent: '#EB611B' },
+  Laufenn: { accent: '#4E267E' },
   Pirelli: { accent: '#D50000' },
-  Firestone: { accent: '#C41E24' },
-  Bridgestone: { accent: '#1A1F36' },
-  Euzkadi: { accent: '#C41E24' },
-  Continental: { accent: '#F59E0B' },
-  'General Tire': { accent: '#C41E24' },
-  Barum: { accent: '#004990' },
+  Firestone: { accent: '#D71920' },
+  Bridgestone: { accent: '#E60012' },
+  Euzkadi: { accent: '#0C5497' },
+  Continental: { accent: '#F39200' },
+  'General Tire': { accent: '#D71920' },
+  Barum: { accent: '#183571' },
 };
 
 export default function TiendaMostRequestedSection({
@@ -258,7 +258,7 @@ export default function TiendaMostRequestedSection({
                   onClick={() => handleSelectBrand(brandName)}
                   className="jasman-brand-tile"
                   style={{
-                    height: isCompactDropdown ? 54 : 74,
+                    height: isCompactDropdown ? 58 : 76,
                     padding: isCompactDropdown ? '8px 10px' : '10px 16px',
                     borderRadius: 14,
                     border: '1px solid rgba(26, 31, 54, 0.10)',
@@ -290,10 +290,11 @@ export default function TiendaMostRequestedSection({
                       src={meta.logo}
                       alt={brandName}
                       style={{
-                        height: isCompactDropdown ? 18 : 25,
-                        maxWidth: '88%',
+                        height: isCompactDropdown ? 22 : 28,
+                        maxWidth: '90%',
                         width: 'auto',
                         objectFit: 'contain',
+                        borderRadius: 3,
                       }}
                     />
                   ) : (

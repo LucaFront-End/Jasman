@@ -325,7 +325,13 @@ function ExpressDealCard({ product }) {
             <img
               src={brandMeta.logo}
               alt={product.brand}
-              style={{ height: 14, maxWidth: 86, width: 'auto', objectFit: 'contain' }}
+              style={{
+                height: 16,
+                maxWidth: 92,
+                width: 'auto',
+                objectFit: 'contain',
+                borderRadius: 2.5,
+              }}
             />
           ) : (
             <span
@@ -578,7 +584,13 @@ function FreeShippingLandscapeCard({ product }) {
               <img
                 src={brandMeta.logo}
                 alt={product.brand}
-                style={{ height: 14, maxWidth: 84, width: 'auto', objectFit: 'contain' }}
+                style={{
+                  height: 16,
+                  maxWidth: 90,
+                  width: 'auto',
+                  objectFit: 'contain',
+                  borderRadius: 2.5,
+                }}
               />
             ) : (
               <span
@@ -786,7 +798,13 @@ function MsiInstallmentCard({ product }) {
           <img
             src={brandMeta.logo}
             alt={product.brand}
-            style={{ height: 15, maxWidth: 90, width: 'auto', objectFit: 'contain' }}
+            style={{
+              height: 17,
+              maxWidth: 96,
+              width: 'auto',
+              objectFit: 'contain',
+              borderRadius: 2.5,
+            }}
           />
         ) : (
           <span

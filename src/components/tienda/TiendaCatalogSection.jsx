@@ -1020,14 +1020,14 @@ export default function TiendaCatalogSection({
                         border: active
                           ? `1.5px solid ${C.red}`
                           : '1px solid rgba(26, 31, 54, 0.10)',
-                        background: active ? '#FFF5F5' : '#FAFAFC',
+                        background: active ? '#FFF5F5' : '#FFFFFF',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         boxShadow: active
                           ? '0 10px 22px rgba(196, 30, 36, 0.10)'
-                          : 'none',
+                          : '0 2px 8px rgba(26, 31, 54, 0.03)',
                         transition: 'all 0.22s ease',
                       }}
                     >
@@ -1035,11 +1035,12 @@ export default function TiendaCatalogSection({
                         src={meta.logo}
                         alt={brandName}
                         style={{
-                          height: 17,
-                          maxWidth: '90%',
+                          height: 21,
+                          maxWidth: '92%',
                           width: 'auto',
                           objectFit: 'contain',
-                          opacity: active ? 1 : 0.78,
+                          borderRadius: 3,
+                          opacity: active ? 1 : 0.9,
                         }}
                       />
                     </button>
