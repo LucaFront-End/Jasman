@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { C, F } from '../hooks/useAnimations';
 import {
-  PRODUCTOS_MASTER,
   BRAND_META,
   formatMXN,
+  useWixCatalogProducts,
 } from '../data/productosMasterData';
 import { useTiendaState, triggerTiendaUI } from '../hooks/useTiendaState';
 import {
@@ -524,6 +524,7 @@ function BentoBrandCard({ brand, count, totalStock, meta, sample, isFeatured }) 
 
 export default function LandingTiendaPreviewPage() {
   const { addToCart, coupon } = useTiendaState();
+  const { products: catalogProducts } = useWixCatalogProducts();
   const heroTrackRef = useRef(null);
   const heroProgress = useStickyScrollProgress(heroTrackRef, 0.14);
   const { tilt: heroTilt, onMouseMove: onHeroMove, onMouseLeave: onHeroLeave } = useAppleTilt(7);
@@ -548,19 +549,19 @@ export default function LandingTiendaPreviewPage() {
   const activeSpotlight =
     HERO_SPOTLIGHTS.find((s) => s.id === selectedHeroId) || HERO_SPOTLIGHTS[0];
   const heroProduct =
-    PRODUCTOS_MASTER.find((p) => p.id === selectedHeroId) || PRODUCTOS_MASTER[0];
+    catalogProducts.find((p) => p.id === selectedHeroId) || catalogProducts[0];
 
   const brandSelectedSample = {
-    Hankook: PRODUCTOS_MASTER.find((p) => p.id === 590),
-    Continental: PRODUCTOS_MASTER.find((p) => p.id === 572),
-    Euzkadi: PRODUCTOS_MASTER.find((p) => p.id === 569),
-    'General Tire': PRODUCTOS_MASTER.find((p) => p.id === 568),
-    Laufenn: PRODUCTOS_MASTER.find((p) => p.id === 555),
+    Hankook: catalogProducts.find((p) => p.id === 590),
+    Continental: catalogProducts.find((p) => p.id === 572),
+    Euzkadi: catalogProducts.find((p) => p.id === 569),
+    'General Tire': catalogProducts.find((p) => p.id === 568),
+    Laufenn: catalogProducts.find((p) => p.id === 555),
   };
 
   const brandCounts = ['Hankook', 'Continental', 'Euzkadi', 'General Tire', 'Laufenn'].map(
     (b) => {
-      const brandItems = PRODUCTOS_MASTER.filter((p) => p.brand === b);
+      const brandItems = catalogProducts.filter((p) => p.brand === b);
       const totalStock = brandItems.reduce((acc, item) => acc + (item.quantity || 0), 0);
       return {
         brand: b,
@@ -679,7 +680,7 @@ export default function LandingTiendaPreviewPage() {
                   color: C.red,
                 }}
               >
-                Jasman Store · {PRODUCTOS_MASTER.length} Referencias Oficiales
+                Jasman Store · {catalogProducts.length} Referencias Oficiales
               </span>
             </div>
 
@@ -1162,7 +1163,7 @@ export default function LandingTiendaPreviewPage() {
                 gap: 8,
               }}
             >
-              Explorar las {PRODUCTOS_MASTER.length} referencias <ArrowRight size={14} />
+              Explorar las {catalogProducts.length} referencias <ArrowRight size={14} />
             </Link>
           </div>
 

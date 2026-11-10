@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 56" fill="none">
+  <circle cx="24" cy="28" r="16" fill="#004990"/>
+  <path d="M18 19 H26 C30 19 31 24 27 26 C31 28 30 35 25 35 H18 V19 Z" fill="#FF9900"/>
+  <g transform="translate(50, 38)">
+    <text x="0" y="0" font-family="'Montserrat', 'Arial Black', sans-serif" font-weight="900" font-size="34" letter-spacing="1" fill="#004990">Barum</text>
+  </g>
+</svg>
+

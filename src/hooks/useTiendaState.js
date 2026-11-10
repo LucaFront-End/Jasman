@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { PRODUCTOS_MASTER } from '../data/productosMasterData';
+import {
+  findCatalogProductById,
+  loadWixCatalogProducts,
+} from '../data/productosMasterData';
 import { logoutWixMember, saveWixTiendaOrder } from '../services/wixService';
 
 const STORAGE_KEYS = {
@@ -101,7 +104,10 @@ export function useTiendaState() {
     readJSON(STORAGE_KEYS.DELIVERY_MODE, 'shipping')
   );
 
+  const [catalogTick, setCatalogTick] = useState(0);
+
   useEffect(() => {
+    loadWixCatalogProducts().catch(() => {});
     const syncAll = () => {
       setCartState(readJSON(STORAGE_KEYS.CART, []));
       setCouponState(readJSON(STORAGE_KEYS.COUPON, null));
@@ -109,6 +115,7 @@ export function useTiendaState() {
       setOrdersState(readJSON(STORAGE_KEYS.ORDERS, []));
       setSelectedBranchSlugState(readJSON(STORAGE_KEYS.BRANCH, 'jasman-satelite'));
       setDeliveryModeState(readJSON(STORAGE_KEYS.DELIVERY_MODE, 'shipping'));
+      setCatalogTick((t) => t + 1);
     };
     window.addEventListener(SYNC_EVENT, syncAll);
     window.addEventListener('storage', syncAll);
@@ -119,11 +126,13 @@ export function useTiendaState() {
   }, []);
 
   const addToCart = useCallback((productId, qty = 1, openCartDrawer = true) => {
-    const product = PRODUCTOS_MASTER.find((p) => p.id === Number(productId));
+    const product = findCatalogProductById(productId);
     if (!product || !product.inStock) return false;
 
     const current = readJSON(STORAGE_KEYS.CART, []);
-    const existingIndex = current.findIndex((item) => item.productId === product.id);
+    const existingIndex = current.findIndex(
+      (item) => String(item.productId) === String(product.id)
+    );
     const maxQty = Math.max(1, product.quantity);
 
     let next;
@@ -145,19 +154,24 @@ export function useTiendaState() {
   }, []);
 
   const updateCartQuantity = useCallback((productId, quantity) => {
-    const product = PRODUCTOS_MASTER.find((p) => p.id === Number(productId));
+    const product = findCatalogProductById(productId);
     if (!product) return;
     const current = readJSON(STORAGE_KEYS.CART, []);
     if (quantity <= 0) {
       writeJSON(
         STORAGE_KEYS.CART,
-        current.filter((item) => item.productId !== Number(productId))
+        current.filter(
+          (item) =>
+            String(item.productId) !== String(productId) &&
+            String(item.productId) !== String(product.id)
+        )
       );
       return;
     }
     const maxQty = Math.max(1, product.quantity);
     const next = current.map((item) =>
-      item.productId === Number(productId)
+      String(item.productId) === String(productId) ||
+      String(item.productId) === String(product.id)
         ? { ...item, quantity: Math.min(maxQty, quantity) }
         : item
     );
@@ -168,7 +182,7 @@ export function useTiendaState() {
     const current = readJSON(STORAGE_KEYS.CART, []);
     writeJSON(
       STORAGE_KEYS.CART,
-      current.filter((item) => item.productId !== Number(productId))
+      current.filter((item) => String(item.productId) !== String(productId))
     );
   }, []);
 
@@ -225,9 +239,10 @@ export function useTiendaState() {
   }, []);
 
   const cartItems = useMemo(() => {
+    void catalogTick;
     return cart
       .map((item) => {
-        const product = PRODUCTOS_MASTER.find((p) => p.id === Number(item.productId));
+        const product = findCatalogProductById(item.productId);
         if (!product) return null;
         const unitPrice = product.finalPriceTaxExcluded || 0;
         const effectiveUnits = (product.unitsPerItem || 1) * item.quantity;
@@ -240,7 +255,7 @@ export function useTiendaState() {
         };
       })
       .filter(Boolean);
-  }, [cart]);
+  }, [cart, catalogTick]);
 
   const cartCount = useMemo(
     () => cartItems.reduce((acc, item) => acc + item.quantity, 0),

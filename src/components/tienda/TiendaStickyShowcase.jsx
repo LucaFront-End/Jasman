@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
-import { PRODUCTOS_MASTER, formatMXN } from '../../data/productosMasterData';
+import { PRODUCTOS_MASTER, findCatalogProductById, formatMXN } from '../../data/productosMasterData';
 import { useTiendaState } from '../../hooks/useTiendaState';
 import { useStickyScrollProgress, useAppleTilt, clamp } from '../../hooks/useAppleScrollPhysics';
 import Tire3DStudioStage from './Tire3DStudioStage';
@@ -56,7 +56,7 @@ export default function TiendaStickyShowcase() {
 
   const items = CHAPTERS.map((ch) => ({
     ...ch,
-    product: PRODUCTOS_MASTER.find((p) => p.id === ch.productId) || PRODUCTOS_MASTER[0],
+    product: findCatalogProductById(ch.productId) || PRODUCTOS_MASTER[0],
   }));
 
   const scrollIndex = clamp(Math.floor(progress * items.length), 0, items.length - 1);

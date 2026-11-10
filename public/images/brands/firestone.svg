@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 56" fill="none">
+  <g transform="translate(6, 8)">
+    <path d="M0 4 H36 L30 14 H12 V20 H28 L24 28 H12 V40 H0 V4 Z" fill="#C41E24"/>
+  </g>
+  <g transform="translate(50, 39) skewX(-6)">
+    <text x="0" y="0" font-family="'Montserrat', 'Georgia', serif" font-weight="900" font-size="35" letter-spacing="0.5" fill="#C41E24">Firestone</text>
+  </g>
+</svg>
+

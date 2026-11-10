@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 56" fill="none">
+  <g transform="translate(6, 10)">
+    <path d="M4 36 L14 4 H36 C44 4 46 10 42 16 C39 20 34 21 30 21 C36 22 40 26 37 32 C34 36 28 36 20 36 H4 Z" fill="#1A1F36"/>
+    <polygon points="18,12 28,4 22,18" fill="#C41E24"/>
+  </g>
+  <g transform="translate(56, 38) skewX(-8)">
+    <text x="0" y="0" font-family="'Montserrat', 'Arial Black', sans-serif" font-weight="900" font-size="31" letter-spacing="1.5" fill="#1A1F36">BRIDGESTONE</text>
+  </g>
+</svg>
+

@@ -17,6 +17,7 @@ import ProveedoresPage from './pages/ProveedoresPage';
 import ContactoPage from './pages/ContactoPage';
 import LandingAlineacionPage from './pages/LandingAlineacionPage';
 import LandingTiendaPreviewPage from './pages/LandingTiendaPreviewPage';
+import LandingTiendaPreviewCopyPage from './pages/LandingTiendaPreviewCopyPage';
 import CatalogoPreviewPage from './pages/CatalogoPreviewPage';
 import ProductoPreviewPage from './pages/ProductoPreviewPage';
 import HomeTiendaPreviewPage from './pages/HomeTiendaPreviewPage';
@@ -40,8 +41,14 @@ export default function App() {
     hostname.startsWith('alineacion.') ||
     hostname.startsWith('landing.');
 
-  const isDedicatedStoreLanding = pathname.startsWith('/landing-tienda-preview');
-  const isStorePreviewRoute = pathname.includes('tienda-preview');
+  const isDedicatedStoreLanding =
+    pathname.startsWith('/landing-tienda-preview') ||
+    pathname.startsWith('/landing-tienda-copia') ||
+    pathname.startsWith('/landing-tienda-wix');
+  const isStorePreviewRoute =
+    pathname.includes('tienda-preview') ||
+    pathname.includes('tienda-copia') ||
+    pathname.includes('tienda-wix');
 
   return (
     <>
@@ -72,6 +79,10 @@ export default function App() {
           <Route path="/contacto" element={<ContactoPage />} />
           {/* Preview routes (isolated from production menus) */}
           <Route path="/landing-tienda-preview" element={<LandingTiendaPreviewPage />} />
+          <Route path="/landing-tienda-wix" element={<LandingTiendaPreviewPage />} />
+          <Route path="/landing-tienda-preview-copia" element={<LandingTiendaPreviewCopyPage />} />
+          <Route path="/landing-tienda-preview/copia" element={<LandingTiendaPreviewCopyPage />} />
+          <Route path="/landing-tienda-copia" element={<LandingTiendaPreviewCopyPage />} />
           <Route path="/landing-tienda-preview/catalogo" element={<CatalogoPreviewPage />} />
           <Route path="/landing-tienda-preview/producto/:id" element={<ProductoPreviewPage />} />
           <Route path="/landing-tienda-preview/cuenta" element={<CuentaPreviewPage />} />

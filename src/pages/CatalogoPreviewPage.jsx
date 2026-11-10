@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { C, F } from '../hooks/useAnimations';
-import { PRODUCTOS_MASTER } from '../data/productosMasterData';
+import { useWixCatalogProducts } from '../data/productosMasterData';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCatalogSection from '../components/tienda/TiendaCatalogSection';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 
 export default function CatalogoPreviewPage() {
-  const totalStock = PRODUCTOS_MASTER.reduce(
+  const { products: catalogProducts } = useWixCatalogProducts();
+  const totalStock = catalogProducts.reduce(
     (sum, p) => sum + (p.quantity || 0),
     0
   );
@@ -89,7 +90,7 @@ export default function CatalogoPreviewPage() {
                 textTransform: 'uppercase',
               }}
             >
-              <Sparkles size={12} /> Catálogo General · {PRODUCTOS_MASTER.length} Modelos ({totalStock} uds.)
+              <Sparkles size={12} /> Catálogo General · {catalogProducts.length} Modelos ({totalStock} uds.)
             </div>
           </div>
 

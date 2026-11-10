@@ -1081,3 +1081,75 @@ export async function saveWixTiendaOrder(orderRecord) {
   }
   return orderRecord;
 }
+
+/* ============================================================================
+ * WIX STORES PRODUCTS CATALOG INTEGRATION ("Stores/Products")
+ * ============================================================================ */
+
+const WIX_PRODUCTS_SESSION_KEY = 'jasman_wix_store_products_cache_v1';
+let wixProductsMemoryCache = null;
+let wixProductsFetchPromise = null;
+
+/**
+ * Fetches all products from the Wix Stores catalog ("Stores/Products"),
+ * paginating automatically to retrieve all items (336+ tires).
+ */
+export async function getWixStoreProducts({ forceRefresh = false } = {}) {
+  if (!forceRefresh && Array.isArray(wixProductsMemoryCache) && wixProductsMemoryCache.length > 0) {
+    return wixProductsMemoryCache;
+  }
+
+  if (!forceRefresh && typeof window !== 'undefined') {
+    try {
+      const cached = window.sessionStorage.getItem(WIX_PRODUCTS_SESSION_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          wixProductsMemoryCache = parsed;
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore sessionStorage parse error
+    }
+  }
+
+  if (wixProductsFetchPromise) {
+    return wixProductsFetchPromise;
+  }
+
+  wixProductsFetchPromise = (async () => {
+    try {
+      const allItems = [];
+      let res = await wixClient.items.query('Stores/Products').limit(100).find();
+      if (res?.items?.length) {
+        allItems.push(...res.items);
+      }
+      while (res && typeof res.hasNext === 'function' && res.hasNext()) {
+        res = await res.next();
+        if (res?.items?.length) {
+          allItems.push(...res.items);
+        }
+      }
+
+      if (allItems.length > 0) {
+        wixProductsMemoryCache = allItems;
+        if (typeof window !== 'undefined') {
+          try {
+            window.sessionStorage.setItem(WIX_PRODUCTS_SESSION_KEY, JSON.stringify(allItems));
+          } catch {
+            // ignore storage quota errors
+          }
+        }
+      }
+      return allItems;
+    } catch (err) {
+      console.warn('Error consultando Stores/Products:', err?.message || err);
+      return wixProductsMemoryCache || [];
+    } finally {
+      wixProductsFetchPromise = null;
+    }
+  })();
+
+  return wixProductsFetchPromise;
+}

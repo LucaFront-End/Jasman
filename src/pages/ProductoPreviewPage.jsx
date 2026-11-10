@@ -2,10 +2,10 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { C, F } from '../hooks/useAnimations';
 import {
-  PRODUCTOS_MASTER,
-  PACKAGE_TO_SINGLE_ID_MAP,
   BRAND_META,
   formatMXN,
+  useWixCatalogProducts,
+  findCatalogProductById,
 } from '../data/productosMasterData';
 import { sucursales } from '../data/sucursalesData';
 import {
@@ -105,15 +105,14 @@ const DRIVER_REVIEWS = [
 export default function ProductoPreviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { products: catalogProducts } = useWixCatalogProducts();
 
   const product = useMemo(() => {
-    const resolvedId = PACKAGE_TO_SINGLE_ID_MAP[Number(id)] || id;
     return (
-      PRODUCTOS_MASTER.find(
-        (p) => String(p.id) === String(resolvedId) || p.slug === resolvedId
-      ) || PRODUCTOS_MASTER[0]
+      findCatalogProductById(id) ||
+      catalogProducts[0]
     );
-  }, [id]);
+  }, [id, catalogProducts]);
 
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [prevProdId, setPrevProdId] = useState(product.id);
@@ -273,7 +272,7 @@ export default function ProductoPreviewPage() {
 
   // 3 Cross-Sell Related Tires
   const relatedProducts = useMemo(() => {
-    const primary = PRODUCTOS_MASTER.filter(
+    const primary = catalogProducts.filter(
       (p) =>
         p.id !== product.id &&
         p.inStock &&
@@ -281,13 +280,13 @@ export default function ProductoPreviewPage() {
     ).slice(0, 3);
     if (primary.length < 3) {
       const existingIds = primary.map((p) => p.id);
-      const fillers = PRODUCTOS_MASTER.filter(
+      const fillers = catalogProducts.filter(
         (p) => p.id !== product.id && p.inStock && !existingIds.includes(p.id)
       ).slice(0, 3 - primary.length);
       return [...primary, ...fillers];
     }
     return primary;
-  }, [product]);
+  }, [product, catalogProducts]);
 
   const specRows = [
     { label: 'ID de Catálogo', value: `#${product.id}` },

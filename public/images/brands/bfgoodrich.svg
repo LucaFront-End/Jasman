@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 56" fill="none">
+  <g transform="translate(6, 10)">
+    <polygon points="0,18 18,0 32,0 14,18 32,36 18,36" fill="#C41E24"/>
+    <polygon points="14,18 28,4 38,4 24,18 38,32 28,32" fill="#003366"/>
+  </g>
+  <g transform="translate(50, 38) skewX(-8)">
+    <text x="0" y="0" font-family="'Montserrat', 'Arial Black', sans-serif" font-weight="900" font-size="31" letter-spacing="0.5" fill="#1A1F36">BFGoodrich</text>
+  </g>
+</svg>
+

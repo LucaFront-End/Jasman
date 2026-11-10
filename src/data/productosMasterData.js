@@ -1,5 +1,6 @@
-// Master product catalog derived directly from "Relacioón productos master.csv"
-// Do not invent prices, features, or specifications: all fields map 1:1 to the CSV.
+// Master product catalog derived directly from "Relacioón productos master.csv" + Live Wix Stores/Products Sync
+import { useState, useEffect, useMemo } from 'react';
+import { getWixStoreProducts, formatWixImageUrl } from '../services/wixService';
 
 export const RAW_PRODUCTOS_MASTER = [
   {
@@ -1244,7 +1245,10 @@ export function parseTireSpecs(product) {
     .replace(/(\d{3}\s*\/\s*\d{2}\s*\/?\s*R\s*\d{2}(?:\.\d)?|\d{2}X\d{1,2}\.\d{2}\s*R\s*\d{2}(?:\.\d)?|\b\d{2}R\d{2}(?:\.\d)?\b)/i, '')
     .replace(/\b(HK|CNT)\b/gi, '')
     .replace(new RegExp(product.brand, 'ig'), '')
-    .replace(/Hankook|Continental|Euzkadi|General Tire|Laufenn/gi, '')
+    .replace(
+      /Hankook|Continental|Euzkadi|General Tire|Laufenn|Firestone|Bridgestone|Michelin|Pirelli|Goodyear|BFGoodrich|Barum|Kelly/gi,
+      ''
+    )
     .replace(/\b\d{2,3}(?:\/\d{2,3})?\s*[THVWYQSRNM]\b/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -1253,8 +1257,6 @@ export function parseTireSpecs(product) {
   const normalizedCategory =
     product.category === 'Paquetes' ? 'Llanta de automóvil' : product.category;
   const inStock = product.quantity > 0 && product.finalPriceTaxExcluded > 0;
-  const hasPngCutout = true;
-  const cutoutImage = `/images/tires/tire-${product.id}.png`;
 
   // Classify each tire into Auto, Camioneta (SUV/Pickup), or Camión (Carga/Van)
   let vehicleType = 'Auto';
@@ -1284,13 +1286,35 @@ export function parseTireSpecs(product) {
       'Tecnología estadounidense con carcasa Duragen™ de ultra alta resistencia, ideal para SUVs y Pick-Ups que exigen estabilidad en carretera, capacidad de carga superior y desempeño todo terreno.',
     Laufenn:
       'Línea de alto desempeño respaldada por la ingeniería de Hankook Tire, con dibujo asimétrico de 4 canales longitudinales para evacuación rápida de agua y respuesta deportiva.',
+    Firestone:
+      'Ingeniería comprobada para caminos exigentes con canales de evacuación hidro-dinámica, excelente kilometraje y tracción constante en ciudad y carretera.',
+    Bridgestone:
+      'Tecnología japonesa de equipo original con compuestos NanoPro-Tech™ que reducen la generación de calor, optimizan el consumo de combustible y ofrecen frenado superior.',
+    Michelin:
+      'Compuesto EverGrip™ de última generación que mantiene distancias cortas de frenado en piso mojado y seco desde el primer hasta el último kilómetro de vida útil.',
+    Pirelli:
+      'Herencia italiana de ultra alto desempeño con perfil optimizado para control milimétrico en curvas, respuesta de dirección inmediata y confort acústico en cabina.',
+    Goodyear:
+      'Tecnología ActiveBraking y carcasa reforzada que incrementa la huella de contacto bajo frenado intenso y brinda máxima durabilidad.',
+    BFGoodrich:
+      'Costados CoreGard™ probados en competencia off-road y hombros dentados de tracción agresiva para dominar asfalto, terracería y condiciones severas.',
+    Barum:
+      'Respaldada por el grupo tecnológico Continental en Europa, combina durabilidad sobresaliente, desgaste uniforme y excelente relación costo-kilómetro.',
+    Kelly:
+      'Diseño de banda de rodamiento simétrica de larga duración respaldado por la ingeniería de Goodyear para conducción diaria confiable.',
   };
 
-  const excerpt = `${cleanTitle} (${measure || 'Medida Oficial'}${
+  const defaultExcerpt = `${cleanTitle} (${measure || 'Medida Oficial'}${
     loadSpeed ? ` · Índice ${loadSpeed}` : ''
   }) para ${vehicleType.toLowerCase()}. ${
     brandExcerpts[product.brand] || brandExcerpts.Hankook
   }`;
+
+  const excerpt = product.customExcerpt || defaultExcerpt;
+  const hasPngCutout =
+    typeof product.hasPngCutout === 'boolean' ? product.hasPngCutout : true;
+  const cutoutImage =
+    product.cutoutImage || `/images/tires/tire-${product.id}.png`;
 
   return {
     ...product,
@@ -1309,7 +1333,7 @@ export function parseTireSpecs(product) {
     hasPngCutout,
     cutoutImage,
     vehicleType,
-    primaryImage: product.images[0] || '/images/service-tires.png',
+    primaryImage: product.images?.[0] || cutoutImage || '/images/service-tires.png',
   };
 }
 
@@ -1332,11 +1356,338 @@ const ALL_SINGLE_TIRES = RAW_PRODUCTOS_MASTER.filter(
   (p) => !EXCLUDED_PACKAGE_IDS.has(p.id)
 ).map(parseTireSpecs);
 
-// Place Continental Premium Contact 6 195/65R15 (single tire #539) first as the flagship spotlight
-export const PRODUCTOS_MASTER = [
+// Immutable static catalog snapshot (45 single tires, used by /landing-tienda-preview-copia)
+export const STATIC_PRODUCTOS_MASTER = [
   ...ALL_SINGLE_TIRES.filter((p) => p.id === 539),
   ...ALL_SINGLE_TIRES.filter((p) => p.id !== 539),
 ];
+
+// Live catalog array (starts with STATIC_PRODUCTOS_MASTER and upgrades in-place when Wix Stores/Products resolves)
+export const PRODUCTOS_MASTER = [...STATIC_PRODUCTOS_MASTER];
+
+// Lookup map by SKU / reference to preserve local studio cutout IDs & images when matching Wix items
+const STATIC_BY_REFERENCE = new Map();
+for (const item of STATIC_PRODUCTOS_MASTER) {
+  const refKey = String(item.reference || '').trim();
+  if (!refKey) continue;
+  const existing = STATIC_BY_REFERENCE.get(refKey);
+  if (!existing || (!existing.inStock && item.inStock)) {
+    STATIC_BY_REFERENCE.set(refKey, item);
+  }
+}
+
+// Curated studio cutouts by vehicle segment for Wix items that don't yet have a custom photo uploaded in Wix
+const STUDIO_CUTOUT_POOLS = {
+  Auto: [539, 572, 590, 589, 588, 586, 546, 545, 544, 542, 540, 538, 537, 535, 569, 565, 562],
+  Camioneta: [561, 568, 543, 571, 570, 567, 566, 563, 541, 536],
+  Camión: [564, 534, 559, 558, 557, 556],
+};
+
+export function normalizeBrandName(rawBrand = '', rawName = '') {
+  const upper = String(rawBrand || '').trim().toUpperCase();
+  if (upper.includes('HANKOOK')) return 'Hankook';
+  if (upper.includes('CONTINENTAL')) return 'Continental';
+  if (upper.includes('EUZKADI')) return 'Euzkadi';
+  if (upper.includes('GENERAL')) return 'General Tire';
+  if (upper.includes('LAUFENN')) return 'Laufenn';
+  if (upper.includes('FIRESTONE')) return 'Firestone';
+  if (upper.includes('BRIDGESTONE')) return 'Bridgestone';
+  if (upper.includes('MICHELIN')) return 'Michelin';
+  if (upper.includes('PIRELLI')) return 'Pirelli';
+  if (upper.includes('GOODYEAR')) return 'Goodyear';
+  if (upper.includes('BFGOODRICH')) return 'BFGoodrich';
+  if (upper.includes('BARUM')) return 'Barum';
+  if (upper.includes('KELLY')) return 'Kelly';
+
+  // Fallback check in title
+  const titleUpper = String(rawName || '').toUpperCase();
+  if (titleUpper.includes('HANKOOK')) return 'Hankook';
+  if (titleUpper.includes('CONTINENTAL')) return 'Continental';
+  if (titleUpper.includes('EUZKADI')) return 'Euzkadi';
+  if (titleUpper.includes('GENERAL')) return 'General Tire';
+  if (titleUpper.includes('LAUFENN')) return 'Laufenn';
+  if (titleUpper.includes('FIRESTONE')) return 'Firestone';
+  if (titleUpper.includes('BRIDGESTONE')) return 'Bridgestone';
+  if (titleUpper.includes('MICHELIN')) return 'Michelin';
+  if (titleUpper.includes('PIRELLI')) return 'Pirelli';
+  if (titleUpper.includes('GOODYEAR')) return 'Goodyear';
+  if (titleUpper.includes('BFGOODRICH')) return 'BFGoodrich';
+  if (titleUpper.includes('BARUM')) return 'Barum';
+  if (titleUpper.includes('KELLY')) return 'Kelly';
+  return rawBrand || 'Hankook';
+}
+
+function extractWixExcerptText(html = '') {
+  if (!html || typeof html !== 'string') return '';
+  const paragraphs = [];
+  const regex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+  let match = regex.exec(html);
+  while (match && paragraphs.length < 2) {
+    const text = match[1]
+      .replace(/<[^>]+>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (text.length > 45 && !text.includes('Característica')) {
+      paragraphs.push(text);
+    }
+    match = regex.exec(html);
+  }
+  return paragraphs.join(' ');
+}
+
+export function normalizeWixStoreProduct(wixItem, index = 0) {
+  const sku = String(wixItem.sku || '').trim();
+  const localMatch = STATIC_BY_REFERENCE.get(sku);
+  const brand = normalizeBrandName(wixItem.brand, wixItem.name);
+
+  const regularPrice = Number(wixItem.price || 0);
+  const activePrice = Number(
+    wixItem.discountedPrice && wixItem.discountedPrice > 0
+      ? wixItem.discountedPrice
+      : regularPrice || localMatch?.finalPriceTaxExcluded || 0
+  );
+
+  const quantity =
+    typeof wixItem.quantityInStock === 'number'
+      ? wixItem.quantityInStock
+      : wixItem.inStock
+        ? Math.max(localMatch?.quantity || 10, 4)
+        : 0;
+
+  const hasUploadedWixMedia =
+    Boolean(wixItem.mainMedia) &&
+    !String(wixItem.mainMedia).includes('missing-media');
+
+  const wixGalleryUrls = Array.isArray(wixItem.mediaItems)
+    ? wixItem.mediaItems
+        .map((m) => formatWixImageUrl(m?.src, null))
+        .filter((url) => url && !url.includes('missing-media'))
+    : [];
+
+  if (hasUploadedWixMedia && wixGalleryUrls.length === 0) {
+    const primaryWixUrl = formatWixImageUrl(wixItem.mainMedia, null);
+    if (primaryWixUrl) wixGalleryUrls.push(primaryWixUrl);
+  }
+
+  // Keep existing numeric ID for flagship/static items so existing URLs (/producto/539, /producto/572, etc.) never break
+  const resolvedId = localMatch
+    ? localMatch.id
+    : /^\d+$/.test(sku)
+      ? Number(sku)
+      : wixItem._id || `wix-${index + 1000}`;
+
+  const rawTitle = wixItem.name || localMatch?.name || 'Llanta Oficial Jasman';
+  const isTruckCategory =
+    /19\.5|17\.5|10R15|11R22|295\/80|VanContact|Vantra|RA08|RA18|AH11|DH35|Smart Work|SMaRT FLeX|6PR|8PR|16C|15C/i.test(
+      rawTitle
+    );
+
+  // Determine fallback studio cutout for Wix items that still have Wix's default placeholder image
+  let poolKey = 'Auto';
+  if (isTruckCategory) {
+    poolKey = 'Camión';
+  } else if (
+    /SUV|AT2|MT2|HTS60|Grabber|Dynapro|Overlander|All Terrain|Destination|Scorpion|LTX|TerrainContact|285\/45R21|245\/75R17|235\/75|265\/70|265\/65|265\/60|31X10|33X12|27X8|205\/75R14/i.test(
+      rawTitle
+    )
+  ) {
+    poolKey = 'Camioneta';
+  }
+
+  const pool = STUDIO_CUTOUT_POOLS[poolKey] || STUDIO_CUTOUT_POOLS.Auto;
+  const hashSeed = sku
+    .split('')
+    .reduce((acc, ch) => acc + ch.charCodeAt(0), index);
+  const fallbackStaticId = localMatch ? localMatch.id : pool[hashSeed % pool.length];
+  const fallbackStaticItem =
+    STATIC_PRODUCTOS_MASTER.find((p) => p.id === fallbackStaticId) ||
+    STATIC_PRODUCTOS_MASTER[0];
+
+  const useCutoutFirst = Boolean(localMatch) || !hasUploadedWixMedia;
+  const cutoutImage = localMatch
+    ? `/images/tires/tire-${localMatch.id}.png`
+    : hasUploadedWixMedia
+      ? wixGalleryUrls[0]
+      : `/images/tires/tire-${fallbackStaticItem.id}.png`;
+
+  const images =
+    wixGalleryUrls.length > 0
+      ? localMatch
+        ? [...new Set([...localMatch.images, ...wixGalleryUrls])]
+        : wixGalleryUrls
+      : fallbackStaticItem.images;
+
+  const wixExcerpt = extractWixExcerptText(wixItem.description);
+
+  const parsed = parseTireSpecs({
+    id: resolvedId,
+    wixId: wixItem._id,
+    reference: sku || String(resolvedId),
+    idShopDefault: 1,
+    priceTaxExcluded: regularPrice || activePrice,
+    regularPrice: regularPrice || activePrice,
+    ecotaxTaxExcluded: 0,
+    idTaxRulesGroup: 1,
+    active: 1,
+    name: rawTitle,
+    slug: wixItem.slug || localMatch?.slug || `llanta-${sku}`,
+    category: isTruckCategory ? 'Llanta de camión' : 'Llanta de automóvil',
+    idImage: localMatch?.idImage || 0,
+    legend: rawTitle,
+    finalPriceTaxExcluded: activePrice,
+    quantity,
+    brand,
+    images,
+    hasPngCutout: useCutoutFirst,
+    cutoutImage,
+    hasUploadedWixMedia,
+    customExcerpt: wixExcerpt || undefined,
+  });
+
+  return parsed;
+}
+
+const WIX_CATALOG_EVENT = 'jasman-wix-catalog-updated';
+let wixCatalogLoaded = false;
+let wixCatalogPromise = null;
+
+export async function loadWixCatalogProducts({ forceRefresh = false } = {}) {
+  if (wixCatalogLoaded && !forceRefresh && PRODUCTOS_MASTER.length > STATIC_PRODUCTOS_MASTER.length) {
+    return PRODUCTOS_MASTER;
+  }
+  if (wixCatalogPromise && !forceRefresh) {
+    return wixCatalogPromise;
+  }
+
+  wixCatalogPromise = (async () => {
+    try {
+      const rawWixItems = await getWixStoreProducts({ forceRefresh });
+      if (!Array.isArray(rawWixItems) || rawWixItems.length === 0) {
+        return PRODUCTOS_MASTER;
+      }
+
+      const normalized = rawWixItems.map((item, idx) =>
+        normalizeWixStoreProduct(item, idx)
+      );
+
+      // Order: Flagship #539 first, then items with real Wix media / Hero spotlights, then in-stock items
+      const priorityIds = new Set([539, 572, 561, 568, 543, 590]);
+      normalized.sort((a, b) => {
+        if (a.id === 539) return -1;
+        if (b.id === 539) return 1;
+        const aPriority = priorityIds.has(a.id) ? 1 : 0;
+        const bPriority = priorityIds.has(b.id) ? 1 : 0;
+        if (aPriority !== bPriority) return bPriority - aPriority;
+        if (a.hasUploadedWixMedia !== b.hasUploadedWixMedia) {
+          return a.hasUploadedWixMedia ? -1 : 1;
+        }
+        if (a.inStock !== b.inStock) return a.inStock ? -1 : 1;
+        return 0;
+      });
+
+      PRODUCTOS_MASTER.splice(0, PRODUCTOS_MASTER.length, ...normalized);
+      wixCatalogLoaded = true;
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(WIX_CATALOG_EVENT));
+        window.dispatchEvent(new CustomEvent('jasman-tienda-sync'));
+      }
+      return PRODUCTOS_MASTER;
+    } catch {
+      return PRODUCTOS_MASTER;
+    } finally {
+      wixCatalogPromise = null;
+    }
+  })();
+
+  return wixCatalogPromise;
+}
+
+export function findCatalogProductById(idOrSlug, { forceStatic = false } = {}) {
+  const resolvedId = PACKAGE_TO_SINGLE_ID_MAP[Number(idOrSlug)] || idOrSlug;
+  const source = forceStatic ? STATIC_PRODUCTOS_MASTER : PRODUCTOS_MASTER;
+  return (
+    source.find(
+      (p) =>
+        String(p.id) === String(resolvedId) ||
+        String(p.reference) === String(resolvedId) ||
+        p.slug === resolvedId ||
+        p.wixId === resolvedId
+    ) ||
+    STATIC_PRODUCTOS_MASTER.find(
+      (p) =>
+        String(p.id) === String(resolvedId) ||
+        String(p.reference) === String(resolvedId) ||
+        p.slug === resolvedId
+    ) ||
+    null
+  );
+}
+
+export function useWixCatalogProducts({ forceStatic = false } = {}) {
+  const [version, setVersion] = useState(0);
+  const [isLoading, setIsLoading] = useState(!forceStatic && !wixCatalogLoaded);
+
+  useEffect(() => {
+    if (forceStatic) return undefined;
+
+    let mounted = true;
+    const handleUpdate = () => {
+      if (mounted) {
+        setVersion((v) => v + 1);
+        setIsLoading(false);
+      }
+    };
+
+    window.addEventListener(WIX_CATALOG_EVENT, handleUpdate);
+    loadWixCatalogProducts().then(() => {
+      if (mounted) {
+        setVersion((v) => v + 1);
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      window.removeEventListener(WIX_CATALOG_EVENT, handleUpdate);
+    };
+  }, [forceStatic]);
+
+  return useMemo(() => {
+    const products = forceStatic ? STATIC_PRODUCTOS_MASTER : [...PRODUCTOS_MASTER];
+    const brands = [
+      'Todas',
+      ...Array.from(new Set(products.map((p) => p.brand).filter(Boolean))),
+    ];
+    const rims = [
+      'Todos',
+      ...Array.from(new Set(products.map((p) => p.rim).filter(Boolean))).sort((a, b) => {
+        const numA = parseFloat(a.replace('R', ''));
+        const numB = parseFloat(b.replace('R', ''));
+        return numA - numB;
+      }),
+    ];
+    const widths = [
+      'Todos',
+      ...Array.from(new Set(products.map((p) => p.width).filter(Boolean))).sort(),
+    ];
+    const profiles = [
+      'Todos',
+      ...Array.from(new Set(products.map((p) => p.profile).filter(Boolean))).sort(),
+    ];
+
+    return {
+      products,
+      brands,
+      rims,
+      widths,
+      profiles,
+      isWixConnected: !forceStatic && wixCatalogLoaded,
+      isLoading,
+      version,
+    };
+  }, [forceStatic, version, isLoading]);
+}
 
 // Top requested measures derived from the master catalog (formatted for "205 / 55" + "R16" pills)
 export const MOST_REQUESTED_MEASURES = [
@@ -1357,29 +1708,54 @@ export const MOST_REQUESTED_MEASURES = [
 // Dynamic filter facets derived strictly from the CSV dataset
 export const TIENDA_CATEGORIES = ['Todos', 'Llanta de automóvil', 'Llanta de camión'];
 
-export const TIENDA_BRANDS = ['Todas', 'Hankook', 'Continental', 'Euzkadi', 'General Tire', 'Laufenn'];
+export const FEATURED_BRAND_KEYS = [
+  'Hankook',
+  'Continental',
+  'Euzkadi',
+  'General Tire',
+  'Laufenn',
+];
+
+export const TIENDA_BRANDS = [
+  'Todas',
+  'Hankook',
+  'Continental',
+  'Firestone',
+  'Bridgestone',
+  'General Tire',
+  'Laufenn',
+  'Euzkadi',
+  'Michelin',
+  'Pirelli',
+  'Barum',
+  'BFGoodrich',
+  'Goodyear',
+  'Kelly',
+];
 
 export const TIENDA_RIMS = [
   'Todos',
-  ...Array.from(new Set(PRODUCTOS_MASTER.map((p) => p.rim).filter(Boolean))).sort((a, b) => {
-    const numA = parseFloat(a.replace('R', ''));
-    const numB = parseFloat(b.replace('R', ''));
-    return numA - numB;
-  }),
+  ...Array.from(new Set(STATIC_PRODUCTOS_MASTER.map((p) => p.rim).filter(Boolean))).sort(
+    (a, b) => {
+      const numA = parseFloat(a.replace('R', ''));
+      const numB = parseFloat(b.replace('R', ''));
+      return numA - numB;
+    }
+  ),
 ];
 
 export const TIENDA_WIDTHS = [
   'Todos',
-  ...Array.from(new Set(PRODUCTOS_MASTER.map((p) => p.width).filter(Boolean))).sort(),
+  ...Array.from(new Set(STATIC_PRODUCTOS_MASTER.map((p) => p.width).filter(Boolean))).sort(),
 ];
 
 export const TIENDA_PROFILES = [
   'Todos',
-  ...Array.from(new Set(PRODUCTOS_MASTER.map((p) => p.profile).filter(Boolean))).sort(),
+  ...Array.from(new Set(STATIC_PRODUCTOS_MASTER.map((p) => p.profile).filter(Boolean))).sort(),
 ];
 
 export const TIENDA_MEASURES = Array.from(
-  new Set(PRODUCTOS_MASTER.map((p) => p.measure).filter(Boolean))
+  new Set(STATIC_PRODUCTOS_MASTER.map((p) => p.measure).filter(Boolean))
 ).sort();
 
 // Currency formatter (MXN, noting price_tax_excluded from CSV)
@@ -1394,7 +1770,7 @@ export function formatMXN(value) {
   }).format(num);
 }
 
-// Brand logos & official metadata available in project
+// Brand logos & official metadata available in project (5 Featured + 8 Extended Wix Brands)
 export const BRAND_META = {
   Hankook: {
     name: 'Hankook',
@@ -1421,5 +1797,46 @@ export const BRAND_META = {
     logo: '/images/brands/laufenn.svg',
     accent: '#E8353B',
   },
+  Firestone: {
+    name: 'Firestone',
+    logo: '/images/brands/firestone.svg',
+    accent: '#C41E24',
+  },
+  Bridgestone: {
+    name: 'Bridgestone',
+    logo: '/images/brands/bridgestone.svg',
+    accent: '#1A1F36',
+  },
+  Michelin: {
+    name: 'Michelin',
+    logo: '/images/brands/michelin.svg',
+    accent: '#004990',
+  },
+  Pirelli: {
+    name: 'Pirelli',
+    logo: '/images/brands/pirelli.svg',
+    accent: '#D50000',
+  },
+  Goodyear: {
+    name: 'Goodyear',
+    logo: '/images/brands/goodyear.svg',
+    accent: '#003399',
+  },
+  BFGoodrich: {
+    name: 'BFGoodrich',
+    logo: '/images/brands/bfgoodrich.svg',
+    accent: '#1A1F36',
+  },
+  Barum: {
+    name: 'Barum',
+    logo: '/images/brands/barum.svg',
+    accent: '#004990',
+  },
+  Kelly: {
+    name: 'Kelly',
+    logo: '/images/brands/kelly.svg',
+    accent: '#006633',
+  },
 };
+
 

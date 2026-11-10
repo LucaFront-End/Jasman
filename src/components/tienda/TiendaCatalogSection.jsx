@@ -2,12 +2,10 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
 import {
-  PRODUCTOS_MASTER,
   MOST_REQUESTED_MEASURES,
-  TIENDA_RIMS,
-  TIENDA_WIDTHS,
-  TIENDA_PROFILES,
   BRAND_META,
+  FEATURED_BRAND_KEYS,
+  useWixCatalogProducts,
 } from '../../data/productosMasterData';
 import TiendaProductCard from './TiendaProductCard';
 import {
@@ -127,6 +125,7 @@ export default function TiendaCatalogSection({
   id = 'catalogo-tienda',
   isHomePreview = false,
   isFullCatalogPage = false,
+  forceStaticCatalog = false,
   initialCategory = 'Todos',
   initialBrand = 'Todas',
   initialRim = 'Todos',
@@ -135,6 +134,13 @@ export default function TiendaCatalogSection({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const {
+    products: catalogProducts,
+    brands: availableBrands,
+    rims: availableRims,
+    widths: availableWidths,
+    profiles: availableProfiles,
+  } = useWixCatalogProducts({ forceStatic: forceStaticCatalog });
 
   // Read initial filters from URL query parameters (?brand=..., ?measure=..., etc.)
   const initialUrlParams = useMemo(() => {
@@ -159,7 +165,7 @@ export default function TiendaCatalogSection({
   const [sortBy, setSortBy] = useState('featured');
   const [onlyInStock, setOnlyInStock] = useState(false);
   const [visibleCount, setVisibleCount] = useState(
-    isFullCatalogPage ? PRODUCTOS_MASTER.length : isHomePreview ? 7 : 12
+    isFullCatalogPage ? 48 : isHomePreview ? 7 : 12
   );
   const [filtersExpanded, setFiltersExpanded] = useState(true);
 
@@ -269,7 +275,7 @@ export default function TiendaCatalogSection({
   const effectiveSearch = searchQuery;
 
   const filteredProducts = useMemo(() => {
-    return PRODUCTOS_MASTER.filter((p) => {
+    return catalogProducts.filter((p) => {
       if (onlyInStock && !p.inStock) return false;
       if (vehicleType !== 'Todos' && p.vehicleType !== vehicleType) return false;
       if (category !== 'Todos' && p.category !== category) return false;
@@ -300,7 +306,7 @@ export default function TiendaCatalogSection({
       }
       return 0;
     });
-  }, [vehicleType, category, brand, rim, width, profile, effectiveSearch, sortBy, onlyInStock]);
+  }, [catalogProducts, vehicleType, category, brand, rim, width, profile, effectiveSearch, sortBy, onlyInStock]);
 
   const activeFilterCount =
     (vehicleType !== 'Todos' ? 1 : 0) +
@@ -361,7 +367,7 @@ export default function TiendaCatalogSection({
                 marginBottom: 8,
               }}
             >
-              Catálogo Oficial · {PRODUCTOS_MASTER.length} Referencias
+              Catálogo Oficial · {catalogProducts.length} Referencias
             </span>
             <h2
               style={{
@@ -390,7 +396,7 @@ export default function TiendaCatalogSection({
           >
             {VEHICLE_TYPES.map((vtId) => {
               const isSelected = vehicleType === vtId;
-              const count = PRODUCTOS_MASTER.filter((p) => p.vehicleType === vtId).length;
+              const count = catalogProducts.filter((p) => p.vehicleType === vtId).length;
               return (
                 <button
                   key={vtId}
@@ -679,7 +685,7 @@ export default function TiendaCatalogSection({
                 }}
                 className="catalog-brands-tile-grid"
               >
-                {Object.keys(BRAND_META).map((brandName) => {
+                {FEATURED_BRAND_KEYS.map((brandName) => {
                   const meta = BRAND_META[brandName];
                   const active = brand === brandName;
                   return (
@@ -782,6 +788,30 @@ export default function TiendaCatalogSection({
                 />
               </div>
 
+              {/* Marca (Todas las marcas del catálogo) */}
+              <select
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 9999,
+                  border: 'none',
+                  background: brand !== 'Todas' ? C.navy : '#F5F5F7',
+                  color: brand !== 'Todas' ? C.white : C.navy,
+                  fontFamily: F.heading,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  outline: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {availableBrands.map((b) => (
+                  <option key={b} value={b} style={{ background: C.white, color: C.navy }}>
+                    {b === 'Todas' ? 'Marca (Todas)' : b}
+                  </option>
+                ))}
+              </select>
+
               {/* Ancho */}
               <select
                 value={width}
@@ -799,7 +829,7 @@ export default function TiendaCatalogSection({
                   cursor: 'pointer',
                 }}
               >
-                {TIENDA_WIDTHS.map((w) => (
+                {availableWidths.map((w) => (
                   <option key={w} value={w} style={{ background: C.white, color: C.navy }}>
                     {w === 'Todos' ? 'Ancho' : `Ancho ${w}`}
                   </option>
@@ -823,7 +853,7 @@ export default function TiendaCatalogSection({
                   cursor: 'pointer',
                 }}
               >
-                {TIENDA_PROFILES.map((pr) => (
+                {availableProfiles.map((pr) => (
                   <option key={pr} value={pr} style={{ background: C.white, color: C.navy }}>
                     {pr === 'Todos' ? 'Perfil' : `Perfil ${pr}`}
                   </option>
@@ -847,7 +877,7 @@ export default function TiendaCatalogSection({
                   cursor: 'pointer',
                 }}
               >
-                {TIENDA_RIMS.map((r) => (
+                {availableRims.map((r) => (
                   <option key={r} value={r} style={{ background: C.white, color: C.navy }}>
                     {r === 'Todos' ? 'Rin' : `Rin ${r}`}
                   </option>
@@ -1083,7 +1113,7 @@ export default function TiendaCatalogSection({
               Sin resultados para esta combinación
             </h3>
             <p style={{ fontSize: 14, color: C.gray, margin: '0 0 22px' }}>
-              Restablece los filtros para explorar las {PRODUCTOS_MASTER.length} referencias disponibles.
+              Restablece los filtros para explorar las {catalogProducts.length} referencias disponibles.
             </p>
             <button
               type="button"

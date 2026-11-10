@@ -2,8 +2,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
 import {
   MOST_REQUESTED_MEASURES,
-  PRODUCTOS_MASTER,
   BRAND_META,
+  FEATURED_BRAND_KEYS,
+  useWixCatalogProducts,
   formatMXN,
 } from '../../data/productosMasterData';
 import { triggerTiendaUI } from '../../hooks/useTiendaState';
@@ -24,9 +25,10 @@ export default function TiendaMostRequestedSection({
   onAfterSelect,
 }) {
   const navigate = useNavigate();
+  const { products: catalogProducts } = useWixCatalogProducts();
 
   const topTires = TOP_REQUESTED_TIRE_IDS.map((id) =>
-    PRODUCTOS_MASTER.find((p) => p.id === id)
+    catalogProducts.find((p) => p.id === id)
   ).filter(Boolean);
 
   const handleSelectMeasure = (rawMeasure) => {
@@ -180,10 +182,10 @@ export default function TiendaMostRequestedSection({
             gap: isCompactDropdown ? 10 : 16,
           }}
         >
-          {Object.keys(BRAND_META).map((brandName) => {
+          {FEATURED_BRAND_KEYS.map((brandName) => {
             const meta = BRAND_META[brandName];
             const tile = BRAND_TILE_STYLES[brandName] || { bg: '#FFFFFF', darkBg: false };
-            const count = PRODUCTOS_MASTER.filter((p) => p.brand === brandName).length;
+            const count = catalogProducts.filter((p) => p.brand === brandName).length;
             return (
               <button
                 key={brandName}
