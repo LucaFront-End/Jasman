@@ -13,7 +13,7 @@ const SHIPPING_TICKER_ITEMS = [
   'GARANTÍA OFICIAL DIRECTA DE FÁBRICA',
 ];
 
-export default function TiendaNavbar() {
+export default function TiendaNavbar({ legacyMode = false }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
@@ -52,13 +52,21 @@ export default function TiendaNavbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const navItems = [
-    { label: 'Experiencia', href: '/landing-tienda-preview#hero-stage' },
-    { label: 'Medidas más pedidas', href: '/landing-tienda-preview/catalogo', hasMega: true },
-    { label: 'Marcas', href: '/landing-tienda-preview/catalogo', hasMega: true },
-    { label: 'Catálogo', href: '/landing-tienda-preview/catalogo' },
-    { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
-  ];
+  const navItems = legacyMode
+    ? [
+        { label: 'Experiencia', href: '/landing-tienda-preview-copia#hero-stage' },
+        { label: 'Medidas más pedidas', href: '/landing-tienda-preview/catalogo', hasMega: true },
+        { label: 'Marcas', href: '/landing-tienda-preview/catalogo', hasMega: true },
+        { label: 'Catálogo', href: '/landing-tienda-preview/catalogo' },
+        { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
+      ]
+    : [
+        { label: 'Inicio', href: '/landing-tienda-preview#hero-stage' },
+        { label: 'Catálogo', href: '/landing-tienda-preview/catalogo' },
+        { label: 'Marcas', href: '/landing-tienda-preview/catalogo', hasMega: true },
+        { label: 'Top Medidas', href: '/landing-tienda-preview/catalogo', hasMega: true },
+        { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
+      ];
 
   const handleAccountAction = (e) => {
     setMegaOpen(false);
@@ -349,7 +357,7 @@ export default function TiendaNavbar() {
               flexShrink: 0,
             }}
           >
-            {!isProductPage && (
+            {legacyMode && !isProductPage && (
               <button
                 type="button"
                 onClick={() => triggerTiendaUI({ type: 'OPEN_COUPON' })}

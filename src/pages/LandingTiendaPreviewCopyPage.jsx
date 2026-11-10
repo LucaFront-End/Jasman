@@ -590,7 +590,7 @@ export default function LandingTiendaPreviewCopyPage() {
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
       {/* Floating Apple Frosted Glass Navbar, Cart Drawer, Auth Popup & Store Chat */}
-      <TiendaNavbar />
+      <TiendaNavbar legacyMode />
       <TiendaCartDrawer />
       <TiendaAuthModal />
       <TiendaLiveChatWidget />
