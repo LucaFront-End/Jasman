@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
 import {
@@ -5,10 +6,13 @@ import {
   BRAND_META,
   FEATURED_BRAND_KEYS,
   ALL_OFFICIAL_MENU_BRANDS,
+  VEHICLE_TYPE_OPTIONS,
+  POPULAR_CAR_MODELS,
   useWixCatalogProducts,
   formatMXN,
 } from '../../data/productosMasterData';
 import { triggerTiendaUI } from '../../hooks/useTiendaState';
+import TiendaVehicleSvg from './TiendaVehicleTypeIcons';
 import { ArrowUpRight } from 'lucide-react';
 
 const TOP_REQUESTED_TIRE_IDS = [572, 590, 568, 539];
@@ -36,9 +40,11 @@ export default function TiendaMostRequestedSection({
 }) {
   const navigate = useNavigate();
   const { products: catalogProducts } = useWixCatalogProducts();
+  const [hoveredVehicleId, setHoveredVehicleId] = useState(null);
 
   const showMeasures = mode === 'all' || mode === 'measures';
   const showBrands = mode === 'all' || mode === 'brands';
+  const showVehicleTypes = mode === 'brands';
   const showTires = mode === 'all' || mode === 'measures';
   const brandsList =
     mode === 'brands' ? ALL_OFFICIAL_MENU_BRANDS : FEATURED_BRAND_KEYS;
@@ -65,15 +71,39 @@ export default function TiendaMostRequestedSection({
     }, 80);
   };
 
+  const handleSelectVehicle = (vehicleId) => {
+    if (onAfterSelect) onAfterSelect();
+    const targetUrl = `/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(vehicleId)}`;
+    navigate(targetUrl);
+    setTimeout(() => {
+      triggerTiendaUI({ type: 'FILTER_CATALOG', vehicle: vehicleId });
+    }, 80);
+  };
+
+  const handleSelectCarModel = (carModelObj) => {
+    if (onAfterSelect) onAfterSelect();
+    const targetUrl = `/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(
+      carModelObj.vehicle
+    )}&carModel=${encodeURIComponent(carModelObj.id)}`;
+    navigate(targetUrl);
+    setTimeout(() => {
+      triggerTiendaUI({
+        type: 'FILTER_CATALOG',
+        vehicle: carModelObj.vehicle,
+        carModel: carModelObj.id,
+      });
+    }, 80);
+  };
+
   return (
     <div
       style={{
         width: '100%',
-        maxWidth: isCompactDropdown ? 980 : 1180,
+        maxWidth: isCompactDropdown ? 1040 : 1180,
         margin: '0 auto',
         display: 'flex',
         flexDirection: 'column',
-        gap: isCompactDropdown ? 26 : 52,
+        gap: isCompactDropdown ? 20 : 48,
       }}
     >
       {/* 1. MEDIDAS MÁS PEDIDAS */}
@@ -83,8 +113,8 @@ export default function TiendaMostRequestedSection({
             style={{
               position: 'relative',
               textAlign: 'center',
-              marginBottom: isCompactDropdown ? 18 : 28,
-              paddingBottom: 12,
+              marginBottom: isCompactDropdown ? 16 : 28,
+              paddingBottom: 11,
               borderBottom: '1px solid rgba(26, 31, 54, 0.08)',
             }}
           >
@@ -161,8 +191,8 @@ export default function TiendaMostRequestedSection({
             style={{
               position: 'relative',
               textAlign: 'center',
-              marginBottom: isCompactDropdown ? 18 : 28,
-              paddingBottom: 12,
+              marginBottom: isCompactDropdown ? 14 : 26,
+              paddingBottom: 10,
               borderBottom: '1px solid rgba(26, 31, 54, 0.08)',
             }}
           >
@@ -201,12 +231,18 @@ export default function TiendaMostRequestedSection({
           </div>
 
           <div
-            className="most-requested-brands-grid"
+            className={
+              mode === 'brands' && isCompactDropdown
+                ? 'most-requested-brands-grid-compact13'
+                : 'most-requested-brands-grid'
+            }
             style={{
               display: 'grid',
               gridTemplateColumns:
-                mode === 'brands' ? 'repeat(5, 1fr)' : 'repeat(5, 1fr)',
-              gap: isCompactDropdown ? 11 : 16,
+                mode === 'brands' && isCompactDropdown
+                  ? 'repeat(7, minmax(0, 1fr))'
+                  : 'repeat(5, minmax(0, 1fr))',
+              gap: isCompactDropdown ? 9 : 16,
             }}
           >
             {brandsList.map((brandName) => {
@@ -222,8 +258,8 @@ export default function TiendaMostRequestedSection({
                   onClick={() => handleSelectBrand(brandName)}
                   className="jasman-brand-tile"
                   style={{
-                    height: isCompactDropdown ? 62 : 74,
-                    padding: '10px 16px',
+                    height: isCompactDropdown ? 54 : 74,
+                    padding: isCompactDropdown ? '8px 10px' : '10px 16px',
                     borderRadius: 14,
                     border: '1px solid rgba(26, 31, 54, 0.10)',
                     background: '#FFFFFF',
@@ -232,7 +268,7 @@ export default function TiendaMostRequestedSection({
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 5,
+                    gap: 4,
                     boxShadow: '0 6px 20px rgba(26, 31, 54, 0.04)',
                     transition: 'all 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
                     position: 'relative',
@@ -245,7 +281,7 @@ export default function TiendaMostRequestedSection({
                       top: 0,
                       left: 0,
                       right: 0,
-                      height: 3,
+                      height: 2.5,
                       background: tile.accent,
                     }}
                   />
@@ -254,8 +290,8 @@ export default function TiendaMostRequestedSection({
                       src={meta.logo}
                       alt={brandName}
                       style={{
-                        height: isCompactDropdown ? 21 : 25,
-                        maxWidth: '86%',
+                        height: isCompactDropdown ? 18 : 25,
+                        maxWidth: '88%',
                         width: 'auto',
                         objectFit: 'contain',
                       }}
@@ -264,7 +300,7 @@ export default function TiendaMostRequestedSection({
                     <span
                       style={{
                         fontFamily: F.heading,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: 900,
                         color: C.navy,
                         textTransform: 'uppercase',
@@ -273,13 +309,13 @@ export default function TiendaMostRequestedSection({
                       {brandName}
                     </span>
                   )}
-                  {(!isCompactDropdown || mode === 'brands') && count > 0 && (
+                  {count > 0 && (
                     <span
                       style={{
                         fontFamily: F.heading,
-                        fontSize: 8.5,
+                        fontSize: 8,
                         fontWeight: 700,
-                        letterSpacing: '0.08em',
+                        letterSpacing: '0.07em',
                         textTransform: 'uppercase',
                         color: '#94A3B8',
                       }}
@@ -290,6 +326,226 @@ export default function TiendaMostRequestedSection({
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* 2B. TIPO DE VEHÍCULO & MODELOS DE AUTOS (Below Marcas in Marcas Dropdown) */}
+      {showVehicleTypes && (
+        <div>
+          <div
+            style={{
+              position: 'relative',
+              textAlign: 'center',
+              marginBottom: isCompactDropdown ? 14 : 22,
+              paddingBottom: 10,
+              borderBottom: '1px solid rgba(26, 31, 54, 0.08)',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: F.heading,
+                fontSize: isCompactDropdown ? 11 : 12,
+                fontWeight: 800,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: C.navy,
+              }}
+            >
+              TIPO DE VEHÍCULO · <strong style={{ color: C.red }}>MODELOS DE AUTOS</strong>
+            </span>
+            <span
+              style={{
+                position: 'absolute',
+                bottom: -1.5,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 68,
+                height: 3,
+                borderRadius: 999,
+                background: C.red,
+              }}
+            />
+          </div>
+
+          {/* 8 Custom Minimalist Vehicle Type SVG Cards */}
+          <div
+            className="most-requested-vehicles-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+              gap: isCompactDropdown ? 10 : 14,
+            }}
+          >
+            {VEHICLE_TYPE_OPTIONS.map((vt) => {
+              const isHovered = hoveredVehicleId === vt.id;
+              const count = catalogProducts.filter((p) =>
+                Array.isArray(p.vehicleTypes)
+                  ? p.vehicleTypes.includes(vt.id)
+                  : p.vehicleType === vt.id
+              ).length;
+
+              return (
+                <button
+                  key={vt.id}
+                  type="button"
+                  onClick={() => handleSelectVehicle(vt.id)}
+                  onMouseEnter={() => setHoveredVehicleId(vt.id)}
+                  onMouseLeave={() => setHoveredVehicleId(null)}
+                  className="jasman-vehicle-type-card"
+                  style={{
+                    padding: isCompactDropdown ? '10px 12px' : '14px 16px',
+                    borderRadius: 16,
+                    border: isHovered
+                      ? `1.5px solid ${C.red}`
+                      : '1px solid rgba(26, 31, 54, 0.09)',
+                    background: isHovered ? '#FFF7F7' : '#FFFFFF',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    textAlign: 'left',
+                    boxShadow: isHovered
+                      ? '0 14px 28px rgba(196, 30, 36, 0.11)'
+                      : '0 4px 14px rgba(26, 31, 54, 0.035)',
+                    transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                    position: 'relative',
+                  }}
+                >
+                  <div
+                    style={{
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+                      transition: 'transform 0.25s ease',
+                    }}
+                  >
+                    <TiendaVehicleSvg
+                      type={vt.id}
+                      active={isHovered}
+                      width={isCompactDropdown ? 72 : 84}
+                      height={isCompactDropdown ? 28 : 32}
+                    />
+                  </div>
+
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: F.heading,
+                          fontSize: isCompactDropdown ? 12 : 13,
+                          fontWeight: 900,
+                          color: isHovered ? C.red : C.navy,
+                          letterSpacing: '-0.01em',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {vt.label}
+                      </span>
+                      <span
+                        style={{
+                          padding: '1.5px 6px',
+                          borderRadius: 9999,
+                          background: isHovered ? C.red : '#F1F5F9',
+                          color: isHovered ? '#FFFFFF' : '#64748B',
+                          fontFamily: F.heading,
+                          fontSize: 8.5,
+                          fontWeight: 800,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {count}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: F.body,
+                        fontSize: 10,
+                        color: '#64748B',
+                        marginTop: 2,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {vt.modelsText}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Popular Car Models Quick Strip ("Modelos de Autos") */}
+          <div
+            style={{
+              marginTop: 12,
+              padding: '10px 14px',
+              borderRadius: 16,
+              background: '#F8FAFC',
+              border: '1px solid rgba(26, 31, 54, 0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 6,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: F.heading,
+                fontSize: 9.5,
+                fontWeight: 800,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: C.red,
+                marginRight: 4,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <circle cx="12" cy="12" r="2.5" />
+                <path d="M12 3v6.5M4.2 16.5l5.6-3.2M19.8 16.5l-5.6-3.2" />
+              </svg>
+              Modelos frecuentes:
+            </span>
+
+            {POPULAR_CAR_MODELS.slice(0, 14).map((cm) => (
+              <button
+                key={cm.id}
+                type="button"
+                onClick={() => handleSelectCarModel(cm)}
+                className="jasman-car-model-chip"
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: 9999,
+                  border: '1px solid rgba(26, 31, 54, 0.11)',
+                  background: '#FFFFFF',
+                  cursor: 'pointer',
+                  fontFamily: F.heading,
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  color: C.navy,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {cm.id}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -443,6 +699,20 @@ export default function TiendaMostRequestedSection({
           transform: translateY(-3px);
           box-shadow: 0 14px 32px rgba(26, 31, 54, 0.09) !important;
         }
+        .jasman-car-model-chip:hover {
+          border-color: #C41E24 !important;
+          background: #FFF5F5 !important;
+          color: #C41E24 !important;
+          transform: translateY(-1px);
+        }
+        @media (max-width: 1020px) {
+          .most-requested-brands-grid-compact13 {
+            grid-template-columns: repeat(4, 1fr) !important;
+          }
+          .most-requested-vehicles-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
         @media (max-width: 900px) {
           .most-requested-measures-grid {
             grid-template-columns: repeat(2, 1fr) !important;
@@ -455,7 +725,8 @@ export default function TiendaMostRequestedSection({
           }
         }
         @media (max-width: 520px) {
-          .most-requested-tires-grid {
+          .most-requested-tires-grid,
+          .most-requested-vehicles-grid {
             grid-template-columns: 1fr !important;
           }
         }

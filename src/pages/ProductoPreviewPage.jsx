@@ -16,6 +16,7 @@ import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
 import TiendaAuthModal from '../components/tienda/TiendaAuthModal';
 import TiendaLiveChatWidget from '../components/tienda/TiendaLiveChatWidget';
+import TiendaVehicleSvg from '../components/tienda/TiendaVehicleTypeIcons';
 import {
   ArrowLeft,
   ShoppingBag,
@@ -38,24 +39,56 @@ import {
 } from 'lucide-react';
 
 const BRAND_DETAILS = {
+  Michelin: {
+    origin: 'Ingeniería Francesa · Larga Duración',
+    badge: 'Distribuidor Oficial Autorizado',
+  },
+  BFGoodrich: {
+    origin: 'Tracción Off-Road & All-Terrain',
+    badge: 'Distribuidor Oficial Autorizado',
+  },
+  Goodyear: {
+    origin: 'Tecnología Estadounidense · ActiveBraking',
+    badge: 'Distribuidor Oficial Autorizado',
+  },
+  Kelly: {
+    origin: 'Respaldo Goodyear · Conducción Diaria',
+    badge: 'Distribuidor Oficial Autorizado',
+  },
   Hankook: {
     origin: 'Tecnología Global · Equipo Original',
     badge: 'Distribuidor Oficial Autorizado',
   },
-  Continental: {
-    origin: 'Ingeniería Alemana de Precisión',
+  Laufenn: {
+    origin: 'Por Hankook Tire · Desempeño Inteligente',
+    badge: 'Distribuidor Oficial Autorizado',
+  },
+  Pirelli: {
+    origin: 'Herencia Italiana · Ultra High Performance',
+    badge: 'Distribuidor Oficial Autorizado',
+  },
+  Firestone: {
+    origin: 'Tradición & Resistencia Comprobada',
+    badge: 'Distribuidor Oficial Autorizado',
+  },
+  Bridgestone: {
+    origin: 'Ingeniería Japonesa · NanoPro-Tech™',
     badge: 'Distribuidor Oficial Autorizado',
   },
   Euzkadi: {
     origin: 'Máxima Resistencia Todo Terreno',
     badge: 'Distribuidor Oficial Autorizado',
   },
+  Continental: {
+    origin: 'Ingeniería Alemana de Precisión',
+    badge: 'Distribuidor Oficial Autorizado',
+  },
   'General Tire': {
     origin: 'Herencia Americana · SUV & Uso Rudo',
     badge: 'Distribuidor Oficial Autorizado',
   },
-  Laufenn: {
-    origin: 'Por Hankook Tire · Desempeño Inteligente',
+  Barum: {
+    origin: 'Grupo Continental · Ingeniería Europea',
     badge: 'Distribuidor Oficial Autorizado',
   },
 };
@@ -278,19 +311,37 @@ export default function ProductoPreviewPage() {
     return primary;
   }, [product, catalogProducts]);
 
-  const specRows = [
-    { label: 'ID de Catálogo', value: `#${product.id}` },
-    { label: 'Referencia / SKU Oficial', value: product.reference },
-    { label: 'Fabricante', value: product.brand },
-    { label: 'Segmento Vehicular', value: product.vehicleType || product.category },
-    { label: 'Medida Completa', value: product.measure || 'Estándar' },
-    { label: 'Ancho de Sección', value: product.width ? `${product.width} mm` : '—' },
-    { label: 'Perfil / Serie', value: product.profile || '—' },
-    { label: 'Diámetro de Rin', value: product.rim || '—' },
-    { label: 'Índice Carga / Velocidad', value: product.loadSpeed || 'Oficial' },
-    { label: 'Presentación', value: 'Llanta individual' },
-    { label: 'Disponibilidad en Red', value: `${product.quantity} unidades` },
-  ];
+  const specRows = useMemo(() => {
+    const baseTableRows =
+      Array.isArray(product.tableSpecs) && product.tableSpecs.length > 0
+        ? product.tableSpecs
+        : [
+            { label: 'Marca', value: product.brand },
+            { label: 'Modelo / línea', value: product.model || product.cleanTitle },
+            { label: 'Medida', value: product.measure || 'Estándar' },
+            { label: 'Ancho de sección', value: product.width ? `${product.width} mm` : '—' },
+            { label: 'Perfil', value: product.profile || '—' },
+            { label: 'Diámetro del rin', value: product.rim || '—' },
+            { label: 'Índice Carga / Velocidad', value: product.loadSpeed || 'Oficial' },
+            { label: 'SKU', value: product.reference },
+          ];
+
+    const hasVehicleRow = baseTableRows.some((r) =>
+      /veh[ií]culo/i.test(r.label)
+    );
+    const vehicleLabelValue =
+      Array.isArray(product.vehicleTypes) && product.vehicleTypes.length > 0
+        ? product.vehicleTypes.join(' · ')
+        : product.primaryVehicleType || product.vehicleType || product.category;
+
+    return [
+      ...baseTableRows,
+      ...(!hasVehicleRow
+        ? [{ label: 'Tipo de vehículo', value: vehicleLabelValue }]
+        : []),
+      { label: 'Disponibilidad en Red', value: `${product.quantity} unidades` },
+    ];
+  }, [product]);
 
   return (
     <div style={{ background: '#F8F9FA', minHeight: '100vh', color: C.navy }}>
@@ -647,10 +698,22 @@ export default function ProductoPreviewPage() {
                 }}
               >
                 {[
-                  { k: 'Ancho', v: product.width ? `${product.width} mm` : '—' },
-                  { k: 'Perfil', v: product.profile ? `Serie ${product.profile}` : '—' },
-                  { k: 'Rin', v: product.rim || '—' },
-                  { k: 'Índice', v: product.loadSpeed || 'Oficial' },
+                  {
+                    k: 'Ancho',
+                    v: product.tableWidthLabel || (product.width ? `${product.width} mm` : '—'),
+                  },
+                  {
+                    k: 'Perfil',
+                    v: product.tableProfileLabel || (product.profile ? `Serie ${product.profile}` : '—'),
+                  },
+                  {
+                    k: 'Rin',
+                    v: product.rim || product.tableRimLabel || '—',
+                  },
+                  {
+                    k: 'Índice',
+                    v: product.loadSpeed || 'Oficial',
+                  },
                 ].map((spec) => (
                   <div
                     key={spec.k}
@@ -1403,25 +1466,124 @@ export default function ProductoPreviewPage() {
                 gap: 10,
               }}
             >
+              {/* Compatible Vehicle Types Mini SVG Pills */}
+              {Array.isArray(product.vehicleTypes) && product.vehicleTypes.length > 0 && (
+                <div
+                  style={{
+                    padding: '12px 16px',
+                    borderRadius: 18,
+                    background: '#FFFFFF',
+                    border: '1px solid rgba(26, 31, 54, 0.07)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: F.heading,
+                      fontSize: 9.5,
+                      fontWeight: 800,
+                      letterSpacing: '0.14em',
+                      textTransform: 'uppercase',
+                      color: '#64748B',
+                      marginRight: 2,
+                    }}
+                  >
+                    Vehículo compatible:
+                  </span>
+                  {product.vehicleTypes.map((vtName) => (
+                    <Link
+                      key={vtName}
+                      to={`/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(
+                        vtName
+                      )}`}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 9999,
+                        background: '#F8FAFC',
+                        border: '1px solid rgba(26, 31, 54, 0.09)',
+                        textDecoration: 'none',
+                        color: C.navy,
+                        fontFamily: F.heading,
+                        fontSize: 10.5,
+                        fontWeight: 800,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <TiendaVehicleSvg type={vtName} width={40} height={15} />
+                      <span>{vtName}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+
               {[
                 {
                   id: 'ficha',
-                  title: 'Ficha Técnica Oficial',
+                  title: 'Especificaciones Técnicas · Tabla Oficial',
                   content: (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {specRows.map((row) => (
+                    <div
+                      style={{
+                        borderRadius: 14,
+                        border: '1px solid rgba(26, 31, 54, 0.08)',
+                        overflow: 'hidden',
+                        background: '#FFFFFF',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'minmax(0, 0.46fr) minmax(0, 0.54fr)',
+                          padding: '9px 14px',
+                          background: '#F8FAFC',
+                          borderBottom: '1px solid rgba(26, 31, 54, 0.08)',
+                          fontFamily: F.heading,
+                          fontSize: 10,
+                          fontWeight: 800,
+                          letterSpacing: '0.14em',
+                          textTransform: 'uppercase',
+                          color: '#64748B',
+                        }}
+                      >
+                        <span>Característica</span>
+                        <span style={{ textAlign: 'right' }}>Especificación</span>
+                      </div>
+
+                      {specRows.map((row, idx) => (
                         <div
-                          key={row.label}
+                          key={`${row.label}-${idx}`}
                           style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            padding: '6px 0',
-                            borderBottom: '1px solid #F1F5F9',
+                            display: 'grid',
+                            gridTemplateColumns: 'minmax(0, 0.46fr) minmax(0, 0.54fr)',
+                            alignItems: 'center',
+                            gap: 10,
+                            padding: '9px 14px',
+                            background: idx % 2 === 1 ? '#FAFBFD' : '#FFFFFF',
+                            borderBottom:
+                              idx < specRows.length - 1
+                                ? '1px solid #F1F5F9'
+                                : 'none',
                             fontSize: 12.5,
                           }}
                         >
-                          <span style={{ color: '#64748B' }}>{row.label}</span>
-                          <strong style={{ color: C.navy }}>{row.value}</strong>
+                          <span style={{ color: '#64748B', fontWeight: 500 }}>
+                            {row.label}
+                          </span>
+                          <strong
+                            style={{
+                              color: C.navy,
+                              textAlign: 'right',
+                              fontFamily: F.heading,
+                              fontWeight: 800,
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            {row.value}
+                          </strong>
                         </div>
                       ))}
                     </div>
@@ -1487,8 +1649,8 @@ export default function ProductoPreviewPage() {
                 );
               })}
 
-              {/* Product Excerpt right below the Ficha Técnica */}
-              {product.excerpt && (
+              {/* Product Excerpt + Wix Description Benefits right below the Ficha Técnica */}
+              {(product.excerpt || (product.benefits && product.benefits.length > 0)) && (
                 <div
                   style={{
                     marginTop: 6,
@@ -1513,18 +1675,54 @@ export default function ProductoPreviewPage() {
                       marginBottom: 8,
                     }}
                   >
-                    <Sparkles size={12} /> Resumen del Producto
+                    <Sparkles size={12} /> Resumen & Beneficios Principales
                   </div>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 13.5,
-                      color: '#475569',
-                      lineHeight: 1.65,
-                    }}
-                  >
-                    {product.excerpt}
-                  </p>
+                  {product.excerpt && (
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 13.5,
+                        color: '#475569',
+                        lineHeight: 1.65,
+                      }}
+                    >
+                      {product.excerpt}
+                    </p>
+                  )}
+
+                  {Array.isArray(product.benefits) && product.benefits.length > 0 && (
+                    <ul
+                      style={{
+                        margin: product.excerpt ? '12px 0 0' : 0,
+                        padding: 0,
+                        listStyle: 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 6,
+                      }}
+                    >
+                      {product.benefits.map((bText, bIdx) => (
+                        <li
+                          key={bIdx}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 8,
+                            fontSize: 12.5,
+                            color: C.navy,
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          <Check
+                            size={14}
+                            color="#16A34A"
+                            style={{ flexShrink: 0, marginTop: 2 }}
+                          />
+                          <span>{bText}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
             </div>

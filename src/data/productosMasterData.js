@@ -1,6 +1,6 @@
 // Master product catalog derived directly from "Relacioón productos master.csv" + Live Wix Stores/Products Sync
 import { useState, useEffect, useMemo } from 'react';
-import { getWixStoreProducts, formatWixImageUrl } from '../services/wixService';
+import { getWixStoreProducts, formatWixImageUrl } from '../services/wixService.js';
 
 export const RAW_PRODUCTOS_MASTER = [
   {
@@ -1191,7 +1191,352 @@ export const RAW_PRODUCTOS_MASTER = [
   },
 ];
 
-// Parse real tire specifications strictly from the CSV product name
+export const VEHICLE_TYPE_OPTIONS = [
+  {
+    id: 'Auto',
+    label: 'Auto',
+    subtitle: 'Sedán & Compacto',
+    modelsText: 'Versa · Aveo · March · Vento',
+    models: ['Versa', 'Aveo', 'March', 'Vento'],
+    sampleMeasures: ['185/65R15', '175/70R14', '185/60R15'],
+  },
+  {
+    id: 'Turismo',
+    label: 'Turismo',
+    subtitle: 'Confort & Carretera',
+    modelsText: 'Sentra · Corolla · Jetta · Civic',
+    models: ['Sentra', 'Corolla', 'Jetta', 'Civic', 'Mazda 3'],
+    sampleMeasures: ['205/55R16', '195/65R15', '215/55R17'],
+  },
+  {
+    id: 'Deportivo',
+    label: 'Deportivo',
+    subtitle: 'Alto Desempeño',
+    modelsText: 'Mustang · GTI · Cupra · Serie 3',
+    models: ['Mustang', 'GTI', 'Cupra', 'Serie 3', 'Camaro'],
+    sampleMeasures: ['225/45R17', '215/45R17', '245/40R18'],
+  },
+  {
+    id: 'Camioneta',
+    label: 'Camioneta',
+    subtitle: 'Crossover & Familiar',
+    modelsText: 'CR-V · RAV4 · Tiguan · Seltos',
+    models: ['CR-V', 'RAV4', 'Tiguan', 'Seltos', 'Kicks'],
+    sampleMeasures: ['215/65R17', '225/65R17', '235/75R15'],
+  },
+  {
+    id: 'SUV',
+    label: 'SUV',
+    subtitle: 'Full-Size & Premium',
+    modelsText: 'Tahoe · Explorer · X5 · Suburban',
+    models: ['Tahoe', 'Explorer', 'X5', 'Suburban', 'CX-5'],
+    sampleMeasures: ['265/60R18', '285/45R21', '235/60R18'],
+  },
+  {
+    id: 'Light Truck',
+    label: 'Light Truck',
+    subtitle: 'Pick-Up & 4×4',
+    modelsText: 'Hilux · NP300 · Ranger · L200',
+    models: ['Hilux', 'NP300', 'Ranger', 'L200', 'Tacoma'],
+    sampleMeasures: ['245/75R17', '265/70R17', '31X10.50R15'],
+  },
+  {
+    id: 'Van',
+    label: 'Van',
+    subtitle: 'Pasajeros & Ruta',
+    modelsText: 'Urvan · Hiace · Starex · Odyssey',
+    models: ['Urvan', 'Hiace', 'Starex', 'Odyssey', 'Sienna'],
+    sampleMeasures: ['195/70R15', '195R15', '165/70R14'],
+  },
+  {
+    id: 'Comercial Ligero',
+    label: 'Comercial Ligero',
+    subtitle: 'Carga & Flotillas',
+    modelsText: 'Sprinter · Transit · Crafter · Kangoo',
+    models: ['Sprinter', 'Transit', 'Crafter', 'Kangoo', 'ProMaster'],
+    sampleMeasures: ['225/70R19.5', '285/65R16', '215/75R17.5'],
+  },
+];
+
+export const POPULAR_CAR_MODELS = [
+  { id: 'Versa', label: 'Nissan Versa', vehicle: 'Auto', measures: ['185/65R15', '195/65R15', '205/55R16'] },
+  { id: 'Aveo', label: 'Chevrolet Aveo', vehicle: 'Auto', measures: ['185/60R15', '185/65R14', '175/70R14'] },
+  { id: 'March', label: 'Nissan March', vehicle: 'Auto', measures: ['175/60R15', '165/70R14', '175/70R14'] },
+  { id: 'Jetta', label: 'VW Jetta', vehicle: 'Turismo', measures: ['205/55R16', '215/55R17', '195/65R15'] },
+  { id: 'Sentra', label: 'Nissan Sentra', vehicle: 'Turismo', measures: ['205/55R16', '215/50R17', '195/65R15'] },
+  { id: 'Corolla', label: 'Toyota Corolla', vehicle: 'Turismo', measures: ['205/55R16', '195/65R15', '225/45R17'] },
+  { id: 'Civic', label: 'Honda Civic', vehicle: 'Turismo', measures: ['215/50R17', '205/55R16', '215/55R16'] },
+  { id: 'Mazda 3', label: 'Mazda 3', vehicle: 'Turismo', measures: ['205/60R16', '215/45R18', '205/55R16'] },
+  { id: 'GTI / Cupra', label: 'GTI / Cupra', vehicle: 'Deportivo', measures: ['225/45R17', '225/40R18', '215/45R17'] },
+  { id: 'Mustang', label: 'Ford Mustang', vehicle: 'Deportivo', measures: ['235/50R18', '255/40R19', '225/45R17'] },
+  { id: 'CR-V', label: 'Honda CR-V', vehicle: 'Camioneta', measures: ['225/65R17', '235/60R18', '215/65R16'] },
+  { id: 'RAV4', label: 'Toyota RAV4', vehicle: 'Camioneta', measures: ['225/65R17', '235/55R18', '215/65R17'] },
+  { id: 'Tiguan', label: 'VW Tiguan', vehicle: 'Camioneta', measures: ['215/65R17', '235/55R18', '235/50R19'] },
+  { id: 'Tahoe', label: 'Tahoe / Explorer', vehicle: 'SUV', measures: ['265/60R18', '265/65R18', '285/45R21', '255/55R20'] },
+  { id: 'Hilux', label: 'Toyota Hilux', vehicle: 'Light Truck', measures: ['265/65R17', '245/75R17', '265/70R16', '225/70R17'] },
+  { id: 'NP300', label: 'Nissan NP300', vehicle: 'Light Truck', measures: ['255/70R16', '215/85R16', '195R15', '205/75R14'] },
+  { id: 'Urvan', label: 'Urvan / Hiace', vehicle: 'Van', measures: ['195R15', '195/70R15', '195/80R15', '165/70R14'] },
+  { id: 'Sprinter', label: 'Sprinter / Transit', vehicle: 'Comercial Ligero', measures: ['225/75R16', '235/65R16', '285/65R16', '225/70R19.5', '215/75R17.5'] },
+];
+
+function decodeHtmlPlainText(input = '') {
+  if (!input || typeof input !== 'string') return '';
+  return input
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&ndash;/gi, '–')
+    .replace(/&mdash;/gi, '—')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeSpecKey(str = '') {
+  return String(str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Extracts structured specification rows from the HTML <table>,
+ * bullet benefits from <ul>, and clean intro excerpt from Wix Stores/Products `description`.
+ */
+export function parseWixDescriptionDetails(html = '') {
+  if (!html || typeof html !== 'string') {
+    return { excerpt: '', benefits: [], tableSpecs: [], specMap: {} };
+  }
+
+  // 1. Extract all <table> rows (Característica -> Especificación)
+  const tableSpecs = [];
+  const specMap = {};
+  const tableBlocks = html.match(/<table[\s\S]*?<\/table>/gi) || [];
+
+  for (const tableHtml of tableBlocks) {
+    const trMatches = tableHtml.match(/<tr[\s\S]*?<\/tr>/gi) || [];
+    for (const trHtml of trMatches) {
+      const cells = [];
+      const cellRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+      let cellMatch = cellRegex.exec(trHtml);
+      while (cellMatch) {
+        cells.push(decodeHtmlPlainText(cellMatch[1]));
+        cellMatch = cellRegex.exec(trHtml);
+      }
+
+      if (cells.length >= 2) {
+        const label = cells[0];
+        const value = cells.slice(1).filter(Boolean).join(' · ');
+        const normKey = normalizeSpecKey(label);
+
+        if (
+          !label ||
+          !value ||
+          normKey === 'caracteristica' ||
+          normKey === 'atributo' ||
+          normalizeSpecKey(value) === 'especificacion'
+        ) {
+          continue;
+        }
+
+        tableSpecs.push({ label, value });
+        if (!specMap[normKey]) {
+          specMap[normKey] = value;
+        }
+      }
+    }
+  }
+
+  // 2. Extract clean product benefits (skipping old promotional discount lists)
+  const benefits = [];
+  const ulBlocks = html.match(/<ul[\s\S]*?<\/ul>/gi) || [];
+  for (const ulHtml of ulBlocks) {
+    if (/2%\s*de\s*descuento|5%\s*de\s*descuento/i.test(ulHtml)) continue;
+    const liMatches = ulHtml.match(/<li[\s\S]*?<\/li>/gi) || [];
+    for (const liHtml of liMatches) {
+      const text = decodeHtmlPlainText(liHtml);
+      if (text && text.length > 8 && benefits.length < 6) {
+        benefits.push(text);
+      }
+    }
+    if (benefits.length > 0) break;
+  }
+
+  // 3. Extract clean introductory paragraphs before tables/promos
+  const beforeTableHtml = html.split(/<h3[^>]*>\s*(?:Beneficios|Especificaciones)/i)[0] || html;
+  const paragraphs = [];
+  const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+  let pMatch = pRegex.exec(beforeTableHtml);
+  while (pMatch && paragraphs.length < 2) {
+    const text = decodeHtmlPlainText(pMatch[1]);
+    if (
+      text.length > 40 &&
+      !text.includes('Característica') &&
+      !/2%\s*de\s*descuento|descuentos no son acumulables/i.test(text)
+    ) {
+      paragraphs.push(text);
+    }
+    pMatch = pRegex.exec(beforeTableHtml);
+  }
+
+  return {
+    excerpt: paragraphs.join(' '),
+    benefits,
+    tableSpecs,
+    specMap,
+  };
+}
+
+function classifyTireVehicleTypes({
+  cleanTitle = '',
+  width = '',
+  profile = '',
+  rim = '',
+  speedIndex = '',
+  normalizedCategory = '',
+  wixCollections = [],
+  specMap = {},
+  excerptText = '',
+}) {
+  const matched = new Set();
+  const explicitFromWix = [];
+
+  const registerExplicit = (rawToken) => {
+    const norm = normalizeSpecKey(rawToken);
+    if (!norm || norm === 'all products' || norm === 'bags' || norm === 'totes') return;
+    if (norm === 'auto' || norm === 'automovil' || norm === 'sedan') {
+      matched.add('Auto');
+      explicitFromWix.push('Auto');
+    } else if (norm === 'turismo' || norm === 'touring') {
+      matched.add('Turismo');
+      explicitFromWix.push('Turismo');
+    } else if (norm === 'deportivo' || norm === 'sport' || norm === 'uhp') {
+      matched.add('Deportivo');
+      explicitFromWix.push('Deportivo');
+    } else if (norm === 'camioneta' || norm === 'crossover' || norm === 'cuv') {
+      matched.add('Camioneta');
+      explicitFromWix.push('Camioneta');
+    } else if (norm === 'suv') {
+      matched.add('SUV');
+      explicitFromWix.push('SUV');
+    } else if (norm === 'light truck' || norm === 'pickup' || norm === 'pick up' || norm === 'lt') {
+      matched.add('Light Truck');
+      explicitFromWix.push('Light Truck');
+    } else if (norm === 'van') {
+      matched.add('Van');
+      explicitFromWix.push('Van');
+    } else if (norm === 'comercial ligero' || norm === 'comercial' || norm === 'carga') {
+      matched.add('Comercial Ligero');
+      explicitFromWix.push('Comercial Ligero');
+    }
+  };
+
+  for (const colName of wixCollections) {
+    registerExplicit(colName);
+  }
+
+  const customVehicleSpec =
+    specMap['tipo de vehiculo'] || specMap['vehiculo'] || specMap['aplicacion'] || '';
+  if (customVehicleSpec) {
+    customVehicleSpec.split(/[,/·;|]+/).forEach(registerExplicit);
+  }
+
+  const combinedText = `${cleanTitle} ${excerptText} ${specMap['segmento'] || ''}`;
+  const numWidth = parseFloat(width);
+  const numProfile = parseFloat(profile);
+  const numRim = parseFloat(String(rim || '').replace('R', ''));
+  const speedUpper = String(speedIndex || '').toUpperCase();
+
+  const isVan =
+    /\bVan\b|VanContact|ContiVan|Eurovan|Vantra|X FIT Van|Agilis|Transporter|14C\b|15C\b|16C\b|195\s*R\s*15|195\/70\s*R?\s*15/i.test(
+      combinedText
+    );
+  const isCommercial =
+    normalizedCategory === 'Llanta de camión' ||
+    /17\.5|19\.5|22\.5|Smart Work|SMaRT FLeX|AH11|DH35|6PR|8PR|10PR|12PR|14C\b|15C\b|16C\b|Campera|LTR\b|VanContact|ContiVan|Eurovan|Vantra|X FIT Van|10\s*R\s*15|215\/85|285\/65\s*R?\s*16/i.test(
+      combinedText
+    );
+  const isLightTruck =
+    /\bLT\b|LTR\b|LRC|AT2|MT2|A\/T|M\/T|All[- ]Terrain|Overlander|Grabber|Dynapro|Wrangler|KO2|KO3|Destination|LTX|Campera|OWL|245\/75|265\/70|265\/75|255\/70|31X|33X|27X|215\/85|10\s*R\s*15|205\/75R14/i.test(
+      combinedText
+    );
+  const isSuv =
+    /\bSUV\b|Primacy SUV|Scorpion|CrossContact|TerrainContact|Latitude|Dueler|Fortera|Dynapro HP|Dynapro HT|Grabber HTS|LTX|orientada a camionetas SUV|285\/45|265\/60|265\/65|255\/55|255\/60|235\/55|235\/60|225\/60|225\/65|215\/65|235\/75|245\/70/i.test(
+      combinedText
+    );
+  const isCamioneta =
+    isSuv ||
+    /Camioneta|Crossover|Scorpion|Terrain|Dynapro|Grabber|Overlander|Destination|LTX|Dueler|Wrangler|215\/60|215\/65|225\/60|225\/65|235\/55|235\/60|235\/75|245\/70|245\/75|265\/60|265\/65|265\/70|285\/45|31X|33X|27X|205\/75R14/i.test(
+      cleanTitle
+    );
+  const isSport =
+    (!isCommercial && !isVan && ['W', 'Y', 'Z'].includes(speedUpper)) ||
+    (!isCommercial && !isVan && Number.isFinite(numProfile) && numProfile <= 50 && numRim >= 16) ||
+    /Sport|Ventus|S FIT|Potenza|Pilot|Eagle F1|P Zero|Premium\s*Contact|Bravuris/i.test(
+      cleanTitle
+    );
+  const isTouring =
+    !isCommercial &&
+    !isVan &&
+    !(/MT2|M\/T|31X|33X|27X|10\s*R\s*15/i.test(cleanTitle)) &&
+    (/Touring|Primacy|UltraContact|PowerContact|ContiPower|Kinergy|Optimo|Ecopia|Advantage|Altimax|Eurodrive|G FIT|Cinturato|Assurance|Energy/i.test(
+      cleanTitle
+    ) ||
+      (Number.isFinite(numProfile) &&
+        numProfile >= 50 &&
+        numProfile <= 70 &&
+        Number.isFinite(numRim) &&
+        numRim >= 14 &&
+        numRim <= 18));
+  const isAuto =
+    !isCommercial &&
+    !isVan &&
+    !isLightTruck &&
+    (!Number.isFinite(numWidth) || numWidth <= 235) &&
+    (!Number.isFinite(numRim) || (numRim >= 13 && numRim <= 18));
+
+  if (isVan) matched.add('Van');
+  if (isCommercial) matched.add('Comercial Ligero');
+  if (isLightTruck) matched.add('Light Truck');
+  if (isSuv) matched.add('SUV');
+  if (isCamioneta) matched.add('Camioneta');
+  if (isSport) matched.add('Deportivo');
+  if (isTouring) matched.add('Turismo');
+  if (isAuto) matched.add('Auto');
+
+  if (matched.size === 0) {
+    matched.add('Auto');
+  }
+
+  const orderedPriority = [
+    'Comercial Ligero',
+    'Van',
+    'Light Truck',
+    'SUV',
+    'Deportivo',
+    'Camioneta',
+    'Turismo',
+    'Auto',
+  ];
+
+  const primaryVehicleType =
+    explicitFromWix[0] ||
+    orderedPriority.find((t) => matched.has(t)) ||
+    'Auto';
+
+  return {
+    vehicleTypes: Array.from(matched),
+    primaryVehicleType,
+  };
+}
+
+// Parse real tire specifications strictly from the CSV product name + live Wix HTML table
 export function parseTireSpecs(product) {
   const rawName = product.name || '';
   const cleanTitle = rawName
@@ -1199,17 +1544,19 @@ export function parseTireSpecs(product) {
     .replace(/^Paquete de 2 Llantas\s+/i, 'Llanta ')
     .trim();
 
+  const specMap = product.wixSpecMap || {};
+
   let width = null;
   let profile = null;
   let rim = null;
   let measure = null;
 
-  // 1. Standard metric: e.g. 195/65R15, 185/60 R15, 235/75/R15, 225/70R19.5
+  // 1. Standard metric: e.g. 195/65R15, 185/60 R15, 235/75/R15, 225/70R19.5, 285/65 R16C
   const metricMatch = cleanTitle.match(/(\d{3})\s*\/\s*(\d{2})\s*\/?\s*R\s*(\d{2}(?:\.\d)?)/i);
   // 2. Flotation: e.g. 33X12.50R15, 27X8.50R14, 31X10.50R15
   const flotationMatch = cleanTitle.match(/(\d{2}X\d{1,2}\.\d{2})\s*R\s*(\d{2}(?:\.\d)?)/i);
-  // 3. Commercial / LT without profile: e.g. 10R15
-  const commercialMatch = cleanTitle.match(/\b(\d{2})R(\d{2}(?:\.\d)?)\b/i);
+  // 3. Commercial / LT without profile: e.g. 10R15, 195 R15C, 10 R15
+  const commercialMatch = cleanTitle.match(/\b(\d{2,3})\s*R\s*(\d{2}(?:\.\d)?)/i);
 
   if (metricMatch) {
     width = metricMatch[1];
@@ -1228,52 +1575,104 @@ export function parseTireSpecs(product) {
     measure = `${width}${rim}`;
   }
 
-  // Extract load & speed index (e.g. "91 H", "84T", "121/118 S", "128/126 N", "109 r")
+  // Enrich from Wix <table> if any dimension wasn't matched in title
+  if (!measure && specMap['medida']) {
+    measure = specMap['medida'].replace(/\s+/g, '').toUpperCase();
+  }
+  if (!width && specMap['ancho de seccion']) {
+    const wMatch = specMap['ancho de seccion'].match(/(\d+(?:\.\d+)?)/);
+    if (wMatch) width = wMatch[1];
+  }
+  if (!profile && specMap['perfil']) {
+    profile = specMap['perfil'];
+  }
+  if (!rim && specMap['diametro del rin']) {
+    const rMatch = specMap['diametro del rin'].match(/(\d{2}(?:\.\d)?)/);
+    if (rMatch) rim = `R${rMatch[1]}`;
+  }
+
+  // Extract load & speed index (e.g. "91 H", "84T", "121/118 S", "128/126 N", "109 r", or from Wix <table>)
+  let loadIndex = specMap['indice de carga'] || null;
+  let speedIndex = specMap['indice de velocidad'] || null;
   let loadSpeed = null;
+
   const loadSpeedEndMatch = cleanTitle.match(/\b(\d{2,3}(?:\/\d{2,3})?\s*[A-Z])\s*$/i);
-  const loadSpeedInlineMatch = cleanTitle.match(/\b(\d{2,3}[THVWYQSRNM])\b/i);
+  const loadSpeedInlineMatch = cleanTitle.match(/\b(\d{2,3}(?:\/\d{2,3})?[THVWYQSRNMZ])\b/i);
   if (loadSpeedEndMatch) {
     loadSpeed = loadSpeedEndMatch[1].toUpperCase().replace(/\s+/, ' ');
   } else if (loadSpeedInlineMatch) {
     const raw = loadSpeedInlineMatch[1].toUpperCase();
     loadSpeed = `${raw.slice(0, -1)} ${raw.slice(-1)}`;
+  } else if (loadIndex && speedIndex) {
+    loadSpeed = `${loadIndex} ${speedIndex.toUpperCase()}`;
+  } else if (loadIndex) {
+    loadSpeed = loadIndex;
   }
 
-  // Extract model line by stripping prefix, measure, brand, and load/speed index
-  let model = cleanTitle
-    .replace(/^(Paquete de 2 Llantas|Llanta)\s+/i, '')
-    .replace(/(\d{3}\s*\/\s*\d{2}\s*\/?\s*R\s*\d{2}(?:\.\d)?|\d{2}X\d{1,2}\.\d{2}\s*R\s*\d{2}(?:\.\d)?|\b\d{2}R\d{2}(?:\.\d)?\b)/i, '')
-    .replace(/\b(HK|CNT)\b/gi, '')
-    .replace(new RegExp(product.brand, 'ig'), '')
-    .replace(
-      /Hankook|Continental|Euzkadi|General Tire|Laufenn|Firestone|Bridgestone|Michelin|Pirelli|Goodyear|BFGoodrich|Barum|Kelly/gi,
-      ''
-    )
-    .replace(/\b\d{2,3}(?:\/\d{2,3})?\s*[THVWYQSRNM]\b/gi, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  if (loadSpeed && (!loadIndex || !speedIndex)) {
+    const parts = loadSpeed.trim().split(/\s+/);
+    if (!loadIndex && parts[0]) loadIndex = parts[0];
+    if (!speedIndex && parts[1]) speedIndex = parts[1];
+  }
+
+  // Extract model line (prefer clean Wix table 'Modelo / línea' when available)
+  let model =
+    specMap['modelo / linea'] ||
+    cleanTitle
+      .replace(/^(Paquete de 2 Llantas|Llanta)\s+/i, '')
+      .replace(
+        /(\d{3}\s*\/\s*\d{2}\s*\/?\s*R\s*\d{2}(?:\.\d)?C?|\d{2}X\d{1,2}\.\d{2}\s*R\s*\d{2}(?:\.\d)?|\b\d{2,3}\s*R\s*\d{2}(?:\.\d)?C?\b)/i,
+        ''
+      )
+      .replace(/\b(HK|CNT|BS|SL|TL|XL)\b/gi, '')
+      .replace(new RegExp(product.brand, 'ig'), '')
+      .replace(
+        /Hankook|Continental|Euzkadi|General Tire|General|Laufenn|Firestone|Bridgestone|Michelin|Pirelli|Goodyear|BFGoodrich|Barum|Kelly/gi,
+        ''
+      )
+      .replace(/\b\d{2,3}(?:\/\d{2,3})?\s*[THVWYQSRNMZ]\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
 
   const isPackage = false;
   const normalizedCategory =
     product.category === 'Paquetes' ? 'Llanta de automóvil' : product.category;
   const inStock = product.quantity > 0 && product.finalPriceTaxExcluded > 0;
 
-  // Classify each tire into Auto, Camioneta (SUV/Pickup), or Camión (Carga/Van)
-  let vehicleType = 'Auto';
+  // Legacy 3-segment classification preserved for /landing-tienda-preview-copia
+  let legacyVehicleType = 'Auto';
   if (
     normalizedCategory === 'Llanta de camión' ||
     /19\.5|17\.5|10R15|VanContact|Vantra|RA08|RA18|AH11|DH35|Smart Work|SMaRT FLeX|6PR|8PR/i.test(
       cleanTitle
     )
   ) {
-    vehicleType = 'Camión';
+    legacyVehicleType = 'Camión';
   } else if (
     /SUV|AT2|MT2|HTS60|Grabber|Dynapro|Overlander|All Terrain|285\/45R21|245\/75R17|235\/75|265\/70|31X10|33X12|27X8|205\/75R14/i.test(
       cleanTitle
     )
   ) {
-    vehicleType = 'Camioneta';
+    legacyVehicleType = 'Camioneta';
   }
+
+  const { vehicleTypes, primaryVehicleType } = classifyTireVehicleTypes({
+    cleanTitle,
+    width,
+    profile,
+    rim,
+    speedIndex,
+    normalizedCategory,
+    wixCollections: product.wixCollections || [],
+    specMap,
+    excerptText: product.customExcerpt || '',
+  });
+
+  // Match compatible popular car models by exact measure for instant car-model search & filtering
+  const normalizedMeasure = String(measure || '').replace(/\s+/g, '').toUpperCase();
+  const compatibleModels = POPULAR_CAR_MODELS.filter((cm) =>
+    cm.measures.some((m) => m.replace(/\s+/g, '').toUpperCase() === normalizedMeasure)
+  ).map((cm) => cm.label);
 
   const brandExcerpts = {
     Hankook:
@@ -1306,7 +1705,7 @@ export function parseTireSpecs(product) {
 
   const defaultExcerpt = `${cleanTitle} (${measure || 'Medida Oficial'}${
     loadSpeed ? ` · Índice ${loadSpeed}` : ''
-  }) para ${vehicleType.toLowerCase()}. ${
+  }) para ${primaryVehicleType.toLowerCase()}. ${
     brandExcerpts[product.brand] || brandExcerpts.Hankook
   }`;
 
@@ -1316,6 +1715,26 @@ export function parseTireSpecs(product) {
   const cutoutImage =
     product.cutoutImage || `/images/tires/tire-${product.id}.png`;
 
+  const resolvedTableSpecs =
+    Array.isArray(product.wixTableSpecs) && product.wixTableSpecs.length > 0
+      ? product.wixTableSpecs
+      : [
+          { label: 'Marca', value: product.brand },
+          { label: 'Modelo / línea', value: model || cleanTitle },
+          { label: 'Medida', value: measure || 'Estándar' },
+          { label: 'Ancho de sección', value: width ? `${width} mm` : '—' },
+          { label: 'Perfil', value: profile || '—' },
+          {
+            label: 'Diámetro del rin',
+            value: rim ? `${rim.replace('R', '')} pulgadas (${rim})` : '—',
+          },
+          { label: 'Índice de carga', value: loadIndex || 'Oficial' },
+          { label: 'Índice de velocidad', value: speedIndex || 'Oficial' },
+          { label: 'Segmento', value: primaryVehicleType },
+          { label: 'Contenido', value: '1 llanta' },
+          { label: 'SKU', value: String(product.reference || product.id) },
+        ];
+
   return {
     ...product,
     category: normalizedCategory,
@@ -1324,15 +1743,25 @@ export function parseTireSpecs(product) {
     profile,
     rim,
     measure,
+    loadIndex,
+    speedIndex,
     loadSpeed,
+    tableWidthLabel: specMap['ancho de seccion'] || (width ? `${width} mm` : '—'),
+    tableProfileLabel: specMap['perfil'] || (profile ? `Serie ${profile}` : '—'),
+    tableRimLabel: specMap['diametro del rin'] || rim || '—',
     model: model || cleanTitle,
     excerpt,
+    benefits: Array.isArray(product.wixBenefits) ? product.wixBenefits : [],
+    tableSpecs: resolvedTableSpecs,
     isPackage,
     unitsPerItem: 1,
     inStock,
     hasPngCutout,
     cutoutImage,
-    vehicleType,
+    vehicleType: product.isLiveWix ? primaryVehicleType : legacyVehicleType,
+    primaryVehicleType,
+    vehicleTypes,
+    compatibleModels,
     primaryImage: product.images?.[0] || cutoutImage || '/images/service-tires.png',
   };
 }
@@ -1417,28 +1846,20 @@ export function normalizeBrandName(rawBrand = '', rawName = '') {
   return rawBrand || 'Hankook';
 }
 
-function extractWixExcerptText(html = '') {
-  if (!html || typeof html !== 'string') return '';
-  const paragraphs = [];
-  const regex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
-  let match = regex.exec(html);
-  while (match && paragraphs.length < 2) {
-    const text = match[1]
-      .replace(/<[^>]+>/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-    if (text.length > 45 && !text.includes('Característica')) {
-      paragraphs.push(text);
-    }
-    match = regex.exec(html);
-  }
-  return paragraphs.join(' ');
-}
-
 export function normalizeWixStoreProduct(wixItem, index = 0) {
   const sku = String(wixItem.sku || '').trim();
   const localMatch = STATIC_BY_REFERENCE.get(sku);
-  const brand = normalizeBrandName(wixItem.brand, wixItem.name);
+  const wixDetails = parseWixDescriptionDetails(wixItem.description);
+  const brand = normalizeBrandName(
+    wixItem.brand || wixDetails.specMap['marca'],
+    wixItem.name
+  );
+
+  const wixCollections = Array.isArray(wixItem.collections)
+    ? wixItem.collections
+        .map((col) => (typeof col === 'string' ? col : col?.name))
+        .filter(Boolean)
+    : [];
 
   const regularPrice = Number(wixItem.price || 0);
   const activePrice = Number(
@@ -1517,12 +1938,10 @@ export function normalizeWixStoreProduct(wixItem, index = 0) {
         : wixGalleryUrls
       : fallbackStaticItem.images;
 
-  const wixExcerpt = extractWixExcerptText(wixItem.description);
-
   const parsed = parseTireSpecs({
     id: resolvedId,
     wixId: wixItem._id,
-    reference: sku || String(resolvedId),
+    reference: sku || wixDetails.specMap['sku'] || String(resolvedId),
     idShopDefault: 1,
     priceTaxExcluded: regularPrice || activePrice,
     regularPrice: regularPrice || activePrice,
@@ -1541,7 +1960,12 @@ export function normalizeWixStoreProduct(wixItem, index = 0) {
     hasPngCutout: useCutoutFirst,
     cutoutImage,
     hasUploadedWixMedia,
-    customExcerpt: wixExcerpt || undefined,
+    customExcerpt: wixDetails.excerpt || undefined,
+    wixBenefits: wixDetails.benefits,
+    wixTableSpecs: wixDetails.tableSpecs,
+    wixSpecMap: wixDetails.specMap,
+    wixCollections,
+    isLiveWix: true,
   });
 
   return parsed;

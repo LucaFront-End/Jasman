@@ -1150,13 +1150,13 @@ export async function saveWixTiendaOrder(orderRecord) {
  * WIX STORES PRODUCTS CATALOG INTEGRATION ("Stores/Products")
  * ============================================================================ */
 
-const WIX_PRODUCTS_SESSION_KEY = 'jasman_wix_store_products_cache_v1';
+const WIX_PRODUCTS_SESSION_KEY = 'jasman_wix_store_products_cache_v2';
 let wixProductsMemoryCache = null;
 let wixProductsFetchPromise = null;
 
 /**
  * Fetches all products from the Wix Stores catalog ("Stores/Products"),
- * paginating automatically to retrieve all items (336+ tires).
+ * paginating automatically to retrieve all items (336+ tires) including assigned Collections.
  * Always fetches live from Wix once per page load so dashboard edits reflect on refresh.
  */
 export async function getWixStoreProducts({ forceRefresh = false } = {}) {
@@ -1171,7 +1171,12 @@ export async function getWixStoreProducts({ forceRefresh = false } = {}) {
   wixProductsFetchPromise = (async () => {
     try {
       const allItems = [];
-      let res = await wixClient.items.query('Stores/Products').limit(100).find();
+      let res;
+      try {
+        res = await wixClient.items.query('Stores/Products').include('collections').limit(100).find();
+      } catch {
+        res = await wixClient.items.query('Stores/Products').limit(100).find();
+      }
       if (res?.items?.length) {
         allItems.push(...res.items);
       }

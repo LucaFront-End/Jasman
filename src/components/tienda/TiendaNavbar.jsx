@@ -5,11 +5,14 @@ import { useTiendaState, triggerTiendaUI } from '../../hooks/useTiendaState';
 import {
   MOST_REQUESTED_MEASURES,
   ALL_OFFICIAL_MENU_BRANDS,
+  VEHICLE_TYPE_OPTIONS,
+  POPULAR_CAR_MODELS,
   BRAND_META,
   useWixCatalogProducts,
   formatMXN,
 } from '../../data/productosMasterData';
 import TiendaMostRequestedSection from './TiendaMostRequestedSection';
+import TiendaVehicleSvg from './TiendaVehicleTypeIcons';
 import {
   ShoppingBag,
   User,
@@ -160,7 +163,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
         { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
       ];
 
-  // Live instant search matches
+  // Live instant search matches (measures, brands, vehicle types, and compatible car models)
   const searchMatches = useMemo(() => {
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
@@ -177,6 +180,8 @@ export default function TiendaNavbar({ legacyMode = false }) {
         p.measure,
         p.rim,
         p.reference,
+        ...(Array.isArray(p.vehicleTypes) ? p.vehicleTypes : [p.vehicleType]),
+        ...(Array.isArray(p.compatibleModels) ? p.compatibleModels : []),
       ]
         .filter(Boolean)
         .join(' ')
@@ -188,6 +193,36 @@ export default function TiendaNavbar({ legacyMode = false }) {
       return tokens.every((tok) => haystack.includes(tok));
     });
   }, [catalogProducts, searchQuery]);
+
+  const handleQuickVehicle = (vehicleId) => {
+    setSearchOpen(false);
+    setMobileMenu(false);
+    setSearchQuery('');
+    navigate(
+      `/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(vehicleId)}`
+    );
+    setTimeout(() => {
+      triggerTiendaUI({ type: 'FILTER_CATALOG', vehicle: vehicleId });
+    }, 80);
+  };
+
+  const handleQuickCarModel = (carModelObj) => {
+    setSearchOpen(false);
+    setMobileMenu(false);
+    setSearchQuery('');
+    navigate(
+      `/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(
+        carModelObj.vehicle
+      )}&carModel=${encodeURIComponent(carModelObj.id)}`
+    );
+    setTimeout(() => {
+      triggerTiendaUI({
+        type: 'FILTER_CATALOG',
+        vehicle: carModelObj.vehicle,
+        carModel: carModelObj.id,
+      });
+    }, 80);
+  };
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
@@ -1148,6 +1183,50 @@ export default function TiendaNavbar({ legacyMode = false }) {
                       ))}
                     </div>
                   </div>
+
+                  {/* Quick 8 Vehicle Types */}
+                  <div>
+                    <div
+                      style={{
+                        fontFamily: F.heading,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        letterSpacing: '0.18em',
+                        textTransform: 'uppercase',
+                        color: '#64748B',
+                        marginBottom: 9,
+                      }}
+                    >
+                      Tipo de Vehículo (8)
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {VEHICLE_TYPE_OPTIONS.map((vt) => (
+                        <button
+                          key={vt.id}
+                          type="button"
+                          onClick={() => handleQuickVehicle(vt.id)}
+                          className="tienda-search-quick-pill"
+                          style={{
+                            padding: '5px 11px',
+                            borderRadius: 9999,
+                            border: '1px solid rgba(26, 31, 54, 0.10)',
+                            background: '#FFFFFF',
+                            cursor: 'pointer',
+                            fontFamily: F.heading,
+                            fontSize: 10.5,
+                            fontWeight: 800,
+                            color: C.navy,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                          }}
+                        >
+                          <TiendaVehicleSvg type={vt.id} width={38} height={15} />
+                          <span>{vt.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -1163,17 +1242,19 @@ export default function TiendaNavbar({ legacyMode = false }) {
           style={{
             position: 'relative',
             zIndex: 3,
-            maxWidth: 1080,
+            maxWidth: 1120,
             margin: '0 auto',
-            padding: '12px 10px 0',
+            padding: '10px 12px 0',
             pointerEvents: 'auto',
           }}
         >
           <div
             style={{
-              padding: '28px 32px',
+              padding: '22px 28px',
+              maxHeight: 'calc(100vh - 102px)',
+              overflowY: 'auto',
               borderRadius: 28,
-              background: 'rgba(255, 255, 255, 0.96)',
+              background: 'rgba(255, 255, 255, 0.97)',
               backdropFilter: 'saturate(180%) blur(28px)',
               WebkitBackdropFilter: 'saturate(180%) blur(28px)',
               border: '1px solid rgba(26, 31, 54, 0.08)',
@@ -1385,6 +1466,123 @@ export default function TiendaNavbar({ legacyMode = false }) {
                         </button>
                       );
                     })}
+                  </div>
+                )}
+              </div>
+
+              {/* Expandable Mobile Accordion: Tipo de Vehículo & Modelos */}
+              <div style={{ borderBottom: '1px solid rgba(26, 31, 54, 0.06)' }}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMobileAccordion((prev) =>
+                      prev === 'vehicles' ? null : 'vehicles'
+                    )
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '10px 6px',
+                    border: 'none',
+                    background: 'transparent',
+                    fontFamily: F.heading,
+                    fontSize: 13.5,
+                    fontWeight: 800,
+                    color: mobileAccordion === 'vehicles' ? C.red : C.navy,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span>Tipo de Vehículo & Modelos (8)</span>
+                  <ChevronDown
+                    size={16}
+                    style={{
+                      transform:
+                        mobileAccordion === 'vehicles'
+                          ? 'rotate(180deg)'
+                          : 'rotate(0deg)',
+                      transition: 'transform 0.25s ease',
+                    }}
+                  />
+                </button>
+                {mobileAccordion === 'vehicles' && (
+                  <div style={{ padding: '4px 4px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                        gap: 8,
+                      }}
+                    >
+                      {VEHICLE_TYPE_OPTIONS.map((vt) => (
+                        <button
+                          key={vt.id}
+                          type="button"
+                          onClick={() => handleQuickVehicle(vt.id)}
+                          style={{
+                            padding: '8px 10px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(26, 31, 54, 0.10)',
+                            background: '#F8FAFC',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            gap: 4,
+                            textAlign: 'left',
+                          }}
+                        >
+                          <TiendaVehicleSvg type={vt.id} width={68} height={25} />
+                          <span
+                            style={{
+                              fontFamily: F.heading,
+                              fontSize: 11.5,
+                              fontWeight: 900,
+                              color: C.navy,
+                            }}
+                          >
+                            {vt.label}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: F.body,
+                              fontSize: 9.5,
+                              color: '#64748B',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              width: '100%',
+                            }}
+                          >
+                            {vt.modelsText}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {POPULAR_CAR_MODELS.slice(0, 10).map((cm) => (
+                        <button
+                          key={cm.id}
+                          type="button"
+                          onClick={() => handleQuickCarModel(cm)}
+                          style={{
+                            padding: '5px 10px',
+                            borderRadius: 9999,
+                            border: '1px solid rgba(26, 31, 54, 0.12)',
+                            background: '#FFFFFF',
+                            cursor: 'pointer',
+                            fontFamily: F.heading,
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            color: C.navy,
+                          }}
+                        >
+                          {cm.id}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

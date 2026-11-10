@@ -5,9 +5,12 @@ import {
   MOST_REQUESTED_MEASURES,
   BRAND_META,
   FEATURED_BRAND_KEYS,
+  VEHICLE_TYPE_OPTIONS,
+  POPULAR_CAR_MODELS,
   useWixCatalogProducts,
 } from '../../data/productosMasterData';
 import TiendaProductCard from './TiendaProductCard';
+import TiendaVehicleSvg from './TiendaVehicleTypeIcons';
 import {
   Search,
   RotateCcw,
@@ -15,6 +18,7 @@ import {
   ChevronUp,
   ChevronDown,
   SlidersHorizontal,
+  X,
 } from 'lucide-react';
 
 function RealisticVehicleSvg({ type, active }) {
@@ -142,13 +146,14 @@ export default function TiendaCatalogSection({
     profiles: availableProfiles,
   } = useWixCatalogProducts({ forceStatic: forceStaticCatalog });
 
-  // Read initial filters from URL query parameters (?brand=..., ?measure=..., etc.)
+  // Read initial filters from URL query parameters (?brand=..., ?measure=..., ?vehicle=..., ?carModel=...)
   const initialUrlParams = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return {
       brand: params.get('brand') || initialBrand,
       measure: params.get('measure') || params.get('q') || externalMeasure || '',
       vehicle: params.get('vehicle') || 'Todos',
+      carModel: params.get('carModel') || '',
       rim: params.get('rim') || initialRim,
       width: params.get('width') || 'Todos',
       profile: params.get('profile') || 'Todos',
@@ -157,6 +162,7 @@ export default function TiendaCatalogSection({
 
   const [category, setCategory] = useState(initialCategory);
   const [vehicleType, setVehicleType] = useState(initialUrlParams.vehicle);
+  const [carModel, setCarModel] = useState(initialUrlParams.carModel);
   const [brand, setBrand] = useState(initialUrlParams.brand);
   const [rim, setRim] = useState(initialUrlParams.rim);
   const [width, setWidth] = useState(initialUrlParams.width);
@@ -177,20 +183,18 @@ export default function TiendaCatalogSection({
     const qBrand = params.get('brand');
     const qMeasure = params.get('measure') || params.get('q');
     const qVehicle = params.get('vehicle');
+    const qCarModel = params.get('carModel');
     const qRim = params.get('rim');
     const qWidth = params.get('width');
     const qProfile = params.get('profile');
 
-    if (qBrand) {
-      setBrand(qBrand);
-    } else if (params.has('q') || params.has('measure')) {
-      setBrand('Todas');
-    }
-    if (qMeasure !== null && qMeasure !== undefined) setSearchQuery(qMeasure);
-    if (qVehicle) setVehicleType(qVehicle);
-    if (qRim) setRim(qRim);
-    if (qWidth) setWidth(qWidth);
-    if (qProfile) setProfile(qProfile);
+    setBrand(qBrand || 'Todas');
+    setSearchQuery(qMeasure || '');
+    setVehicleType(qVehicle || 'Todos');
+    setCarModel(qCarModel || '');
+    setRim(qRim || 'Todos');
+    setWidth(qWidth || 'Todos');
+    setProfile(qProfile || 'Todos');
   }
 
   // Sync if parent passes a quick measure or brand selection
@@ -213,6 +217,7 @@ export default function TiendaCatalogSection({
       location.search.includes('brand=') ||
       location.search.includes('measure=') ||
       location.search.includes('vehicle=') ||
+      location.search.includes('carModel=') ||
       location.search.includes('rim=') ||
       location.search.includes('width=') ||
       location.search.includes('profile=') ||
@@ -235,6 +240,7 @@ export default function TiendaCatalogSection({
       const nextBrand = overrides.brand !== undefined ? overrides.brand : brand;
       const nextMeasure = overrides.measure !== undefined ? overrides.measure : searchQuery;
       const nextVehicle = overrides.vehicle !== undefined ? overrides.vehicle : vehicleType;
+      const nextCarModel = overrides.carModel !== undefined ? overrides.carModel : carModel;
       const nextRim = overrides.rim !== undefined ? overrides.rim : rim;
       const nextWidth = overrides.width !== undefined ? overrides.width : width;
       const nextProfile = overrides.profile !== undefined ? overrides.profile : profile;
@@ -243,6 +249,7 @@ export default function TiendaCatalogSection({
       if (nextBrand && nextBrand !== 'Todas') params.set('brand', nextBrand);
       if (nextMeasure && nextMeasure.trim()) params.set('measure', nextMeasure.trim());
       if (nextVehicle && nextVehicle !== 'Todos') params.set('vehicle', nextVehicle);
+      if (nextCarModel && nextCarModel.trim()) params.set('carModel', nextCarModel.trim());
       if (nextRim && nextRim !== 'Todos') params.set('rim', nextRim);
       if (nextWidth && nextWidth !== 'Todos') params.set('width', nextWidth);
       if (nextProfile && nextProfile !== 'Todos') params.set('profile', nextProfile);
@@ -251,7 +258,7 @@ export default function TiendaCatalogSection({
       const targetUrl = `/landing-tienda-preview/catalogo${queryString ? `?${queryString}` : ''}`;
       navigate(targetUrl);
     },
-    [brand, searchQuery, vehicleType, rim, width, profile, navigate]
+    [brand, searchQuery, vehicleType, carModel, rim, width, profile, navigate]
   );
 
   useEffect(() => {
@@ -262,10 +269,19 @@ export default function TiendaCatalogSection({
         setSearchQuery(detail.measure);
         setBrand('Todas');
         setVehicleType('Todos');
+        setCarModel('');
       }
       if (typeof detail.brand === 'string') {
         setBrand(detail.brand);
         setSearchQuery('');
+        setVehicleType('Todos');
+        setCarModel('');
+      }
+      if (typeof detail.vehicle === 'string') {
+        setVehicleType(detail.vehicle);
+        setBrand('Todas');
+        setSearchQuery('');
+        setCarModel(typeof detail.carModel === 'string' ? detail.carModel : '');
       }
       const el = document.getElementById(id);
       if (el) {
@@ -278,42 +294,99 @@ export default function TiendaCatalogSection({
 
   const effectiveSearch = searchQuery;
 
+  const activeCarModelObj = useMemo(() => {
+    if (!carModel) return null;
+    return (
+      POPULAR_CAR_MODELS.find(
+        (cm) => cm.id.toLowerCase() === carModel.toLowerCase()
+      ) || null
+    );
+  }, [carModel]);
+
   const filteredProducts = useMemo(() => {
-    return catalogProducts.filter((p) => {
-      if (onlyInStock && !p.inStock) return false;
-      if (vehicleType !== 'Todos' && p.vehicleType !== vehicleType) return false;
-      if (category !== 'Todos' && p.category !== category) return false;
-      if (brand !== 'Todas' && p.brand !== brand) return false;
-      if (rim !== 'Todos' && p.rim !== rim) return false;
-      if (width !== 'Todos' && p.width !== width) return false;
-      if (profile !== 'Todos' && p.profile !== profile) return false;
+    const carModelMeasureSet = activeCarModelObj
+      ? new Set(
+          activeCarModelObj.measures.map((m) =>
+            m.replace(/\s+/g, '').toUpperCase()
+          )
+        )
+      : null;
 
-      if (effectiveSearch.trim()) {
-        const q = effectiveSearch.trim().toLowerCase().replace(/\s+/g, '');
-        const searchable = `${p.cleanTitle} ${p.brand} ${p.reference} ${p.measure || ''} ${p.category} ${p.vehicleType}`
-          .toLowerCase()
-          .replace(/\s+/g, '');
-        if (!searchable.includes(q)) return false;
-      }
+    // Check if catalog has at least 1 exact OEM measure match for the chosen car model
+    const hasExactCarModelMeasureMatch =
+      carModelMeasureSet &&
+      catalogProducts.some((p) =>
+        carModelMeasureSet.has(String(p.measure || '').replace(/\s+/g, '').toUpperCase())
+      );
 
-      return true;
-    }).sort((a, b) => {
-      if (a.inStock !== b.inStock) return a.inStock ? -1 : 1;
-      if (sortBy === 'price-asc') {
-        return (a.finalPriceTaxExcluded || 999999) - (b.finalPriceTaxExcluded || 999999);
-      }
-      if (sortBy === 'price-desc') {
-        return (b.finalPriceTaxExcluded || 0) - (a.finalPriceTaxExcluded || 0);
-      }
-      if (sortBy === 'stock-desc') {
-        return (b.quantity || 0) - (a.quantity || 0);
-      }
-      return 0;
-    });
-  }, [catalogProducts, vehicleType, category, brand, rim, width, profile, effectiveSearch, sortBy, onlyInStock]);
+    return catalogProducts
+      .filter((p) => {
+        if (onlyInStock && !p.inStock) return false;
+
+        if (activeCarModelObj && hasExactCarModelMeasureMatch) {
+          const normMeasure = String(p.measure || '').replace(/\s+/g, '').toUpperCase();
+          if (!carModelMeasureSet.has(normMeasure)) return false;
+        } else if (vehicleType !== 'Todos') {
+          const matchesVehicle =
+            !forceStaticCatalog && Array.isArray(p.vehicleTypes)
+              ? p.vehicleTypes.includes(vehicleType) || p.vehicleType === vehicleType
+              : p.vehicleType === vehicleType;
+          if (!matchesVehicle) return false;
+        }
+
+        if (category !== 'Todos' && p.category !== category) return false;
+        if (brand !== 'Todas' && p.brand !== brand) return false;
+        if (rim !== 'Todos' && p.rim !== rim) return false;
+        if (width !== 'Todos' && p.width !== width) return false;
+        if (profile !== 'Todos' && p.profile !== profile) return false;
+
+        if (effectiveSearch.trim()) {
+          const q = effectiveSearch.trim().toLowerCase().replace(/\s+/g, '');
+          const vTypesText = Array.isArray(p.vehicleTypes)
+            ? p.vehicleTypes.join(' ')
+            : p.vehicleType;
+          const compatText = Array.isArray(p.compatibleModels)
+            ? p.compatibleModels.join(' ')
+            : '';
+          const searchable = `${p.cleanTitle} ${p.brand} ${p.reference} ${p.measure || ''} ${p.category} ${vTypesText} ${compatText}`
+            .toLowerCase()
+            .replace(/\s+/g, '');
+          if (!searchable.includes(q)) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        if (a.inStock !== b.inStock) return a.inStock ? -1 : 1;
+        if (sortBy === 'price-asc') {
+          return (a.finalPriceTaxExcluded || 999999) - (b.finalPriceTaxExcluded || 999999);
+        }
+        if (sortBy === 'price-desc') {
+          return (b.finalPriceTaxExcluded || 0) - (a.finalPriceTaxExcluded || 0);
+        }
+        if (sortBy === 'stock-desc') {
+          return (b.quantity || 0) - (a.quantity || 0);
+        }
+        return 0;
+      });
+  }, [
+    catalogProducts,
+    activeCarModelObj,
+    vehicleType,
+    forceStaticCatalog,
+    category,
+    brand,
+    rim,
+    width,
+    profile,
+    effectiveSearch,
+    sortBy,
+    onlyInStock,
+  ]);
 
   const activeFilterCount =
     (vehicleType !== 'Todos' ? 1 : 0) +
+    (carModel ? 1 : 0) +
     (category !== 'Todos' ? 1 : 0) +
     (brand !== 'Todas' ? 1 : 0) +
     (rim !== 'Todos' ? 1 : 0) +
@@ -324,6 +397,7 @@ export default function TiendaCatalogSection({
 
   const resetFilters = () => {
     setVehicleType('Todos');
+    setCarModel('');
     setCategory('Todos');
     setBrand('Todas');
     setRim('Todos');
@@ -388,72 +462,99 @@ export default function TiendaCatalogSection({
             </h2>
           </div>
 
-          {/* 3 Realistic Vehicle Silhouette SVG Selectors (No text clutter) */}
-          <div
-            className="catalog-vehicle-svg-row"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              flexWrap: 'wrap',
-            }}
-          >
-            {VEHICLE_TYPES.map((vtId) => {
-              const isSelected = vehicleType === vtId;
-              const count = catalogProducts.filter((p) => p.vehicleType === vtId).length;
-              return (
-                <button
-                  key={vtId}
-                  type="button"
-                  onClick={() => setVehicleType(isSelected ? 'Todos' : vtId)}
-                  aria-label={vtId}
-                  title={`${vtId} (${count} modelos)`}
-                  style={{
-                    position: 'relative',
-                    padding: '12px 18px 10px',
-                    borderRadius: 20,
-                    background: isSelected ? '#FFF5F5' : '#FFFFFF',
-                    border: isSelected
-                      ? `2px solid ${C.red}`
-                      : '1px solid rgba(26, 31, 54, 0.08)',
-                    boxShadow: isSelected
-                      ? '0 14px 32px rgba(196, 30, 36, 0.12)'
-                      : '0 6px 18px rgba(26, 31, 54, 0.03)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transform: isSelected ? 'translateY(-2px)' : 'translateY(0)',
-                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                  }}
-                >
-                  <RealisticVehicleSvg type={vtId} active={isSelected} />
-                  <span
+          {/* Legacy 3-vehicle selector on frozen copy vs 8-vehicle minimalist SVG selector on live store */}
+          {forceStaticCatalog ? (
+            <div
+              className="catalog-vehicle-svg-row"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                flexWrap: 'wrap',
+              }}
+            >
+              {VEHICLE_TYPES.map((vtId) => {
+                const isSelected = vehicleType === vtId;
+                const count = catalogProducts.filter((p) => p.vehicleType === vtId).length;
+                return (
+                  <button
+                    key={vtId}
+                    type="button"
+                    onClick={() => setVehicleType(isSelected ? 'Todos' : vtId)}
+                    aria-label={vtId}
+                    title={`${vtId} (${count} modelos)`}
                     style={{
-                      position: 'absolute',
-                      top: 6,
-                      right: 8,
-                      padding: '2px 7px',
-                      borderRadius: 9999,
-                      background: isSelected ? C.red : '#F1F5F9',
-                      color: isSelected ? '#FFFFFF' : C.navy,
-                      fontFamily: F.heading,
-                      fontSize: 9.5,
-                      fontWeight: 800,
+                      position: 'relative',
+                      padding: '12px 18px 10px',
+                      borderRadius: 20,
+                      background: isSelected ? '#FFF5F5' : '#FFFFFF',
+                      border: isSelected
+                        ? `2px solid ${C.red}`
+                        : '1px solid rgba(26, 31, 54, 0.08)',
+                      boxShadow: isSelected
+                        ? '0 14px 32px rgba(196, 30, 36, 0.12)'
+                        : '0 6px 18px rgba(26, 31, 54, 0.03)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transform: isSelected ? 'translateY(-2px)' : 'translateY(0)',
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
                   >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
+                    <RealisticVehicleSvg type={vtId} active={isSelected} />
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 6,
+                        right: 8,
+                        padding: '2px 7px',
+                        borderRadius: 9999,
+                        background: isSelected ? C.red : '#F1F5F9',
+                        color: isSelected ? '#FFFFFF' : C.navy,
+                        fontFamily: F.heading,
+                        fontSize: 9.5,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
 
-            {!isFullCatalogPage && (
+              {!isFullCatalogPage && (
+                <button
+                  type="button"
+                  onClick={() => navigateToStoreCatalog()}
+                  style={{
+                    padding: '14px 22px',
+                    borderRadius: 9999,
+                    border: 'none',
+                    background: C.navy,
+                    color: C.white,
+                    fontFamily: F.heading,
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  Catálogo Completo <ArrowRight size={14} />
+                </button>
+              )}
+            </div>
+          ) : (
+            !isFullCatalogPage && (
               <button
                 type="button"
                 onClick={() => navigateToStoreCatalog()}
                 style={{
-                  padding: '14px 22px',
+                  padding: '14px 24px',
                   borderRadius: 9999,
                   border: 'none',
                   background: C.navy,
@@ -471,9 +572,217 @@ export default function TiendaCatalogSection({
               >
                 Catálogo Completo <ArrowRight size={14} />
               </button>
+            )
+          )}
+        </div>
+
+        {/* 1B. 8 MINIMALIST VEHICLE TYPE SVG SELECTORS + CAR MODELS BAR (Live Store) */}
+        {!forceStaticCatalog && (
+          <div style={{ marginBottom: 24 }}>
+            <div
+              className="catalog-8vehicles-grid"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(8, minmax(0, 1fr))',
+                gap: 10,
+              }}
+            >
+              {VEHICLE_TYPE_OPTIONS.map((vt) => {
+                const isSelected = vehicleType === vt.id;
+                const count = catalogProducts.filter((p) =>
+                  Array.isArray(p.vehicleTypes)
+                    ? p.vehicleTypes.includes(vt.id)
+                    : p.vehicleType === vt.id
+                ).length;
+
+                return (
+                  <button
+                    key={vt.id}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setVehicleType('Todos');
+                        setCarModel('');
+                      } else {
+                        setVehicleType(vt.id);
+                        setCarModel('');
+                      }
+                    }}
+                    title={`${vt.label}: ${vt.modelsText} (${count} llantas)`}
+                    style={{
+                      position: 'relative',
+                      padding: '12px 10px 10px',
+                      borderRadius: 18,
+                      background: isSelected ? '#FFF5F5' : '#FFFFFF',
+                      border: isSelected
+                        ? `2px solid ${C.red}`
+                        : '1px solid rgba(26, 31, 54, 0.08)',
+                      boxShadow: isSelected
+                        ? '0 14px 28px rgba(196, 30, 36, 0.13)'
+                        : '0 6px 16px rgba(26, 31, 54, 0.03)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 6,
+                      transform: isSelected ? 'translateY(-2px)' : 'translateY(0)',
+                      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                  >
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 6,
+                        right: 6,
+                        padding: '1.5px 6px',
+                        borderRadius: 9999,
+                        background: isSelected ? C.red : '#F1F5F9',
+                        color: isSelected ? '#FFFFFF' : '#64748B',
+                        fontFamily: F.heading,
+                        fontSize: 8.5,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {count}
+                    </span>
+
+                    <div style={{ marginTop: 4 }}>
+                      <TiendaVehicleSvg
+                        type={vt.id}
+                        active={isSelected}
+                        width={76}
+                        height={28}
+                      />
+                    </div>
+
+                    <div style={{ width: '100%', textAlign: 'center' }}>
+                      <div
+                        style={{
+                          fontFamily: F.heading,
+                          fontSize: 11,
+                          fontWeight: 900,
+                          color: isSelected ? C.red : C.navy,
+                          letterSpacing: '-0.01em',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {vt.label}
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: F.body,
+                          fontSize: 9.5,
+                          color: '#64748B',
+                          marginTop: 1,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {vt.modelsText}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Active Vehicle / Compatible Car Models Strip */}
+            {(vehicleType !== 'Todos' || activeCarModelObj) && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: '11px 16px',
+                  borderRadius: 18,
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(196, 30, 36, 0.18)',
+                  boxShadow: '0 8px 22px rgba(196, 30, 36, 0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                  <span
+                    style={{
+                      fontFamily: F.heading,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: '0.14em',
+                      textTransform: 'uppercase',
+                      color: C.red,
+                    }}
+                  >
+                    {activeCarModelObj
+                      ? `Modelo: ${activeCarModelObj.label} (${activeCarModelObj.measures.join(' · ')})`
+                      : `Modelos ${vehicleType}:`}
+                  </span>
+
+                  {POPULAR_CAR_MODELS.filter((cm) =>
+                    vehicleType === 'Todos' ? true : cm.vehicle === vehicleType
+                  ).map((cm) => {
+                    const isModelActive =
+                      activeCarModelObj && activeCarModelObj.id === cm.id;
+                    return (
+                      <button
+                        key={cm.id}
+                        type="button"
+                        onClick={() =>
+                          setCarModel(isModelActive ? '' : cm.id)
+                        }
+                        style={{
+                          padding: '4px 11px',
+                          borderRadius: 9999,
+                          border: isModelActive
+                            ? `1.5px solid ${C.red}`
+                            : '1px solid rgba(26, 31, 54, 0.12)',
+                          background: isModelActive ? C.red : '#F8FAFC',
+                          color: isModelActive ? '#FFFFFF' : C.navy,
+                          fontFamily: F.heading,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {cm.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVehicleType('Todos');
+                    setCarModel('');
+                  }}
+                  style={{
+                    padding: '5px 11px',
+                    borderRadius: 9999,
+                    border: 'none',
+                    background: 'rgba(26, 31, 54, 0.06)',
+                    color: C.navy,
+                    fontFamily: F.heading,
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <X size={12} /> Quitar filtro
+                </button>
+              </div>
             )}
           </div>
-        </div>
+        )}
 
         {/* 2. UNIFIED MINIMALIST CONSOLE: MEDIDAS MÁS PEDIDAS + MARCAS MÁS PEDIDAS + BUSCADOR (Collapsible / Expandable) */}
         <div
@@ -791,6 +1100,42 @@ export default function TiendaCatalogSection({
                   }}
                 />
               </div>
+
+              {/* Tipo de Vehículo (8 Segmentos) */}
+              {!forceStaticCatalog && (
+                <select
+                  value={vehicleType}
+                  onChange={(e) => {
+                    setVehicleType(e.target.value);
+                    setCarModel('');
+                  }}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 9999,
+                    border: 'none',
+                    background: vehicleType !== 'Todos' ? C.navy : '#F5F5F7',
+                    color: vehicleType !== 'Todos' ? C.white : C.navy,
+                    fontFamily: F.heading,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="Todos" style={{ background: C.white, color: C.navy }}>
+                    Vehículo (Todos)
+                  </option>
+                  {VEHICLE_TYPE_OPTIONS.map((vt) => (
+                    <option
+                      key={vt.id}
+                      value={vt.id}
+                      style={{ background: C.white, color: C.navy }}
+                    >
+                      {vt.label}
+                    </option>
+                  ))}
+                </select>
+              )}
 
               {/* Marca (Todas las marcas del catálogo) */}
               <select
@@ -1143,6 +1488,11 @@ export default function TiendaCatalogSection({
       </div>
 
       <style>{`
+        @media (max-width: 1180px) {
+          .catalog-8vehicles-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          }
+        }
         @media (max-width: 960px) {
           .catalog-unified-discovery-grid {
             grid-template-columns: 1fr !important;
@@ -1156,6 +1506,9 @@ export default function TiendaCatalogSection({
           }
         }
         @media (max-width: 780px) {
+          .catalog-8vehicles-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
           .tienda-spotlight-card {
             grid-column: span 1 !important;
             grid-template-columns: 1fr !important;

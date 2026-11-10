@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
 import {
   BRAND_META,
+  VEHICLE_TYPE_OPTIONS,
+  POPULAR_CAR_MODELS,
   useWixCatalogProducts,
   formatMXN,
 } from '../../data/productosMasterData';
+import TiendaVehicleSvg from './TiendaVehicleTypeIcons';
 import { ArrowRight, ArrowUpRight, Plus, Minus } from 'lucide-react';
 
 const SUTRA_BRAND_PANELS = [
@@ -947,6 +950,229 @@ export default function TiendaCategoriesAccordion() {
             );
           })}
         </div>
+
+        {/* VEHICLE TYPE & CAR MODELS MINIMALIST SVG SHOWCASE BELOW BRANDS */}
+        <div
+          style={{
+            marginTop: 52,
+            paddingTop: 42,
+            borderTop: '1px solid rgba(26, 31, 54, 0.08)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 16,
+              marginBottom: 24,
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  letterSpacing: '0.24em',
+                  textTransform: 'uppercase',
+                  color: C.red,
+                  display: 'block',
+                  marginBottom: 6,
+                }}
+              >
+                8 Segmentos Homologados · Modelos de Autos
+              </span>
+              <h3
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 'clamp(1.45rem, 2.6vw, 2.1rem)',
+                  fontWeight: 900,
+                  color: C.navy,
+                  letterSpacing: '-0.03em',
+                  margin: 0,
+                }}
+              >
+                Elige por <span style={{ color: C.red }}>tipo de vehículo.</span>
+              </h3>
+            </div>
+
+            <span
+              style={{
+                fontFamily: F.body,
+                fontSize: 13,
+                color: '#64748B',
+              }}
+            >
+              Selecciona segmento o modelo compatible para filtrar medidas exactas
+            </span>
+          </div>
+
+          <div
+            className="sutra-vehicle-types-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+              gap: 14,
+            }}
+          >
+            {VEHICLE_TYPE_OPTIONS.map((vt) => {
+              const count = catalogProducts.filter((p) =>
+                Array.isArray(p.vehicleTypes)
+                  ? p.vehicleTypes.includes(vt.id)
+                  : p.vehicleType === vt.id
+              ).length;
+
+              return (
+                <Link
+                  key={vt.id}
+                  to={`/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(vt.id)}`}
+                  className="sutra-vehicle-card"
+                  style={{
+                    padding: '18px 18px 16px',
+                    borderRadius: 22,
+                    background: '#F8FAFC',
+                    border: '1px solid rgba(26, 31, 54, 0.08)',
+                    textDecoration: 'none',
+                    color: C.navy,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 10,
+                    }}
+                  >
+                    <TiendaVehicleSvg type={vt.id} width={96} height={36} />
+                    <span
+                      className="sutra-vehicle-badge"
+                      style={{
+                        padding: '4px 9px',
+                        borderRadius: 9999,
+                        background: '#FFFFFF',
+                        border: '1px solid rgba(26, 31, 54, 0.08)',
+                        fontFamily: F.heading,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        color: C.navy,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {count} llantas
+                    </span>
+                  </div>
+
+                  <div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: F.heading,
+                          fontSize: 15,
+                          fontWeight: 900,
+                          color: C.navy,
+                          letterSpacing: '-0.02em',
+                        }}
+                      >
+                        {vt.label}
+                      </span>
+                      <ArrowUpRight size={15} color={C.red} />
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: F.body,
+                        fontSize: 11.5,
+                        color: '#64748B',
+                        marginTop: 3,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {vt.modelsText}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Clickable Car Models Strip ("Modelos de Autos") */}
+          <div
+            style={{
+              marginTop: 16,
+              padding: '14px 18px',
+              borderRadius: 20,
+              background: '#F8FAFC',
+              border: '1px solid rgba(26, 31, 54, 0.07)',
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 8,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: F.heading,
+                fontSize: 10.5,
+                fontWeight: 800,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: C.red,
+                marginRight: 6,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <circle cx="12" cy="12" r="2.5" />
+                <path d="M12 3v6.5M4.2 16.5l5.6-3.2M19.8 16.5l-5.6-3.2" />
+              </svg>
+              Modelos de Autos:
+            </span>
+
+            {POPULAR_CAR_MODELS.map((cm) => (
+              <Link
+                key={cm.id}
+                to={`/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(
+                  cm.vehicle
+                )}&carModel=${encodeURIComponent(cm.id)}`}
+                className="sutra-car-model-pill"
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 9999,
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(26, 31, 54, 0.10)',
+                  color: C.navy,
+                  fontFamily: F.heading,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                }}
+              >
+                <span>{cm.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
 
       <style>{`
@@ -975,6 +1201,24 @@ export default function TiendaCategoriesAccordion() {
           color: #1A1F36 !important;
           transform: translateY(-2px);
         }
+        .sutra-vehicle-card {
+          transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .sutra-vehicle-card:hover {
+          background: #FFF7F7 !important;
+          border-color: #C41E24 !important;
+          transform: translateY(-3px);
+          box-shadow: 0 16px 34px rgba(196, 30, 36, 0.10);
+        }
+        .sutra-car-model-pill {
+          transition: all 0.2s ease;
+        }
+        .sutra-car-model-pill:hover {
+          background: #C41E24 !important;
+          border-color: #C41E24 !important;
+          color: #FFFFFF !important;
+          transform: translateY(-1px);
+        }
         @media (max-width: 1080px) {
           .sutra-brands-desktop {
             display: none !important;
@@ -982,10 +1226,16 @@ export default function TiendaCategoriesAccordion() {
           .sutra-brands-mobile {
             display: flex !important;
           }
+          .sutra-vehicle-types-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
         }
         @media (max-width: 640px) {
           #marcas-acordeon {
             padding: 58px 16px 52px !important;
+          }
+          .sutra-vehicle-types-grid {
+            grid-template-columns: 1fr !important;
           }
         }
       `}</style>
