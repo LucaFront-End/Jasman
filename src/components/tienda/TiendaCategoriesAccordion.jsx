@@ -198,11 +198,19 @@ export default function TiendaCategoriesAccordion() {
           ? Math.min(...matched.map((p) => p.finalPriceTaxExcluded))
           : null;
 
-      const dynamicMeasures = Array.from(
-        new Set(matched.map((p) => p.measure).filter(Boolean))
-      ).slice(0, 3);
-
-      const sampleTire = matched[0] || allForBrand[0] || null;
+      const transparentCutoutItem =
+        matched.find(
+          (p) =>
+            typeof p.cutoutImage === 'string' &&
+            p.cutoutImage.startsWith('/images/tires/') &&
+            p.cutoutImage.endsWith('.png')
+        ) ||
+        allForBrand.find(
+          (p) =>
+            typeof p.cutoutImage === 'string' &&
+            p.cutoutImage.startsWith('/images/tires/') &&
+            p.cutoutImage.endsWith('.png')
+        );
       const meta = BRAND_META[panel.brandKey];
 
       return {
@@ -210,9 +218,7 @@ export default function TiendaCategoriesAccordion() {
         logo: meta?.logo || null,
         count: allForBrand.length,
         minPrice,
-        measures: dynamicMeasures.length > 0 ? dynamicMeasures : panel.fallbackMeasures,
-        tireCutout:
-          sampleTire?.cutoutImage || sampleTire?.primaryImage || panel.fallbackTire,
+        tireCutout: transparentCutoutItem?.cutoutImage || panel.fallbackTire,
         href: `/landing-tienda-preview/catalogo?brand=${encodeURIComponent(panel.brandKey)}`,
       };
     });
@@ -319,7 +325,7 @@ export default function TiendaCategoriesAccordion() {
                   }
                 }}
                 style={{
-                  flex: isActive ? '6.4 1 0%' : '1 1 0%',
+                  flex: isActive ? '7.8 1 0%' : '1 1 0%',
                   minWidth: 0,
                   position: 'relative',
                   borderRadius: isActive ? 28 : 20,
@@ -327,7 +333,7 @@ export default function TiendaCategoriesAccordion() {
                   cursor: 'pointer',
                   background: '#0F1424',
                   border: isActive
-                    ? '1px solid rgba(196, 30, 36, 0.45)'
+                    ? '1px solid rgba(255, 255, 255, 0.16)'
                     : '1px solid rgba(26, 31, 54, 0.12)',
                   boxShadow: isActive
                     ? '0 28px 64px rgba(15, 20, 36, 0.24)'
@@ -351,9 +357,9 @@ export default function TiendaCategoriesAccordion() {
                     height: '100%',
                     objectFit: 'cover',
                     objectPosition: 'center',
-                    transform: isActive ? 'scale(1.04)' : 'scale(1.12)',
+                    transform: isActive ? 'scale(1.03)' : 'scale(1.12)',
                     filter: isActive
-                      ? 'brightness(0.85) contrast(1.06)'
+                      ? 'brightness(0.84) contrast(1.05)'
                       : 'brightness(0.45) grayscale(25%)',
                     transition:
                       'transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease',
@@ -361,13 +367,13 @@ export default function TiendaCategoriesAccordion() {
                   }}
                 />
 
-                {/* Cinematic Gradient Scrim for Crisp Typography */}
+                {/* Minimalist Gradient Scrim: Airy Center + Crisp Bottom Readability */}
                 <div
                   style={{
                     position: 'absolute',
                     inset: 0,
                     background: isActive
-                      ? 'linear-gradient(180deg, rgba(12, 16, 30, 0.38) 0%, rgba(12, 16, 30, 0.56) 46%, rgba(12, 16, 30, 0.95) 100%)'
+                      ? 'linear-gradient(180deg, rgba(10, 14, 26, 0.38) 0%, rgba(10, 14, 26, 0.14) 44%, rgba(10, 14, 26, 0.88) 78%, rgba(10, 14, 26, 0.96) 100%)'
                       : 'linear-gradient(180deg, rgba(12, 16, 30, 0.52) 0%, rgba(12, 16, 30, 0.82) 100%)',
                     pointerEvents: 'none',
                   }}
@@ -433,21 +439,22 @@ export default function TiendaCategoriesAccordion() {
                   </span>
                 </div>
 
-                {/* EXPANDED ACTIVE PANEL VIEW */}
+                {/* EXPANDED ACTIVE PANEL VIEW (3 NON-OVERLAPPING MINIMALIST ZONES) */}
                 <div
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    padding: '26px 28px',
+                    padding: '24px 26px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
+                    gap: 12,
                     opacity: isActive ? 1 : 0,
                     pointerEvents: isActive ? 'auto' : 'none',
-                    transition: isActive ? 'opacity 0.38s ease 0.14s' : 'opacity 0.12s ease',
+                    transition: isActive ? 'opacity 0.36s ease 0.12s' : 'opacity 0.12s ease',
                   }}
                 >
-                  {/* Top Row: Official Brand Vector Logo Pill + Live Model Count */}
+                  {/* Zone 1: Top Official Brand Pill + Subtle Frosted Count */}
                   <div
                     style={{
                       display: 'flex',
@@ -456,15 +463,16 @@ export default function TiendaCategoriesAccordion() {
                       gap: 10,
                       position: 'relative',
                       zIndex: 3,
+                      flexShrink: 0,
                     }}
                   >
                     <div
                       style={{
-                        height: 42,
+                        height: 40,
                         padding: '6px 16px',
                         borderRadius: 9999,
                         background: 'rgba(255, 255, 255, 0.97)',
-                        boxShadow: '0 10px 26px rgba(0, 0, 0, 0.22)',
+                        boxShadow: '0 10px 26px rgba(0, 0, 0, 0.20)',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -475,8 +483,8 @@ export default function TiendaCategoriesAccordion() {
                           src={panel.logo}
                           alt={panel.label}
                           style={{
-                            height: 24,
-                            maxWidth: 132,
+                            height: 22,
+                            maxWidth: 128,
                             width: 'auto',
                             objectFit: 'contain',
                             borderRadius: 3,
@@ -498,134 +506,126 @@ export default function TiendaCategoriesAccordion() {
 
                     <span
                       style={{
-                        padding: '6px 12px',
+                        padding: '6px 13px',
                         borderRadius: 9999,
-                        background: 'rgba(196, 30, 36, 0.92)',
+                        background: 'rgba(255, 255, 255, 0.14)',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        border: '1px solid rgba(255, 255, 255, 0.22)',
                         color: '#FFFFFF',
                         fontFamily: F.heading,
                         fontSize: 10,
                         fontWeight: 800,
-                        letterSpacing: '0.1em',
+                        letterSpacing: '0.08em',
                         textTransform: 'uppercase',
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      {panel.count > 0 ? `${panel.count} modelos` : 'Marca Oficial'}
+                      {panel.count > 0 ? `${panel.count} modelos` : 'Oficial'}
                     </span>
                   </div>
 
-                  {/* Floating 3/4 Studio Tire Cutout on Right */}
-                  <img
-                    src={panel.tireCutout}
-                    alt={`Llanta ${panel.label}`}
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.src = panel.fallbackTire;
-                    }}
+                  {/* Zone 2: Dedicated Clean Center Stage for Transparent 3/4 Tire Cutout (Zero Overlap) */}
+                  <div
                     style={{
-                      position: 'absolute',
-                      right: 16,
-                      top: '22%',
-                      width: 158,
-                      height: 158,
-                      objectFit: 'contain',
-                      filter: 'drop-shadow(0 22px 30px rgba(0, 0, 0, 0.65))',
-                      pointerEvents: 'none',
+                      flex: 1,
+                      minHeight: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      paddingRight: 4,
+                      position: 'relative',
                       zIndex: 2,
+                      pointerEvents: 'none',
                     }}
-                  />
-
-                  {/* Bottom Editorial Content */}
-                  <div style={{ position: 'relative', zIndex: 3, maxWidth: 360 }}>
-                    <span
-                      style={{
-                        fontFamily: F.heading,
-                        fontSize: 10,
-                        fontWeight: 800,
-                        letterSpacing: '0.18em',
-                        textTransform: 'uppercase',
-                        color: '#FCA5A5',
-                        display: 'block',
-                        marginBottom: 6,
+                  >
+                    <img
+                      src={panel.tireCutout}
+                      alt={`Llanta ${panel.label}`}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.src = panel.fallbackTire;
                       }}
-                    >
-                      {panel.index} · {panel.origin}
-                    </span>
-
-                    <h3
                       style={{
-                        fontFamily: F.heading,
-                        fontSize: 'clamp(1.6rem, 2.3vw, 2.2rem)',
-                        fontWeight: 900,
-                        letterSpacing: '-0.03em',
-                        lineHeight: 1.05,
-                        color: '#FFFFFF',
-                        margin: '0 0 10px',
+                        width: 152,
+                        height: 152,
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 22px 28px rgba(0, 0, 0, 0.72))',
+                        transform: isActive ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.95)',
+                        transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
                       }}
-                    >
-                      {panel.label}
-                    </h3>
+                    />
+                  </div>
 
-                    <p
-                      style={{
-                        fontSize: 12.5,
-                        lineHeight: 1.5,
-                        color: 'rgba(255, 255, 255, 0.82)',
-                        margin: '0 0 14px',
-                        maxWidth: 290,
-                      }}
-                    >
-                      {panel.description}
-                    </p>
+                  {/* Zone 3: Minimalist Editorial Footer + Frosted Glass Action Pill */}
+                  <div
+                    style={{
+                      position: 'relative',
+                      zIndex: 3,
+                      flexShrink: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 14,
+                    }}
+                  >
+                    <div>
+                      <span
+                        style={{
+                          fontFamily: F.heading,
+                          fontSize: 10,
+                          fontWeight: 800,
+                          letterSpacing: '0.18em',
+                          textTransform: 'uppercase',
+                          color: 'rgba(255, 255, 255, 0.68)',
+                          display: 'block',
+                          marginBottom: 6,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {panel.index} · {panel.origin}
+                      </span>
 
-                    {/* Quick Measure Chips */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: 6,
-                        marginBottom: 16,
-                      }}
-                    >
-                      {panel.measures.map((m) => (
-                        <Link
-                          key={m}
-                          to={`/landing-tienda-preview/catalogo?brand=${encodeURIComponent(
-                            panel.brandKey
-                          )}&measure=${encodeURIComponent(m)}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="sutra-measure-chip"
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: 9999,
-                            background: 'rgba(255, 255, 255, 0.14)',
-                            backdropFilter: 'blur(10px)',
-                            border: '1px solid rgba(255, 255, 255, 0.22)',
-                            color: '#FFFFFF',
-                            fontFamily: F.heading,
-                            fontSize: 10,
-                            fontWeight: 800,
-                            textDecoration: 'none',
-                          }}
-                        >
-                          {m}
-                        </Link>
-                      ))}
+                      <p
+                        style={{
+                          fontSize: 13.5,
+                          fontWeight: 500,
+                          lineHeight: 1.48,
+                          color: 'rgba(255, 255, 255, 0.94)',
+                          margin: 0,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {panel.description}
+                      </p>
                     </div>
 
-                    {/* Price Con IVA + CTA */}
+                    {/* Sleek Frosted Glass Price + CTA Dock */}
                     <div
                       style={{
-                        paddingTop: 14,
-                        borderTop: '1px solid rgba(255, 255, 255, 0.16)',
+                        padding: '9px 10px 9px 16px',
+                        borderRadius: 9999,
+                        background: 'rgba(255, 255, 255, 0.11)',
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
+                        border: '1px solid rgba(255, 255, 255, 0.16)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         gap: 12,
-                        flexWrap: 'wrap',
                       }}
                     >
-                      <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.78)' }}>
+                      <div
+                        style={{
+                          fontSize: 11.5,
+                          color: 'rgba(255, 255, 255, 0.80)',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         {panel.minPrice ? (
                           <>
                             Desde{' '}
@@ -639,7 +639,7 @@ export default function TiendaCategoriesAccordion() {
                             >
                               {formatMXN(panel.minPrice)}
                             </strong>{' '}
-                            · Con IVA
+                            <span style={{ fontSize: 10.5, opacity: 0.8 }}>· Con IVA</span>
                           </>
                         ) : (
                           <strong style={{ fontFamily: F.heading, color: '#FFFFFF' }}>
@@ -660,16 +660,17 @@ export default function TiendaCategoriesAccordion() {
                           fontFamily: F.heading,
                           fontSize: 10.5,
                           fontWeight: 800,
-                          letterSpacing: '0.08em',
+                          letterSpacing: '0.07em',
                           textTransform: 'uppercase',
                           textDecoration: 'none',
+                          whiteSpace: 'nowrap',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: 5,
-                          boxShadow: '0 8px 22px rgba(196, 30, 36, 0.38)',
+                          boxShadow: '0 8px 20px rgba(196, 30, 36, 0.36)',
                         }}
                       >
-                        Ver {panel.label} <ArrowUpRight size={13} />
+                        Explorar <ArrowUpRight size={13} />
                       </Link>
                     </div>
                   </div>
@@ -808,7 +809,7 @@ export default function TiendaCategoriesAccordion() {
                     style={{
                       position: 'relative',
                       zIndex: 2,
-                      padding: '4px 18px 20px',
+                      padding: '2px 18px 18px',
                       color: '#FFFFFF',
                     }}
                   >
@@ -817,8 +818,8 @@ export default function TiendaCategoriesAccordion() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        gap: 12,
-                        marginBottom: 12,
+                        gap: 14,
+                        marginBottom: 14,
                       }}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -832,7 +833,7 @@ export default function TiendaCategoriesAccordion() {
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              marginBottom: 10,
+                              marginBottom: 8,
                             }}
                           >
                             <img
@@ -848,12 +849,30 @@ export default function TiendaCategoriesAccordion() {
                             />
                           </div>
                         )}
+                        <span
+                          style={{
+                            fontFamily: F.heading,
+                            fontSize: 9.5,
+                            fontWeight: 800,
+                            letterSpacing: '0.14em',
+                            textTransform: 'uppercase',
+                            color: 'rgba(255, 255, 255, 0.65)',
+                            display: 'block',
+                            marginBottom: 4,
+                          }}
+                        >
+                          {panel.origin}
+                        </span>
                         <p
                           style={{
                             fontSize: 12.5,
-                            lineHeight: 1.5,
-                            color: 'rgba(255,255,255,0.86)',
+                            lineHeight: 1.48,
+                            color: 'rgba(255, 255, 255, 0.90)',
                             margin: 0,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
                           }}
                         >
                           {panel.description}
@@ -868,82 +887,71 @@ export default function TiendaCategoriesAccordion() {
                           e.currentTarget.src = panel.fallbackTire;
                         }}
                         style={{
-                          width: 84,
-                          height: 84,
+                          width: 90,
+                          height: 90,
                           objectFit: 'contain',
                           flexShrink: 0,
-                          filter: 'drop-shadow(0 12px 18px rgba(0,0,0,0.55))',
+                          filter: 'drop-shadow(0 14px 20px rgba(0, 0, 0, 0.65))',
                         }}
                       />
                     </div>
 
-                    {/* Quick Measure Chips on Mobile */}
                     <div
                       style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: 6,
-                        marginBottom: 14,
-                      }}
-                    >
-                      {panel.measures.map((m) => (
-                        <Link
-                          key={m}
-                          to={`/landing-tienda-preview/catalogo?brand=${encodeURIComponent(
-                            panel.brandKey
-                          )}&measure=${encodeURIComponent(m)}`}
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: 9999,
-                            background: 'rgba(255, 255, 255, 0.15)',
-                            border: '1px solid rgba(255, 255, 255, 0.24)',
-                            color: '#FFFFFF',
-                            fontFamily: F.heading,
-                            fontSize: 10,
-                            fontWeight: 800,
-                            textDecoration: 'none',
-                          }}
-                        >
-                          {m}
-                        </Link>
-                      ))}
-                    </div>
-
-                    <div
-                      style={{
-                        paddingTop: 12,
-                        borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+                        padding: '8px 9px 8px 14px',
+                        borderRadius: 9999,
+                        background: 'rgba(255, 255, 255, 0.11)',
+                        backdropFilter: 'blur(14px)',
+                        WebkitBackdropFilter: 'blur(14px)',
+                        border: '1px solid rgba(255, 255, 255, 0.16)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        flexWrap: 'wrap',
                         gap: 10,
                       }}
                     >
-                      <span style={{ fontSize: 12, fontWeight: 700 }}>
-                        {panel.minPrice
-                          ? `Desde ${formatMXN(panel.minPrice)} · Con IVA`
-                          : 'Precios Oficiales · Con IVA'}
+                      <span style={{ fontSize: 11.5, color: 'rgba(255, 255, 255, 0.85)' }}>
+                        {panel.minPrice ? (
+                          <>
+                            Desde{' '}
+                            <strong
+                              style={{
+                                fontFamily: F.heading,
+                                fontSize: 14,
+                                fontWeight: 900,
+                                color: '#FFFFFF',
+                              }}
+                            >
+                              {formatMXN(panel.minPrice)}
+                            </strong>{' '}
+                            <span style={{ fontSize: 10, opacity: 0.8 }}>· Con IVA</span>
+                          </>
+                        ) : (
+                          <strong style={{ fontFamily: F.heading, color: '#FFFFFF' }}>
+                            Precios Oficiales · Con IVA
+                          </strong>
+                        )}
                       </span>
                       <Link
                         to={panel.href}
                         style={{
-                          padding: '9px 16px',
+                          padding: '8px 14px',
                           borderRadius: 9999,
                           background: C.red,
                           color: '#FFFFFF',
                           fontFamily: F.heading,
-                          fontSize: 10.5,
+                          fontSize: 10,
                           fontWeight: 800,
-                          letterSpacing: '0.08em',
+                          letterSpacing: '0.07em',
                           textTransform: 'uppercase',
                           textDecoration: 'none',
+                          whiteSpace: 'nowrap',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: 5,
+                          gap: 4,
                         }}
                       >
-                        Ver {panel.label} <ArrowUpRight size={13} />
+                        Explorar <ArrowUpRight size={13} />
                       </Link>
                     </div>
                   </div>
@@ -1186,14 +1194,6 @@ export default function TiendaCategoriesAccordion() {
           color: #FFFFFF !important;
           border-color: #1A1F36 !important;
           transform: translateY(-2px);
-        }
-        .sutra-measure-chip {
-          transition: all 0.22s ease;
-        }
-        .sutra-measure-chip:hover {
-          background: #C41E24 !important;
-          border-color: #C41E24 !important;
-          transform: translateY(-1px);
         }
         .sutra-brand-cta {
           transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
