@@ -11,7 +11,6 @@ import {
   Trash2,
   Plus,
   Minus,
-  MapPin,
   Tag,
   Check,
   MessageCircle,
@@ -28,14 +27,10 @@ export default function TiendaCartDrawer() {
     volumeTier,
     volumeDiscountAmount,
     discountAmount,
-    installationFee,
     totalAfterDiscount,
     coupon,
     user,
     selectedBranchSlug,
-    deliveryMode,
-    setSelectedBranch,
-    setDeliveryMode,
     updateCartQuantity,
     removeFromCart,
     clearCart,
@@ -96,15 +91,12 @@ export default function TiendaCartDrawer() {
       subtotal,
       volumeDiscountAmount,
       discountAmount,
-      installationFee,
-      deliveryMode,
+      installationFee: 0,
+      deliveryMode: 'shipping',
       total: totalAfterDiscount,
       couponCode: coupon?.code || null,
-      branchName:
-        deliveryMode === 'branch'
-          ? selectedBranch?.name || 'Por definir'
-          : 'Entrega a Domicilio Gratis',
-      branchSlug: deliveryMode === 'branch' ? selectedBranch?.slug || '' : 'envio-domicilio',
+      branchName: 'Entrega a Domicilio Gratis',
+      branchSlug: 'envio-domicilio',
       customer: user || { nombre: 'Cliente Web' },
     });
 
@@ -533,114 +525,6 @@ export default function TiendaCartDrawer() {
                 </div>
               ))}
 
-              {/* Kamibi-style Checkbox Add-on for Branch Installation */}
-              <div
-                style={{
-                  padding: '6px 2px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 10,
-                }}
-              >
-                <label
-                  onClick={() =>
-                    setDeliveryMode(deliveryMode === 'branch' ? 'shipping' : 'branch')
-                  }
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 10,
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                  }}
-                >
-                  <span
-                    role="checkbox"
-                    aria-checked={deliveryMode === 'branch'}
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === ' ' || e.key === 'Enter') {
-                        e.preventDefault();
-                        setDeliveryMode(deliveryMode === 'branch' ? 'shipping' : 'branch');
-                      }
-                    }}
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: 6,
-                      border:
-                        deliveryMode === 'branch'
-                          ? `2px solid ${C.red}`
-                          : '2px solid rgba(26, 31, 54, 0.25)',
-                      background: deliveryMode === 'branch' ? C.red : C.white,
-                      color: C.white,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      marginTop: 1,
-                    }}
-                  >
-                    {deliveryMode === 'branch' && <Check size={13} strokeWidth={3} />}
-                  </span>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span
-                        style={{
-                          fontFamily: F.heading,
-                          fontSize: 12.5,
-                          fontWeight: 800,
-                          color: C.navy,
-                        }}
-                      >
-                        Agregar instalación en sucursal
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: F.heading,
-                          fontSize: 11.5,
-                          fontWeight: 900,
-                          color: C.red,
-                        }}
-                      >
-                        +$999.00
-                      </span>
-                    </div>
-                    <span style={{ fontSize: 11, color: C.gray }}>
-                      Montaje, balanceo y válvulas (sin marcar = envío gratis a domicilio)
-                    </span>
-                  </div>
-                </label>
-
-                {deliveryMode === 'branch' && (
-                  <div style={{ paddingLeft: 30, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <MapPin size={13} color={C.red} style={{ flexShrink: 0 }} />
-                    <select
-                      value={selectedBranchSlug}
-                      onChange={(e) => setSelectedBranch(e.target.value)}
-                      style={{
-                        flex: 1,
-                        padding: '8px 12px',
-                        borderRadius: 8,
-                        border: `1px solid ${C.border}`,
-                        background: C.white,
-                        fontFamily: F.body,
-                        fontSize: 12.5,
-                        color: C.navy,
-                        outline: 'none',
-                      }}
-                    >
-                      {sucursales.map((s) => (
-                        <option key={s.slug} value={s.slug}>
-                          {s.name} ({s.zone})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
               {/* Coupon box */}
               <div
                 style={{
@@ -734,17 +618,10 @@ export default function TiendaCartDrawer() {
                   <span>−{formatMXN(discountAmount)}</span>
                 </div>
               )}
-              {deliveryMode === 'branch' ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: C.navy, fontWeight: 700 }}>
-                  <span>Instalación en Sucursal ({selectedBranch?.name})</span>
-                  <span>+{formatMXN(installationFee)}</span>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: '#15803D', fontWeight: 700 }}>
-                  <span>Entrega a Domicilio Nacional</span>
-                  <span>GRATIS</span>
-                </div>
-              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: '#15803D', fontWeight: 700 }}>
+                <span>Entrega a Domicilio Nacional</span>
+                <span>GRATIS</span>
+              </div>
               <div
                 style={{
                   display: 'flex',

@@ -7,12 +7,9 @@ import {
   useWixCatalogProducts,
   findCatalogProductById,
 } from '../data/productosMasterData';
-import { sucursales } from '../data/sucursalesData';
 import {
   useTiendaState,
-  triggerTiendaUI,
   getVolumeDiscountTier,
-  BRANCH_INSTALLATION_FEE,
 } from '../hooks/useTiendaState';
 import { useAppleTilt } from '../hooks/useAppleScrollPhysics';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
@@ -26,7 +23,7 @@ import {
   ShieldCheck,
   MapPin,
   Award,
-  Zap,
+  MessageCircle,
   Star,
   ChevronDown,
   ChevronLeft,
@@ -134,14 +131,7 @@ export default function ProductoPreviewPage() {
 
   const { tilt, onMouseMove, onMouseLeave } = useAppleTilt(4);
 
-  const {
-    addToCart,
-    coupon,
-    selectedBranchSlug,
-    deliveryMode,
-    setSelectedBranch,
-    setDeliveryMode,
-  } = useTiendaState();
+  const { addToCart, coupon } = useTiendaState();
 
   // Show bottom floating buy bar when user scrolls past the main buy button
   useEffect(() => {
@@ -186,9 +176,7 @@ export default function ProductoPreviewPage() {
 
   const rawTotalWithoutDiscounts = basePrice * qty;
   const tiresSubtotalForSelection = unitEffectivePrice * qty;
-  const activeInstallationCost =
-    deliveryMode === 'branch' ? BRANCH_INSTALLATION_FEE : 0;
-  const finalTotalForSelection = tiresSubtotalForSelection + activeInstallationCost;
+  const finalTotalForSelection = tiresSubtotalForSelection;
   const totalSavingsForSelection = Math.max(
     0,
     rawTotalWithoutDiscounts - tiresSubtotalForSelection
@@ -210,8 +198,10 @@ export default function ProductoPreviewPage() {
 
   const activeSlide = galleryImages[selectedImageIdx] || galleryImages[0];
 
-  const selectedBranch =
-    sucursales.find((s) => s.slug === selectedBranchSlug) || sucursales[0];
+  const whatsappMessage = `SW- Hola, quisiera información / asesoría sobre esta llanta en Jasman Tienda:\n• Producto: ${product.cleanTitle}\n• Marca: ${product.brand}\n• Medida: ${product.measure || 'Oficial'}\n• SKU: ${product.reference}\n• Cantidad: ${qty} ${qty === 1 ? 'pieza' : 'piezas'}${basePrice > 0 ? `\n• Precio: ${formatMXN(unitEffectivePrice)} c/u (Con IVA)` : ''}`;
+  const whatsappAdvisorUrl = `https://api.whatsapp.com/send/?phone=5215579337994&text=${encodeURIComponent(
+    whatsappMessage
+  )}`;
 
   const handleAddToCart = () => {
     if (!product.inStock) return;
@@ -1253,153 +1243,7 @@ export default function ProductoPreviewPage() {
               </div>
             </div>
 
-            {/* Kamibi-style Checkbox Add-on for Branch Installation (Containerless) */}
-            <div
-              style={{
-                width: '100%',
-                marginBottom: 20,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              <label
-                onClick={() =>
-                  setDeliveryMode(deliveryMode === 'branch' ? 'shipping' : 'branch')
-                }
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 12,
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                }}
-              >
-                <span
-                  role="checkbox"
-                  aria-checked={deliveryMode === 'branch'}
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === ' ' || e.key === 'Enter') {
-                      e.preventDefault();
-                      setDeliveryMode(deliveryMode === 'branch' ? 'shipping' : 'branch');
-                    }
-                  }}
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 7,
-                    border:
-                      deliveryMode === 'branch'
-                        ? `2px solid ${C.red}`
-                        : '2px solid rgba(26, 31, 54, 0.25)',
-                    background: deliveryMode === 'branch' ? C.red : '#FFFFFF',
-                    color: '#FFFFFF',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    marginTop: 1,
-                    transition: 'all 0.18s ease',
-                    boxShadow:
-                      deliveryMode === 'branch'
-                        ? '0 4px 12px rgba(196, 30, 36, 0.25)'
-                        : 'none',
-                  }}
-                >
-                  {deliveryMode === 'branch' && <Check size={14} strokeWidth={3} />}
-                </span>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: 8,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: F.heading,
-                        fontSize: 13.5,
-                        fontWeight: 800,
-                        color: C.navy,
-                      }}
-                    >
-                      Agregar instalación en sucursal
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: F.heading,
-                        fontSize: 12,
-                        fontWeight: 900,
-                        color: C.red,
-                      }}
-                    >
-                      +{formatMXN(BRANCH_INSTALLATION_FEE)}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: 12, color: '#64748B', lineHeight: 1.45 }}>
-                    Incluye montaje, balanceo y válvulas en +80 sucursales Jasman
-                  </span>
-                </div>
-              </label>
-
-              {deliveryMode === 'branch' && (
-                <div
-                  style={{
-                    paddingLeft: 34,
-                    display: 'flex',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: 10,
-                  }}
-                >
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 5,
-                      fontFamily: F.heading,
-                      fontSize: 11,
-                      fontWeight: 800,
-                      color: C.navy,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                    }}
-                  >
-                    <MapPin size={12} color={C.red} /> Sucursal:
-                  </span>
-                  <select
-                    value={selectedBranchSlug}
-                    onChange={(e) => setSelectedBranch(e.target.value)}
-                    style={{
-                      flex: 1,
-                      minWidth: 210,
-                      padding: '8px 12px',
-                      borderRadius: 10,
-                      border: '1px solid rgba(26, 31, 54, 0.14)',
-                      background: '#FFFFFF',
-                      fontFamily: F.body,
-                      fontSize: 12.5,
-                      fontWeight: 600,
-                      color: C.navy,
-                      outline: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {sucursales.map((s) => (
-                      <option key={s.slug} value={s.slug}>
-                        {s.name} ({s.zone})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {/* Quantity Picker + Primary Add to Cart Button (Moved right up into first view!) */}
+            {/* Quantity Picker + Primary Add to Cart Button */}
             {product.inStock && (
               <div
                 ref={buyButtonRef}
@@ -1503,20 +1347,16 @@ export default function ProductoPreviewPage() {
               </div>
             )}
 
-            {/* Direct Live Store Chat Button (No WhatsApp) */}
-            <button
-              type="button"
-              onClick={() =>
-                triggerTiendaUI({
-                  type: 'OPEN_CHAT',
-                  initialMessage: `Hola, me interesa información sobre ${product.cleanTitle} (${product.measure})`,
-                })
-              }
+            {/* Direct WhatsApp Advisor Button with Product Info */}
+            <a
+              href={whatsappAdvisorUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 width: '100%',
                 padding: '14px 22px',
                 borderRadius: 16,
-                border: '1.5px solid rgba(26, 31, 54, 0.14)',
+                border: '1.5px solid rgba(22, 163, 74, 0.28)',
                 background: '#FFFFFF',
                 color: C.navy,
                 fontFamily: F.heading,
@@ -1525,16 +1365,34 @@ export default function ProductoPreviewPage() {
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 cursor: 'pointer',
+                textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 8,
                 marginBottom: 22,
                 transition: 'all 0.25s ease',
+                boxSizing: 'border-box',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#16A34A';
+                e.currentTarget.style.borderColor = '#16A34A';
+                e.currentTarget.style.color = '#FFFFFF';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow =
+                  '0 12px 26px rgba(22, 163, 74, 0.24)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#FFFFFF';
+                e.currentTarget.style.borderColor = 'rgba(22, 163, 74, 0.28)';
+                e.currentTarget.style.color = C.navy;
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              <Zap size={15} color={C.red} /> Consultar con Asesor en Chat en Línea
-            </button>
+              <MessageCircle size={16} color="currentColor" style={{ color: 'inherit' }} />
+              <span>Consultar con Asesor por WhatsApp</span>
+            </a>
 
             {/* Interactive Glass Accordions Deck */}
             <div
@@ -1571,19 +1429,17 @@ export default function ProductoPreviewPage() {
                 },
                 {
                   id: 'sucursal',
-                  title: 'Sucursal Seleccionada & Horarios',
-                  content: selectedBranch ? (
+                  title: 'Envío Gratis & +80 Sucursales Jasman',
+                  content: (
                     <div style={{ fontSize: 12.5, color: '#64748B', lineHeight: 1.6 }}>
                       <p style={{ margin: '0 0 4px', color: C.navy, fontWeight: 800 }}>
-                        {selectedBranch.name} ({selectedBranch.zone})
+                        Cobertura Nacional Sin Costo de Envío
                       </p>
-                      <p style={{ margin: '0 0 4px' }}>{selectedBranch.address}</p>
                       <p style={{ margin: 0 }}>
-                        Tel: {selectedBranch.phone} · Horario:{' '}
-                        {selectedBranch.hours?.weekdays}
+                        Entrega directa a domicilio en toda la República Mexicana. Si requieres montaje y balanceo en alguna de nuestras +80 sucursales, consulta la cotización exacta para tu medida por WhatsApp.
                       </p>
                     </div>
-                  ) : null,
+                  ),
                 },
               ].map((acc) => {
                 const isOpen = openAccordion === acc.id;
@@ -2192,16 +2048,11 @@ export default function ProductoPreviewPage() {
                     fontWeight: 700,
                     padding: '2px 8px',
                     borderRadius: 999,
-                    background:
-                      deliveryMode === 'shipping'
-                        ? 'rgba(22, 163, 74, 0.22)'
-                        : 'rgba(255, 255, 255, 0.12)',
-                    color: deliveryMode === 'shipping' ? '#86EFAC' : '#E2E8F0',
+                    background: 'rgba(22, 163, 74, 0.22)',
+                    color: '#86EFAC',
                   }}
                 >
-                  {deliveryMode === 'shipping'
-                    ? 'Entrega Gratis'
-                    : `Instalación en Sucursal (+${formatMXN(BRANCH_INSTALLATION_FEE)})`}
+                  Entrega Gratis
                 </span>
               </div>
               <div

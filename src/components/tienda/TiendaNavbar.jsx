@@ -17,14 +17,18 @@ export default function TiendaNavbar({ legacyMode = false }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
+  const [megaMode, setMegaMode] = useState('all');
   const closeMegaTimerRef = useRef(null);
   const { cartCount, user, coupon } = useTiendaState();
   const { pathname } = useLocation();
 
-  const openMegaMenu = () => {
+  const openMegaMenu = (nextMode) => {
     if (closeMegaTimerRef.current) {
       clearTimeout(closeMegaTimerRef.current);
       closeMegaTimerRef.current = null;
+    }
+    if (typeof nextMode === 'string') {
+      setMegaMode(nextMode);
     }
     setMegaOpen(true);
   };
@@ -55,16 +59,16 @@ export default function TiendaNavbar({ legacyMode = false }) {
   const navItems = legacyMode
     ? [
         { label: 'Experiencia', href: '/landing-tienda-preview-copia#hero-stage' },
-        { label: 'Medidas más pedidas', href: '/landing-tienda-preview/catalogo', hasMega: true },
-        { label: 'Marcas', href: '/landing-tienda-preview/catalogo', hasMega: true },
+        { label: 'Medidas más pedidas', href: '/landing-tienda-preview/catalogo', hasMega: true, megaMode: 'all' },
+        { label: 'Marcas', href: '/landing-tienda-preview/catalogo', hasMega: true, megaMode: 'all' },
         { label: 'Catálogo', href: '/landing-tienda-preview/catalogo' },
         { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
       ]
     : [
         { label: 'Inicio', href: '/landing-tienda-preview#hero-stage' },
         { label: 'Catálogo', href: '/landing-tienda-preview/catalogo' },
-        { label: 'Marcas', href: '/landing-tienda-preview/catalogo', hasMega: true },
-        { label: 'Top Medidas', href: '/landing-tienda-preview/catalogo', hasMega: true },
+        { label: 'Marcas', href: '/landing-tienda-preview/catalogo', hasMega: true, megaMode: 'brands' },
+        { label: 'Top Medidas', href: '/landing-tienda-preview/catalogo', hasMega: true, megaMode: 'measures' },
         { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
       ];
 
@@ -285,6 +289,8 @@ export default function TiendaNavbar({ legacyMode = false }) {
               const isLocalAnchor =
                 item.href.startsWith('/landing-tienda-preview#') &&
                 pathname === '/landing-tienda-preview';
+              const isMegaActive =
+                megaOpen && item.hasMega && !legacyMode && megaMode === item.megaMode;
               const linkStyle = {
                 padding: '7px 13px',
                 borderRadius: 9999,
@@ -292,7 +298,8 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 fontSize: 12,
                 fontWeight: 600,
                 letterSpacing: '-0.01em',
-                color: C.navy,
+                background: isMegaActive ? C.red : 'transparent',
+                color: isMegaActive ? C.white : C.navy,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -303,18 +310,22 @@ export default function TiendaNavbar({ legacyMode = false }) {
               };
 
               const handleEnter = (e) => {
-                e.currentTarget.style.background = 'rgba(196, 30, 36, 0.07)';
-                e.currentTarget.style.color = C.red;
+                if (!isMegaActive) {
+                  e.currentTarget.style.background = 'rgba(196, 30, 36, 0.07)';
+                  e.currentTarget.style.color = C.red;
+                }
                 if (item.hasMega) {
-                  openMegaMenu();
+                  openMegaMenu(item.megaMode || 'all');
                 } else {
                   scheduleCloseMegaMenu();
                 }
               };
 
               const handleLeave = (e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = C.navy;
+                if (!isMegaActive) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = C.navy;
+                }
                 if (item.hasMega) {
                   scheduleCloseMegaMenu();
                 }
@@ -474,7 +485,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
       {/* Frosted Glass Mega-Menu Dropdown with Invisible Hover Bridge so cursor never loses hover */}
       {megaOpen && (
         <div
-          onMouseEnter={openMegaMenu}
+          onMouseEnter={() => openMegaMenu()}
           onMouseLeave={scheduleCloseMegaMenu}
           style={{
             maxWidth: 1080,
@@ -497,6 +508,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
           >
             <TiendaMostRequestedSection
               isCompactDropdown
+              mode={megaMode}
               onAfterSelect={() => setMegaOpen(false)}
             />
           </div>

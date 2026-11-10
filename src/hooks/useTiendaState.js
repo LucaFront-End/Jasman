@@ -293,14 +293,11 @@ export function useTiendaState() {
     return subtotalAfterVolume * 0.1;
   }, [coupon, subtotalAfterVolume]);
 
-  const installationFee = useMemo(
-    () => (cartItems.length > 0 && deliveryMode === 'branch' ? BRANCH_INSTALLATION_FEE : 0),
-    [cartItems.length, deliveryMode]
-  );
+  const installationFee = 0;
 
   const totalAfterDiscount = useMemo(
-    () => Math.max(0, subtotalAfterVolume - discountAmount) + installationFee,
-    [subtotalAfterVolume, discountAmount, installationFee]
+    () => Math.max(0, subtotalAfterVolume - discountAmount),
+    [subtotalAfterVolume, discountAmount]
   );
 
   return {
