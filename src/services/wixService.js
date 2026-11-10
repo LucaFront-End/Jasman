@@ -1064,7 +1064,10 @@ export async function createWixEcommerceCheckout(orderRecord) {
   }
 
   try {
-    await ensureWixVisitorTokens();
+    if (!wixClient.auth.loggedIn()) {
+      const vt = await wixClient.auth.generateVisitorTokens();
+      wixClient.auth.setTokens(vt);
+    }
     const lineItems = orderRecord.items
       .filter((item) => item.wixId)
       .map((item) => ({
