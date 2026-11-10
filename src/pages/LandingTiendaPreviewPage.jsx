@@ -11,7 +11,7 @@ import { useAppleTilt } from '../hooks/useAppleScrollPhysics';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import Tire3DStudioStage from '../components/tienda/Tire3DStudioStage';
 import TiendaCategoriesAccordion from '../components/tienda/TiendaCategoriesAccordion';
-import TiendaCatalogSection from '../components/tienda/TiendaCatalogSection';
+import TiendaHomeCarousels from '../components/tienda/TiendaHomeCarousels';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
 import TiendaAuthModal from '../components/tienda/TiendaAuthModal';
 import FirstPurchasePopup from '../components/tienda/FirstPurchasePopup';
@@ -322,7 +322,7 @@ export default function LandingTiendaPreviewPage() {
               }}
             >
               <div style={{ fontSize: 9.5, fontFamily: F.heading, fontWeight: 800, letterSpacing: '0.2em', color: C.red, textTransform: 'uppercase' }}>
-                Precio Oficial (Sin IVA)
+                Precio Oficial (Con IVA)
               </div>
               <div style={{ fontSize: 22, fontFamily: F.heading, fontWeight: 900, color: C.navy, marginTop: 2 }}>
                 {formatMXN(heroPrice)}
@@ -435,7 +435,7 @@ export default function LandingTiendaPreviewPage() {
                   </>
                 ) : (
                   <>
-                    <ShoppingBag size={14} /> Comprar · {formatMXN(heroPrice)}
+                    <ShoppingBag size={14} /> Agregar · {formatMXN(heroPrice)}
                   </>
                 )}
               </button>
@@ -533,11 +533,11 @@ export default function LandingTiendaPreviewPage() {
         </div>
       </section>
 
-      {/* 2. SUTRA-STYLE EXPANDING CATEGORIES ACCORDION */}
+      {/* 2. SUTRA-STYLE EXPANDING 13-BRANDS PHOTO ACCORDION */}
       <TiendaCategoriesAccordion />
 
-      {/* 4. UNIFIED CATALOG, MEDIDAS MÁS PEDIDAS & MARCAS MÁS PEDIDAS */}
-      <TiendaCatalogSection id="catalogo-tienda" />
+      {/* 3. THREE SEPARATE HOME CAROUSELS: OFERTAS EXPRESS, ENVÍO GRATIS & MESES SIN INTERESES */}
+      <TiendaHomeCarousels />
 
       {/* 5. RESEÑAS DE CONDUCTORES VERIFICADOS — SINGLE INFINITE MARQUEE WITH LATERAL BLUR */}
       <section

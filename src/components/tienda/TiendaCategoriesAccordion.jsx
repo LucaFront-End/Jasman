@@ -1,115 +1,231 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
-import { useWixCatalogProducts, formatMXN } from '../../data/productosMasterData';
+import {
+  BRAND_META,
+  useWixCatalogProducts,
+  formatMXN,
+} from '../../data/productosMasterData';
 import { ArrowRight, ArrowUpRight, Plus, Minus } from 'lucide-react';
 
-const CATEGORY_PANELS = [
+const SUTRA_BRAND_PANELS = [
   {
-    id: 'auto-sedan',
+    id: 'michelin',
     index: '01',
-    title: 'Auto & Sedán',
-    shortTitle: 'Auto & Sedán',
-    tag: 'Confort Urbano & Autopista',
+    label: 'MICHELIN',
+    brandKey: 'Michelin',
+    origin: 'Ingeniería Francesa · Larga Duración',
     description:
-      'Frenado preciso en piso seco y mojado, silencio superior en cabina y baja resistencia al rodamiento para conducción diaria.',
-    tireImage: '/images/tires/tire-539.png',
-    measures: ['205/55R16', '195/65R15', '185/65R15', '175/70R14'],
-    href: '/landing-tienda-preview/catalogo?vehicle=Auto',
-    matcher: (p) => p.vehicleType === 'Auto',
+      'Compuesto EverGrip™ que mantiene distancias cortas de frenado en piso seco y mojado desde el primer hasta el último kilómetro.',
+    photo:
+      'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-539.png',
+    fallbackMeasures: ['205/55R16', '225/45R17', '215/55R17'],
   },
   {
-    id: 'suv-camioneta',
+    id: 'bfgoodrich',
     index: '02',
-    title: 'SUV & Crossover',
-    shortTitle: 'SUV & Crossover',
-    tag: 'Estabilidad & Viajes Familiares',
+    label: 'BFGOODRICH',
+    brandKey: 'BFGoodrich',
+    origin: 'Tracción Off-Road & All-Terrain',
     description:
-      'Hombros reforzados y huella optimizada para camionetas y SUVs que exigen control total en curvas y alto kilometraje.',
-    tireImage: '/images/tires/tire-561.png',
-    measures: ['215/65R17', '235/65R16', '265/60R18', '285/45R21'],
-    href: '/landing-tienda-preview/catalogo?vehicle=Camioneta',
-    matcher: (p) => p.vehicleType === 'Camioneta',
+      'Costados CoreGard™ probados en competencia todoterreno con bloques agresivos para dominar asfalto, grava, lodo y roca.',
+    photo:
+      'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-568.png',
+    fallbackMeasures: ['265/70R17', '245/75R17', '31X10.50R15'],
   },
   {
-    id: 'todo-terreno',
+    id: 'goodyear',
     index: '03',
-    title: 'Todo Terreno 4×4',
-    shortTitle: 'Todo Terreno 4×4',
-    tag: 'Pick-Up, Grava & Off-Road',
+    label: 'GOODYEAR',
+    brandKey: 'Goodyear',
+    origin: 'Tecnología Estadounidense · ActiveBraking',
     description:
-      'Carcasa de ultra resistencia contra impactos y diseño de bloques profundos para tracción confiable en asfalto y terracería.',
-    tireImage: '/images/tires/tire-543.png',
-    measures: ['245/75R17', '235/75R15', '31X10.50R15', '27X8.50R14'],
-    href: '/landing-tienda-preview/catalogo?vehicle=Camioneta&measure=75',
-    matcher: (p) =>
-      /AT2|MT2|Grabber|Overlander|All Terrain|Destination|Terrain|X10|X12|X8|75R/i.test(
-        p.cleanTitle || ''
-      ),
+      'Mayor superficie de contacto bajo frenado exigente, carcasa reforzada contra baches y confort silencioso en carretera.',
+    photo:
+      'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-572.png',
+    fallbackMeasures: ['195/65R15', '205/55R16', '215/60R16'],
   },
   {
-    id: 'carga-camion',
+    id: 'kelly',
     index: '04',
-    title: 'Carga & Flotilla',
-    shortTitle: 'Carga & Flotilla',
-    tag: 'Vans Comerciales & Camión',
+    label: 'KELLY',
+    brandKey: 'Kelly',
+    origin: 'Respaldo Goodyear · Ciudad & Diario',
     description:
-      'Estructura multicapa para trabajo pesado y desgaste uniforme que maximiza la rentabilidad operativa de tu negocio.',
-    tireImage: '/images/tires/tire-564.png',
-    measures: ['225/70R19.5', '215/75R17.5', '285/65R16C', '10R15'],
-    href: '/landing-tienda-preview/catalogo?vehicle=Camión',
-    matcher: (p) => p.vehicleType === 'Camión',
+      'Banda de rodamiento optimizada para alto rendimiento kilométrico, desgaste uniforme y máxima confiabilidad en uso urbano.',
+    photo:
+      'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-590.png',
+    fallbackMeasures: ['175/70R14', '185/65R15', '195/65R15'],
   },
   {
-    id: 'performance',
+    id: 'hankook',
     index: '05',
-    title: 'Alto Desempeño',
-    shortTitle: 'Performance',
-    tag: 'Sport & Rines 17" a 21"',
+    label: 'HANKOOK',
+    brandKey: 'Hankook',
+    origin: 'Socio Técnico Oficial · FIA Formula E',
     description:
-      'Compuestos inspirados en motorsport y Formula E para máxima adherencia a alta velocidad y respuesta inmediata de dirección.',
-    tireImage: '/images/tires/tire-540.png',
-    measures: ['225/45R17', '215/45R18', '205/45R17', '285/45R21'],
-    href: '/landing-tienda-preview/catalogo?rim=R18',
-    matcher: (p) =>
-      /Ventus|Sport|Pilot|P Zero|Potenza|PremiumContact|Premium Contact|R18|R19|R20|R21|\/45R|\/40R/i.test(
-        p.cleanTitle || ''
-      ),
+      'Compuestos de sílice de alta dispersión desarrollados para máxima adherencia, eficiencia energética y control deportivo.',
+    photo:
+      'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-561.png',
+    fallbackMeasures: ['205/55R16', '185/65R15', '285/45R21'],
+  },
+  {
+    id: 'laufenn',
+    index: '06',
+    label: 'LAUFENN',
+    brandKey: 'Laufenn',
+    origin: 'By Hankook · Desempeño Inteligente',
+    description:
+      'Diseño asimétrico de 4 canales longitudinales para evacuación rápida de agua, estabilidad en curvas y manejo dinámico.',
+    photo:
+      'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-555.png',
+    fallbackMeasures: ['215/45R17', '215/55R17', '205/55R16'],
+  },
+  {
+    id: 'pirelli',
+    index: '07',
+    label: 'PIRELLI',
+    brandKey: 'Pirelli',
+    origin: 'Herencia Italiana · Ultra High Performance',
+    description:
+      'Equipo original de las firmas deportivas más prestigiosas del mundo con precisión milimétrica en dirección y curvas.',
+    photo:
+      'https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-589.png',
+    fallbackMeasures: ['225/45R17', '235/55R18', '205/55R16'],
+  },
+  {
+    id: 'firestone',
+    index: '08',
+    label: 'FIRESTONE',
+    brandKey: 'Firestone',
+    origin: 'Tradición & Resistencia Comprobada',
+    description:
+      'Canales hidrodinámicos y estructura robusta diseñada para brindar tracción constante y larga vida útil en ciudad y autopista.',
+    photo:
+      'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-542.png',
+    fallbackMeasures: ['185/65R15', '195/65R15', '235/75R15'],
+  },
+  {
+    id: 'bridgestone',
+    index: '09',
+    label: 'BRIDGESTONE',
+    brandKey: 'Bridgestone',
+    origin: 'Ingeniería Japonesa · NanoPro-Tech™',
+    description:
+      'Compuestos avanzados de equipo original que reducen la fricción térmica, mejoran el frenado en mojado y maximizan confort.',
+    photo:
+      'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-546.png',
+    fallbackMeasures: ['205/55R16', '195/65R15', '215/65R16'],
+  },
+  {
+    id: 'euzkadi',
+    index: '10',
+    label: 'EUZKADI',
+    brandKey: 'Euzkadi',
+    origin: 'Hecha para los Caminos de México',
+    description:
+      'Hombros reforzados de alta resistencia contra impactos y excelente tracción para autos, camionetas y carga ligera.',
+    photo:
+      'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-569.png',
+    fallbackMeasures: ['185/65R14', '235/75R15', '27X8.50R14'],
+  },
+  {
+    id: 'continental',
+    index: '11',
+    label: 'CONTINENTAL',
+    brandKey: 'Continental',
+    origin: 'Ingeniería Alemana · SafetySilica',
+    description:
+      'Diseño macro-bloque de precisión alemana que acorta la distancia de frenado y eleva el kilometraje en todo clima.',
+    photo:
+      'https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-572.png',
+    fallbackMeasures: ['205/55R16', '195/65R15', '225/70R19.5'],
+  },
+  {
+    id: 'general',
+    index: '12',
+    label: 'GENERAL',
+    brandKey: 'General Tire',
+    origin: 'Tecnología Duragen™ · SUV & 4×4',
+    description:
+      'Carcasa de ultra resistencia ideal para SUVs y Pick-Ups que demandan estabilidad en carretera y capacidad todoterreno.',
+    photo:
+      'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-568.png',
+    fallbackMeasures: ['245/75R17', '235/75R15', '27X8.50R14'],
+  },
+  {
+    id: 'barum',
+    index: '13',
+    label: 'BARUM',
+    brandKey: 'Barum',
+    origin: 'Grupo Continental · Europa',
+    description:
+      'Respaldada por la ingeniería europea de Grupo Continental, ofrece desgaste uniforme, bajo ruido y gran costo-kilómetro.',
+    photo:
+      'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=1000&q=80',
+    fallbackTire: '/images/tires/tire-538.png',
+    fallbackMeasures: ['185/60R15', '195/65R15', '205/55R16'],
   },
 ];
 
 export default function TiendaCategoriesAccordion() {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeId, setActiveId] = useState(SUTRA_BRAND_PANELS[0].id);
   const { products: catalogProducts } = useWixCatalogProducts();
 
-  const enrichedCategories = useMemo(() => {
-    return CATEGORY_PANELS.map((cat) => {
-      const matched = catalogProducts.filter(cat.matcher);
-      const inStockPrices = matched
-        .filter((p) => p.inStock && p.finalPriceTaxExcluded > 0)
-        .map((p) => p.finalPriceTaxExcluded);
+  const enrichedPanels = useMemo(() => {
+    return SUTRA_BRAND_PANELS.map((panel) => {
+      const matched = catalogProducts.filter(
+        (p) => p.brand === panel.brandKey && p.inStock && p.finalPriceTaxExcluded > 0
+      );
+      const allForBrand = catalogProducts.filter((p) => p.brand === panel.brandKey);
       const minPrice =
-        inStockPrices.length > 0 ? Math.min(...inStockPrices) : null;
+        matched.length > 0
+          ? Math.min(...matched.map((p) => p.finalPriceTaxExcluded))
+          : null;
+
+      const dynamicMeasures = Array.from(
+        new Set(matched.map((p) => p.measure).filter(Boolean))
+      ).slice(0, 3);
+
+      const sampleTire = matched[0] || allForBrand[0] || null;
+      const meta = BRAND_META[panel.brandKey];
 
       return {
-        ...cat,
-        count: matched.length,
+        ...panel,
+        logo: meta?.logo || null,
+        count: allForBrand.length,
         minPrice,
+        measures: dynamicMeasures.length > 0 ? dynamicMeasures : panel.fallbackMeasures,
+        tireCutout:
+          sampleTire?.cutoutImage || sampleTire?.primaryImage || panel.fallbackTire,
+        href: `/landing-tienda-preview/catalogo?brand=${encodeURIComponent(panel.brandKey)}`,
       };
     });
   }, [catalogProducts]);
 
   return (
     <section
-      id="marcas-tienda"
+      id="marcas-acordeon"
       style={{
-        padding: '96px 24px 104px',
+        padding: '96px 24px 88px',
         background: '#FFFFFF',
-        borderTop: '1px solid rgba(26, 31, 54, 0.05)',
+        borderTop: '1px solid rgba(26, 31, 54, 0.06)',
       }}
     >
-      <div style={{ maxWidth: 1260, margin: '0 auto' }}>
-        {/* Editorial Header */}
+      <div style={{ maxWidth: 1360, margin: '0 auto' }}>
+        {/* Section Header */}
         <div
           style={{
             display: 'flex',
@@ -117,7 +233,7 @@ export default function TiendaCategoriesAccordion() {
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: 20,
-            marginBottom: 40,
+            marginBottom: 38,
           }}
         >
           <div>
@@ -133,12 +249,12 @@ export default function TiendaCategoriesAccordion() {
                 marginBottom: 10,
               }}
             >
-              Categorías Oficiales · Selección Jasman
+              13 Firmas Oficiales · Garantía Directa
             </span>
             <h2
               style={{
                 fontFamily: F.heading,
-                fontSize: 'clamp(2.1rem, 4vw, 3.3rem)',
+                fontSize: 'clamp(2.1rem, 4vw, 3.35rem)',
                 fontWeight: 900,
                 color: C.navy,
                 letterSpacing: '-0.04em',
@@ -146,17 +262,18 @@ export default function TiendaCategoriesAccordion() {
                 margin: 0,
               }}
             >
-              Encuentra tu categoría ideal.
+              Explora por <span style={{ color: C.red }}>marca.</span>
             </h2>
           </div>
 
           <Link
             to="/landing-tienda-preview/catalogo"
+            className="sutra-brands-all-btn"
             style={{
               padding: '12px 22px',
               borderRadius: 9999,
               background: '#F8F9FA',
-              border: '1px solid rgba(26, 31, 54, 0.09)',
+              border: '1px solid rgba(26, 31, 54, 0.10)',
               color: C.navy,
               fontFamily: F.heading,
               fontSize: 11.5,
@@ -173,495 +290,317 @@ export default function TiendaCategoriesAccordion() {
           </Link>
         </div>
 
-        {/* DESKTOP: SUTRA-STYLE HORIZONTAL EXPANDING ACCORDION */}
-        <div className="jasman-sutra-accordion-desktop">
-          {enrichedCategories.map((cat, idx) => {
-            const isActive = idx === activeIndex;
+        {/* DESKTOP SUTRA HORIZONTAL EXPANDING 13-BRAND PHOTO ACCORDION */}
+        <div
+          className="sutra-brands-desktop"
+          style={{
+            display: 'flex',
+            gap: 8,
+            height: 510,
+            width: '100%',
+          }}
+        >
+          {enrichedPanels.map((panel) => {
+            const isActive = panel.id === activeId;
             return (
               <div
-                key={cat.id}
-                onMouseEnter={() => setActiveIndex(idx)}
-                onClick={() => setActiveIndex(idx)}
+                key={panel.id}
                 role="button"
                 tabIndex={0}
+                onMouseEnter={() => setActiveId(panel.id)}
+                onClick={() => setActiveId(panel.id)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    setActiveIndex(idx);
+                    setActiveId(panel.id);
                   }
                 }}
                 style={{
-                  flex: isActive ? '3.6 1 0%' : '0.82 1 0%',
+                  flex: isActive ? '6.4 1 0%' : '1 1 0%',
+                  minWidth: 0,
                   position: 'relative',
-                  height: 490,
-                  borderRadius: 30,
+                  borderRadius: isActive ? 28 : 20,
                   overflow: 'hidden',
-                  cursor: isActive ? 'default' : 'pointer',
-                  background: isActive
-                    ? 'linear-gradient(135deg, #15192B 0%, #1A1F36 58%, #2B1722 100%)'
-                    : '#F6F7F9',
+                  cursor: 'pointer',
+                  background: '#0F1424',
                   border: isActive
-                    ? '1px solid rgba(196, 30, 36, 0.32)'
-                    : '1px solid rgba(26, 31, 54, 0.08)',
+                    ? '1px solid rgba(196, 30, 36, 0.45)'
+                    : '1px solid rgba(26, 31, 54, 0.12)',
                   boxShadow: isActive
-                    ? '0 28px 64px rgba(26, 31, 54, 0.18)'
-                    : '0 6px 20px rgba(26, 31, 54, 0.03)',
+                    ? '0 28px 64px rgba(15, 20, 36, 0.24)'
+                    : '0 8px 24px rgba(15, 20, 36, 0.08)',
                   transition:
-                    'flex 0.65s cubic-bezier(0.16, 1, 0.3, 1), background 0.45s ease, box-shadow 0.45s ease, border-color 0.35s ease',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  padding: isActive ? '34px 36px' : '26px 20px',
+                    'flex 0.56s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.4s ease, box-shadow 0.4s ease, border-color 0.35s ease',
                 }}
               >
-                {/* Ambient Crimson Studio Glow inside Active Panel */}
-                <div
+                {/* Full-bleed Automotive Background Photo */}
+                <img
+                  src={panel.photo}
+                  alt={panel.label}
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/promo-landing-banner.jpg';
+                  }}
                   style={{
                     position: 'absolute',
-                    right: -60,
-                    bottom: -60,
-                    width: 360,
-                    height: 360,
-                    borderRadius: '50%',
-                    background:
-                      'radial-gradient(circle, rgba(196, 30, 36, 0.28) 0%, rgba(196, 30, 36, 0) 70%)',
-                    opacity: isActive ? 1 : 0,
-                    transition: 'opacity 0.5s ease',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    transform: isActive ? 'scale(1.04)' : 'scale(1.12)',
+                    filter: isActive
+                      ? 'brightness(0.85) contrast(1.06)'
+                      : 'brightness(0.45) grayscale(25%)',
+                    transition:
+                      'transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease',
                     pointerEvents: 'none',
                   }}
                 />
 
-                {/* Top Bar: Index + Count / Toggle Icon */}
+                {/* Cinematic Gradient Scrim for Crisp Typography */}
                 <div
                   style={{
-                    position: 'relative',
-                    zIndex: 3,
+                    position: 'absolute',
+                    inset: 0,
+                    background: isActive
+                      ? 'linear-gradient(180deg, rgba(12, 16, 30, 0.38) 0%, rgba(12, 16, 30, 0.56) 46%, rgba(12, 16, 30, 0.95) 100%)'
+                      : 'linear-gradient(180deg, rgba(12, 16, 30, 0.52) 0%, rgba(12, 16, 30, 0.82) 100%)',
+                    pointerEvents: 'none',
+                  }}
+                />
+
+                {/* COLLAPSED VERTICAL STRIP VIEW */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    padding: '18px 0',
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: 10,
+                    opacity: isActive ? 0 : 1,
+                    pointerEvents: isActive ? 'none' : 'auto',
+                    transition: 'opacity 0.22s ease',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span
-                      style={{
-                        fontFamily: F.heading,
-                        fontSize: 12,
-                        fontWeight: 900,
-                        letterSpacing: '0.14em',
-                        color: isActive ? '#FCA5A5' : C.red,
-                      }}
-                    >
-                      {cat.index}
-                    </span>
-                    {isActive && (
-                      <span
-                        style={{
-                          padding: '5px 12px',
-                          borderRadius: 9999,
-                          background: 'rgba(255, 255, 255, 0.10)',
-                          border: '1px solid rgba(255, 255, 255, 0.14)',
-                          color: '#FFFFFF',
-                          fontFamily: F.heading,
-                          fontSize: 10,
-                          fontWeight: 800,
-                          letterSpacing: '0.14em',
-                          textTransform: 'uppercase',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {cat.count} modelos disponibles
-                      </span>
-                    )}
-                  </div>
+                  <span
+                    style={{
+                      fontFamily: F.heading,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: '0.08em',
+                      color: 'rgba(255, 255, 255, 0.68)',
+                    }}
+                  >
+                    {panel.index}
+                  </span>
 
                   <span
                     style={{
-                      width: 34,
-                      height: 34,
+                      writingMode: 'vertical-rl',
+                      transform: 'rotate(180deg)',
+                      fontFamily: F.heading,
+                      fontSize: 12.5,
+                      fontWeight: 900,
+                      letterSpacing: '0.16em',
+                      color: '#FFFFFF',
+                      whiteSpace: 'nowrap',
+                      textShadow: '0 2px 10px rgba(0,0,0,0.45)',
+                    }}
+                  >
+                    {panel.label}
+                  </span>
+
+                  <span
+                    style={{
+                      width: 26,
+                      height: 26,
                       borderRadius: '50%',
-                      background: isActive ? C.red : '#FFFFFF',
-                      border: isActive
-                        ? 'none'
-                        : '1px solid rgba(26, 31, 54, 0.10)',
-                      color: isActive ? '#FFFFFF' : C.navy,
+                      background: 'rgba(255, 255, 255, 0.14)',
+                      border: '1px solid rgba(255, 255, 255, 0.24)',
+                      color: '#FFFFFF',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      flexShrink: 0,
-                      transition: 'all 0.3s ease',
                     }}
                   >
-                    {isActive ? <ArrowUpRight size={15} /> : <Plus size={15} />}
+                    <Plus size={13} />
                   </span>
                 </div>
 
-                {/* COLLAPSED STATE: Vertical Architectural Title + Count */}
-                {!isActive && (
+                {/* EXPANDED ACTIVE PANEL VIEW */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    padding: '26px 28px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    opacity: isActive ? 1 : 0,
+                    pointerEvents: isActive ? 'auto' : 'none',
+                    transition: isActive ? 'opacity 0.38s ease 0.14s' : 'opacity 0.12s ease',
+                  }}
+                >
+                  {/* Top Row: Official Brand Vector Logo Pill + Live Model Count */}
                   <div
                     style={{
-                      position: 'relative',
-                      zIndex: 2,
-                      flex: 1,
                       display: 'flex',
-                      flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      paddingTop: 24,
+                      gap: 10,
+                      position: 'relative',
+                      zIndex: 3,
                     }}
                   >
                     <div
                       style={{
-                        writingMode: 'vertical-rl',
-                        transform: 'rotate(180deg)',
-                        fontFamily: F.heading,
-                        fontSize: 19,
-                        fontWeight: 900,
-                        letterSpacing: '-0.02em',
-                        color: C.navy,
-                        whiteSpace: 'nowrap',
-                        margin: 'auto 0',
+                        height: 38,
+                        padding: '6px 16px',
+                        borderRadius: 9999,
+                        background: 'rgba(255, 255, 255, 0.96)',
+                        boxShadow: '0 10px 26px rgba(0, 0, 0, 0.22)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      {cat.shortTitle}
+                      {panel.logo ? (
+                        <img
+                          src={panel.logo}
+                          alt={panel.label}
+                          style={{
+                            height: 20,
+                            maxWidth: 120,
+                            width: 'auto',
+                            objectFit: 'contain',
+                          }}
+                        />
+                      ) : (
+                        <span
+                          style={{
+                            fontFamily: F.heading,
+                            fontSize: 12,
+                            fontWeight: 900,
+                            color: C.navy,
+                          }}
+                        >
+                          {panel.label}
+                        </span>
+                      )}
                     </div>
 
                     <span
                       style={{
-                        padding: '4px 10px',
+                        padding: '6px 12px',
                         borderRadius: 9999,
-                        background: 'rgba(26, 31, 54, 0.06)',
-                        color: '#475569',
+                        background: 'rgba(196, 30, 36, 0.92)',
+                        color: '#FFFFFF',
                         fontFamily: F.heading,
                         fontSize: 10,
                         fontWeight: 800,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      {cat.count}
+                      {panel.count > 0 ? `${panel.count} modelos` : 'Marca Oficial'}
                     </span>
                   </div>
-                )}
 
-                {/* EXPANDED STATE: Full Editorial Content + 3/4 Studio Cutout Tire */}
-                {isActive && (
-                  <div
-                    style={{
-                      position: 'relative',
-                      zIndex: 3,
-                      flex: 1,
-                      display: 'grid',
-                      gridTemplateColumns: 'minmax(0, 1.25fr) minmax(0, 0.75fr)',
-                      alignItems: 'center',
-                      gap: 20,
-                      marginTop: 18,
+                  {/* Floating 3/4 Studio Tire Cutout on Right */}
+                  <img
+                    src={panel.tireCutout}
+                    alt={`Llanta ${panel.label}`}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.src = panel.fallbackTire;
                     }}
-                  >
-                    {/* Left Copy + Quick Measures + CTA */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        height: '100%',
-                      }}
-                    >
-                      <div>
-                        <div
-                          style={{
-                            fontFamily: F.heading,
-                            fontSize: 10.5,
-                            fontWeight: 800,
-                            letterSpacing: '0.2em',
-                            textTransform: 'uppercase',
-                            color: '#FCA5A5',
-                            marginBottom: 8,
-                          }}
-                        >
-                          {cat.tag}
-                        </div>
+                    style={{
+                      position: 'absolute',
+                      right: 16,
+                      top: '22%',
+                      width: 158,
+                      height: 158,
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 22px 30px rgba(0, 0, 0, 0.65))',
+                      pointerEvents: 'none',
+                      zIndex: 2,
+                    }}
+                  />
 
-                        <h3
-                          style={{
-                            fontFamily: F.heading,
-                            fontSize: 'clamp(1.85rem, 2.8vw, 2.5rem)',
-                            fontWeight: 900,
-                            color: '#FFFFFF',
-                            letterSpacing: '-0.035em',
-                            lineHeight: 1.05,
-                            margin: '0 0 14px',
-                          }}
-                        >
-                          {cat.title}
-                        </h3>
-
-                        <p
-                          style={{
-                            fontFamily: F.body,
-                            fontSize: 13.5,
-                            lineHeight: 1.6,
-                            color: 'rgba(255, 255, 255, 0.76)',
-                            margin: '0 0 20px',
-                            maxWidth: 420,
-                          }}
-                        >
-                          {cat.description}
-                        </p>
-
-                        {/* Quick Measure Chips */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 7,
-                          }}
-                        >
-                          {cat.measures.map((m) => (
-                            <Link
-                              key={m}
-                              to={`/landing-tienda-preview/catalogo?measure=${encodeURIComponent(m)}`}
-                              onClick={(e) => e.stopPropagation()}
-                              style={{
-                                padding: '5px 11px',
-                                borderRadius: 9999,
-                                background: 'rgba(255, 255, 255, 0.08)',
-                                border: '1px solid rgba(255, 255, 255, 0.15)',
-                                color: '#FFFFFF',
-                                fontFamily: F.heading,
-                                fontSize: 10.5,
-                                fontWeight: 700,
-                                textDecoration: 'none',
-                              }}
-                            >
-                              {m}
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Bottom Price + Direct Category Route */}
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          flexWrap: 'wrap',
-                          gap: 14,
-                          paddingTop: 18,
-                          borderTop: '1px solid rgba(255, 255, 255, 0.10)',
-                        }}
-                      >
-                        {cat.minPrice ? (
-                          <div>
-                            <div
-                              style={{
-                                fontFamily: F.heading,
-                                fontSize: 9.5,
-                                fontWeight: 700,
-                                letterSpacing: '0.16em',
-                                textTransform: 'uppercase',
-                                color: 'rgba(255, 255, 255, 0.56)',
-                              }}
-                            >
-                              Desde
-                            </div>
-                            <div
-                              style={{
-                                fontFamily: F.heading,
-                                fontSize: 18,
-                                fontWeight: 900,
-                                color: '#FFFFFF',
-                              }}
-                            >
-                              {formatMXN(cat.minPrice)}
-                            </div>
-                          </div>
-                        ) : (
-                          <span />
-                        )}
-
-                        <Link
-                          to={cat.href}
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            padding: '12px 22px',
-                            borderRadius: 9999,
-                            background: C.red,
-                            color: '#FFFFFF',
-                            fontFamily: F.heading,
-                            fontSize: 11,
-                            fontWeight: 800,
-                            letterSpacing: '0.1em',
-                            textTransform: 'uppercase',
-                            textDecoration: 'none',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 8,
-                            boxShadow: '0 10px 26px rgba(196, 30, 36, 0.38)',
-                          }}
-                        >
-                          Explorar Categoría <ArrowUpRight size={14} />
-                        </Link>
-                      </div>
-                    </div>
-
-                    {/* Right Studio Floating Cutout Tire */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'relative',
-                      }}
-                    >
-                      <img
-                        src={cat.tireImage}
-                        alt={cat.title}
-                        style={{
-                          width: '100%',
-                          maxWidth: 235,
-                          height: 'auto',
-                          objectFit: 'contain',
-                          filter: 'drop-shadow(0 24px 36px rgba(0, 0, 0, 0.5))',
-                          animation: 'jasmanAccordionTireIn 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* MOBILE: SUTRA-STYLE VERTICAL COLLAPSIBLE ACCORDION */}
-        <div className="jasman-sutra-accordion-mobile">
-          {enrichedCategories.map((cat, idx) => {
-            const isActive = idx === activeIndex;
-            return (
-              <div
-                key={cat.id}
-                style={{
-                  borderRadius: 22,
-                  overflow: 'hidden',
-                  background: isActive ? '#1A1F36' : '#F8F9FA',
-                  border: isActive
-                    ? '1px solid rgba(196, 30, 36, 0.32)'
-                    : '1px solid rgba(26, 31, 54, 0.08)',
-                  transition: 'all 0.35s ease',
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => setActiveIndex(isActive ? -1 : idx)}
-                  style={{
-                    width: '100%',
-                    padding: '20px 22px',
-                    background: 'transparent',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  {/* Bottom Editorial Content */}
+                  <div style={{ position: 'relative', zIndex: 3, maxWidth: 360 }}>
                     <span
                       style={{
                         fontFamily: F.heading,
-                        fontSize: 12,
-                        fontWeight: 900,
-                        color: isActive ? '#FCA5A5' : C.red,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        letterSpacing: '0.18em',
+                        textTransform: 'uppercase',
+                        color: '#FCA5A5',
+                        display: 'block',
+                        marginBottom: 6,
                       }}
                     >
-                      {cat.index}
+                      {panel.index} · {panel.origin}
                     </span>
-                    <div>
-                      <div
-                        style={{
-                          fontFamily: F.heading,
-                          fontSize: 17,
-                          fontWeight: 900,
-                          color: isActive ? '#FFFFFF' : C.navy,
-                        }}
-                      >
-                        {cat.title}
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: F.body,
-                          fontSize: 12,
-                          color: isActive ? 'rgba(255,255,255,0.65)' : '#64748B',
-                        }}
-                      >
-                        {cat.count} modelos disponibles
-                      </div>
-                    </div>
-                  </div>
 
-                  <span
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      background: isActive ? C.red : '#FFFFFF',
-                      color: isActive ? '#FFFFFF' : C.navy,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {isActive ? <Minus size={15} /> : <Plus size={15} />}
-                  </span>
-                </button>
+                    <h3
+                      style={{
+                        fontFamily: F.heading,
+                        fontSize: 'clamp(1.6rem, 2.3vw, 2.2rem)',
+                        fontWeight: 900,
+                        letterSpacing: '-0.03em',
+                        lineHeight: 1.05,
+                        color: '#FFFFFF',
+                        margin: '0 0 10px',
+                      }}
+                    >
+                      {panel.label}
+                    </h3>
 
-                {isActive && (
-                  <div style={{ padding: '0 22px 24px', color: '#FFFFFF' }}>
+                    <p
+                      style={{
+                        fontSize: 12.5,
+                        lineHeight: 1.5,
+                        color: 'rgba(255, 255, 255, 0.82)',
+                        margin: '0 0 14px',
+                        maxWidth: 290,
+                      }}
+                    >
+                      {panel.description}
+                    </p>
+
+                    {/* Quick Measure Chips */}
                     <div
                       style={{
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: 16,
+                        flexWrap: 'wrap',
+                        gap: 6,
                         marginBottom: 16,
                       }}
                     >
-                      <img
-                        src={cat.tireImage}
-                        alt={cat.title}
-                        style={{
-                          width: 96,
-                          height: 96,
-                          objectFit: 'contain',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <p
-                        style={{
-                          fontSize: 13,
-                          lineHeight: 1.55,
-                          color: 'rgba(255,255,255,0.78)',
-                          margin: 0,
-                        }}
-                      >
-                        {cat.description}
-                      </p>
-                    </div>
-
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 18 }}>
-                      {cat.measures.map((m) => (
+                      {panel.measures.map((m) => (
                         <Link
                           key={m}
-                          to={`/landing-tienda-preview/catalogo?measure=${encodeURIComponent(m)}`}
+                          to={`/landing-tienda-preview/catalogo?brand=${encodeURIComponent(
+                            panel.brandKey
+                          )}&measure=${encodeURIComponent(m)}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="sutra-measure-chip"
                           style={{
-                            padding: '5px 10px',
+                            padding: '4px 10px',
                             borderRadius: 9999,
-                            background: 'rgba(255,255,255,0.10)',
+                            background: 'rgba(255, 255, 255, 0.14)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255, 255, 255, 0.22)',
                             color: '#FFFFFF',
                             fontFamily: F.heading,
-                            fontSize: 10.5,
-                            fontWeight: 700,
+                            fontSize: 10,
+                            fontWeight: 800,
                             textDecoration: 'none',
                           }}
                         >
@@ -670,28 +609,250 @@ export default function TiendaCategoriesAccordion() {
                       ))}
                     </div>
 
-                    <Link
-                      to={cat.href}
+                    {/* Price Con IVA + CTA */}
+                    <div
                       style={{
-                        width: '100%',
-                        padding: '13px 20px',
-                        borderRadius: 9999,
-                        background: C.red,
-                        color: '#FFFFFF',
+                        paddingTop: 14,
+                        borderTop: '1px solid rgba(255, 255, 255, 0.16)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.78)' }}>
+                        {panel.minPrice ? (
+                          <>
+                            Desde{' '}
+                            <strong
+                              style={{
+                                fontFamily: F.heading,
+                                fontSize: 15,
+                                fontWeight: 900,
+                                color: '#FFFFFF',
+                              }}
+                            >
+                              {formatMXN(panel.minPrice)}
+                            </strong>{' '}
+                            · Con IVA
+                          </>
+                        ) : (
+                          <strong style={{ fontFamily: F.heading, color: '#FFFFFF' }}>
+                            Precios Oficiales · Con IVA
+                          </strong>
+                        )}
+                      </div>
+
+                      <Link
+                        to={panel.href}
+                        onClick={(e) => e.stopPropagation()}
+                        className="sutra-brand-cta"
+                        style={{
+                          padding: '9px 16px',
+                          borderRadius: 9999,
+                          background: C.red,
+                          color: '#FFFFFF',
+                          fontFamily: F.heading,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          boxShadow: '0 8px 22px rgba(196, 30, 36, 0.38)',
+                        }}
+                      >
+                        Ver {panel.label} <ArrowUpRight size={13} />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* MOBILE / TABLET VERTICAL PHOTO ACCORDION */}
+        <div
+          className="sutra-brands-mobile"
+          style={{
+            display: 'none',
+            flexDirection: 'column',
+            gap: 10,
+          }}
+        >
+          {enrichedPanels.map((panel) => {
+            const isOpen = panel.id === activeId;
+            return (
+              <div
+                key={panel.id}
+                style={{
+                  position: 'relative',
+                  borderRadius: 22,
+                  overflow: 'hidden',
+                  background: '#0F1424',
+                  border: isOpen
+                    ? '1px solid rgba(196, 30, 36, 0.45)'
+                    : '1px solid rgba(26, 31, 54, 0.12)',
+                  transition: 'all 0.35s ease',
+                }}
+              >
+                <img
+                  src={panel.photo}
+                  alt={panel.label}
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/promo-landing-banner.jpg';
+                  }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    filter: isOpen ? 'brightness(0.55)' : 'brightness(0.36)',
+                    pointerEvents: 'none',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background:
+                      'linear-gradient(180deg, rgba(12,16,30,0.45) 0%, rgba(12,16,30,0.92) 100%)',
+                    pointerEvents: 'none',
+                  }}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setActiveId(isOpen ? '' : panel.id)}
+                  style={{
+                    position: 'relative',
+                    zIndex: 2,
+                    width: '100%',
+                    padding: '16px 18px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span
+                      style={{
                         fontFamily: F.heading,
-                        fontSize: 11.5,
+                        fontSize: 10.5,
                         fontWeight: 800,
+                        color: '#FCA5A5',
+                      }}
+                    >
+                      {panel.index}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: F.heading,
+                        fontSize: 15,
+                        fontWeight: 900,
                         letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                        textDecoration: 'none',
+                        color: '#FFFFFF',
+                      }}
+                    >
+                      {panel.label}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {panel.count > 0 && (
+                      <span
+                        style={{
+                          fontFamily: F.heading,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: 'rgba(255,255,255,0.75)',
+                        }}
+                      >
+                        {panel.count} uds.
+                      </span>
+                    )}
+                    <span
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        background: isOpen ? C.red : 'rgba(255,255,255,0.16)',
+                        color: '#FFFFFF',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 8,
                       }}
                     >
-                      Explorar Categoría <ArrowUpRight size={14} />
-                    </Link>
+                      {isOpen ? <Minus size={14} /> : <Plus size={14} />}
+                    </span>
+                  </div>
+                </button>
+
+                {isOpen && (
+                  <div
+                    style={{
+                      position: 'relative',
+                      zIndex: 2,
+                      padding: '4px 18px 20px',
+                      color: '#FFFFFF',
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: 12.5,
+                        lineHeight: 1.5,
+                        color: 'rgba(255,255,255,0.84)',
+                        margin: '0 0 12px',
+                      }}
+                    >
+                      {panel.description}
+                    </p>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: 10,
+                      }}
+                    >
+                      <span style={{ fontSize: 12 }}>
+                        {panel.minPrice
+                          ? `Desde ${formatMXN(panel.minPrice)} · Con IVA`
+                          : 'Precios Oficiales · Con IVA'}
+                      </span>
+                      <Link
+                        to={panel.href}
+                        style={{
+                          padding: '9px 16px',
+                          borderRadius: 9999,
+                          background: C.red,
+                          color: '#FFFFFF',
+                          fontFamily: F.heading,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}
+                      >
+                        Ver {panel.label} <ArrowUpRight size={13} />
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
@@ -701,32 +862,36 @@ export default function TiendaCategoriesAccordion() {
       </div>
 
       <style>{`
-        .jasman-sutra-accordion-desktop {
-          display: flex;
-          align-items: stretch;
-          gap: 14px;
-          width: 100%;
+        .sutra-brands-all-btn {
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .jasman-sutra-accordion-mobile {
-          display: none;
-          flex-direction: column;
-          gap: 12px;
+        .sutra-brands-all-btn:hover {
+          background: #1A1F36 !important;
+          color: #FFFFFF !important;
+          border-color: #1A1F36 !important;
+          transform: translateY(-2px);
         }
-        @keyframes jasmanAccordionTireIn {
-          0% {
-            opacity: 0;
-            transform: scale(0.88) translateX(18px);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1) translateX(0);
-          }
+        .sutra-measure-chip {
+          transition: all 0.22s ease;
         }
-        @media (max-width: 960px) {
-          .jasman-sutra-accordion-desktop {
+        .sutra-measure-chip:hover {
+          background: #C41E24 !important;
+          border-color: #C41E24 !important;
+          transform: translateY(-1px);
+        }
+        .sutra-brand-cta {
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .sutra-brand-cta:hover {
+          background: #FFFFFF !important;
+          color: #1A1F36 !important;
+          transform: translateY(-2px);
+        }
+        @media (max-width: 1080px) {
+          .sutra-brands-desktop {
             display: none !important;
           }
-          .jasman-sutra-accordion-mobile {
+          .sutra-brands-mobile {
             display: flex !important;
           }
         }
@@ -734,4 +899,3 @@ export default function TiendaCategoriesAccordion() {
     </section>
   );
 }
-

@@ -10,6 +10,8 @@ export default function TiendaProductCard({
   product,
   compact = false,
   featured = false,
+  promoBadge = null,
+  msiMonths = null,
 }) {
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -279,7 +281,7 @@ export default function TiendaProductCard({
                 </div>
               )}
               <span style={{ fontSize: 10.5, color: '#15803D', fontWeight: 700 }}>
-                ● {product.quantity} en inventario · Sin IVA
+                ● {product.quantity} en inventario · Con IVA
               </span>
             </div>
 
@@ -311,7 +313,7 @@ export default function TiendaProductCard({
                   </>
                 ) : (
                   <>
-                    <Plus size={15} /> Comprar
+                    <Plus size={15} /> Agregar
                   </>
                 )}
               </button>
@@ -499,6 +501,30 @@ export default function TiendaProductCard({
           overflow: 'hidden',
         }}
       >
+        {promoBadge && (
+          <span
+            style={{
+              position: 'absolute',
+              top: 10,
+              left: 10,
+              zIndex: 3,
+              padding: '4px 10px',
+              borderRadius: 9999,
+              background: promoBadge.bg || 'rgba(196, 30, 36, 0.10)',
+              color: promoBadge.color || C.red,
+              border: `1px solid ${promoBadge.border || 'rgba(196, 30, 36, 0.18)'}`,
+              fontFamily: F.heading,
+              fontSize: 9,
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              pointerEvents: 'none',
+            }}
+          >
+            {promoBadge.label}
+          </span>
+        )}
+
         {/* Perspective Platform Ring under tire */}
         <div
           style={{
@@ -627,7 +653,13 @@ export default function TiendaProductCard({
               </div>
             )}
             <span style={{ fontSize: 10, color: '#94A3B8', display: 'block', marginTop: 1 }}>
-              {product.inStock ? `Stock: ${product.quantity} · Sin IVA` : 'Agotado'}
+              {product.inStock
+                ? msiMonths && basePrice > 0
+                  ? `Hasta ${msiMonths}x ${formatMXN(
+                      (discountedPrice || basePrice) / msiMonths
+                    )} · Con IVA`
+                  : `Stock: ${product.quantity} · Con IVA`
+                : 'Agotado'}
             </span>
           </div>
 
@@ -664,7 +696,7 @@ export default function TiendaProductCard({
                 </>
               ) : (
                 <>
-                  <Plus size={15} /> {tilt.active ? 'Comprar' : ''}
+                  <Plus size={15} /> {tilt.active ? 'Agregar' : ''}
                 </>
               )}
             </button>

@@ -67,6 +67,7 @@ export default function TiendaAuthModal({ forceOpen = false, onCloseForce }) {
   } = useTiendaState();
 
   const [open, setOpen] = useState(false);
+  const [forceDismissed, setForceDismissed] = useState(false);
   const [redirectToAccount, setRedirectToAccount] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
   const [form, setForm] = useState({
@@ -93,6 +94,14 @@ export default function TiendaAuthModal({ forceOpen = false, onCloseForce }) {
     });
   }, [saveUser, mergeSyncedOrders]);
 
+  const handleClose = () => {
+    setOpen(false);
+    setForceDismissed(true);
+    setSocialQuickProvider(null);
+    setFeedback(null);
+    if (onCloseForce) onCloseForce();
+  };
+
   useEffect(() => {
     const handleUI = (e) => {
       if (e.detail?.type === 'OPEN_AUTH' || e.detail?.type === 'OPEN_USER') {
@@ -104,6 +113,7 @@ export default function TiendaAuthModal({ forceOpen = false, onCloseForce }) {
         setRedirectToAccount(Boolean(e.detail?.redirectToAccount ?? true));
         setFeedback(null);
         setSocialQuickProvider(null);
+        setForceDismissed(false);
         setOpen(true);
       }
     };
@@ -111,15 +121,24 @@ export default function TiendaAuthModal({ forceOpen = false, onCloseForce }) {
     return () => window.removeEventListener('jasman-tienda-ui', handleUI);
   }, [user, navigate]);
 
-  const isVisible = open || (forceOpen && !user);
-  if (!isVisible) return null;
+  const isVisible = open || (forceOpen && !user && !forceDismissed);
 
-  const handleClose = () => {
-    setOpen(false);
-    setSocialQuickProvider(null);
-    setFeedback(null);
-    if (onCloseForce) onCloseForce();
-  };
+  useEffect(() => {
+    if (!isVisible) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        setForceDismissed(true);
+        setSocialQuickProvider(null);
+        setFeedback(null);
+        if (onCloseForce) onCloseForce();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isVisible, onCloseForce]);
+
+  if (!isVisible) return null;
 
   const finishSuccess = (member, remoteOrders) => {
     saveUser(member);
@@ -292,25 +311,42 @@ export default function TiendaAuthModal({ forceOpen = false, onCloseForce }) {
         {/* Close Button */}
         <button
           type="button"
-          onClick={handleClose}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleClose();
+          }}
           aria-label="Cerrar ventana de cuenta"
           style={{
             position: 'absolute',
             top: 22,
             right: 22,
-            width: 36,
-            height: 36,
+            zIndex: 20,
+            width: 38,
+            height: 38,
             borderRadius: '50%',
-            border: '1px solid rgba(26, 31, 54, 0.1)',
+            border: '1px solid rgba(26, 31, 54, 0.12)',
             background: '#F8FAFC',
             color: C.navy,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
+            pointerEvents: 'auto',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#FEF2F2';
+            e.currentTarget.style.borderColor = 'rgba(196, 30, 36, 0.32)';
+            e.currentTarget.style.color = C.red;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#F8FAFC';
+            e.currentTarget.style.borderColor = 'rgba(26, 31, 54, 0.12)';
+            e.currentTarget.style.color = C.navy;
           }}
         >
-          <X size={16} />
+          <X size={17} />
         </button>
 
         {/* Header */}

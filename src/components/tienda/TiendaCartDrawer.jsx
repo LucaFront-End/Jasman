@@ -719,7 +719,7 @@ export default function TiendaCartDrawer() {
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: C.gray }}>
-                <span>Subtotal (sin IVA)</span>
+                <span>Subtotal (Con IVA)</span>
                 <span>{formatMXN(subtotal)}</span>
               </div>
               {volumeDiscountAmount > 0 && (
@@ -755,7 +755,7 @@ export default function TiendaCartDrawer() {
                 }}
               >
                 <span style={{ fontFamily: F.heading, fontSize: 14, fontWeight: 800, color: C.navy }}>
-                  Total (sin IVA)
+                  Total (Con IVA)
                 </span>
                 <span style={{ fontFamily: F.heading, fontSize: 20, fontWeight: 900, color: C.navy }}>
                   {formatMXN(totalAfterDiscount)}

@@ -1237,7 +1237,7 @@ export default function ProductoPreviewPage() {
                   fontWeight: 500,
                 }}
               >
-                <span>Precio unitario en MXN · Sin IVA</span>
+                <span>Precio unitario en MXN · Con IVA</span>
                 <span style={{ color: '#CBD5E1' }}>•</span>
                 <span
                   style={{
@@ -1496,7 +1496,7 @@ export default function ProductoPreviewPage() {
                     </>
                   ) : (
                     <>
-                      <ShoppingBag size={17} /> Comprar · {formatMXN(finalTotalForSelection)}
+                      <ShoppingBag size={17} /> Agregar · {formatMXN(finalTotalForSelection)}
                     </>
                   )}
                 </button>
