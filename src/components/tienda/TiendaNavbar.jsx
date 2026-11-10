@@ -1,9 +1,27 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
 import { useTiendaState, triggerTiendaUI } from '../../hooks/useTiendaState';
+import {
+  MOST_REQUESTED_MEASURES,
+  ALL_OFFICIAL_MENU_BRANDS,
+  BRAND_META,
+  useWixCatalogProducts,
+  formatMXN,
+} from '../../data/productosMasterData';
 import TiendaMostRequestedSection from './TiendaMostRequestedSection';
-import { ShoppingBag, User, Sparkles, Menu, X, ChevronDown, Truck } from 'lucide-react';
+import {
+  ShoppingBag,
+  User,
+  Sparkles,
+  Menu,
+  X,
+  ChevronDown,
+  Truck,
+  Search,
+  ArrowRight,
+  ArrowUpRight,
+} from 'lucide-react';
 
 const SHIPPING_TICKER_ITEMS = [
   'ENVÍO GRATIS EN TODA LA REPÚBLICA MEXICANA',
@@ -13,14 +31,33 @@ const SHIPPING_TICKER_ITEMS = [
   'GARANTÍA OFICIAL DIRECTA DE FÁBRICA',
 ];
 
+function normalizeMeasureToken(raw) {
+  const compact = String(raw || '')
+    .toUpperCase()
+    .trim();
+  const match = compact.match(/(\d{3})[\s/-]*(\d{2})[\s/-]*R?(\d{2})/i);
+  if (match) {
+    return `${match[1]}/${match[2]}R${match[3]}`;
+  }
+  return compact;
+}
+
 export default function TiendaNavbar({ legacyMode = false }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [mobileAccordion, setMobileAccordion] = useState(null); // 'brands' | 'measures' | null
   const [megaOpen, setMegaOpen] = useState(false);
   const [megaMode, setMegaMode] = useState('all');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const closeMegaTimerRef = useRef(null);
+  const searchInputRef = useRef(null);
+
   const { cartCount, user, coupon } = useTiendaState();
+  const { products: catalogProducts } = useWixCatalogProducts();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   const openMegaMenu = (nextMode) => {
     if (closeMegaTimerRef.current) {
@@ -30,6 +67,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
     if (typeof nextMode === 'string') {
       setMegaMode(nextMode);
     }
+    setSearchOpen(false);
     setMegaOpen(true);
   };
 
@@ -48,6 +86,36 @@ export default function TiendaNavbar({ legacyMode = false }) {
     };
   }, []);
 
+  // Auto-focus search input when opened
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      const t = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 60);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [searchOpen]);
+
+  // Keyboard shortcuts: Cmd/Ctrl + K to toggle search, Escape to dismiss overlays
+  useEffect(() => {
+    if (legacyMode) return undefined;
+    const onKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setMegaOpen(false);
+        setMobileMenu(false);
+        setSearchOpen((prev) => !prev);
+      } else if (e.key === 'Escape') {
+        setSearchOpen(false);
+        setMegaOpen(false);
+        setMobileMenu(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [legacyMode]);
+
   const isProductPage = pathname.includes('/producto/');
 
   useEffect(() => {
@@ -59,22 +127,115 @@ export default function TiendaNavbar({ legacyMode = false }) {
   const navItems = legacyMode
     ? [
         { label: 'Experiencia', href: '/landing-tienda-preview-copia#hero-stage' },
-        { label: 'Medidas más pedidas', href: '/landing-tienda-preview/catalogo', hasMega: true, megaMode: 'all' },
-        { label: 'Marcas', href: '/landing-tienda-preview/catalogo', hasMega: true, megaMode: 'all' },
+        {
+          label: 'Medidas más pedidas',
+          href: '/landing-tienda-preview/catalogo',
+          hasMega: true,
+          megaMode: 'all',
+        },
+        {
+          label: 'Marcas',
+          href: '/landing-tienda-preview/catalogo',
+          hasMega: true,
+          megaMode: 'all',
+        },
         { label: 'Catálogo', href: '/landing-tienda-preview/catalogo' },
         { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
       ]
     : [
         { label: 'Inicio', href: '/landing-tienda-preview#hero-stage' },
         { label: 'Catálogo', href: '/landing-tienda-preview/catalogo' },
-        { label: 'Marcas', href: '/landing-tienda-preview/catalogo', hasMega: true, megaMode: 'brands' },
-        { label: 'Top Medidas', href: '/landing-tienda-preview/catalogo', hasMega: true, megaMode: 'measures' },
+        {
+          label: 'Marcas',
+          href: '/landing-tienda-preview/catalogo',
+          hasMega: true,
+          megaMode: 'brands',
+        },
+        {
+          label: 'Top Medidas',
+          href: '/landing-tienda-preview/catalogo',
+          hasMega: true,
+          megaMode: 'measures',
+        },
         { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
       ];
+
+  // Live instant search matches
+  const searchMatches = useMemo(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return [];
+    const lower = trimmed.toLowerCase();
+    const normalizedMeasure = normalizeMeasureToken(trimmed).toLowerCase();
+    const tokens = lower.split(/\s+/).filter(Boolean);
+
+    return catalogProducts.filter((p) => {
+      const haystack = [
+        p.cleanTitle,
+        p.title,
+        p.brand,
+        p.model,
+        p.measure,
+        p.rim,
+        p.reference,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      if (normalizedMeasure && haystack.includes(normalizedMeasure)) {
+        return true;
+      }
+      return tokens.every((tok) => haystack.includes(tok));
+    });
+  }, [catalogProducts, searchQuery]);
+
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setSearchOpen(false);
+      navigate('/landing-tienda-preview/catalogo');
+      return;
+    }
+    const queryValue = normalizeMeasureToken(trimmed).includes('/')
+      ? normalizeMeasureToken(trimmed)
+      : trimmed;
+    setSearchOpen(false);
+    setMobileMenu(false);
+    navigate(`/landing-tienda-preview/catalogo?q=${encodeURIComponent(queryValue)}`);
+    setTimeout(() => {
+      triggerTiendaUI({ type: 'FILTER_CATALOG', measure: queryValue });
+    }, 80);
+  };
+
+  const handleQuickMeasure = (rawMeasure) => {
+    setSearchOpen(false);
+    setMobileMenu(false);
+    setSearchQuery('');
+    navigate(
+      `/landing-tienda-preview/catalogo?measure=${encodeURIComponent(rawMeasure)}`
+    );
+    setTimeout(() => {
+      triggerTiendaUI({ type: 'FILTER_CATALOG', measure: rawMeasure });
+    }, 80);
+  };
+
+  const handleQuickBrand = (brandName) => {
+    setSearchOpen(false);
+    setMobileMenu(false);
+    setSearchQuery('');
+    navigate(
+      `/landing-tienda-preview/catalogo?brand=${encodeURIComponent(brandName)}`
+    );
+    setTimeout(() => {
+      triggerTiendaUI({ type: 'FILTER_CATALOG', brand: brandName });
+    }, 80);
+  };
 
   const handleAccountAction = (e) => {
     setMegaOpen(false);
     setMobileMenu(false);
+    setSearchOpen(false);
     if (!user) {
       e.preventDefault();
       triggerTiendaUI({ type: 'OPEN_AUTH', redirectToAccount: true });
@@ -99,6 +260,26 @@ export default function TiendaNavbar({ legacyMode = false }) {
         pointerEvents: 'none',
       }}
     >
+      {/* Subtle Click-Away Backdrop when Search or Mobile Menu is Open */}
+      {(searchOpen || mobileMenu) && (
+        <div
+          aria-hidden="true"
+          onClick={() => {
+            setSearchOpen(false);
+            setMobileMenu(false);
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 20, 36, 0.22)',
+            backdropFilter: 'blur(3px)',
+            WebkitBackdropFilter: 'blur(3px)',
+            zIndex: 1,
+            pointerEvents: 'auto',
+          }}
+        />
+      )}
+
       {/* Top Circulating "Envío Gratis" Legend Bar */}
       <div
         style={{
@@ -113,6 +294,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
           alignItems: 'center',
           pointerEvents: scrolled ? 'none' : 'auto',
           position: 'relative',
+          zIndex: 3,
           transition: 'height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
         }}
       >
@@ -208,18 +390,22 @@ export default function TiendaNavbar({ legacyMode = false }) {
 
       {/* Main Floating Apple-Style Glass Pill Navbar */}
       <div
+        className="tienda-apple-pill-outer"
         style={{
-          padding: scrolled ? '10px 20px 0' : '10px 20px 0',
+          position: 'relative',
+          zIndex: 3,
+          padding: '10px 20px 0',
           transition: 'padding 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
         <div
+          className="tienda-apple-pill-inner"
           style={{
-            maxWidth: scrolled ? 1140 : 1240,
+            maxWidth: scrolled ? 1160 : 1260,
             margin: '0 auto',
             padding: scrolled ? '9px 16px 9px 20px' : '10px 18px 10px 22px',
             borderRadius: 9999,
-            background: 'rgba(255, 255, 255, 0.92)',
+            background: 'rgba(255, 255, 255, 0.94)',
             backdropFilter: 'saturate(180%) blur(24px)',
             WebkitBackdropFilter: 'saturate(180%) blur(24px)',
             border: '1px solid rgba(26, 31, 54, 0.08)',
@@ -229,14 +415,14 @@ export default function TiendaNavbar({ legacyMode = false }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 14,
+            gap: 12,
             pointerEvents: 'auto',
             transition: 'all 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
           {/* Left: Official Jasman Logo */}
           <Link
-            to="/landing-tienda-preview"
+            to={legacyMode ? '/landing-tienda-preview-copia' : '/landing-tienda-preview'}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -249,6 +435,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
             <img
               src="/images/logo/logo-01.png"
               alt="Jasman Automotriz"
+              className="tienda-apple-logo-img"
               style={{
                 height: 30,
                 width: 'auto',
@@ -257,6 +444,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
               }}
             />
             <span
+              className="tienda-apple-logo-badge"
               style={{
                 fontFamily: F.heading,
                 fontSize: 9.5,
@@ -350,7 +538,9 @@ export default function TiendaNavbar({ legacyMode = false }) {
                   style={linkStyle}
                   onMouseEnter={handleEnter}
                   onMouseLeave={handleLeave}
-                  onClick={item.isAccount ? handleAccountAction : () => setMegaOpen(false)}
+                  onClick={
+                    item.isAccount ? handleAccountAction : () => setMegaOpen(false)
+                  }
                 >
                   <span>{item.label}</span>
                   {item.hasMega && <ChevronDown size={12} />}
@@ -359,15 +549,70 @@ export default function TiendaNavbar({ legacyMode = false }) {
             })}
           </nav>
 
-          {/* Right: Minimalist Action Pills (strictly single-line nowrap) */}
+          {/* Right: Minimalist Search + Account + Cart + Mobile Burger */}
           <div
+            className="tienda-apple-actions"
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
+              gap: 7,
               flexShrink: 0,
             }}
           >
+            {/* Minimalist Header Search Trigger (New Store Experience) */}
+            {!legacyMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMegaOpen(false);
+                  setMobileMenu(false);
+                  setSearchOpen((v) => !v);
+                }}
+                aria-label="Buscar llantas por medida, marca o modelo"
+                aria-expanded={searchOpen}
+                className="tienda-apple-search-btn"
+                style={{
+                  padding: '7px 13px',
+                  borderRadius: 9999,
+                  border: searchOpen
+                    ? `1px solid ${C.navy}`
+                    : '1px solid rgba(26, 31, 54, 0.10)',
+                  background: searchOpen ? C.navy : '#F8F9FA',
+                  color: searchOpen ? '#FFFFFF' : C.navy,
+                  fontFamily: F.heading,
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              >
+                <Search size={13.5} color={searchOpen ? '#FFFFFF' : C.red} />
+                <span className="tienda-apple-search-txt">Buscar</span>
+                <span
+                  className="tienda-apple-search-kbd"
+                  style={{
+                    padding: '1px 5px',
+                    borderRadius: 5,
+                    background: searchOpen
+                      ? 'rgba(255,255,255,0.16)'
+                      : 'rgba(26,31,54,0.06)',
+                    color: searchOpen ? 'rgba(255,255,255,0.85)' : '#64748B',
+                    fontSize: 9,
+                    fontWeight: 800,
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  ⌘K
+                </span>
+              </button>
+            )}
+
             {legacyMode && !isProductPage && (
               <button
                 type="button"
@@ -405,6 +650,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
               to="/landing-tienda-preview/cuenta"
               onClick={handleAccountAction}
               aria-label="Mi Cuenta"
+              className="tienda-apple-account-btn"
               style={{
                 padding: '7px 13px',
                 borderRadius: 9999,
@@ -419,6 +665,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: 6,
                 whiteSpace: 'nowrap',
                 flexShrink: 0,
@@ -433,8 +680,13 @@ export default function TiendaNavbar({ legacyMode = false }) {
 
             <button
               type="button"
-              onClick={() => triggerTiendaUI({ type: 'OPEN_CART' })}
+              onClick={() => {
+                setSearchOpen(false);
+                setMobileMenu(false);
+                triggerTiendaUI({ type: 'OPEN_CART' });
+              }}
               aria-label="Abrir carrito"
+              className="tienda-apple-cart-btn"
               style={{
                 padding: '7px 14px',
                 borderRadius: 9999,
@@ -460,7 +712,12 @@ export default function TiendaNavbar({ legacyMode = false }) {
 
             <button
               type="button"
-              onClick={() => setMobileMenu((v) => !v)}
+              onClick={() => {
+                setSearchOpen(false);
+                setMegaOpen(false);
+                setMobileMenu((v) => !v);
+              }}
+              aria-label={mobileMenu ? 'Cerrar menú' : 'Abrir menú'}
               className="tienda-apple-burger"
               style={{
                 display: 'none',
@@ -468,8 +725,8 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 height: 34,
                 borderRadius: '50%',
                 border: '1px solid rgba(26,31,54,0.08)',
-                background: '#F8F9FA',
-                color: C.navy,
+                background: mobileMenu ? C.navy : '#F8F9FA',
+                color: mobileMenu ? '#FFFFFF' : C.navy,
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
@@ -482,12 +739,430 @@ export default function TiendaNavbar({ legacyMode = false }) {
         </div>
       </div>
 
-      {/* Frosted Glass Mega-Menu Dropdown with Invisible Hover Bridge so cursor never loses hover */}
+      {/* Minimalist Frosted-Glass Spotlight Search Panel */}
+      {!legacyMode && searchOpen && (
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 3,
+            maxWidth: 780,
+            margin: '10px auto 0',
+            padding: '0 14px',
+            pointerEvents: 'auto',
+          }}
+        >
+          <div
+            style={{
+              borderRadius: 26,
+              background: 'rgba(255, 255, 255, 0.98)',
+              backdropFilter: 'saturate(180%) blur(28px)',
+              WebkitBackdropFilter: 'saturate(180%) blur(28px)',
+              border: '1px solid rgba(26, 31, 54, 0.10)',
+              boxShadow: '0 32px 72px rgba(15, 20, 36, 0.20)',
+              overflow: 'hidden',
+              animation: 'heroFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
+            {/* Search Input Bar */}
+            <form
+              onSubmit={handleSearchSubmit}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '14px 16px',
+                borderBottom: '1px solid rgba(26, 31, 54, 0.08)',
+                background: '#FFFFFF',
+              }}
+            >
+              <Search size={18} color={C.red} style={{ flexShrink: 0 }} />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Medida (ej. 205/55R16), marca, modelo o SKU..."
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  fontFamily: F.body,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: C.navy,
+                }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    searchInputRef.current?.focus();
+                  }}
+                  aria-label="Limpiar búsqueda"
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: '#F1F5F9',
+                    color: '#64748B',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  <X size={13} />
+                </button>
+              )}
+              <button
+                type="submit"
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: 9999,
+                  border: 'none',
+                  background: C.red,
+                  color: '#FFFFFF',
+                  fontFamily: F.heading,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: '0.07em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  flexShrink: 0,
+                }}
+              >
+                Buscar <ArrowRight size={13} />
+              </button>
+            </form>
+
+            {/* Search Body: Live Results or Quick Shortcuts */}
+            <div
+              style={{
+                padding: '16px 18px 18px',
+                maxHeight: 'min(64vh, 460px)',
+                overflowY: 'auto',
+              }}
+            >
+              {searchQuery.trim() ? (
+                searchMatches.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: 10.5,
+                        fontFamily: F.heading,
+                        fontWeight: 800,
+                        letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                        color: '#64748B',
+                      }}
+                    >
+                      <span>Resultados instantáneos ({searchMatches.length})</span>
+                      <span style={{ color: C.red }}>Precios Con IVA</span>
+                    </div>
+
+                    <div
+                      className="tienda-spotlight-results-grid"
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                        gap: 10,
+                      }}
+                    >
+                      {searchMatches.slice(0, 6).map((tire) => (
+                        <Link
+                          key={tire.id}
+                          to={`/landing-tienda-preview/producto/${tire.id}`}
+                          onClick={() => {
+                            setSearchOpen(false);
+                            setSearchQuery('');
+                          }}
+                          className="tienda-spotlight-result-card"
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: 16,
+                            background: '#F8FAFC',
+                            border: '1px solid rgba(26, 31, 54, 0.08)',
+                            textDecoration: 'none',
+                            color: C.navy,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <img
+                            src={tire.cutoutImage || tire.primaryImage}
+                            alt={tire.cleanTitle}
+                            onError={(e) => {
+                              e.currentTarget.src = '/images/service-tires.png';
+                            }}
+                            style={{
+                              width: 48,
+                              height: 48,
+                              objectFit: 'contain',
+                              flexShrink: 0,
+                            }}
+                          />
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              {tire.measure && (
+                                <span
+                                  style={{
+                                    padding: '2px 7px',
+                                    borderRadius: 9999,
+                                    background: 'rgba(196, 30, 36, 0.10)',
+                                    color: C.red,
+                                    fontFamily: F.heading,
+                                    fontSize: 9.5,
+                                    fontWeight: 900,
+                                  }}
+                                >
+                                  {tire.measure}
+                                </span>
+                              )}
+                              <span
+                                style={{
+                                  fontFamily: F.heading,
+                                  fontSize: 9.5,
+                                  fontWeight: 700,
+                                  color: '#64748B',
+                                }}
+                              >
+                                {tire.brand}
+                              </span>
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: F.heading,
+                                fontSize: 11.5,
+                                fontWeight: 800,
+                                color: C.navy,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                marginTop: 3,
+                              }}
+                            >
+                              {tire.cleanTitle}
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: F.heading,
+                                fontSize: 12,
+                                fontWeight: 900,
+                                color: C.navy,
+                                marginTop: 2,
+                              }}
+                            >
+                              {formatMXN(tire.finalPriceTaxExcluded)}{' '}
+                              <span
+                                style={{
+                                  fontSize: 9.5,
+                                  fontWeight: 700,
+                                  color: '#94A3B8',
+                                }}
+                              >
+                                Con IVA
+                              </span>
+                            </div>
+                          </div>
+                          <ArrowUpRight size={14} color={C.red} style={{ flexShrink: 0 }} />
+                        </Link>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSearchSubmit}
+                      style={{
+                        marginTop: 4,
+                        width: '100%',
+                        padding: '11px 16px',
+                        borderRadius: 14,
+                        border: '1px solid rgba(26, 31, 54, 0.10)',
+                        background: C.navy,
+                        color: '#FFFFFF',
+                        fontFamily: F.heading,
+                        fontSize: 11,
+                        fontWeight: 800,
+                        letterSpacing: '0.07em',
+                        textTransform: 'uppercase',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                      }}
+                    >
+                      Ver los {searchMatches.length} resultados en el Catálogo{' '}
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      padding: '18px 12px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: F.heading,
+                        fontSize: 13.5,
+                        fontWeight: 800,
+                        color: C.navy,
+                        marginBottom: 6,
+                      }}
+                    >
+                      No encontramos coincidencias exactas para “{searchQuery}”
+                    </div>
+                    <div style={{ fontSize: 12, color: '#64748B', marginBottom: 14 }}>
+                      Prueba escribiendo la medida como <strong>205/55R16</strong> o explora
+                      el catálogo completo.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchOpen(false);
+                        setSearchQuery('');
+                        navigate('/landing-tienda-preview/catalogo');
+                      }}
+                      style={{
+                        padding: '9px 18px',
+                        borderRadius: 9999,
+                        border: 'none',
+                        background: C.navy,
+                        color: '#FFFFFF',
+                        fontFamily: F.heading,
+                        fontSize: 11,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Ir al Catálogo Completo →
+                    </button>
+                  </div>
+                )
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* Quick Popular Measures */}
+                  <div>
+                    <div
+                      style={{
+                        fontFamily: F.heading,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        letterSpacing: '0.18em',
+                        textTransform: 'uppercase',
+                        color: '#64748B',
+                        marginBottom: 9,
+                      }}
+                    >
+                      Medidas más buscadas
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                      {MOST_REQUESTED_MEASURES.slice(0, 8).map((m) => (
+                        <button
+                          key={m.raw}
+                          type="button"
+                          onClick={() => handleQuickMeasure(m.raw)}
+                          className="tienda-search-quick-pill"
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: 9999,
+                            border: '1px solid rgba(26, 31, 54, 0.14)',
+                            background: '#FFFFFF',
+                            cursor: 'pointer',
+                            fontFamily: F.heading,
+                            fontSize: 11.5,
+                            fontWeight: 800,
+                            color: C.navy,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}
+                        >
+                          <span>{m.prefix}</span>
+                          <span style={{ color: C.red }}>{m.rim}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quick 13 Official Brands */}
+                  <div>
+                    <div
+                      style={{
+                        fontFamily: F.heading,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        letterSpacing: '0.18em',
+                        textTransform: 'uppercase',
+                        color: '#64748B',
+                        marginBottom: 9,
+                      }}
+                    >
+                      Marcas Oficiales (13)
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {ALL_OFFICIAL_MENU_BRANDS.map((brandName) => (
+                        <button
+                          key={brandName}
+                          type="button"
+                          onClick={() => handleQuickBrand(brandName)}
+                          className="tienda-search-quick-pill"
+                          style={{
+                            padding: '5px 11px',
+                            borderRadius: 9999,
+                            border: '1px solid rgba(26, 31, 54, 0.10)',
+                            background: '#F8FAFC',
+                            cursor: 'pointer',
+                            fontFamily: F.heading,
+                            fontSize: 10.5,
+                            fontWeight: 800,
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase',
+                            color: C.navy,
+                          }}
+                        >
+                          {brandName}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Frosted Glass Mega-Menu Dropdown with Invisible Hover Bridge */}
       {megaOpen && (
         <div
           onMouseEnter={() => openMegaMenu()}
           onMouseLeave={scheduleCloseMegaMenu}
           style={{
+            position: 'relative',
+            zIndex: 3,
             maxWidth: 1080,
             margin: '0 auto',
             padding: '12px 10px 0',
@@ -519,37 +1194,294 @@ export default function TiendaNavbar({ legacyMode = false }) {
       {mobileMenu && (
         <div
           style={{
-            maxWidth: 420,
+            position: 'relative',
+            zIndex: 3,
+            maxWidth: 460,
+            width: 'calc(100vw - 24px)',
+            maxHeight: 'calc(100vh - 96px)',
+            overflowY: 'auto',
             margin: '10px auto 0',
-            padding: '16px 22px',
+            padding: '16px 18px 20px',
             borderRadius: 24,
-            background: 'rgba(255, 255, 255, 0.96)',
+            background: 'rgba(255, 255, 255, 0.98)',
             backdropFilter: 'blur(24px)',
-            border: '1px solid rgba(26, 31, 54, 0.08)',
-            boxShadow: '0 20px 50px rgba(26, 31, 54, 0.12)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: '1px solid rgba(26, 31, 54, 0.09)',
+            boxShadow: '0 24px 56px rgba(15, 20, 36, 0.18)',
             display: 'flex',
             flexDirection: 'column',
-            gap: 10,
+            gap: 6,
             pointerEvents: 'auto',
           }}
         >
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              to={item.href}
-              onClick={item.isAccount ? handleAccountAction : () => setMobileMenu(false)}
-              style={{
-                fontFamily: F.heading,
-                fontSize: 13,
-                fontWeight: 700,
-                color: C.navy,
-                textDecoration: 'none',
-                padding: '6px 0',
-              }}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {legacyMode ? (
+            navItems.map((item) => (
+              <Link
+                key={item.label}
+                to={item.href}
+                onClick={item.isAccount ? handleAccountAction : () => setMobileMenu(false)}
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: C.navy,
+                  textDecoration: 'none',
+                  padding: '8px 4px',
+                }}
+              >
+                {item.label}
+              </Link>
+            ))
+          ) : (
+            <>
+              {/* Quick Search Button inside Mobile Menu */}
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenu(false);
+                  setSearchOpen(true);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '11px 14px',
+                  marginBottom: 6,
+                  borderRadius: 14,
+                  border: '1px solid rgba(26, 31, 54, 0.10)',
+                  background: '#F8FAFC',
+                  color: '#64748B',
+                  fontFamily: F.body,
+                  fontSize: 13,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 9,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <Search size={15} color={C.red} />
+                <span>Buscar medida (ej. 205/55R16) o marca...</span>
+              </button>
+
+              <Link
+                to="/landing-tienda-preview"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 13.5,
+                  fontWeight: 800,
+                  color: C.navy,
+                  textDecoration: 'none',
+                  padding: '10px 6px',
+                  borderBottom: '1px solid rgba(26, 31, 54, 0.06)',
+                }}
+              >
+                Inicio
+              </Link>
+
+              <Link
+                to="/landing-tienda-preview/catalogo"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 13.5,
+                  fontWeight: 800,
+                  color: C.navy,
+                  textDecoration: 'none',
+                  padding: '10px 6px',
+                  borderBottom: '1px solid rgba(26, 31, 54, 0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span>Catálogo Completo</span>
+                <ArrowRight size={14} color={C.red} />
+              </Link>
+
+              {/* Expandable Mobile Accordion: All 13 Brands */}
+              <div style={{ borderBottom: '1px solid rgba(26, 31, 54, 0.06)' }}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMobileAccordion((prev) => (prev === 'brands' ? null : 'brands'))
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '10px 6px',
+                    border: 'none',
+                    background: 'transparent',
+                    fontFamily: F.heading,
+                    fontSize: 13.5,
+                    fontWeight: 800,
+                    color: mobileAccordion === 'brands' ? C.red : C.navy,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span>Marcas Oficiales (13)</span>
+                  <ChevronDown
+                    size={16}
+                    style={{
+                      transform:
+                        mobileAccordion === 'brands' ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.25s ease',
+                    }}
+                  />
+                </button>
+                {mobileAccordion === 'brands' && (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                      gap: 8,
+                      padding: '4px 4px 12px',
+                    }}
+                  >
+                    {ALL_OFFICIAL_MENU_BRANDS.map((brandName) => {
+                      const meta = BRAND_META[brandName];
+                      return (
+                        <button
+                          key={brandName}
+                          type="button"
+                          onClick={() => handleQuickBrand(brandName)}
+                          style={{
+                            height: 44,
+                            padding: '6px 10px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(26, 31, 54, 0.10)',
+                            background: '#F8FAFC',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {meta?.logo ? (
+                            <img
+                              src={meta.logo}
+                              alt={brandName}
+                              style={{
+                                height: 17,
+                                maxWidth: '88%',
+                                width: 'auto',
+                                objectFit: 'contain',
+                              }}
+                            />
+                          ) : (
+                            <span
+                              style={{
+                                fontFamily: F.heading,
+                                fontSize: 11,
+                                fontWeight: 800,
+                                color: C.navy,
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              {brandName}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Expandable Mobile Accordion: Top Medidas */}
+              <div style={{ borderBottom: '1px solid rgba(26, 31, 54, 0.06)' }}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMobileAccordion((prev) =>
+                      prev === 'measures' ? null : 'measures'
+                    )
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '10px 6px',
+                    border: 'none',
+                    background: 'transparent',
+                    fontFamily: F.heading,
+                    fontSize: 13.5,
+                    fontWeight: 800,
+                    color: mobileAccordion === 'measures' ? C.red : C.navy,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span>Top Medidas</span>
+                  <ChevronDown
+                    size={16}
+                    style={{
+                      transform:
+                        mobileAccordion === 'measures'
+                          ? 'rotate(180deg)'
+                          : 'rotate(0deg)',
+                      transition: 'transform 0.25s ease',
+                    }}
+                  />
+                </button>
+                {mobileAccordion === 'measures' && (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                      gap: 8,
+                      padding: '4px 4px 12px',
+                    }}
+                  >
+                    {MOST_REQUESTED_MEASURES.map((m) => (
+                      <button
+                        key={m.raw}
+                        type="button"
+                        onClick={() => handleQuickMeasure(m.raw)}
+                        style={{
+                          padding: '9px 10px',
+                          borderRadius: 9999,
+                          border: '1px solid rgba(26, 31, 54, 0.14)',
+                          background: '#FFFFFF',
+                          cursor: 'pointer',
+                          fontFamily: F.heading,
+                          fontSize: 12,
+                          fontWeight: 800,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 4,
+                        }}
+                      >
+                        <span style={{ color: C.navy }}>{m.prefix}</span>
+                        <span style={{ color: C.red }}>{m.rim}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Link
+                to="/landing-tienda-preview/cuenta"
+                onClick={handleAccountAction}
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 13.5,
+                  fontWeight: 800,
+                  color: C.navy,
+                  textDecoration: 'none',
+                  padding: '10px 6px 4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <User size={15} color={user ? '#16A34A' : C.red} />
+                <span>{user ? `Mi Cuenta (${user.nombre.split(' ')[0]})` : 'Cuenta / Iniciar sesión'}</span>
+              </Link>
+            </>
+          )}
         </div>
       )}
 
@@ -566,12 +1498,54 @@ export default function TiendaNavbar({ legacyMode = false }) {
         .tienda-shipping-marquee-track:hover {
           animation-play-state: paused;
         }
+        .tienda-apple-search-btn:hover {
+          border-color: rgba(196, 30, 36, 0.35) !important;
+          transform: translateY(-1px);
+        }
+        .tienda-search-quick-pill {
+          transition: all 0.2s ease;
+        }
+        .tienda-search-quick-pill:hover {
+          border-color: #C41E24 !important;
+          background: #FFF5F5 !important;
+          color: #C41E24 !important;
+          transform: translateY(-1px);
+        }
+        .tienda-spotlight-result-card:hover {
+          border-color: rgba(196, 30, 36, 0.32) !important;
+          background: #FFFFFF !important;
+          box-shadow: 0 10px 24px rgba(26, 31, 54, 0.06);
+        }
+        @media (max-width: 1080px) {
+          .tienda-apple-search-kbd { display: none !important; }
+        }
         @media (max-width: 960px) {
           .tienda-apple-nav { display: none !important; }
           .tienda-apple-burger { display: inline-flex !important; }
+          .tienda-apple-pill-outer { padding: 8px 12px 0 !important; }
+          .tienda-apple-pill-inner { padding: 8px 12px 8px 16px !important; gap: 8px !important; }
         }
-        @media (max-width: 560px) {
-          .tienda-apple-coupon, .tienda-apple-user-txt { display: none !important; }
+        @media (max-width: 640px) {
+          .tienda-apple-coupon,
+          .tienda-apple-user-txt,
+          .tienda-apple-search-txt { display: none !important; }
+          .tienda-apple-search-btn,
+          .tienda-apple-account-btn {
+            width: 34px !important;
+            height: 34px !important;
+            padding: 0 !important;
+          }
+          .tienda-apple-cart-btn {
+            height: 34px !important;
+            padding: 0 11px !important;
+          }
+          .tienda-apple-logo-img { height: 24px !important; }
+          .tienda-apple-logo-badge { padding-left: 7px !important; font-size: 8.5px !important; letter-spacing: 0.16em !important; }
+          .tienda-apple-actions { gap: 5px !important; }
+          .tienda-spotlight-results-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 390px) {
+          .tienda-apple-logo-badge { display: none !important; }
         }
       `}</style>
     </header>

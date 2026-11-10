@@ -181,7 +181,11 @@ export default function TiendaCatalogSection({
     const qWidth = params.get('width');
     const qProfile = params.get('profile');
 
-    if (qBrand) setBrand(qBrand);
+    if (qBrand) {
+      setBrand(qBrand);
+    } else if (params.has('q') || params.has('measure')) {
+      setBrand('Todas');
+    }
     if (qMeasure !== null && qMeasure !== undefined) setSearchQuery(qMeasure);
     if (qVehicle) setVehicleType(qVehicle);
     if (qRim) setRim(qRim);

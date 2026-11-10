@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 const QUICK_PROMPTS = [
-  '¿Cómo funciona el Envío Gratis vs Instalación?',
+  '¿Cómo funciona el Envío Gratis Nacional?',
   'Busco llantas 205/55R16 o 195/65R15',
   '¿Cómo aplico el descuento por volumen?',
   'Quiero que un asesor me contacte',
@@ -34,14 +34,14 @@ function generateAssistantReply(userText) {
     if (matches.length > 0) {
       const top = matches
         .slice(0, 3)
-        .map((m) => `• ${m.brand} (${m.cleanTitle}) — ${formatMXN(m.finalPriceTaxExcluded)}`)
+        .map((m) => `• ${m.brand} (${m.cleanTitle}) — ${formatMXN(m.finalPriceTaxExcluded)} Con IVA`)
         .join('\n');
       return `Tenemos ${matches.length} opciones en stock para la medida ${normalized}:\n${top}\n\nPuedes filtrarlas directamente en el Catálogo Oficial.`;
     }
   }
 
   if (q.includes('envío') || q.includes('entrega') || q.includes('instalación') || q.includes('sucursal')) {
-    return 'En Tienda Jasman la Entrega a Domicilio Nacional es GRATIS por defecto. Si prefieres montaje, balanceo y válvula nueva en cualquiera de nuestras +80 sucursales, puedes elegir "Instalación en Sucursal" por $999.00 MXN al agregar tus llantas.';
+    return 'En Tienda Jasman la Entrega a Domicilio Nacional es GRATIS en toda la República Mexicana. Si deseas servicio de montaje y balanceo en cualquiera de nuestras +80 sucursales, un asesor te cotiza al instante según tu medida y sucursal.';
   }
 
   if (q.includes('descuento') || q.includes('volumen') || q.includes('cupón') || q.includes('10%')) {
@@ -146,6 +146,7 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
 
   return (
     <div
+      className="jasman-chat-widget-root"
       style={{
         position: 'fixed',
         bottom: 24,
@@ -392,6 +393,7 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
+          className="jasman-chat-widget-trigger"
           style={{
             height: 52,
             padding: '0 20px',
@@ -420,14 +422,40 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
             <MessageSquare size={14} color="#FFFFFF" />
           </span>
-          <span>Chat Tienda</span>
-          <Sparkles size={13} color="#FCA5A5" />
+          <span className="jasman-chat-full-txt">Chat Tienda</span>
+          <span className="jasman-chat-short-txt" style={{ display: 'none' }}>
+            Chat
+          </span>
+          <Sparkles className="jasman-chat-sparkle" size={13} color="#FCA5A5" />
         </button>
       )}
+      <style>{`
+        @media (max-width: 640px) {
+          .jasman-chat-widget-root {
+            bottom: 14px !important;
+            right: ${positionLeft ? 'auto' : '12px'} !important;
+            left: ${positionLeft ? '12px' : 'auto'} !important;
+          }
+          .jasman-chat-widget-trigger {
+            height: 44px !important;
+            padding: 0 14px !important;
+            gap: 7px !important;
+            font-size: 11px !important;
+          }
+          .jasman-chat-full-txt,
+          .jasman-chat-sparkle {
+            display: none !important;
+          }
+          .jasman-chat-short-txt {
+            display: inline !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

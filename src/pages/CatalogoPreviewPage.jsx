@@ -32,6 +32,7 @@ export default function CatalogoPreviewPage() {
 
       {/* Minimalist Architectural Top Header for the Full Catalog Page */}
       <div
+        className="jasman-catalogo-top-header"
         style={{
           background: 'linear-gradient(180deg, #FFFFFF 0%, #F5F5F7 100%)',
           padding: '126px 24px 12px',
@@ -132,6 +133,13 @@ export default function CatalogoPreviewPage() {
         id="catalogo-tienda"
         isFullCatalogPage={true}
       />
+      <style>{`
+        @media (max-width: 640px) {
+          .jasman-catalogo-top-header {
+            padding: 102px 16px 12px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -107,52 +107,80 @@ export default function FirstPurchasePopup() {
 
   if (!open) {
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="10% de descuento en tu primera compra"
-        style={{
-          position: 'fixed',
-          bottom: 24,
-          left: 24,
-          zIndex: 990,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 10,
-          padding: '12px 18px',
-          borderRadius: 9999,
-          background: C.navy,
-          color: C.white,
-          border: '1px solid rgba(255,255,255,0.14)',
-          boxShadow: '0 16px 40px rgba(26,31,54,0.28)',
-          cursor: 'pointer',
-          fontFamily: F.heading,
-          fontSize: 12,
-          fontWeight: 700,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-3px)';
-          e.currentTarget.style.background = C.red;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.background = C.navy;
-        }}
-      >
-        <span
+      <>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="10% de descuento en tu primera compra"
+          className="jasman-coupon-float-btn"
           style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: coupon ? '#22C55E' : C.red,
-            boxShadow: coupon ? '0 0 10px #22C55E' : `0 0 10px ${C.red}`,
+            position: 'fixed',
+            bottom: 24,
+            left: 24,
+            zIndex: 990,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '12px 18px',
+            borderRadius: 9999,
+            background: C.navy,
+            color: C.white,
+            border: '1px solid rgba(255,255,255,0.14)',
+            boxShadow: '0 16px 40px rgba(26,31,54,0.28)',
+            cursor: 'pointer',
+            fontFamily: F.heading,
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
-        />
-        <span>{coupon ? `Cupón activo: ${coupon.code}` : '−10% Primera Compra'}</span>
-      </button>
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-3px)';
+            e.currentTarget.style.background = C.red;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.background = C.navy;
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: coupon ? '#22C55E' : C.red,
+              boxShadow: coupon ? '0 0 10px #22C55E' : `0 0 10px ${C.red}`,
+              flexShrink: 0,
+            }}
+          />
+          <span className="jasman-coupon-full-txt">
+            {coupon ? `Cupón activo: ${coupon.code}` : '−10% Primera Compra'}
+          </span>
+          <span className="jasman-coupon-short-txt" style={{ display: 'none' }}>
+            {coupon ? '10% Activo' : '−10% Cupón'}
+          </span>
+        </button>
+        <style>{`
+          @media (max-width: 640px) {
+            .jasman-coupon-float-btn {
+              bottom: 14px !important;
+              left: 12px !important;
+              height: 44px !important;
+              padding: 0 14px !important;
+              gap: 7px !important;
+              font-size: 10.5px !important;
+              letter-spacing: 0.06em !important;
+            }
+            .jasman-coupon-full-txt {
+              display: none !important;
+            }
+            .jasman-coupon-short-txt {
+              display: inline !important;
+            }
+          }
+        `}</style>
+      </>
     );
   }
 
@@ -176,16 +204,18 @@ export default function FirstPurchasePopup() {
       }}
     >
       <div
+        className="jasman-coupon-modal-card"
         style={{
           position: 'relative',
           width: '100%',
           maxWidth: 820,
+          maxHeight: '90vh',
+          overflowY: 'auto',
           borderRadius: 24,
-          overflow: 'hidden',
           background: C.white,
           boxShadow: '0 40px 100px rgba(0,0,0,0.45)',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
           border: '1px solid rgba(26,31,54,0.08)',
         }}
       >

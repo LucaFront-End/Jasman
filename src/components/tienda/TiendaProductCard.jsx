@@ -372,6 +372,16 @@ export default function TiendaProductCard({
             }}
           />
         </div>
+        <style>{`
+          @media (max-width: 768px) {
+            .tienda-spotlight-card {
+              grid-column: span 1 !important;
+              grid-template-columns: 1fr !important;
+              padding: 22px 20px !important;
+              gap: 18px !important;
+            }
+          }
+        `}</style>
       </Link>
     );
   }
@@ -667,6 +677,7 @@ export default function TiendaProductCard({
             <button
               type="button"
               onClick={handleQuickAdd}
+              className="tienda-card-quick-add-btn"
               style={{
                 height: 38,
                 padding: tilt.active || addedFeedback ? '0 16px' : '0 12px',
@@ -696,7 +707,13 @@ export default function TiendaProductCard({
                 </>
               ) : (
                 <>
-                  <Plus size={15} /> {tilt.active ? 'Agregar' : ''}
+                  <Plus size={15} />
+                  <span
+                    className="tienda-card-quick-add-txt"
+                    style={{ display: tilt.active ? 'inline' : 'none' }}
+                  >
+                    Agregar
+                  </span>
                 </>
               )}
             </button>
@@ -718,6 +735,16 @@ export default function TiendaProductCard({
           )}
         </div>
       </div>
+      <style>{`
+        @media (hover: none), (max-width: 768px) {
+          .tienda-card-quick-add-txt {
+            display: inline !important;
+          }
+          .tienda-card-quick-add-btn {
+            padding: 0 14px !important;
+          }
+        }
+      `}</style>
     </Link>
   );
 }

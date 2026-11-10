@@ -4,6 +4,7 @@ import {
   MOST_REQUESTED_MEASURES,
   BRAND_META,
   FEATURED_BRAND_KEYS,
+  ALL_OFFICIAL_MENU_BRANDS,
   useWixCatalogProducts,
   formatMXN,
 } from '../../data/productosMasterData';
@@ -11,22 +12,6 @@ import { triggerTiendaUI } from '../../hooks/useTiendaState';
 import { ArrowUpRight } from 'lucide-react';
 
 const TOP_REQUESTED_TIRE_IDS = [572, 590, 568, 539];
-
-const ALL_OFFICIAL_MENU_BRANDS = [
-  'Michelin',
-  'BFGoodrich',
-  'Goodyear',
-  'Kelly',
-  'Hankook',
-  'Laufenn',
-  'Pirelli',
-  'Firestone',
-  'Bridgestone',
-  'Euzkadi',
-  'Continental',
-  'General Tire',
-  'Barum',
-];
 
 const BRAND_TILE_STYLES = {
   Michelin: { accent: '#004990' },
@@ -433,7 +418,10 @@ export default function TiendaMostRequestedSection({
                       marginTop: 2,
                     }}
                   >
-                    {formatMXN(tire.finalPriceTaxExcluded)}
+                    {formatMXN(tire.finalPriceTaxExcluded)}{' '}
+                    <span style={{ fontSize: 9.5, fontWeight: 700, color: '#94A3B8' }}>
+                      Con IVA
+                    </span>
                   </div>
                 </div>
                 <ArrowUpRight size={14} color={C.red} style={{ flexShrink: 0 }} />

@@ -2194,6 +2194,11 @@ export default function ProductoPreviewPage() {
             grid-template-columns: 1fr !important;
           }
         }
+        @media (max-width: 640px) {
+          .bruce-tire-detail-grid {
+            gap: 24px !important;
+          }
+        }
       `}</style>
     </div>
   );

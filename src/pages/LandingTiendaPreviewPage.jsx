@@ -101,6 +101,7 @@ export default function LandingTiendaPreviewPage() {
       {/* 1. DIRECT-SCROLL LIGHT STUDIO HERO */}
       <section
         id="hero-stage"
+        className="jasman-hero-stage-sec"
         onMouseMove={onHeroMove}
         onMouseLeave={onHeroLeave}
         style={{
@@ -344,8 +345,77 @@ export default function LandingTiendaPreviewPage() {
             gap: 12,
           }}
         >
+          {/* Compact Mobile Telemetry Strip (Visible when desktop floating callouts hide) */}
+          <div
+            className="hero-mobile-telemetry-bar"
+            style={{
+              display: 'none',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+              padding: '12px 16px',
+              borderRadius: 20,
+              background: 'rgba(255, 255, 255, 0.94)',
+              border: '1px solid rgba(26, 31, 54, 0.08)',
+              boxShadow: '0 10px 28px rgba(26, 31, 54, 0.06)',
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 9,
+                  fontWeight: 800,
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: C.red,
+                }}
+              >
+                Medida · Rin
+              </div>
+              <div
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 17,
+                  fontWeight: 900,
+                  color: C.navy,
+                  marginTop: 1,
+                }}
+              >
+                {heroProduct.measure}
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'right' }}>
+              <div
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 9,
+                  fontWeight: 800,
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  color: '#64748B',
+                }}
+              >
+                Precio Oficial · Con IVA
+              </div>
+              <div
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 18,
+                  fontWeight: 900,
+                  color: C.navy,
+                  marginTop: 1,
+                }}
+              >
+                {formatMXN(heroPrice)}
+              </div>
+            </div>
+          </div>
+
           {/* Model Switcher + Quick Buy Dock + Catálogo Completo Route */}
           <div
+            className="jasman-hero-command-dock"
             onMouseEnter={() => setHeroPaused(true)}
             onMouseLeave={() => setHeroPaused(false)}
             style={{
@@ -364,7 +434,10 @@ export default function LandingTiendaPreviewPage() {
             }}
           >
             {/* Live Hero Model Selector Pills (Auto-Rotating) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <div
+              className="jasman-hero-spotlights-row"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
+            >
               {HERO_SPOTLIGHTS.map((spot) => {
                 const active = spot.id === selectedHeroId;
                 return (
@@ -384,6 +457,8 @@ export default function LandingTiendaPreviewPage() {
                       fontSize: 11,
                       fontWeight: 800,
                       cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
                       transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
                   >
@@ -406,11 +481,15 @@ export default function LandingTiendaPreviewPage() {
               })}
             </div>
 
-            {/* Action Buttons: Comprar + Ficha + Catálogo Completo */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {/* Action Buttons: Agregar + Ficha + Catálogo Completo */}
+            <div
+              className="jasman-hero-actions-row"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
+            >
               <button
                 type="button"
                 onClick={handleHeroBuy}
+                className="jasman-hero-primary-buy"
                 style={{
                   padding: '11px 20px',
                   borderRadius: 9999,
@@ -425,6 +504,7 @@ export default function LandingTiendaPreviewPage() {
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 8,
                   boxShadow: '0 8px 24px rgba(196, 30, 36, 0.32)',
                 }}
@@ -442,6 +522,7 @@ export default function LandingTiendaPreviewPage() {
 
               <Link
                 to={`/landing-tienda-preview/producto/${heroProduct.id}`}
+                className="jasman-hero-secondary-btn"
                 style={{
                   padding: '11px 15px',
                   borderRadius: 9999,
@@ -454,6 +535,7 @@ export default function LandingTiendaPreviewPage() {
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 5,
                 }}
               >
@@ -462,7 +544,7 @@ export default function LandingTiendaPreviewPage() {
 
               <Link
                 to="/landing-tienda-preview/catalogo"
-                className="jasman-hero-catalog-cta"
+                className="jasman-hero-catalog-cta jasman-hero-secondary-btn"
                 style={{
                   padding: '11px 16px',
                   borderRadius: 9999,
@@ -477,6 +559,7 @@ export default function LandingTiendaPreviewPage() {
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 6,
                 }}
               >
@@ -488,6 +571,7 @@ export default function LandingTiendaPreviewPage() {
           {/* Product Excerpt right below the Ficha / Command Bar */}
           {heroProduct?.excerpt && (
             <div
+              className="jasman-hero-excerpt-bar"
               style={{
                 padding: '8px 18px',
                 borderRadius: 16,
@@ -503,6 +587,7 @@ export default function LandingTiendaPreviewPage() {
               }}
             >
               <span
+                className="jasman-hero-excerpt-txt"
                 style={{
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -690,7 +775,7 @@ export default function LandingTiendaPreviewPage() {
                   city: 'Sucursal Jasman Satélite',
                   tire: 'Continental 205/55R16',
                   quote:
-                    'Compré el juego de 4 llantas en línea con el descuento por volumen y agregué la instalación con un clic. En 40 minutos quedaron montadas y balanceadas.',
+                    'Compré el juego de 4 llantas en línea con el descuento por volumen y acudí a mi sucursal más cercana. En 40 minutos quedaron montadas y balanceadas.',
                 },
                 {
                   name: 'Valeria R.',
@@ -738,6 +823,7 @@ export default function LandingTiendaPreviewPage() {
               return [...REVIEWS_DATA, ...REVIEWS_DATA].map((rev, idx) => (
                 <div
                   key={`${rev.name}-${idx}`}
+                  className="jasman-review-card"
                   style={{
                     width: 390,
                     flexShrink: 0,
@@ -1381,6 +1467,7 @@ export default function LandingTiendaPreviewPage() {
 
       {/* 7. MINIMALIST INSTALLATION CONCIERGE BANNER (CTA FINAL) */}
       <section
+        className="jasman-concierge-sec"
         style={{
           background: '#FFFFFF',
           color: C.navy,
@@ -1388,6 +1475,7 @@ export default function LandingTiendaPreviewPage() {
         }}
       >
         <div
+          className="jasman-concierge-box"
           style={{
             maxWidth: 1200,
             margin: '0 auto',
@@ -1555,14 +1643,80 @@ export default function LandingTiendaPreviewPage() {
           box-shadow: 0 8px 20px rgba(196, 30, 36, 0.24);
         }
         @media (max-width: 960px) {
+          .jasman-hero-stage-sec {
+            min-height: auto !important;
+            padding: 104px 16px 28px !important;
+            gap: 18px !important;
+          }
           .hero-xray-callouts {
             display: none !important;
+          }
+          .hero-mobile-telemetry-bar {
+            display: flex !important;
+          }
+          .jasman-hero-command-dock {
+            border-radius: 24px !important;
+            padding: 14px !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+          }
+          .jasman-hero-spotlights-row {
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            padding-bottom: 2px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          .jasman-hero-spotlights-row::-webkit-scrollbar {
+            display: none;
+          }
+          .jasman-hero-actions-row {
+            width: 100%;
+            justify-content: space-between;
           }
           .fe-minimal-callout {
             display: none !important;
           }
           .fe-minimal-pillars-grid {
             grid-template-columns: 1fr !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .jasman-hero-primary-buy {
+            flex: 1 1 100% !important;
+          }
+          .jasman-hero-secondary-btn {
+            flex: 1 1 calc(50% - 6px) !important;
+          }
+          .jasman-hero-excerpt-bar {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 6px !important;
+            padding: 11px 14px !important;
+          }
+          .jasman-hero-excerpt-txt {
+            white-space: normal !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+          }
+          .jasman-review-card {
+            width: 300px !important;
+            padding: 22px 20px !important;
+          }
+          #resenas-tienda {
+            padding: 60px 0 54px !important;
+          }
+          #patrocinador-formula-e {
+            padding: 28px 16px 24px !important;
+          }
+          .jasman-concierge-sec {
+            padding: 52px 16px 88px !important;
+          }
+          .jasman-concierge-box {
+            padding: 28px 22px !important;
+            border-radius: 26px !important;
           }
         }
       `}</style>

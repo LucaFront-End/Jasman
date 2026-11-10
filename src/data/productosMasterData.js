@@ -1839,4 +1839,21 @@ export const BRAND_META = {
   },
 };
 
+export const ALL_OFFICIAL_MENU_BRANDS = [
+  'Michelin',
+  'BFGoodrich',
+  'Goodyear',
+  'Kelly',
+  'Hankook',
+  'Laufenn',
+  'Pirelli',
+  'Firestone',
+  'Bridgestone',
+  'Euzkadi',
+  'Continental',
+  'General Tire',
+  'Barum',
+];
+
+
 
