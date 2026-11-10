@@ -160,7 +160,12 @@ export default function TiendaNavbar({ legacyMode = false }) {
           hasMega: true,
           megaMode: 'measures',
         },
-        { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
+        {
+          label: 'Tipo de Vehículos',
+          href: '/landing-tienda-preview/catalogo',
+          hasMega: true,
+          megaMode: 'vehicles',
+        },
       ];
 
   // Live instant search matches (measures, brands, vehicle types, and compatible car models)

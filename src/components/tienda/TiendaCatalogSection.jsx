@@ -416,7 +416,11 @@ export default function TiendaCatalogSection({
       id={id}
       style={{
         background: '#F5F5F7',
-        padding: isHomePreview ? '88px 24px' : '104px 24px 128px',
+        padding: isHomePreview
+          ? '88px 24px'
+          : forceStaticCatalog
+            ? '104px 24px 128px'
+            : '18px 24px 120px',
         position: 'relative',
       }}
     >

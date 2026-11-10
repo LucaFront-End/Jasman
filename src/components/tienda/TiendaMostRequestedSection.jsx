@@ -35,7 +35,7 @@ const BRAND_TILE_STYLES = {
 
 export default function TiendaMostRequestedSection({
   isCompactDropdown = false,
-  mode = 'all', // 'all' | 'measures' | 'brands'
+  mode = 'all', // 'all' | 'measures' | 'brands' | 'vehicles'
   onAfterSelect,
 }) {
   const navigate = useNavigate();
@@ -44,7 +44,7 @@ export default function TiendaMostRequestedSection({
 
   const showMeasures = mode === 'all' || mode === 'measures';
   const showBrands = mode === 'all' || mode === 'brands';
-  const showVehicleTypes = mode === 'brands';
+  const showVehicleTypes = mode === 'vehicles';
   const showTires = mode === 'all' || mode === 'measures';
   const brandsList =
     mode === 'brands' ? ALL_OFFICIAL_MENU_BRANDS : FEATURED_BRAND_KEYS;
@@ -231,18 +231,11 @@ export default function TiendaMostRequestedSection({
           </div>
 
           <div
-            className={
-              mode === 'brands' && isCompactDropdown
-                ? 'most-requested-brands-grid-compact13'
-                : 'most-requested-brands-grid'
-            }
+            className="most-requested-brands-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns:
-                mode === 'brands' && isCompactDropdown
-                  ? 'repeat(7, minmax(0, 1fr))'
-                  : 'repeat(5, minmax(0, 1fr))',
-              gap: isCompactDropdown ? 9 : 16,
+              gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+              gap: isCompactDropdown ? 12 : 16,
             }}
           >
             {brandsList.map((brandName) => {
@@ -258,8 +251,8 @@ export default function TiendaMostRequestedSection({
                   onClick={() => handleSelectBrand(brandName)}
                   className="jasman-brand-tile"
                   style={{
-                    height: isCompactDropdown ? 58 : 76,
-                    padding: isCompactDropdown ? '8px 10px' : '10px 16px',
+                    height: isCompactDropdown ? 68 : 76,
+                    padding: isCompactDropdown ? '10px 14px' : '10px 16px',
                     borderRadius: 14,
                     border: '1px solid rgba(26, 31, 54, 0.10)',
                     background: '#FFFFFF',
@@ -268,7 +261,7 @@ export default function TiendaMostRequestedSection({
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 4,
+                    gap: 5,
                     boxShadow: '0 6px 20px rgba(26, 31, 54, 0.04)',
                     transition: 'all 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
                     position: 'relative',
@@ -290,7 +283,7 @@ export default function TiendaMostRequestedSection({
                       src={meta.logo}
                       alt={brandName}
                       style={{
-                        height: isCompactDropdown ? 22 : 28,
+                        height: isCompactDropdown ? 25 : 28,
                         maxWidth: '90%',
                         width: 'auto',
                         objectFit: 'contain',

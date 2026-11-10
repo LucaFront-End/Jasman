@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { C, F } from '../hooks/useAnimations';
-import { useWixCatalogProducts } from '../data/productosMasterData';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCatalogSection from '../components/tienda/TiendaCatalogSection';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
@@ -9,19 +8,11 @@ import FirstPurchasePopup from '../components/tienda/FirstPurchasePopup';
 import TiendaLiveChatWidget from '../components/tienda/TiendaLiveChatWidget';
 import {
   ArrowLeft,
-  Sparkles,
   Truck,
-  ShieldCheck,
   MapPin,
 } from 'lucide-react';
 
 export default function CatalogoPreviewPage() {
-  const { products: catalogProducts } = useWixCatalogProducts();
-  const totalStock = catalogProducts.reduce(
-    (sum, p) => sum + (p.quantity || 0),
-    0
-  );
-
   return (
     <div style={{ background: '#F5F5F7', minHeight: '100vh', color: C.navy }}>
       <TiendaNavbar />
@@ -34,9 +25,8 @@ export default function CatalogoPreviewPage() {
       <div
         className="jasman-catalogo-top-header"
         style={{
-          background: 'linear-gradient(180deg, #FFFFFF 0%, #F5F5F7 100%)',
-          padding: '126px 24px 12px',
-          borderBottom: '1px solid rgba(26, 31, 54, 0.06)',
+          background: '#F5F5F7',
+          padding: '106px 24px 6px',
         }}
       >
         <div
@@ -47,10 +37,10 @@ export default function CatalogoPreviewPage() {
             flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 16,
+            gap: 14,
           }}
         >
-          {/* Left: Back to Store Landing + Breadcrumb */}
+          {/* Left: Back to Store Landing */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <Link
               to="/landing-tienda-preview"
@@ -74,25 +64,6 @@ export default function CatalogoPreviewPage() {
             >
               <ArrowLeft size={14} color={C.red} /> Inicio Tienda
             </Link>
-
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 7,
-                padding: '6px 13px',
-                borderRadius: 9999,
-                background: 'rgba(196, 30, 36, 0.08)',
-                color: C.red,
-                fontFamily: F.heading,
-                fontSize: 10.5,
-                fontWeight: 800,
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-              }}
-            >
-              <Sparkles size={12} /> Catálogo General · {catalogProducts.length} Modelos ({totalStock} uds.)
-            </div>
           </div>
 
           {/* Right: Store Value Pills */}
@@ -100,7 +71,6 @@ export default function CatalogoPreviewPage() {
             {[
               { icon: Truck, label: 'Entrega a Domicilio Gratis' },
               { icon: MapPin, label: '+80 Sucursales Jasman' },
-              { icon: ShieldCheck, label: 'Hasta −10% OFF por Volumen' },
             ].map((item) => {
               const IconComp = item.icon;
               return (
@@ -136,7 +106,7 @@ export default function CatalogoPreviewPage() {
       <style>{`
         @media (max-width: 640px) {
           .jasman-catalogo-top-header {
-            padding: 102px 16px 12px !important;
+            padding: 96px 16px 6px !important;
           }
         }
       `}</style>
