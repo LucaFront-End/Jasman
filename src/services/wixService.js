@@ -1052,8 +1052,63 @@ export async function logoutWixMember() {
   }
 }
 
+const WIX_STORES_APP_ID = '215238eb-22a5-4c36-9e7b-e7c08025e04e';
+
 /**
- * Saves a store order into the cloud collection ("Contactoweb") linked to the customer's email.
+ * Creates a real Wix eCommerce Checkout session from the store cart items
+ * using each product's live `wixId` (`Stores/Products` `_id`).
+ */
+export async function createWixEcommerceCheckout(orderRecord) {
+  if (!orderRecord || !Array.isArray(orderRecord.items) || orderRecord.items.length === 0) {
+    return null;
+  }
+
+  try {
+    await ensureWixVisitorTokens();
+    const lineItems = orderRecord.items
+      .filter((item) => item.wixId)
+      .map((item) => ({
+        catalogReference: {
+          appId: WIX_STORES_APP_ID,
+          catalogItemId: item.wixId,
+        },
+        quantity: Math.max(1, Number(item.quantity) || 1),
+      }));
+
+    if (lineItems.length === 0) return null;
+
+    const payload = {
+      lineItems,
+      channelType: 'WEB',
+    };
+
+    if (orderRecord.couponCode) {
+      payload.couponCode = orderRecord.couponCode;
+    }
+
+    const email = String(orderRecord.customer?.correo || '').trim().toLowerCase();
+    if (email && email.includes('@')) {
+      payload.buyerInfo = { email };
+    }
+
+    const res = await wixClient.fetchWithAuth('https://www.wixapis.com/ecom/v1/checkouts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.checkout || null;
+  } catch (err) {
+    console.warn('Aviso al crear checkout eCom en Wix:', err?.message || err);
+    return null;
+  }
+}
+
+/**
+ * Saves a store order into Wix eCommerce Checkouts AND the cloud collection ("Contactoweb")
+ * linked to the customer's email.
  */
 export async function saveWixTiendaOrder(orderRecord) {
   if (!orderRecord) return null;
@@ -1062,6 +1117,11 @@ export async function saveWixTiendaOrder(orderRecord) {
   const cleanPhone = orderRecord.customer?.telefono || '';
 
   try {
+    const ecomCheckout = await createWixEcommerceCheckout(orderRecord);
+    const enrichedOrder = ecomCheckout?.id
+      ? { ...orderRecord, wixCheckoutId: ecomCheckout.id }
+      : orderRecord;
+
     await wixClient.items.insert('Contactoweb', {
       title: `Pedido Tienda ${orderRecord.id} - ${cleanName}`,
       folio: orderRecord.id,
@@ -1071,11 +1131,12 @@ export async function saveWixTiendaOrder(orderRecord) {
       sucursal: orderRecord.branchName || '',
       cupon: orderRecord.couponCode || '',
       tipo: 'PEDIDO_TIENDA',
-      asunto: orderRecord.id,
-      mensaje: JSON.stringify(orderRecord),
+      asunto: ecomCheckout?.id ? `${orderRecord.id} (eCom: ${ecomCheckout.id})` : orderRecord.id,
+      mensaje: JSON.stringify(enrichedOrder),
       origen: 'Pedido Tienda Online',
       fecha: orderRecord.createdAt || new Date().toISOString(),
     });
+    return enrichedOrder;
   } catch (err) {
     console.warn('Aviso al guardar pedido en nube:', err?.message || err);
   }
@@ -1093,25 +1154,11 @@ let wixProductsFetchPromise = null;
 /**
  * Fetches all products from the Wix Stores catalog ("Stores/Products"),
  * paginating automatically to retrieve all items (336+ tires).
+ * Always fetches live from Wix once per page load so dashboard edits reflect on refresh.
  */
 export async function getWixStoreProducts({ forceRefresh = false } = {}) {
   if (!forceRefresh && Array.isArray(wixProductsMemoryCache) && wixProductsMemoryCache.length > 0) {
     return wixProductsMemoryCache;
-  }
-
-  if (!forceRefresh && typeof window !== 'undefined') {
-    try {
-      const cached = window.sessionStorage.getItem(WIX_PRODUCTS_SESSION_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          wixProductsMemoryCache = parsed;
-          return parsed;
-        }
-      }
-    } catch {
-      // ignore sessionStorage parse error
-    }
   }
 
   if (wixProductsFetchPromise) {
@@ -1145,6 +1192,17 @@ export async function getWixStoreProducts({ forceRefresh = false } = {}) {
       return allItems;
     } catch (err) {
       console.warn('Error consultando Stores/Products:', err?.message || err);
+      if (typeof window !== 'undefined') {
+        try {
+          const cached = window.sessionStorage.getItem(WIX_PRODUCTS_SESSION_KEY);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch {
+          // ignore
+        }
+      }
       return wixProductsMemoryCache || [];
     } finally {
       wixProductsFetchPromise = null;

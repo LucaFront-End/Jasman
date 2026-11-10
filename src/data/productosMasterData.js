@@ -1513,7 +1513,7 @@ export function normalizeWixStoreProduct(wixItem, index = 0) {
   const images =
     wixGalleryUrls.length > 0
       ? localMatch
-        ? [...new Set([...localMatch.images, ...wixGalleryUrls])]
+        ? [...new Set([...wixGalleryUrls, ...localMatch.images])]
         : wixGalleryUrls
       : fallbackStaticItem.images;
 

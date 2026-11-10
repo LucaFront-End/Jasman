@@ -87,6 +87,7 @@ export default function TiendaCartDrawer() {
     const orderRecord = createOrderRecord({
       items: cartItems.map((i) => ({
         id: i.product.id,
+        wixId: i.product.wixId || null,
         reference: i.product.reference,
         name: i.product.cleanTitle,
         quantity: i.quantity,
