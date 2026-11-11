@@ -247,6 +247,10 @@ export const branchCoordinates = {
     "lat": 25.731,
     "lng": -100.379
   },
+  "concordia": {
+    "lat": 25.78555,
+    "lng": -100.26701
+  },
   "queretaro": {
     "lat": 20.589,
     "lng": -100.405
@@ -1118,6 +1122,13 @@ export const specificPostalCodes = {
     "lng": -100.292,
     "branchId": "san-nicolas",
     "branchName": "Jasman Automotriz - Suc. San Nicolás"
+  },
+  "66612": {
+    "name": "Av. Concordia, Cdad. Apodaca, Nuevo León",
+    "lat": 25.78555,
+    "lng": -100.26701,
+    "branchId": "concordia",
+    "branchName": "Jasman Automotriz - Suc. Concordia"
   },
   "67123": {
     "name": "Col. Linda Vista Guadalupe, Guadalupe, Nuevo León",

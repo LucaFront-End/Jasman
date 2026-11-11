@@ -7,7 +7,7 @@ import PageHero from '../components/PageHero';
 import { C, F, useCountUp } from '../hooks/useAnimations';
 import { sucursales, regions, states } from '../data/sucursalesData';
 import { branchCoordinates } from '../data/postalCodesData';
-import { MapPin, Phone, MessageCircle, Navigation, Search, ChevronRight, Building2, Users, Wrench, Shield } from 'lucide-react';
+import { MapPin, Phone, Clock, MessageCircle, Navigation, Search, ChevronRight, Building2, Users, Wrench, Shield } from 'lucide-react';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -46,6 +46,7 @@ const cityGeo = {
   'Tepic': [21.5049, -104.8946], 'Huixquilucan': [19.3591, -99.3485],
   'San Pedro Garza García': [25.6577, -100.4031], 'Guadalupe': [25.6768, -100.2560],
   'Monterrey': [25.6866, -100.3161], 'San Nicolás de los Garza': [25.7456, -100.2833],
+  'Cdad. Apodaca': [25.78555, -100.26701], 'Apodaca': [25.78555, -100.26701],
   'Nuevo Laredo': [27.4763, -99.5066],
   'Santiago de Querétaro': [20.5888, -100.3899], 'San Juan del Río': [20.3893, -99.9961],
   'Celaya': [20.5233, -100.8157],
@@ -362,11 +363,16 @@ export default function SucursalesPage() {
                         <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, marginBottom: 10 }}>
                           {b.address}
                         </p>
-                        {b.phone && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>
-                            <Phone size={11} /> {b.phone}
-                          </div>
-                        )}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 11.5, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>
+                          {b.phone && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                              <Phone size={11} /> {b.phone}
+                            </span>
+                          )}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                            <Clock size={11} /> {b.schedule || 'Lun - Sáb: 8:00 - 18:00'}
+                          </span>
+                        </div>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {b.whatsappUrl && (
                             <a href={b.whatsappUrl} target="_blank" rel="noreferrer"
@@ -454,7 +460,17 @@ export default function SucursalesPage() {
                         <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>{b.city}</div>
                       </div>
                     </div>
-                    <p style={{ fontSize: 12, color: C.gray, lineHeight: 1.5, marginBottom: 12 }}>{b.address}</p>
+                    <p style={{ fontSize: 12, color: C.gray, lineHeight: 1.5, marginBottom: 8 }}>{b.address}</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 11.5, color: C.gray, marginBottom: 12 }}>
+                      {b.phone && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <Phone size={12} color={C.red} /> {b.phone}
+                        </span>
+                      )}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                        <Clock size={12} color={C.red} /> {b.schedule || 'Lun - Sáb: 8:00 - 18:00'}
+                      </span>
+                    </div>
                     <div style={{ display: 'flex', gap: 6 }}>
                       {b.whatsappUrl && (
                         <a href={b.whatsappUrl} target="_blank" rel="noopener noreferrer" style={{

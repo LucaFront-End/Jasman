@@ -67,7 +67,12 @@ function loadSavedSession() {
   }
 }
 
-export default function TiendaLiveChatWidget({ positionLeft = false }) {
+export default function TiendaLiveChatWidget({
+  positionLeft = false,
+  stackedAboveWhatsApp = false,
+  buttonLabel = 'Chat Tienda',
+  headerTitle = 'Chat en Vivo · Tienda Jasman',
+}) {
   const { user } = useTiendaState();
   const { products: catalogProducts } = useWixCatalogProducts();
 
@@ -105,7 +110,9 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
     const welcomeMsg = {
       id: 'welcome-inbox',
       role: 'system_welcome',
-      text: `¡Hola ${firstName}! Ya estás conectado en directo con Wix Inbox de Tienda Jasman. Escribe tu consulta o medida y un asesor te responderá aquí mismo en tiempo real.`,
+      text: `¡Hola ${firstName}! Ya estás conectado en directo con Wix Inbox de ${
+        stackedAboveWhatsApp ? 'Jasman Automotriz' : 'Tienda Jasman'
+      }. Escribe tu consulta o medida y un asesor te responderá aquí mismo en tiempo real.`,
       createdAt: '0',
     };
 
@@ -128,7 +135,7 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
 
       return [welcomeMsg, ...Array.from(mapById.values()), ...localHints];
     });
-  }, []);
+  }, [stackedAboveWhatsApp]);
 
   const sendLiveMessage = useCallback(
     async (rawText, activeSession = leadSession) => {
@@ -483,15 +490,20 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
 
   const hasUserSentMessage = messages.some((m) => m.role === 'user');
 
+  const desktopBottom = stackedAboveWhatsApp ? (open ? 20 : 78) : 24;
+  const desktopRight = stackedAboveWhatsApp ? 20 : 24;
+
   return (
     <div
-      className="jasman-chat-widget-root"
+      className={`jasman-chat-widget-root${
+        stackedAboveWhatsApp && !open ? ' jasman-chat-stacked-wa' : ''
+      }`}
       style={{
         position: 'fixed',
-        bottom: 24,
-        right: positionLeft ? 'auto' : 24,
-        left: positionLeft ? 24 : 'auto',
-        zIndex: 992,
+        bottom: desktopBottom,
+        right: positionLeft ? 'auto' : desktopRight,
+        left: positionLeft ? desktopRight : 'auto',
+        zIndex: open ? 1015 : stackedAboveWhatsApp ? 999 : 992,
       }}
     >
       {open ? (
@@ -547,7 +559,7 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
                     color: '#FFFFFF',
                   }}
                 >
-                  Chat en Vivo · Tienda Jasman
+                  {headerTitle}
                 </div>
                 <div
                   style={{
@@ -630,7 +642,9 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
                   lineHeight: 1.45,
                 }}
               >
-                <strong style={{ color: C.navy }}>¡Bienvenido a Tienda Jasman!</strong>{' '}
+                <strong style={{ color: C.navy }}>
+                  {stackedAboveWhatsApp ? '¡Bienvenido a Jasman!' : '¡Bienvenido a Tienda Jasman!'}
+                </strong>{' '}
                 Compártenos tus datos primero para conectarte en tiempo real con un asesor.
               </div>
 
@@ -1128,10 +1142,12 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
           onClick={() => setOpen(true)}
           className="jasman-chat-widget-trigger"
           style={{
-            height: 52,
-            padding: '0 20px',
+            height: stackedAboveWhatsApp ? 48 : 52,
+            padding: stackedAboveWhatsApp ? '0 18px 0 14px' : '0 20px',
             borderRadius: 9999,
-            border: '1px solid rgba(255, 255, 255, 0.16)',
+            border: stackedAboveWhatsApp
+              ? '2px solid rgba(255, 255, 255, 0.22)'
+              : '1px solid rgba(255, 255, 255, 0.16)',
             background: C.navy,
             color: '#FFFFFF',
             fontFamily: F.heading,
@@ -1142,14 +1158,14 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
             cursor: 'pointer',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 10,
-            boxShadow: '0 16px 40px rgba(26, 31, 54, 0.28)',
+            gap: 9,
+            boxShadow: '0 16px 40px rgba(26, 31, 54, 0.30)',
           }}
         >
           <span
             style={{
-              width: 28,
-              height: 28,
+              width: stackedAboveWhatsApp ? 26 : 28,
+              height: stackedAboveWhatsApp ? 26 : 28,
               borderRadius: '50%',
               background: C.red,
               display: 'inline-flex',
@@ -1160,7 +1176,7 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
           >
             <MessageSquare size={14} color="#FFFFFF" />
           </span>
-          <span className="jasman-chat-full-txt">Chat Tienda</span>
+          <span className="jasman-chat-full-txt">{buttonLabel}</span>
           <span className="jasman-chat-short-txt" style={{ display: 'none' }}>
             Chat
           </span>
@@ -1174,9 +1190,14 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
             right: ${positionLeft ? 'auto' : '12px'} !important;
             left: ${positionLeft ? '12px' : 'auto'} !important;
           }
+          .jasman-chat-widget-root.jasman-chat-stacked-wa {
+            bottom: 64px !important;
+            right: 14px !important;
+            left: auto !important;
+          }
           .jasman-chat-widget-trigger {
-            height: 44px !important;
-            padding: 0 14px !important;
+            height: ${stackedAboveWhatsApp ? '42px' : '44px'} !important;
+            padding: 0 14px 0 11px !important;
             gap: 7px !important;
             font-size: 11px !important;
           }

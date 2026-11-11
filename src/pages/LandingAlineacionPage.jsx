@@ -200,7 +200,14 @@ export default function LandingAlineacionPage() {
           const wixNameMap = new Map(wixBranches.map(b => [b.name.toLowerCase(), b]));
           const merged = sucursalesWithCoords.map(localB => {
             const match = wixNameMap.get(localB.name.toLowerCase());
-            return match ? { ...localB, ...match, mapsUrl: localB.mapsUrl } : localB;
+            return match
+              ? {
+                  ...localB,
+                  ...match,
+                  mapsUrl: localB.mapsUrl,
+                  whatsappPhone: localB.whatsappPhone || match.whatsappPhone || null,
+                }
+              : localB;
           });
           setAllBranches(merged);
         }
@@ -343,8 +350,8 @@ export default function LandingAlineacionPage() {
 
   // Build WhatsApp URL with "SW-" standard prefix and dynamic Wix promo details
   const getWhatsAppPromoUrl = (branch, bookingDetails = null) => {
-    const phoneWithCountry = '5215510024945';
     const targetBranch = branch || selectedBranch || nearbyBranches[0];
+    const phoneWithCountry = targetBranch?.whatsappPhone || '5215510024945';
     const branchName = targetBranch ? targetBranch.fullName : 'Jasman Automotriz';
     const promoTitle = promotion.headline || promotion.title || 'Alineación y Balanceo';
 

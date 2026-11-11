@@ -150,7 +150,7 @@ export default function TiendaMostRequestedSection({
             className="most-requested-measures-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
               gap: isCompactDropdown ? '10px 16px' : '16px 28px',
             }}
           >
@@ -161,6 +161,7 @@ export default function TiendaMostRequestedSection({
                 onClick={() => handleSelectMeasure(m.raw)}
                 className="jasman-measure-pill"
                 style={{
+                  minWidth: 0,
                   padding: isCompactDropdown ? '9px 14px' : '12px 20px',
                   borderRadius: 9999,
                   border: '1px solid rgba(26, 31, 54, 0.22)',
@@ -588,7 +589,7 @@ export default function TiendaMostRequestedSection({
             className="most-requested-tires-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
               gap: isCompactDropdown ? 10 : 16,
             }}
           >
@@ -600,7 +601,10 @@ export default function TiendaMostRequestedSection({
                   if (onAfterSelect) onAfterSelect();
                 }}
                 style={{
-                  padding: isCompactDropdown ? '10px 12px' : '14px 16px',
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  boxSizing: 'border-box',
+                  padding: isCompactDropdown ? '10px 10px' : '14px 16px',
                   borderRadius: 18,
                   background: '#FFFFFF',
                   border: '1px solid rgba(26, 31, 54, 0.08)',
@@ -608,7 +612,7 @@ export default function TiendaMostRequestedSection({
                   color: C.navy,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12,
+                  gap: isCompactDropdown ? 10 : 12,
                   boxShadow: '0 8px 24px rgba(26, 31, 54, 0.04)',
                   transition: 'all 0.25s ease',
                 }}
@@ -617,31 +621,44 @@ export default function TiendaMostRequestedSection({
                   src={tire.cutoutImage || tire.primaryImage}
                   alt={tire.cleanTitle}
                   style={{
-                    width: isCompactDropdown ? 44 : 56,
-                    height: isCompactDropdown ? 44 : 56,
+                    width: isCompactDropdown ? 42 : 56,
+                    height: isCompactDropdown ? 42 : 56,
                     objectFit: 'contain',
                     flexShrink: 0,
                   }}
                 />
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      minWidth: 0,
+                      overflow: 'hidden',
+                    }}
+                  >
                     <span
                       style={{
                         fontFamily: F.heading,
                         fontSize: 10,
                         fontWeight: 900,
                         color: C.red,
+                        flexShrink: 0,
                       }}
                     >
                       {tire.measure}
                     </span>
-                    <span style={{ fontSize: 10, color: '#94A3B8' }}>·</span>
+                    <span style={{ fontSize: 10, color: '#94A3B8', flexShrink: 0 }}>·</span>
                     <span
                       style={{
                         fontFamily: F.heading,
                         fontSize: 9.5,
                         fontWeight: 700,
                         color: '#64748B',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        minWidth: 0,
                       }}
                     >
                       {tire.brand}
@@ -668,6 +685,7 @@ export default function TiendaMostRequestedSection({
                       fontWeight: 900,
                       color: C.navy,
                       marginTop: 2,
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {formatMXN(tire.finalPriceTaxExcluded)}{' '}
@@ -703,27 +721,27 @@ export default function TiendaMostRequestedSection({
         }
         @media (max-width: 1020px) {
           .most-requested-brands-grid-compact13 {
-            grid-template-columns: repeat(4, 1fr) !important;
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
           }
           .most-requested-vehicles-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
           }
         }
         @media (max-width: 900px) {
           .most-requested-measures-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
           }
           .most-requested-brands-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
           }
           .most-requested-tires-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
           }
         }
         @media (max-width: 520px) {
           .most-requested-tires-grid,
           .most-requested-vehicles-grid {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: minmax(0, 1fr) !important;
           }
         }
       `}</style>

@@ -1538,6 +1538,8 @@ export default function TiendaNavbar({ legacyMode = false }) {
               padding: '22px 28px',
               maxHeight: 'calc(100vh - 102px)',
               overflowY: 'auto',
+              overflowX: 'hidden',
+              boxSizing: 'border-box',
               borderRadius: 28,
               background: 'rgba(255, 255, 255, 0.97)',
               backdropFilter: 'saturate(180%) blur(28px)',

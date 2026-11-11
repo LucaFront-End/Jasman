@@ -47,6 +47,7 @@ const cityGeo = {
   'Tepic': [21.5049, -104.8946],
   'San Pedro Garza García': [25.6577, -100.4031], 'Guadalupe': [25.6768, -100.2560],
   'Monterrey': [25.6866, -100.3161], 'San Nicolás de los Garza': [25.7456, -100.2833],
+  'Cdad. Apodaca': [25.78555, -100.26701], 'Apodaca': [25.78555, -100.26701],
   'Nuevo Laredo': [27.4763, -99.5066],
   'Santiago de Querétaro': [20.5888, -100.3899], 'San Juan del Río': [20.3893, -99.9961],
   'Celaya': [20.5233, -100.8157],
@@ -335,8 +336,18 @@ export default function Locations() {
                       borderTop: '1px solid rgba(255,255,255,0.06)',
                       animation: 'heroFadeUp 0.3s cubic-bezier(0.16,1,0.3,1)',
                     }}>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 12, lineHeight: 1.5 }}>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 10, lineHeight: 1.5 }}>
                         {loc.address}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 12, fontSize: 11.5, color: 'rgba(255,255,255,0.55)' }}>
+                        {loc.phone && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                            <Phone size={12} color={C.redLight} /> {loc.phone}
+                          </span>
+                        )}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <Clock size={12} color={C.redLight} /> {loc.schedule || 'Lun - Sáb: 8:00 - 18:00'}
+                        </span>
                       </div>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {loc.whatsappUrl && (

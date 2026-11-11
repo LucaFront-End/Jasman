@@ -128,7 +128,7 @@ export const locationsContent = {
   subtitle: 'Con más de 80 sucursales distribuidas en las principales ciudades de México, siempre hay un Jasman cerca de ti.',
   featured: [
     { city: 'CDMX', branches: 25, rating: 4.3 },
-    { city: 'Monterrey', branches: 8, rating: 4.4 },
+    { city: 'Monterrey', branches: 10, rating: 4.4 },
     { city: 'Guadalajara', branches: 6, rating: 4.5 },
     { city: 'Puebla', branches: 5, rating: 4.2 },
     { city: 'Querétaro', branches: 4, rating: 4.6 },

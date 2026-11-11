@@ -166,7 +166,7 @@ export default function PromotionsPopup() {
 
   const isMobile = windowWidth <= 640;
 
-  // Minimized floating trigger button stacked cleanly at bottom-right above WhatsApp
+  // Minimized floating trigger button positioned cleanly at bottom-left
   if (!open) {
     return (
       <button
@@ -175,10 +175,12 @@ export default function PromotionsPopup() {
         aria-label="Abrir beneficio de 10% de descuento"
         style={{
           position: 'fixed',
-          bottom: isMobile ? 64 : 78,
-          right: isMobile ? 14 : 20,
+          bottom: isMobile ? 14 : 20,
+          left: isMobile ? 14 : 20,
+          right: 'auto',
           zIndex: 999,
-          padding: isMobile ? '8px 14px' : '11px 18px',
+          height: isMobile ? 42 : 48,
+          padding: isMobile ? '0 14px' : '0 18px',
           borderRadius: 9999,
           background: `linear-gradient(135deg, ${C.red}, #E52E35)`,
           color: C.white,

@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import ScrollProgress from './components/ScrollProgress';
 import PromotionsPopup from './components/PromotionsPopup';
 import FloatingWhatsAppButton from './components/FloatingWhatsAppButton';
+import TiendaLiveChatWidget from './components/tienda/TiendaLiveChatWidget';
 import HomePage from './pages/HomePage';
 import NosotrosPage from './pages/NosotrosPage';
 import ServiciosPage from './pages/ServiciosPage';
@@ -142,7 +143,7 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
-      {/* Show automotive 10% service popup & floating WhatsApp on main site routes (both bottom-right) */}
+      {/* Main corporate site floating controls: Coupon on bottom-left, Live Chat stacked above WhatsApp on bottom-right */}
       {!isPromoSubdomain &&
         !isDedicatedStoreLanding &&
         !isPromoSlugUnderLlantas &&
@@ -150,6 +151,11 @@ export default function App() {
         !pathname.includes('alineación') && (
           <>
             <PromotionsPopup />
+            <TiendaLiveChatWidget
+              stackedAboveWhatsApp
+              buttonLabel="Chat en Vivo"
+              headerTitle="Chat en Vivo · Jasman"
+            />
             <FloatingWhatsAppButton />
           </>
         )}

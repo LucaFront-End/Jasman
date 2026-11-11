@@ -1,8 +1,9 @@
 /* ═══ Real Jasman branches from corporate spreadsheet ═══ */
 
-const buildWhatsApp = (_phone, branchName) => {
+const buildWhatsApp = (_phone, branchName, customWhatsappPhone) => {
   const msg = encodeURIComponent(`SW - Hola quisiera más información de sus servicios automotrices en su sucursal "${branchName}"`);
-  return `https://api.whatsapp.com/send/?phone=5215510024945&text=${msg}`;
+  const waNumber = customWhatsappPhone || '5215510024945';
+  return `https://api.whatsapp.com/send/?phone=${waNumber}&text=${msg}`;
 };
 
 const raw = [
@@ -66,6 +67,7 @@ const raw = [
   { region:'Monterrey', name:'Chapultepec', state:'Nuevo León', city:'Monterrey', address:'Av. Chapultepec #1707, Col. Buenos Aires, Monterrey, Nuevo León 64800', cp:'64800', phone:'8128612734' },
   { region:'Monterrey', name:'Universidad', state:'Nuevo León', city:'Monterrey', address:'Av. Alfonso Reyes #3339, Col. Regina, Monterrey, Nuevo León 64290', cp:'64290', phone:'8128613474' },
   { region:'Monterrey', name:'Lincoln', state:'Nuevo León', city:'Monterrey', address:'Av. Abraham Lincoln #7305, Col. Plutarco Elías Calles, Monterrey, Nuevo León 64108', cp:'64108', phone:'8128613458' },
+  { region:'Monterrey', name:'Concordia', state:'Nuevo León', city:'Cdad. Apodaca', address:'Av. Concordia 423, 66612 Cdad. Apodaca, N.L.', cp:'66612', phone:'81 1244 9804', whatsappPhone:'5218112449804', mapsUrl:'https://maps.app.goo.gl/mKGD1ahypEDhRqZr7' },
   { region:'Queretaro', name:'Querétaro', state:'Querétaro', city:'Santiago de Querétaro', address:'Ezequiel Montes #164 Sur, Col. El Carrizal, Santiago de Querétaro, Querétaro 76030', cp:'76030', phone:'442 491 5515' },
   { region:'Queretaro', name:'Constituyentes', state:'Querétaro', city:'Santiago de Querétaro', address:'Av. Constituyentes 222 Pte, Casa Blanca, Santiago De Querétaro, Querétaro 76000', cp:'76000', phone:'4423945995' },
   { region:'Queretaro', name:'Américas Qro', state:'Querétaro', city:'Santiago de Querétaro', address:'Av Constituyentes Ote. 54, El Marques, Santiago De Querétaro, Querétaro 76047', cp:'76047', phone:'4421904829' },
@@ -93,8 +95,10 @@ export const sucursales = raw.map(b => {
     address: b.address,
     cp: b.cp,
     phone: b.phone,
-    whatsappUrl: b.phone ? buildWhatsApp(b.phone, fullName) : null,
-    mapsUrl: `https://maps.google.com/?q=${encodeURIComponent(b.address)}`,
+    whatsappPhone: b.whatsappPhone || null,
+    schedule: b.schedule || 'Lun - Sáb: 8:00 - 18:00',
+    whatsappUrl: (b.phone || b.whatsappPhone) ? buildWhatsApp(b.phone, fullName, b.whatsappPhone) : null,
+    mapsUrl: b.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(b.address)}`,
   };
 });
 
