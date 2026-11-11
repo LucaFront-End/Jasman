@@ -194,14 +194,45 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
           setMessages((prev) =>
             prev.map((m) => (m.id === tempId ? { ...data.message, optimistic: false } : m))
           );
-          if (data.cmsThreadId && data.cmsThreadId !== activeSession.cmsThreadId) {
-            const updatedSession = { ...activeSession, cmsThreadId: data.cmsThreadId };
+
+          const nextConvId = data.conversationId || activeSession.conversationId;
+          const nextContactId = data.contactId || activeSession.contactId || '';
+          const nextCmsId = data.cmsThreadId || activeSession.cmsThreadId || '';
+          const nextMode = data.mode || activeSession.mode;
+
+          if (
+            nextConvId !== activeSession.conversationId ||
+            nextContactId !== activeSession.contactId ||
+            nextCmsId !== activeSession.cmsThreadId ||
+            nextMode !== activeSession.mode
+          ) {
+            const updatedSession = {
+              ...activeSession,
+              conversationId: nextConvId,
+              contactId: nextContactId,
+              cmsThreadId: nextCmsId,
+              mode: nextMode,
+            };
             setLeadSession(updatedSession);
             try {
               sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(updatedSession));
             } catch {
               // ignore
             }
+          }
+
+          if (data.mode !== 'wix_inbox_live') {
+            sendFormSubmitEmail({
+              seccion: 'Mensaje Chat en Vivo — Tienda Jasman',
+              asuntoCorreo: `Jasman Chat — Nuevo mensaje de ${activeSession.nombre}`,
+              correoRespuesta: activeSession.correo,
+              campos: {
+                'Nombre Completo': activeSession.nombre,
+                'Teléfono / WhatsApp': activeSession.telefono,
+                'Correo Electrónico': activeSession.correo,
+                'Mensaje del Cliente': clean,
+              },
+            }).catch(() => {});
           }
         } else {
           // Direct browser fallback to Wix CMS if serverless endpoint unreachable

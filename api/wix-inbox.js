@@ -1,6 +1,7 @@
 import process from 'node:process';
 import { createClient, ApiKeyStrategy, OAuthStrategy } from '@wix/sdk';
 import { conversations, messages } from '@wix/inbox';
+import { submittedContact } from '@wix/crm';
 import { items } from '@wix/data';
 
 const WIX_SITE_ID =
@@ -23,19 +24,29 @@ function getApiKey() {
   ).trim();
 }
 
+function getAccountId() {
+  return (
+    process.env.WIX_ACCOUNT_ID ||
+    process.env.VITE_WIX_ACCOUNT_ID ||
+    ''
+  ).trim();
+}
+
 function createInboxSdkClient(apiKey) {
+  const accountId = getAccountId();
   return createClient({
     modules: { conversations, messages, items },
     auth: ApiKeyStrategy({
       apiKey,
       siteId: WIX_SITE_ID,
+      ...(accountId ? { accountId } : {}),
     }),
   });
 }
 
 async function createVisitorDataClient() {
   const client = createClient({
-    modules: { items },
+    modules: { items, submittedContact },
     auth: OAuthStrategy({ clientId: WIX_CLIENT_ID }),
   });
   const tokens = await client.auth.generateVisitorTokens();
@@ -51,6 +62,53 @@ function splitFullName(fullName = '') {
     first: parts[0],
     last: parts.slice(1).join(' '),
   };
+}
+
+async function submitVisitorCrmContact({ nombre, correo, telefono }) {
+  try {
+    const cleanEmail = String(correo || '').trim().toLowerCase();
+    const cleanPhone = String(telefono || '').replace(/\D/g, '');
+    const { first, last } = splitFullName(nombre);
+    const visitorClient = await createVisitorDataClient();
+    const res = await visitorClient.submittedContact.appendOrCreateContact({
+      info: {
+        name: {
+          first,
+          ...(last ? { last } : {}),
+        },
+        ...(cleanEmail
+          ? {
+              emails: {
+                items: [{ tag: 'MAIN', email: cleanEmail }],
+              },
+            }
+          : {}),
+        ...(cleanPhone
+          ? {
+              phones: {
+                items: [{ tag: 'MOBILE', countryCode: 'MX', phone: cleanPhone }],
+              },
+            }
+          : {}),
+      },
+    });
+    return res?.contactId || '';
+  } catch {
+    return '';
+  }
+}
+
+async function sendParticipantInboxMessage(inboxClient, conversationId, messagePayload) {
+  try {
+    return await inboxClient.messages.sendMessage(conversationId, messagePayload, {
+      sendNotifications: true,
+      sendAs: 'PARTICIPANT',
+    });
+  } catch {
+    return inboxClient.messages.sendMessage(conversationId, messagePayload, {
+      sendNotifications: true,
+    });
+  }
 }
 
 async function resolveOrCreateWixContact(apiKey, { nombre, correo, telefono }) {
@@ -310,15 +368,29 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   const apiKey = getApiKey();
 
-  // 1. Poll messages (GET /api/wix-inbox?conversationId=...&cmsThreadId=...)
+  // 1. Poll messages or check Inbox status (GET /api/wix-inbox)
   if (req.method === 'GET') {
     const urlObj = new URL(req.url || '/api/wix-inbox', 'http://localhost');
+    if (req.query?.check || urlObj.searchParams.get('check')) {
+      return res.status(200).json({
+        ok: true,
+        hasApiKey: Boolean(apiKey),
+        siteId: WIX_SITE_ID,
+        status: apiKey ? 'wix_inbox_ready' : 'missing_wix_api_key',
+      });
+    }
+
     const conversationId =
       req.query?.conversationId || urlObj.searchParams.get('conversationId') || '';
     const cmsThreadId =
       req.query?.cmsThreadId || urlObj.searchParams.get('cmsThreadId') || '';
 
-    if (apiKey && conversationId && !conversationId.startsWith('cms:')) {
+    if (
+      apiKey &&
+      conversationId &&
+      !conversationId.startsWith('cms:') &&
+      !conversationId.startsWith('local:')
+    ) {
       try {
         const inboxClient = createInboxSdkClient(apiKey);
         const listRes = await inboxClient.messages.listMessages(
@@ -367,7 +439,7 @@ export default async function handler(req, res) {
     const telefono = String(body.telefono || '').replace(/\D/g, '');
     const correo = String(body.correo || '').trim();
     const initialMessage = String(body.initialMessage || '').trim();
-    const pagina = String(body.pagina || '/landing-tienda-preview').trim();
+    const pagina = String(body.pagina || '/llantas').trim();
 
     if (!nombre || telefono.length < 10 || !correo.includes('@')) {
       return res.status(400).json({
@@ -376,7 +448,8 @@ export default async function handler(req, res) {
       });
     }
 
-    let contactId = '';
+    // Always reconcile/create the customer in Wix Contacts (works even without WIX_API_KEY)
+    let contactId = await submitVisitorCrmContact({ nombre, correo, telefono });
     let conversationId = '';
     let mode = 'wix_cms_cloud';
     let inboxMessages = [];
@@ -384,11 +457,13 @@ export default async function handler(req, res) {
 
     if (apiKey) {
       try {
-        contactId = await resolveOrCreateWixContact(apiKey, {
-          nombre,
-          correo,
-          telefono,
-        });
+        if (!contactId) {
+          contactId = await resolveOrCreateWixContact(apiKey, {
+            nombre,
+            correo,
+            telefono,
+          });
+        }
 
         if (contactId) {
           const inboxClient = createInboxSdkClient(apiKey);
@@ -401,28 +476,26 @@ export default async function handler(req, res) {
           if (conversationId) {
             mode = 'wix_inbox_live';
 
-            // Send structured lead form into Wix Inbox when starting new or fresh lead capture
-            await inboxClient.messages
-              .sendMessage(conversationId, {
-                direction: 'PARTICIPANT_TO_BUSINESS',
-                visibility: 'BUSINESS_AND_PARTICIPANT',
-                content: {
-                  previewText: `Datos de chat: ${nombre} · ${telefono}`,
-                  form: {
-                    title: 'Datos del Cliente · Tienda Jasman',
-                    description: `Origen: ${pagina}`,
-                    fields: [
-                      { name: 'Nombre', value: nombre },
-                      { name: 'WhatsApp / Teléfono', value: telefono },
-                      { name: 'Correo electrónico', value: correo },
-                    ],
-                  },
+            // Send structured lead form into Wix Inbox with notifications enabled & customer sender
+            await sendParticipantInboxMessage(inboxClient, conversationId, {
+              direction: 'PARTICIPANT_TO_BUSINESS',
+              visibility: 'BUSINESS_AND_PARTICIPANT',
+              content: {
+                previewText: `Datos de chat: ${nombre} · ${telefono}`,
+                form: {
+                  title: 'Datos del Cliente · Tienda Jasman',
+                  description: `Origen: ${pagina}`,
+                  fields: [
+                    { name: 'Nombre', value: nombre },
+                    { name: 'WhatsApp / Teléfono', value: telefono },
+                    { name: 'Correo electrónico', value: correo },
+                  ],
                 },
-              })
-              .catch(() => {});
+              },
+            }).catch(() => {});
 
             if (initialMessage) {
-              await inboxClient.messages.sendMessage(conversationId, {
+              await sendParticipantInboxMessage(inboxClient, conversationId, {
                 direction: 'PARTICIPANT_TO_BUSINESS',
                 visibility: 'BUSINESS_AND_PARTICIPANT',
                 content: {
@@ -444,6 +517,8 @@ export default async function handler(req, res) {
       } catch (err) {
         inboxError = err?.message || 'wix_inbox_init_failed';
       }
+    } else {
+      inboxError = 'missing_wix_api_key';
     }
 
     const cmsThreadId = await syncCmsLeadThread({
@@ -477,13 +552,14 @@ export default async function handler(req, res) {
 
   // 3. Send Visitor Message to Wix Inbox
   if (action === 'send') {
-    const conversationId = String(body.conversationId || '').trim();
+    let conversationId = String(body.conversationId || '').trim();
     const cmsThreadId = String(body.cmsThreadId || '').trim();
+    let contactId = String(body.contactId || '').trim();
     const text = String(body.text || '').trim();
     const nombre = String(body.nombre || 'Cliente Tienda').trim();
     const telefono = String(body.telefono || '').replace(/\D/g, '');
     const correo = String(body.correo || '').trim();
-    const pagina = String(body.pagina || '/landing-tienda-preview').trim();
+    const pagina = String(body.pagina || '/llantas').trim();
 
     if (!text) {
       return res.status(400).json({ ok: false, error: 'Mensaje vacío.' });
@@ -491,41 +567,75 @@ export default async function handler(req, res) {
 
     let sentMessage = null;
     let mode = 'wix_cms_cloud';
+    let sendWarning = null;
 
-    if (apiKey && conversationId && !conversationId.startsWith('cms:') && !conversationId.startsWith('local:')) {
+    if (apiKey) {
       try {
         const inboxClient = createInboxSdkClient(apiKey);
-        const sendRes = await inboxClient.messages.sendMessage(conversationId, {
-          direction: 'PARTICIPANT_TO_BUSINESS',
-          visibility: 'BUSINESS_AND_PARTICIPANT',
-          content: {
-            previewText: text.slice(0, 120),
-            basic: {
-              items: [{ text }],
-            },
-          },
-        });
-        mode = 'wix_inbox_live';
-        const rawMsg = sendRes?.message;
-        sentMessage = {
-          id: rawMsg?._id || `wix-${Date.now()}`,
-          role: 'user',
-          text,
-          createdAt: rawMsg?._createdDate || new Date().toISOString(),
-        };
-      } catch {
-        // Fallback to CMS thread below
+
+        // Auto-upgrade fallback cms:/local: sessions into a real Wix Inbox conversation
+        if (
+          !conversationId ||
+          conversationId.startsWith('cms:') ||
+          conversationId.startsWith('local:')
+        ) {
+          if (!contactId) {
+            contactId =
+              (await submitVisitorCrmContact({ nombre, correo, telefono })) ||
+              (await resolveOrCreateWixContact(apiKey, { nombre, correo, telefono }));
+          }
+          if (contactId) {
+            const convRes = await inboxClient.conversations.getOrCreateConversation({
+              contactId,
+            });
+            conversationId =
+              convRes?.conversation?._id || convRes?.conversation?.id || conversationId;
+          }
+        }
+
+        if (
+          conversationId &&
+          !conversationId.startsWith('cms:') &&
+          !conversationId.startsWith('local:')
+        ) {
+          const sendRes = await sendParticipantInboxMessage(
+            inboxClient,
+            conversationId,
+            {
+              direction: 'PARTICIPANT_TO_BUSINESS',
+              visibility: 'BUSINESS_AND_PARTICIPANT',
+              content: {
+                previewText: text.slice(0, 120),
+                basic: {
+                  items: [{ text }],
+                },
+              },
+            }
+          );
+          mode = 'wix_inbox_live';
+          const rawMsg = sendRes?.message;
+          sentMessage = {
+            id: rawMsg?._id || `wix-${Date.now()}`,
+            role: 'user',
+            text,
+            createdAt: rawMsg?._createdDate || new Date().toISOString(),
+          };
+        }
+      } catch (err) {
+        sendWarning = err?.message || 'wix_inbox_send_failed';
       }
+    } else {
+      sendWarning = 'missing_wix_api_key';
     }
 
-    const effectiveCmsId = conversationId.startsWith('cms:')
-      ? conversationId.slice(4)
+    const effectiveCmsId = String(body.conversationId || '').startsWith('cms:')
+      ? String(body.conversationId).slice(4)
       : cmsThreadId;
 
     const updatedCmsId = await syncCmsLeadThread({
       cmsThreadId: effectiveCmsId,
       conversationId,
-      contactId: body.contactId || '',
+      contactId,
       nombre,
       telefono,
       correo,
@@ -536,6 +646,8 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       mode,
+      conversationId,
+      contactId,
       cmsThreadId: updatedCmsId || effectiveCmsId || '',
       message: sentMessage || {
         id: `usr-${Date.now()}`,
@@ -543,6 +655,7 @@ export default async function handler(req, res) {
         text,
         createdAt: new Date().toISOString(),
       },
+      ...(sendWarning ? { warning: sendWarning } : {}),
     });
   }
 
