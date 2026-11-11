@@ -1,4 +1,7 @@
-import { defineConfig } from 'vite';
+import path from 'node:path';
+import process from 'node:process';
+import { pathToFileURL } from 'node:url';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -13,7 +16,11 @@ function localVercelApiPlugin() {
         try {
           const parsedUrl = new URL(req.url, 'http://localhost');
           const routeName = parsedUrl.pathname.replace(/^\/api\//, '').replace(/\.js$/, '');
-          if (routeName !== 'wix-inbox' && routeName !== 'wix-oauth-check') {
+          if (
+            routeName !== 'wix-inbox' &&
+            routeName !== 'wix-oauth-check' &&
+            routeName !== 'order'
+          ) {
             return next();
           }
 
@@ -30,7 +37,10 @@ function localVercelApiPlugin() {
             return res;
           };
 
-          const mod = await import(`./api/${routeName}.js`);
+          const apiFileUrl = pathToFileURL(
+            path.resolve(process.cwd(), 'api', `${routeName}.js`)
+          ).href;
+          const mod = await import(apiFileUrl);
           return await mod.default(req, res);
         } catch (err) {
           res.statusCode = 500;
@@ -42,6 +52,14 @@ function localVercelApiPlugin() {
   };
 }
 
-export default defineConfig({
-  plugins: [react(), tailwindcss(), localVercelApiPlugin()],
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  for (const [k, v] of Object.entries(env)) {
+    if (process.env[k] === undefined) {
+      process.env[k] = v;
+    }
+  }
+  return {
+    plugins: [react(), tailwindcss(), localVercelApiPlugin()],
+  };
 });

@@ -24,6 +24,7 @@ import CatalogoPreviewPage from './pages/CatalogoPreviewPage';
 import ProductoPreviewPage from './pages/ProductoPreviewPage';
 import HomeTiendaPreviewPage from './pages/HomeTiendaPreviewPage';
 import CuentaPreviewPage from './pages/CuentaPreviewPage';
+import ThankYouPage from './pages/ThankYouPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -51,7 +52,10 @@ export default function App() {
     pathname === '/llantas' ||
     pathname.startsWith('/llantas/catalogo') ||
     pathname.startsWith('/llantas/producto') ||
-    pathname.startsWith('/llantas/cuenta');
+    pathname.startsWith('/llantas/cuenta') ||
+    pathname.startsWith('/llantas/thank-you') ||
+    pathname.startsWith('/thank-you') ||
+    pathname.startsWith('/gracias');
 
   const isDedicatedStoreLanding =
     isLlantasStoreRoute ||
@@ -86,6 +90,9 @@ export default function App() {
           <Route path="/llantas/catalogo" element={<CatalogoPreviewPage />} />
           <Route path="/llantas/producto/:id" element={<ProductoPreviewPage />} />
           <Route path="/llantas/cuenta" element={<CuentaPreviewPage />} />
+          <Route path="/llantas/thank-you" element={<ThankYouPage />} />
+          <Route path="/thank-you" element={<ThankYouPage />} />
+          <Route path="/gracias" element={<ThankYouPage />} />
           <Route path="/llantas/:slug" element={<LandingAlineacionPage />} />
 
           {/* Promotional campaign routes */}

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
 import { formatMXN } from '../../data/productosMasterData';
 import { sucursales } from '../../data/sucursalesData';
 import { useTiendaState, triggerTiendaUI } from '../../hooks/useTiendaState';
 import { saveContactoWeb } from '../../services/wixService';
+import { redirectToJasmanWixCheckout } from '../../services/wixCheckoutService';
 import {
   X,
   ShoppingBag,
@@ -16,6 +17,8 @@ import {
   MessageCircle,
   ArrowRight,
   Truck,
+  Loader2,
+  Lock,
 } from 'lucide-react';
 
 export default function TiendaCartDrawer() {
@@ -37,15 +40,22 @@ export default function TiendaCartDrawer() {
     createOrderRecord,
   } = useTiendaState();
 
+  const { pathname } = useLocation();
+  const isLegacyCopyRoute = pathname.includes('copia');
+
   const [open, setOpen] = useState(false);
   const [manualCode, setManualCode] = useState('');
+  const [pendingCouponCode, setPendingCouponCode] = useState('');
   const [couponFeedback, setCouponFeedback] = useState('');
   const [orderCompleted, setOrderCompleted] = useState(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
 
   useEffect(() => {
     const handleUI = (e) => {
       if (e.detail?.type === 'OPEN_CART') {
         setOrderCompleted(null);
+        setCheckoutError('');
         setOpen(true);
       }
     };
@@ -80,68 +90,95 @@ export default function TiendaCartDrawer() {
     e.preventDefault();
     const clean = manualCode.trim().toUpperCase();
     if (!clean) return;
+    setPendingCouponCode(clean);
     setCouponFeedback(
-      'Este código aún no está activo. Si te registraste al 10%, recibirás tu cupón oficial por correo electrónico.'
+      'Si tu código está activo, se validará automáticamente en el Checkout Seguro de Wix. (Si te registraste al 10%, recibirás tu cupón oficial por correo).'
     );
     setManualCode('');
   };
 
-  const handleConfirmOrder = () => {
-    if (cartItems.length === 0) return;
+  const handleConfirmOrder = async () => {
+    if (cartItems.length === 0 || checkoutLoading) return;
 
-    const orderRecord = createOrderRecord({
-      items: cartItems.map((i) => ({
-        id: i.product.id,
-        wixId: i.product.wixId || null,
-        reference: i.product.reference,
-        name: i.product.cleanTitle,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
-      })),
-      subtotal,
-      volumeDiscountAmount,
-      discountAmount,
-      installationFee: 0,
-      deliveryMode: 'shipping',
-      total: totalAfterDiscount,
-      couponCode: coupon?.code || null,
-      branchName: 'Entrega a Domicilio Gratis',
-      branchSlug: 'envio-domicilio',
-      customer: user || { nombre: 'Cliente Web' },
-    });
+    // Keep frozen /landing-tienda-preview-copia behavior untouched
+    if (isLegacyCopyRoute) {
+      const orderRecord = createOrderRecord({
+        items: cartItems.map((i) => ({
+          id: i.product.id,
+          wixId: i.product.wixId || null,
+          reference: i.product.reference,
+          name: i.product.cleanTitle,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+        })),
+        subtotal,
+        volumeDiscountAmount,
+        discountAmount,
+        installationFee: 0,
+        deliveryMode: 'shipping',
+        total: totalAfterDiscount,
+        couponCode: coupon?.code || null,
+        branchName: 'Entrega a Domicilio Gratis',
+        branchSlug: 'envio-domicilio',
+        customer: user || { nombre: 'Cliente Web' },
+      });
 
-    const detalleProductos = cartItems
-      .map(
-        (i) =>
-          `${i.quantity}x ${i.product.cleanTitle} (SKU: ${i.product.reference}) — ${formatMXN(
-            i.unitPrice * i.quantity
-          )} Con IVA`
-      )
-      .join(' | ');
+      const detalleProductos = cartItems
+        .map(
+          (i) =>
+            `${i.quantity}x ${i.product.cleanTitle} (SKU: ${i.product.reference}) — ${formatMXN(
+              i.unitPrice * i.quantity
+            )} Con IVA`
+        )
+        .join(' | ');
 
-    saveContactoWeb({
-      folio: orderRecord.id,
-      nombre: user?.nombre || 'Cliente Tienda Online',
-      telefono: user?.telefono || '',
-      email: user?.correo || '',
-      sucursal: selectedBranch?.name || 'Entrega a Domicilio Gratis',
-      tipo: `Orden de Compra (${totalTireUnits} llantas) — Total Con IVA: ${formatMXN(
-        totalAfterDiscount
-      )}`,
-      cupon: coupon?.code || '',
-      asunto: `Nueva Orden Tienda ${orderRecord.id} (${cartCount} uds) — ${formatMXN(
-        totalAfterDiscount
-      )} Con IVA`,
-      mensaje: `Productos: ${detalleProductos} | Subtotal: ${formatMXN(subtotal)}${
-        volumeDiscountAmount > 0
-          ? ` | Descuento por Volumen (${volumeTier.percent}%): -${formatMXN(volumeDiscountAmount)}`
-          : ''
-      } | Envío: GRATIS Nacional | Total Con IVA: ${formatMXN(totalAfterDiscount)}`,
-      origen: 'Confirmación de Orden — Tienda de Llantas',
-    }).catch(() => {});
+      saveContactoWeb({
+        folio: orderRecord.id,
+        nombre: user?.nombre || 'Cliente Tienda Online',
+        telefono: user?.telefono || '',
+        email: user?.correo || '',
+        sucursal: selectedBranch?.name || 'Entrega a Domicilio Gratis',
+        tipo: `Orden de Compra (${totalTireUnits} llantas) — Total Con IVA: ${formatMXN(
+          totalAfterDiscount
+        )}`,
+        cupon: coupon?.code || '',
+        asunto: `Nueva Orden Tienda ${orderRecord.id} (${cartCount} uds) — ${formatMXN(
+          totalAfterDiscount
+        )} Con IVA`,
+        mensaje: `Productos: ${detalleProductos} | Subtotal: ${formatMXN(subtotal)}${
+          volumeDiscountAmount > 0
+            ? ` | Descuento por Volumen (${volumeTier.percent}%): -${formatMXN(volumeDiscountAmount)}`
+            : ''
+        } | Envío: GRATIS Nacional | Total Con IVA: ${formatMXN(totalAfterDiscount)}`,
+        origen: 'Confirmación de Orden — Tienda de Llantas',
+      }).catch(() => {});
 
-    setOrderCompleted(orderRecord);
-    clearCart();
+      setOrderCompleted(orderRecord);
+      clearCart();
+      return;
+    }
+
+    // Official Wix Managed Checkout Redirect (https://sistemas5160.wixsite.com/website-4)
+    setCheckoutLoading(true);
+    setCheckoutError('');
+    try {
+      await redirectToJasmanWixCheckout({
+        cartItems,
+        couponCode: coupon?.code || pendingCouponCode || null,
+        subtotal,
+        volumeDiscountAmount,
+        discountAmount,
+        totalAfterDiscount,
+        totalTireUnits,
+      });
+    } catch (err) {
+      console.error('[TiendaCartDrawer] Checkout redirect error:', err);
+      setCheckoutError(
+        err?.message ||
+          'No se pudo iniciar el Checkout Seguro. Intenta nuevamente o escríbenos por WhatsApp.'
+      );
+      setCheckoutLoading(false);
+    }
   };
 
   return (
@@ -671,23 +708,43 @@ export default function TiendaCartDrawer() {
               </div>
             </div>
 
+            {checkoutError && (
+              <div
+                style={{
+                  marginBottom: 12,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  background: '#FEF2F2',
+                  border: '1px solid rgba(196, 30, 36, 0.25)',
+                  color: C.red,
+                  fontSize: 12,
+                  lineHeight: 1.45,
+                  fontWeight: 600,
+                }}
+              >
+                {checkoutError}
+              </div>
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button
                 type="button"
                 onClick={handleConfirmOrder}
+                disabled={checkoutLoading}
                 style={{
                   width: '100%',
                   padding: '14px 18px',
                   borderRadius: 12,
                   border: 'none',
-                  background: C.red,
+                  background: checkoutLoading ? '#991B1B' : C.red,
                   color: C.white,
                   fontFamily: F.heading,
                   fontSize: 12,
                   fontWeight: 800,
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  cursor: 'pointer',
+                  cursor: checkoutLoading ? 'wait' : 'pointer',
+                  opacity: checkoutLoading ? 0.88 : 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -695,7 +752,23 @@ export default function TiendaCartDrawer() {
                   boxShadow: '0 10px 24px rgba(196,30,36,0.25)',
                 }}
               >
-                Confirmar Orden de Compra <ArrowRight size={15} />
+                {checkoutLoading ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    <span>Redirigiendo a Pago Seguro...</span>
+                  </>
+                ) : isLegacyCopyRoute ? (
+                  <>
+                    <span>Confirmar Orden de Compra</span>
+                    <ArrowRight size={15} />
+                  </>
+                ) : (
+                  <>
+                    <Lock size={14} />
+                    <span>Proceder al Pago Seguro</span>
+                    <ArrowRight size={15} />
+                  </>
+                )}
               </button>
 
               <a
