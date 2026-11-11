@@ -92,7 +92,7 @@ export default function CTA() {
               marginBottom: 28,
             }}>
               <a
-                href={`https://api.whatsapp.com/send/?phone=5215579337994&text=${encodeURIComponent('SW- Hola Jasman, me gustaría agendar una cita para mi auto.')}`}
+                href={`https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent('SW - Hola Jasman, me gustaría agendar una cita para mi auto.')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="glow-btn"

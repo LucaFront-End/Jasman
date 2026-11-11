@@ -266,7 +266,7 @@ export default function ProductoPreviewPage() {
   const activeSlide = galleryImages[selectedImageIdx] || galleryImages[0];
 
   const whatsappMessage = `SW- Hola, quisiera información / asesoría sobre esta llanta en Jasman Tienda:\n• Producto: ${product.cleanTitle}\n• Marca: ${product.brand}\n• Medida: ${product.measure || 'Oficial'}\n• SKU: ${product.reference}\n• Cantidad: ${qty} ${qty === 1 ? 'pieza' : 'piezas'}${basePrice > 0 ? `\n• Precio: ${formatMXN(unitEffectivePrice)} c/u (Con IVA)` : ''}`;
-  const whatsappAdvisorUrl = `https://api.whatsapp.com/send/?phone=5215579337994&text=${encodeURIComponent(
+  const whatsappAdvisorUrl = `https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent(
     whatsappMessage
   )}`;
 
@@ -404,7 +404,7 @@ export default function ProductoPreviewPage() {
           }}
         >
           <Link
-            to="/landing-tienda-preview/catalogo"
+            to="/llantas/catalogo"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -1657,7 +1657,7 @@ export default function ProductoPreviewPage() {
                   {product.vehicleTypes.map((vtName) => (
                     <Link
                       key={vtName}
-                      to={`/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(
+                      to={`/llantas/catalogo?vehicle=${encodeURIComponent(
                         vtName
                       )}`}
                       style={{
@@ -2271,7 +2271,7 @@ export default function ProductoPreviewPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        navigate(`/landing-tienda-preview/producto/${rel.id}`);
+                        navigate(`/llantas/producto/${rel.id}`);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       style={{

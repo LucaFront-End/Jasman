@@ -159,7 +159,12 @@ export default function ServicioDetailPage() {
                 </div>
               </div>
 
-              <a href="https://api.whatsapp.com/send/?phone=5215579337994&text=SW%20-Hola%20quisiera%20cotizar%20el%20servicio%20de%20" className="glow-btn" style={{
+              <a
+                href={`https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent(`SW - Hola quisiera cotizar el servicio de ${service.title}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glow-btn"
+                style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                 width: '100%', padding: '16px 24px', borderRadius: 16, border: 'none',
                 background: `linear-gradient(135deg, ${C.red}, ${C.redLight})`,

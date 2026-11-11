@@ -186,7 +186,7 @@ export default function Services() {
             <div style={{ textAlign: isMobile ? 'center' : 'left', marginBottom: isMobile ? 28 : 0 }}>
               {s.title === 'Llantas' ? (
                 <Link
-                  to="/landing-tienda-preview"
+                  to="/llantas"
                   className="glow-btn"
                   style={{
                     width: isMobile ? '100%' : 'auto',
@@ -203,7 +203,7 @@ export default function Services() {
                 </Link>
               ) : (
                 <a
-                  href={`https://api.whatsapp.com/send/?phone=5215579337994&text=${encodeURIComponent(`SW- Hola, quisiera cotizar el servicio de ${s.title}`)}`}
+                  href={`https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent(`SW - Hola, quisiera cotizar el servicio de ${s.title}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="glow-btn"

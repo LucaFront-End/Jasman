@@ -47,7 +47,7 @@ export function triggerTiendaUI(action) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
-    window.location.href = '/landing-tienda-preview/cuenta';
+    window.location.href = '/llantas/cuenta';
     return;
   }
   window.dispatchEvent(new CustomEvent(UI_EVENT, { detail: action }));

@@ -2,27 +2,46 @@ import { useState, useEffect } from 'react';
 import { C, F } from '../../hooks/useAnimations';
 import { saveContactoWeb } from '../../services/wixService';
 import { useTiendaState } from '../../hooks/useTiendaState';
-import { X, Tag, Check, Copy, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { X, Tag, Check, ArrowRight, AlertCircle, Sparkles, Mail } from 'lucide-react';
+
+const EMAIL_REG_STORAGE_KEY = 'jasman_tienda_first_purchase_email_v1';
+
+function readRegisteredEmail() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(EMAIL_REG_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function FirstPurchasePopup({ autoOpen = true }) {
-  const { coupon, applyFirstPurchaseCoupon, user, saveUser } = useTiendaState();
+  const { coupon, removeCoupon, user, saveUser } = useTiendaState();
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [registeredRecord, setRegisteredRecord] = useState(() => readRegisteredEmail());
 
   const [nombre, setNombre] = useState(user?.nombre || '');
   const [telefono, setTelefono] = useState(user?.telefono || '');
   const [correo, setCorreo] = useState(user?.correo || '');
   const [errors, setErrors] = useState({});
 
+  // Clear any legacy auto-generated JASMAN10-* code from older preview sessions
+  useEffect(() => {
+    if (coupon?.code && String(coupon.code).toUpperCase().startsWith('JASMAN10')) {
+      removeCoupon();
+    }
+  }, [coupon, removeCoupon]);
+
   useEffect(() => {
     if (!autoOpen) return undefined;
     const dismissed = sessionStorage.getItem('jasman_tienda_popup_dismissed');
-    if (!dismissed && !coupon) {
+    if (!dismissed && !registeredRecord) {
       const timer = setTimeout(() => setOpen(true), 2600);
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [coupon, autoOpen]);
+  }, [registeredRecord, autoOpen]);
 
   useEffect(() => {
     const handleUI = (e) => {
@@ -66,20 +85,20 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
     e.preventDefault();
     if (!validate()) return;
 
-    const suffix = Math.floor(1000 + Math.random() * 9000);
-    const code = `JASMAN10-${suffix}`;
     const cleanPhone = telefono.replace(/\D/g, '');
-
-    const couponPayload = {
-      code,
+    const record = {
       nombre: nombre.trim(),
       telefono: cleanPhone,
       correo: correo.trim(),
-      discountRate: 0.1,
       createdAt: new Date().toISOString(),
     };
 
-    applyFirstPurchaseCoupon(couponPayload);
+    setRegisteredRecord(record);
+    try {
+      window.localStorage.setItem(EMAIL_REG_STORAGE_KEY, JSON.stringify(record));
+    } catch {
+      // ignore storage errors
+    }
 
     if (!user) {
       saveUser({
@@ -94,17 +113,12 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
       nombre: nombre.trim(),
       telefono: cleanPhone,
       email: correo.trim(),
-      cupon: code,
-      asunto: `Cupón 10% Primera Compra Tienda: ${code}`,
-      origen: 'Popup 10% Primera Compra (/landing-tienda-preview)',
+      cupon: 'Pendiente de envío por correo (10% Primera Compra Tienda)',
+      asunto: 'Solicitud de Cupón 10% Primera Compra — Tienda de Llantas',
+      mensaje:
+        'Cliente registrado en Tienda Online para recibir su cupón del 10% de descuento por correo electrónico.',
+      origen: 'Popup 10% Primera Compra — Tienda de Llantas',
     }).catch(() => {});
-  };
-
-  const copyCode = () => {
-    if (!coupon?.code || !navigator.clipboard) return;
-    navigator.clipboard.writeText(coupon.code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2200);
   };
 
   if (!open) {
@@ -117,13 +131,13 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
           className="jasman-coupon-float-btn"
           style={{
             position: 'fixed',
-            bottom: 24,
-            left: 24,
+            bottom: 84,
+            right: 24,
             zIndex: 990,
             display: 'inline-flex',
             alignItems: 'center',
             gap: 10,
-            padding: '12px 18px',
+            padding: '11px 18px',
             borderRadius: 9999,
             background: C.navy,
             color: C.white,
@@ -131,9 +145,9 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
             boxShadow: '0 16px 40px rgba(26,31,54,0.28)',
             cursor: 'pointer',
             fontFamily: F.heading,
-            fontSize: 12,
+            fontSize: 11.5,
             fontWeight: 700,
-            letterSpacing: '0.1em',
+            letterSpacing: '0.09em',
             textTransform: 'uppercase',
             transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
@@ -151,24 +165,25 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
               width: 8,
               height: 8,
               borderRadius: '50%',
-              background: coupon ? '#22C55E' : C.red,
-              boxShadow: coupon ? '0 0 10px #22C55E' : `0 0 10px ${C.red}`,
+              background: registeredRecord ? '#22C55E' : C.red,
+              boxShadow: registeredRecord ? '0 0 10px #22C55E' : `0 0 10px ${C.red}`,
               flexShrink: 0,
             }}
           />
           <span className="jasman-coupon-full-txt">
-            {coupon ? `Cupón activo: ${coupon.code}` : '−10% Primera Compra'}
+            {registeredRecord ? '✓ Cupón 10% por correo' : '−10% Primera Compra'}
           </span>
           <span className="jasman-coupon-short-txt" style={{ display: 'none' }}>
-            {coupon ? '10% Activo' : '−10% Cupón'}
+            {registeredRecord ? '✓ 10% Correo' : '−10% Cupón'}
           </span>
         </button>
         <style>{`
           @media (max-width: 640px) {
             .jasman-coupon-float-btn {
-              bottom: 14px !important;
-              left: 12px !important;
-              height: 44px !important;
+              bottom: 66px !important;
+              right: 12px !important;
+              left: auto !important;
+              height: 42px !important;
               padding: 0 14px !important;
               gap: 7px !important;
               font-size: 10.5px !important;
@@ -324,7 +339,7 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                 margin: 0,
               }}
             >
-              Activa tu código personal y aplícalo directamente en tu carrito para llantas de automóvil, camioneta o paquetes.
+              Regístrate y recibe directamente en tu correo electrónico tu cupón personal para llantas de automóvil, camioneta o paquetes.
             </p>
           </div>
 
@@ -343,11 +358,11 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
           >
             <span>Catálogo oficial Jasman</span>
             <span>•</span>
-            <span>Aplicación inmediata</span>
+            <span>Envío directo a tu correo</span>
           </div>
         </div>
 
-        {/* Right form / coupon activation column */}
+        {/* Right form / email confirmation column */}
         <div
           className="jasman-coupon-modal-right"
           style={{ padding: '40px 36px', position: 'relative', background: C.white }}
@@ -377,8 +392,11 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
             <X size={16} />
           </button>
 
-          {!coupon ? (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {!registeredRecord ? (
+            <form
+              onSubmit={handleSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+            >
               <div>
                 <span
                   style={{
@@ -404,7 +422,7 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                     letterSpacing: '-0.02em',
                   }}
                 >
-                  Desbloquea tu 10% ahora
+                  Recibe tu cupón del 10%
                 </h4>
               </div>
 
@@ -444,7 +462,16 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                   }}
                 />
                 {errors.nombre && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: C.red, marginTop: 4 }}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontSize: 11,
+                      color: C.red,
+                      marginTop: 4,
+                    }}
+                  >
                     <AlertCircle size={12} /> {errors.nombre}
                   </span>
                 )}
@@ -487,7 +514,16 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                   }}
                 />
                 {errors.telefono && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: C.red, marginTop: 4 }}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontSize: 11,
+                      color: C.red,
+                      marginTop: 4,
+                    }}
+                  >
                     <AlertCircle size={12} /> {errors.telefono}
                   </span>
                 )}
@@ -529,7 +565,16 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                   }}
                 />
                 {errors.correo && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: C.red, marginTop: 4 }}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontSize: 11,
+                      color: C.red,
+                      marginTop: 4,
+                    }}
+                  >
                     <AlertCircle size={12} /> {errors.correo}
                   </span>
                 )}
@@ -559,7 +604,7 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                   transition: 'all 0.25s',
                 }}
               >
-                <Tag size={15} /> Activar 10% en mi primera compra <ArrowRight size={15} />
+                <Tag size={15} /> Recibir cupón en mi correo <ArrowRight size={15} />
               </button>
 
               <p
@@ -571,11 +616,19 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                   textAlign: 'center',
                 }}
               >
-                El descuento se aplica automáticamente en tu carrito de compra. Sujeto a validación de primera compra al confirmar pedido.
+                Tu cupón personal del 10% te llegará directamente por correo electrónico. Válido en tu primera compra en línea.
               </p>
             </form>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', gap: 18 }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                height: '100%',
+                gap: 18,
+              }}
+            >
               <div
                 style={{
                   width: 48,
@@ -604,7 +657,7 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                     marginBottom: 6,
                   }}
                 >
-                  Descuento aplicado al carrito
+                  Solicitud confirmada
                 </span>
                 <h4
                   style={{
@@ -615,54 +668,67 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                     margin: '0 0 8px',
                   }}
                 >
-                  Código listo para usar
+                  ¡Te llegará por correo!
                 </h4>
                 <p style={{ fontSize: 13.5, color: C.gray, margin: 0, lineHeight: 1.55 }}>
-                  Tu beneficio del <strong>10% de descuento en tu primera compra</strong> ya se refleja en el resumen de tu carrito.
+                  Hemos registrado tu beneficio del{' '}
+                  <strong>10% de descuento en tu primera compra</strong>. Recibirás tu cupón directamente en tu correo electrónico.
                 </p>
               </div>
 
               <div
                 style={{
-                  padding: '16px 18px',
+                  padding: '15px 18px',
                   borderRadius: 14,
                   background: '#F8FAFC',
-                  border: `1.5px dashed ${C.red}`,
+                  border: `1.5px solid ${C.border}`,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
                   gap: 12,
                 }}
               >
-                <div>
-                  <div style={{ fontSize: 10, fontFamily: F.heading, fontWeight: 700, color: C.gray, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                    Código primera compra
-                  </div>
-                  <div style={{ fontSize: 20, fontFamily: F.heading, fontWeight: 900, color: C.navy, letterSpacing: '0.06em', marginTop: 2 }}>
-                    {coupon.code}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={copyCode}
+                <div
                   style={{
-                    padding: '9px 14px',
-                    borderRadius: 8,
-                    border: `1px solid ${C.border}`,
-                    background: copied ? '#16A34A' : C.white,
-                    color: copied ? C.white : C.navy,
-                    fontFamily: F.heading,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
+                    width: 38,
+                    height: 38,
+                    borderRadius: 10,
+                    background: 'rgba(196,30,36,0.08)',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: 6,
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  {copied ? <Check size={13} /> : <Copy size={13} />}
-                  {copied ? 'Copiado' : 'Copiar'}
-                </button>
+                  <Mail size={18} color={C.red} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontFamily: F.heading,
+                      fontWeight: 700,
+                      color: C.gray,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Lo enviaremos a tu correo
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontFamily: F.heading,
+                      fontWeight: 800,
+                      color: C.navy,
+                      marginTop: 2,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {registeredRecord.correo}
+                  </div>
+                </div>
               </div>
 
               <button
@@ -683,7 +749,7 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                   cursor: 'pointer',
                 }}
               >
-                Explorar Llantas con Descuento
+                Explorar Catálogo de Llantas
               </button>
             </div>
           )}
@@ -731,4 +797,3 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
     </div>
   );
 }
-

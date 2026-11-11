@@ -537,7 +537,7 @@ export default function LandingTiendaPreviewPage() {
               </button>
 
               <Link
-                to={`/landing-tienda-preview/producto/${heroProduct.id}`}
+                to={`/llantas/producto/${heroProduct.id}`}
                 className="jasman-hero-secondary-btn"
                 style={{
                   padding: '10px 13px',
@@ -560,7 +560,7 @@ export default function LandingTiendaPreviewPage() {
               </Link>
 
               <Link
-                to="/landing-tienda-preview/catalogo"
+                to="/llantas/catalogo"
                 className="jasman-hero-catalog-cta jasman-hero-secondary-btn"
                 style={{
                   padding: '10px 14px',
@@ -618,7 +618,7 @@ export default function LandingTiendaPreviewPage() {
                 {heroProduct.excerpt}
               </span>
               <Link
-                to={`/landing-tienda-preview/producto/${heroProduct.id}`}
+                to={`/llantas/producto/${heroProduct.id}`}
                 style={{
                   fontFamily: F.heading,
                   fontSize: 10.5,
@@ -1386,7 +1386,7 @@ export default function LandingTiendaPreviewPage() {
             </p>
 
             <Link
-              to="/landing-tienda-preview/catalogo?brand=Hankook"
+              to="/llantas/catalogo?brand=Hankook"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

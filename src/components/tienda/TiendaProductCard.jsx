@@ -43,7 +43,7 @@ export default function TiendaProductCard({
   if (featured && !compact) {
     return (
       <Link
-        to={`/landing-tienda-preview/producto/${product.id}`}
+        to={`/llantas/producto/${product.id}`}
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
         className="tienda-spotlight-card"
@@ -395,7 +395,7 @@ export default function TiendaProductCard({
   // STANDARD 3/4 PRODUCT CARD
   return (
     <Link
-      to={`/landing-tienda-preview/producto/${product.id}`}
+      to={`/llantas/producto/${product.id}`}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
       style={{

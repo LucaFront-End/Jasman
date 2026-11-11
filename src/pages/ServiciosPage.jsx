@@ -180,7 +180,7 @@ export default function ServiciosPage() {
                     </p>
                   </div>
                   <Link
-                    to="/landing-tienda-preview"
+                    to="/llantas"
                     style={{
                       padding: '13px 28px', borderRadius: 14, background: C.red, color: C.white,
                       fontFamily: F.heading, fontWeight: 700, fontSize: 14, textDecoration: 'none',

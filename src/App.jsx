@@ -26,30 +26,40 @@ import CuentaPreviewPage from './pages/CuentaPreviewPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   return null;
 }
 
 export default function App() {
   const { pathname } = useLocation();
 
-  // Subdomain detection: if visiting via a landing/promo subdomain, render landing page at root
-  const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
-  const isLandingSubdomain =
-    hostname.startsWith('llantas.') ||
+  // Subdomain detection
+  const hostname =
+    typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+  const isLlantasSubdomain = hostname.startsWith('llantas.');
+  const isPromoSubdomain =
     hostname.startsWith('promociones.') ||
     hostname.startsWith('promocion.') ||
     hostname.startsWith('alineacion.') ||
     hostname.startsWith('landing.');
 
+  const isLlantasStoreRoute =
+    isLlantasSubdomain ||
+    pathname === '/llantas' ||
+    pathname.startsWith('/llantas/catalogo') ||
+    pathname.startsWith('/llantas/producto') ||
+    pathname.startsWith('/llantas/cuenta');
+
   const isDedicatedStoreLanding =
+    isLlantasStoreRoute ||
     pathname.startsWith('/landing-tienda-preview') ||
     pathname.startsWith('/landing-tienda-copia') ||
     pathname.startsWith('/landing-tienda-wix');
-  const isStorePreviewRoute =
-    pathname.includes('tienda-preview') ||
-    pathname.includes('tienda-copia') ||
-    pathname.includes('tienda-wix');
+
+  const isPromoSlugUnderLlantas =
+    pathname.startsWith('/llantas/') && !isLlantasStoreRoute;
 
   return (
     <>
@@ -58,16 +68,41 @@ export default function App() {
       <ScrollProgress />
       <main>
         <Routes>
-          <Route path="/" element={isLandingSubdomain ? <LandingAlineacionPage /> : <HomePage />} />
-          <Route path="/llantas" element={<LandingAlineacionPage />} />
+          <Route
+            path="/"
+            element={
+              isLlantasSubdomain ? (
+                <LandingTiendaPreviewPage />
+              ) : isPromoSubdomain ? (
+                <LandingAlineacionPage />
+              ) : (
+                <HomePage />
+              )
+            }
+          />
+          {/* Official Online Tire Store routes under /llantas */}
+          <Route path="/llantas" element={<LandingTiendaPreviewPage />} />
+          <Route path="/llantas/catalogo" element={<CatalogoPreviewPage />} />
+          <Route path="/llantas/producto/:id" element={<ProductoPreviewPage />} />
+          <Route path="/llantas/cuenta" element={<CuentaPreviewPage />} />
           <Route path="/llantas/:slug" element={<LandingAlineacionPage />} />
+
+          {/* Promotional campaign routes */}
           <Route path="/alineacion-y-balanceo" element={<LandingAlineacionPage />} />
           <Route path="/alineación-y-balanceo" element={<LandingAlineacionPage />} />
-          <Route path="/alineacion-y-balanceo-promocion-cdmx-octubre" element={<LandingAlineacionPage />} />
+          <Route
+            path="/alineacion-y-balanceo-promocion-cdmx-octubre"
+            element={<LandingAlineacionPage />}
+          />
           <Route path="/promociones/:slug" element={<LandingAlineacionPage />} />
           <Route path="/promocion/:slug" element={<LandingAlineacionPage />} />
           <Route path="/promociones" element={<LandingAlineacionPage />} />
-          <Route path="/promociones/alineacion-y-balanceo" element={<LandingAlineacionPage />} />
+          <Route
+            path="/promociones/alineacion-y-balanceo"
+            element={<LandingAlineacionPage />}
+          />
+
+          {/* Main corporate site routes */}
           <Route path="/nosotros" element={<NosotrosPage />} />
           <Route path="/servicios" element={<ServiciosPage />} />
           <Route path="/servicios/:slug" element={<ServicioDetailPage />} />
@@ -78,25 +113,41 @@ export default function App() {
           <Route path="/bolsa-de-trabajo/:id" element={<VacanteDetailPage />} />
           <Route path="/proveedores" element={<ProveedoresPage />} />
           <Route path="/contacto" element={<ContactoPage />} />
-          {/* Preview routes (isolated from production menus) */}
+
+          {/* Store preview & OAuth callback aliases (kept active for backwards compatibility) */}
           <Route path="/landing-tienda-preview" element={<LandingTiendaPreviewPage />} />
           <Route path="/landing-tienda-wix" element={<LandingTiendaPreviewPage />} />
-          <Route path="/landing-tienda-preview-copia" element={<LandingTiendaPreviewCopyPage />} />
-          <Route path="/landing-tienda-preview/copia" element={<LandingTiendaPreviewCopyPage />} />
-          <Route path="/landing-tienda-copia" element={<LandingTiendaPreviewCopyPage />} />
-          <Route path="/landing-tienda-preview/catalogo" element={<CatalogoPreviewPage />} />
-          <Route path="/landing-tienda-preview/producto/:id" element={<ProductoPreviewPage />} />
+          <Route
+            path="/landing-tienda-preview-copia"
+            element={<LandingTiendaPreviewCopyPage />}
+          />
+          <Route
+            path="/landing-tienda-preview/copia"
+            element={<LandingTiendaPreviewCopyPage />}
+          />
+          <Route
+            path="/landing-tienda-copia"
+            element={<LandingTiendaPreviewCopyPage />}
+          />
+          <Route
+            path="/landing-tienda-preview/catalogo"
+            element={<CatalogoPreviewPage />}
+          />
+          <Route
+            path="/landing-tienda-preview/producto/:id"
+            element={<ProductoPreviewPage />}
+          />
           <Route path="/landing-tienda-preview/cuenta" element={<CuentaPreviewPage />} />
           <Route path="/home-tienda-preview" element={<HomeTiendaPreviewPage />} />
         </Routes>
       </main>
       <Footer />
-      {/* Hide general promotion popup when already on a dedicated landing or store preview page */}
-      {!isLandingSubdomain &&
-        !isStorePreviewRoute &&
+      {/* Show automotive 10% service popup & floating WhatsApp on main site routes (both bottom-right) */}
+      {!isPromoSubdomain &&
+        !isDedicatedStoreLanding &&
+        !isPromoSlugUnderLlantas &&
         !pathname.includes('alineacion') &&
-        !pathname.includes('alineación') &&
-        !pathname.includes('llantas') && (
+        !pathname.includes('alineación') && (
           <>
             <PromotionsPopup />
             <FloatingWhatsAppButton />

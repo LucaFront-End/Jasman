@@ -1636,7 +1636,7 @@ export default function TiendaUserSection({ isStandalonePage = false }) {
         {isStandalonePage && (
           <div style={{ marginBottom: 24 }}>
             <Link
-              to="/landing-tienda-preview"
+              to="/llantas"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

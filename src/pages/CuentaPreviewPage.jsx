@@ -15,7 +15,7 @@ export default function CuentaPreviewPage() {
       <TiendaCartDrawer />
       <TiendaAuthModal
         forceOpen={true}
-        onCloseForce={() => navigate('/landing-tienda-preview')}
+        onCloseForce={() => navigate('/llantas')}
       />
       <FirstPurchasePopup autoOpen={false} />
       <TiendaLiveChatWidget />

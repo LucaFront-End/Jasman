@@ -106,7 +106,7 @@ export default function TiendaAuthModal({ forceOpen = false, onCloseForce }) {
     const handleUI = (e) => {
       if (e.detail?.type === 'OPEN_AUTH' || e.detail?.type === 'OPEN_USER') {
         if (user) {
-          navigate('/landing-tienda-preview/cuenta');
+          navigate('/llantas/cuenta');
           return;
         }
         setAuthMode(e.detail?.mode || 'login');
@@ -151,7 +151,7 @@ export default function TiendaAuthModal({ forceOpen = false, onCloseForce }) {
     setOpen(false);
     setSocialQuickProvider(null);
     if (redirectToAccount || forceOpen) {
-      navigate('/landing-tienda-preview/cuenta');
+      navigate('/llantas/cuenta');
     }
   };
 

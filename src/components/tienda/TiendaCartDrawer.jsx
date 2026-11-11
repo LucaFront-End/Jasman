@@ -34,7 +34,6 @@ export default function TiendaCartDrawer() {
     updateCartQuantity,
     removeFromCart,
     clearCart,
-    applyFirstPurchaseCoupon,
     createOrderRecord,
   } = useTiendaState();
 
@@ -73,7 +72,7 @@ export default function TiendaCartDrawer() {
     .filter(Boolean)
     .join('\n');
 
-  const cartWhatsappUrl = `https://api.whatsapp.com/send/?phone=5215579337994&text=${encodeURIComponent(
+  const cartWhatsappUrl = `https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent(
     cartWhatsappMessage
   )}`;
 
@@ -81,17 +80,10 @@ export default function TiendaCartDrawer() {
     e.preventDefault();
     const clean = manualCode.trim().toUpperCase();
     if (!clean) return;
-    if (clean.startsWith('JASMAN10') || clean === 'PRIMERA10') {
-      applyFirstPurchaseCoupon({
-        code: clean,
-        discountRate: 0.1,
-        createdAt: new Date().toISOString(),
-      });
-      setCouponFeedback('Cupón 10% aplicado.');
-      setManualCode('');
-    } else {
-      setCouponFeedback('Usa el botón de 10% primera compra para generar tu código.');
-    }
+    setCouponFeedback(
+      'Este código aún no está activo. Si te registraste al 10%, recibirás tu cupón oficial por correo electrónico.'
+    );
+    setManualCode('');
   };
 
   const handleConfirmOrder = () => {
@@ -118,14 +110,35 @@ export default function TiendaCartDrawer() {
       customer: user || { nombre: 'Cliente Web' },
     });
 
+    const detalleProductos = cartItems
+      .map(
+        (i) =>
+          `${i.quantity}x ${i.product.cleanTitle} (SKU: ${i.product.reference}) — ${formatMXN(
+            i.unitPrice * i.quantity
+          )} Con IVA`
+      )
+      .join(' | ');
+
     saveContactoWeb({
+      folio: orderRecord.id,
       nombre: user?.nombre || 'Cliente Tienda Online',
       telefono: user?.telefono || '',
       email: user?.correo || '',
+      sucursal: selectedBranch?.name || 'Entrega a Domicilio Gratis',
+      tipo: `Orden de Compra (${totalTireUnits} llantas) — Total Con IVA: ${formatMXN(
+        totalAfterDiscount
+      )}`,
       cupon: coupon?.code || '',
-      asunto: `Pedido Tienda ${orderRecord.id} (${cartCount} uds) - ${selectedBranch?.name}`,
-      origen: 'Carrito Tienda Preview',
-    }).catch(() => { });
+      asunto: `Nueva Orden Tienda ${orderRecord.id} (${cartCount} uds) — ${formatMXN(
+        totalAfterDiscount
+      )} Con IVA`,
+      mensaje: `Productos: ${detalleProductos} | Subtotal: ${formatMXN(subtotal)}${
+        volumeDiscountAmount > 0
+          ? ` | Descuento por Volumen (${volumeTier.percent}%): -${formatMXN(volumeDiscountAmount)}`
+          : ''
+      } | Envío: GRATIS Nacional | Total Con IVA: ${formatMXN(totalAfterDiscount)}`,
+      origen: 'Confirmación de Orden — Tienda de Llantas',
+    }).catch(() => {});
 
     setOrderCompleted(orderRecord);
     clearCart();
@@ -397,7 +410,7 @@ export default function TiendaCartDrawer() {
                   }}
                 >
                   <Link
-                    to={`/landing-tienda-preview/producto/${product.id}`}
+                    to={`/llantas/producto/${product.id}`}
                     onClick={() => setOpen(false)}
                     style={{
                       width: 76,
@@ -431,7 +444,7 @@ export default function TiendaCartDrawer() {
                       }}
                     >
                       <Link
-                        to={`/landing-tienda-preview/producto/${product.id}`}
+                        to={`/llantas/producto/${product.id}`}
                         onClick={() => setOpen(false)}
                         style={{
                           fontFamily: F.heading,
@@ -571,7 +584,7 @@ export default function TiendaCartDrawer() {
                   <form onSubmit={handleManualCoupon} style={{ display: 'flex', gap: 8 }}>
                     <input
                       type="text"
-                      placeholder="Código de cupón (ej. JASMAN10)"
+                      placeholder="Código promocional"
                       value={manualCode}
                       onChange={(e) => setManualCode(e.target.value)}
                       style={{

@@ -30,7 +30,7 @@ const SHIPPING_TICKER_ITEMS = [
   'ENVÍO GRATIS EN TODA LA REPÚBLICA MEXICANA',
   'AGREGA MÁS Y OBTÉN DESCUENTO: −5% EN PAR · −10% EN JUEGO DE 4 LLANTAS',
   'INSTALACIÓN CERTIFICADA EN +80 SUCURSALES JASMAN',
-  '−10% ADICIONAL EN TU PRIMERA COMPRA (CÓDIGO: JASMAN10)',
+  '−10% ADICIONAL EN TU PRIMERA COMPRA REGISTRÁNDOTE EN LÍNEA',
   'GARANTÍA OFICIAL DIRECTA DE FÁBRICA',
 ];
 
@@ -127,6 +127,8 @@ export default function TiendaNavbar({ legacyMode = false }) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const storeBasePath = legacyMode ? '/landing-tienda-preview' : '/llantas';
+
   const navItems = legacyMode
     ? [
         { label: 'Experiencia', href: '/landing-tienda-preview-copia#hero-stage' },
@@ -146,26 +148,29 @@ export default function TiendaNavbar({ legacyMode = false }) {
         { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
       ]
     : [
-        { label: 'Inicio', href: '/landing-tienda-preview#hero-stage' },
-        { label: 'Catálogo', href: '/landing-tienda-preview/catalogo' },
+        { label: '← Home', href: '/', isMainHome: true },
+        { label: 'Tienda', href: '/llantas#hero-stage' },
+        { label: 'Catálogo', href: '/llantas/catalogo' },
         {
           label: 'Marcas',
-          href: '/landing-tienda-preview/catalogo',
+          href: '/llantas/catalogo',
           hasMega: true,
           megaMode: 'brands',
         },
         {
           label: 'Top Medidas',
-          href: '/landing-tienda-preview/catalogo',
+          href: '/llantas/catalogo',
           hasMega: true,
           megaMode: 'measures',
         },
         {
           label: 'Tipo de Vehículos',
-          href: '/landing-tienda-preview/catalogo',
+          href: '/llantas/catalogo',
           hasMega: true,
           megaMode: 'vehicles',
         },
+        { label: 'Servicios', href: '/servicios' },
+        { label: 'Sucursales', href: '/sucursales' },
       ];
 
   // Live instant search matches (measures, brands, vehicle types, and compatible car models)
@@ -204,7 +209,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
     setMobileMenu(false);
     setSearchQuery('');
     navigate(
-      `/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(vehicleId)}`
+      `${storeBasePath}/catalogo?vehicle=${encodeURIComponent(vehicleId)}`
     );
     setTimeout(() => {
       triggerTiendaUI({ type: 'FILTER_CATALOG', vehicle: vehicleId });
@@ -216,7 +221,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
     setMobileMenu(false);
     setSearchQuery('');
     navigate(
-      `/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(
+      `${storeBasePath}/catalogo?vehicle=${encodeURIComponent(
         carModelObj.vehicle
       )}&carModel=${encodeURIComponent(carModelObj.id)}`
     );
@@ -234,7 +239,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
     const trimmed = searchQuery.trim();
     if (!trimmed) {
       setSearchOpen(false);
-      navigate('/landing-tienda-preview/catalogo');
+      navigate(`${storeBasePath}/catalogo`);
       return;
     }
     const queryValue = normalizeMeasureToken(trimmed).includes('/')
@@ -242,7 +247,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
       : trimmed;
     setSearchOpen(false);
     setMobileMenu(false);
-    navigate(`/landing-tienda-preview/catalogo?q=${encodeURIComponent(queryValue)}`);
+    navigate(`${storeBasePath}/catalogo?q=${encodeURIComponent(queryValue)}`);
     setTimeout(() => {
       triggerTiendaUI({ type: 'FILTER_CATALOG', measure: queryValue });
     }, 80);
@@ -253,7 +258,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
     setMobileMenu(false);
     setSearchQuery('');
     navigate(
-      `/landing-tienda-preview/catalogo?measure=${encodeURIComponent(rawMeasure)}`
+      `${storeBasePath}/catalogo?measure=${encodeURIComponent(rawMeasure)}`
     );
     setTimeout(() => {
       triggerTiendaUI({ type: 'FILTER_CATALOG', measure: rawMeasure });
@@ -265,7 +270,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
     setMobileMenu(false);
     setSearchQuery('');
     navigate(
-      `/landing-tienda-preview/catalogo?brand=${encodeURIComponent(brandName)}`
+      `${storeBasePath}/catalogo?brand=${encodeURIComponent(brandName)}`
     );
     setTimeout(() => {
       triggerTiendaUI({ type: 'FILTER_CATALOG', brand: brandName });
@@ -441,7 +446,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
         <div
           className="tienda-apple-pill-inner"
           style={{
-            maxWidth: scrolled ? 1160 : 1260,
+            maxWidth: legacyMode ? (scrolled ? 1160 : 1260) : scrolled ? 1240 : 1280,
             margin: '0 auto',
             padding: scrolled ? '9px 16px 9px 20px' : '10px 18px 10px 22px',
             borderRadius: 9999,
@@ -455,51 +460,105 @@ export default function TiendaNavbar({ legacyMode = false }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 12,
+            gap: 10,
             pointerEvents: 'auto',
             transition: 'all 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          {/* Left: Official Jasman Logo */}
-          <Link
-            to={legacyMode ? '/landing-tienda-preview-copia' : '/landing-tienda-preview'}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              textDecoration: 'none',
-              flexShrink: 0,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <img
-              src="/images/logo/logo-01.png"
-              alt="Jasman Automotriz"
-              className="tienda-apple-logo-img"
+          {/* Left: Official Jasman Logo (-> Main Home) + Store Badge (-> /llantas) */}
+          {legacyMode ? (
+            <Link
+              to="/landing-tienda-preview-copia"
               style={{
-                height: 30,
-                width: 'auto',
-                objectFit: 'contain',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                textDecoration: 'none',
                 flexShrink: 0,
-              }}
-            />
-            <span
-              className="tienda-apple-logo-badge"
-              style={{
-                fontFamily: F.heading,
-                fontSize: 9.5,
-                fontWeight: 800,
-                letterSpacing: '0.22em',
-                textTransform: 'uppercase',
-                color: C.red,
-                borderLeft: '1px solid rgba(26, 31, 54, 0.12)',
-                paddingLeft: 10,
                 whiteSpace: 'nowrap',
               }}
             >
-              Tienda
-            </span>
-          </Link>
+              <img
+                src="/images/logo/logo-01.png"
+                alt="Jasman Automotriz"
+                className="tienda-apple-logo-img"
+                style={{
+                  height: 30,
+                  width: 'auto',
+                  objectFit: 'contain',
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                className="tienda-apple-logo-badge"
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 9.5,
+                  fontWeight: 800,
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                  color: C.red,
+                  borderLeft: '1px solid rgba(26, 31, 54, 0.12)',
+                  paddingLeft: 10,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Tienda
+              </span>
+            </Link>
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Link
+                to="/"
+                title="Volver al Home Principal Jasman"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  textDecoration: 'none',
+                  flexShrink: 0,
+                }}
+              >
+                <img
+                  src="/images/logo/logo-01.png"
+                  alt="Jasman Automotriz — Volver al Home"
+                  className="tienda-apple-logo-img"
+                  style={{
+                    height: 30,
+                    width: 'auto',
+                    objectFit: 'contain',
+                    flexShrink: 0,
+                  }}
+                />
+              </Link>
+              <Link
+                to="/llantas"
+                title="Inicio Tienda de Llantas"
+                className="tienda-apple-logo-badge"
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 9.5,
+                  fontWeight: 800,
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                  color: C.red,
+                  borderLeft: '1px solid rgba(26, 31, 54, 0.12)',
+                  paddingLeft: 10,
+                  whiteSpace: 'nowrap',
+                  textDecoration: 'none',
+                }}
+              >
+                Tienda
+              </Link>
+            </div>
+          )}
 
           {/* Center: Minimalist Apple-style navigation (strictly single-line nowrap) */}
           <nav
@@ -508,25 +567,31 @@ export default function TiendaNavbar({ legacyMode = false }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 4,
+              gap: legacyMode ? 4 : 2,
               flex: 1,
               minWidth: 0,
             }}
           >
             {navItems.map((item) => {
               const isLocalAnchor =
-                item.href.startsWith('/landing-tienda-preview#') &&
-                pathname === '/landing-tienda-preview';
+                (item.href === '/llantas#hero-stage' &&
+                  (pathname === '/llantas' || pathname === '/landing-tienda-preview')) ||
+                (item.href.startsWith('/landing-tienda-preview#') &&
+                  pathname === '/landing-tienda-preview');
               const isMegaActive =
                 megaOpen && item.hasMega && !legacyMode && megaMode === item.megaMode;
               const linkStyle = {
-                padding: '7px 13px',
+                padding: legacyMode ? '7px 13px' : '7px 11px',
                 borderRadius: 9999,
                 fontFamily: F.heading,
-                fontSize: 12,
-                fontWeight: 600,
+                fontSize: legacyMode ? 12 : 11.5,
+                fontWeight: item.isMainHome ? 700 : 600,
                 letterSpacing: '-0.01em',
-                background: isMegaActive ? C.red : 'transparent',
+                background: isMegaActive
+                  ? C.red
+                  : item.isMainHome
+                    ? 'rgba(26, 31, 54, 0.05)'
+                    : 'transparent',
                 color: isMegaActive ? C.white : C.navy,
                 textDecoration: 'none',
                 display: 'inline-flex',
@@ -551,7 +616,9 @@ export default function TiendaNavbar({ legacyMode = false }) {
 
               const handleLeave = (e) => {
                 if (!isMegaActive) {
-                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.background = item.isMainHome
+                    ? 'rgba(26, 31, 54, 0.05)'
+                    : 'transparent';
                   e.currentTarget.style.color = C.navy;
                 }
                 if (item.hasMega) {
@@ -562,7 +629,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
               return isLocalAnchor ? (
                 <a
                   key={item.label}
-                  href={item.href.replace('/landing-tienda-preview', '')}
+                  href="#hero-stage"
                   style={linkStyle}
                   onMouseEnter={handleEnter}
                   onMouseLeave={handleLeave}
@@ -687,7 +754,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
             )}
 
             <Link
-              to="/landing-tienda-preview/cuenta"
+              to={`${storeBasePath}/cuenta`}
               onClick={handleAccountAction}
               aria-label="Mi Cuenta"
               className="tienda-apple-account-btn"
@@ -922,7 +989,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
                       {searchMatches.slice(0, 6).map((tire) => (
                         <Link
                           key={tire.id}
-                          to={`/landing-tienda-preview/producto/${tire.id}`}
+                          to={`${storeBasePath}/producto/${tire.id}`}
                           onClick={() => {
                             setSearchOpen(false);
                             setSearchQuery('');
@@ -1083,7 +1150,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
                       onClick={() => {
                         setSearchOpen(false);
                         setSearchQuery('');
-                        navigate('/landing-tienda-preview/catalogo');
+                        navigate(`${storeBasePath}/catalogo`);
                       }}
                       style={{
                         padding: '9px 18px',
@@ -1371,7 +1438,29 @@ export default function TiendaNavbar({ legacyMode = false }) {
               </button>
 
               <Link
-                to="/landing-tienda-preview"
+                to="/"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 12.5,
+                  fontWeight: 800,
+                  color: C.navy,
+                  background: '#F1F5F9',
+                  border: '1px solid rgba(26, 31, 54, 0.10)',
+                  borderRadius: 12,
+                  textDecoration: 'none',
+                  padding: '10px 12px',
+                  marginBottom: 4,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span>← Volver al Home Principal Jasman</span>
+              </Link>
+
+              <Link
+                to="/llantas"
                 onClick={() => setMobileMenu(false)}
                 style={{
                   fontFamily: F.heading,
@@ -1383,11 +1472,11 @@ export default function TiendaNavbar({ legacyMode = false }) {
                   borderBottom: '1px solid rgba(26, 31, 54, 0.06)',
                 }}
               >
-                Inicio
+                Inicio Tienda de Llantas
               </Link>
 
               <Link
-                to="/landing-tienda-preview/catalogo"
+                to="/llantas/catalogo"
                 onClick={() => setMobileMenu(false)}
                 style={{
                   fontFamily: F.heading,
@@ -1689,7 +1778,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
               </div>
 
               <Link
-                to="/landing-tienda-preview/cuenta"
+                to="/llantas/cuenta"
                 onClick={handleAccountAction}
                 style={{
                   fontFamily: F.heading,
@@ -1697,7 +1786,8 @@ export default function TiendaNavbar({ legacyMode = false }) {
                   fontWeight: 800,
                   color: C.navy,
                   textDecoration: 'none',
-                  padding: '10px 6px 4px',
+                  padding: '10px 6px',
+                  borderBottom: '1px solid rgba(26, 31, 54, 0.06)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
@@ -1706,6 +1796,60 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 <User size={15} color={user ? '#16A34A' : C.red} />
                 <span>{user ? `Mi Cuenta (${user.nombre.split(' ')[0]})` : 'Cuenta / Iniciar sesión'}</span>
               </Link>
+
+              {/* Main Corporate Site Navigation Links */}
+              <div style={{ paddingTop: 10 }}>
+                <div
+                  style={{
+                    fontFamily: F.heading,
+                    fontSize: 9.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    color: '#94A3B8',
+                    padding: '0 6px 8px',
+                  }}
+                >
+                  Jasman Automotriz
+                </div>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  {[
+                    { label: 'Servicios', to: '/servicios' },
+                    { label: 'Sucursales (+80)', to: '/sucursales' },
+                    { label: 'Flotillas', to: '/flotillas' },
+                    { label: 'Contacto', to: '/contacto' },
+                  ].map((siteLink) => (
+                    <Link
+                      key={siteLink.to}
+                      to={siteLink.to}
+                      onClick={() => setMobileMenu(false)}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: 11,
+                        background: '#F8FAFC',
+                        border: '1px solid rgba(26, 31, 54, 0.08)',
+                        fontFamily: F.heading,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: C.navy,
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span>{siteLink.label}</span>
+                      <ArrowUpRight size={13} color={C.red} />
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -1742,10 +1886,10 @@ export default function TiendaNavbar({ legacyMode = false }) {
           background: #FFFFFF !important;
           box-shadow: 0 10px 24px rgba(26, 31, 54, 0.06);
         }
-        @media (max-width: 1080px) {
+        @media (max-width: 1180px) {
           .tienda-apple-search-kbd { display: none !important; }
         }
-        @media (max-width: 960px) {
+        @media (max-width: 1120px) {
           .tienda-apple-nav { display: none !important; }
           .tienda-apple-burger { display: inline-flex !important; }
           .tienda-apple-pill-outer { padding: 8px 12px 0 !important; }

@@ -18,13 +18,13 @@ const contactMethods = [
   },
   {
     icon: MessageCircle, title: 'WhatsApp', subtitle: 'Respuesta en minutos',
-    value: '55 7933 7994',
-    action: 'https://api.whatsapp.com/send/?phone=5215579337994&text=' + encodeURIComponent('SW -Hola quisiera más información sobre sus servicios automotrices'),
+    value: '55 1002 4945',
+    action: 'https://api.whatsapp.com/send/?phone=5215510024945&text=' + encodeURIComponent('SW - Hola quisiera más información sobre sus servicios automotrices'),
     color: '#22c55e', gradient: 'linear-gradient(135deg, #22c55e, #4ade80)',
   },
   {
     icon: Mail, title: 'Email', subtitle: 'Te respondemos en 24h',
-    value: 'jasmanteescucha @jasman.com.mx', action: 'mailto:jasmanteescucha@jasman.com.mx', smallText: true,
+    value: 'jasmanonline@jasman.com.mx', action: 'mailto:jasmanonline@jasman.com.mx?cc=hola@dilodigitalmx.com', smallText: true,
     color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
   },
   {
@@ -195,7 +195,7 @@ export default function ContactoPage() {
       formData.sucursal && `*Sucursal:* ${formData.sucursal}`,
       `*Mensaje:* ${formData.message}`,
     ].filter(Boolean).join('\n');
-    const url = `https://api.whatsapp.com/send/?phone=5215579337994&text=${encodeURIComponent(lines)}`;
+    const url = `https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent(lines)}`;
     window.open(url, '_blank');
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 5000);
@@ -305,7 +305,7 @@ export default function ContactoPage() {
                     ¡Mensaje enviado!
                   </h3>
                   <p style={{ fontSize: 14, color: C.gray }}>
-                    Tu mensaje ha sido enviado por WhatsApp. Nuestro equipo te contactará pronto.
+                    Tu mensaje ha sido enviado por correo electrónico y WhatsApp. Nuestro equipo te contactará pronto.
                   </p>
                 </div>
               ) : (
@@ -468,7 +468,7 @@ export default function ContactoPage() {
                     </div>
                     <div>
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 2 }}>WhatsApp</div>
-                      <a href="https://api.whatsapp.com/send/?phone=5215579337994" target="_blank" rel="noopener noreferrer" style={{ fontFamily: F.heading, fontWeight: 600, fontSize: 15, color: C.white }}>55 7933 7994</a>
+                      <a href="https://api.whatsapp.com/send/?phone=5215510024945" target="_blank" rel="noopener noreferrer" style={{ fontFamily: F.heading, fontWeight: 600, fontSize: 15, color: C.white }}>55 1002 4945</a>
                     </div>
                   </div>
 
@@ -481,7 +481,7 @@ export default function ContactoPage() {
                     </div>
                     <div>
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 2 }}>Email</div>
-                      <a href="mailto:jasmanteescucha@jasman.com.mx" style={{ fontFamily: F.heading, fontWeight: 600, fontSize: 14, color: C.white, wordBreak: 'break-all' }}>jasmanteescucha@jasman.com.mx</a>
+                      <a href="mailto:jasmanonline@jasman.com.mx?cc=hola@dilodigitalmx.com" style={{ fontFamily: F.heading, fontWeight: 600, fontSize: 14, color: C.white, wordBreak: 'break-all' }}>jasmanonline@jasman.com.mx</a>
                     </div>
                   </div>
 

@@ -260,7 +260,7 @@ export default function TiendaCatalogSection({
       if (nextProfile && nextProfile !== 'Todos') params.set('profile', nextProfile);
 
       const queryString = params.toString();
-      const targetUrl = `/landing-tienda-preview/catalogo${queryString ? `?${queryString}` : ''}`;
+      const targetUrl = `/llantas/catalogo${queryString ? `?${queryString}` : ''}`;
       navigate(targetUrl);
     },
     [brand, searchQuery, vehicleType, carModel, rim, width, profile, navigate]

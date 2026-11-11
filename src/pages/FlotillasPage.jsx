@@ -219,7 +219,7 @@ export default function FlotillasPage() {
                     <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 18 }}>{flotillasContent.hero.phone}</div>
                   </div>
                 </a>
-                <a href={`https://api.whatsapp.com/send/?phone=52${flotillasContent.hero.phone.replace(/\s/g, '')}&text=${encodeURIComponent('SW -Hola, me interesa el servicio de flotillas de Jasman')}`}
+                <a href={`https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent('SW - Hola, me interesa el servicio de flotillas de Jasman')}`}
                   target="_blank" rel="noopener noreferrer" style={{
                     padding: '18px 24px', borderRadius: 16,
                     background: 'rgba(37,211,102,0.08)', border: '1px solid rgba(37,211,102,0.15)',
@@ -236,7 +236,7 @@ export default function FlotillasPage() {
                   }}><MessageCircle size={20} color={C.white} /></div>
                   <div>
                     <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>WhatsApp</div>
-                    <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 18 }}>Escríbenos</div>
+                    <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 18 }}>55 1002 4945</div>
                   </div>
                 </a>
               </div>

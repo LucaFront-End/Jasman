@@ -343,10 +343,8 @@ export default function LandingAlineacionPage() {
 
   // Build WhatsApp URL with "SW-" standard prefix and dynamic Wix promo details
   const getWhatsAppPromoUrl = (branch, bookingDetails = null) => {
-    const defaultPhone = '5215579337994';
+    const phoneWithCountry = '5215510024945';
     const targetBranch = branch || selectedBranch || nearbyBranches[0];
-    const cleanPhone = targetBranch?.phone ? targetBranch.phone.replace(/[\s\-()]/g, '') : '';
-    const phoneWithCountry = cleanPhone ? (cleanPhone.startsWith('52') ? cleanPhone : `52${cleanPhone}`) : defaultPhone;
     const branchName = targetBranch ? targetBranch.fullName : 'Jasman Automotriz';
     const promoTitle = promotion.headline || promotion.title || 'Alineación y Balanceo';
 

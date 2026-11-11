@@ -196,7 +196,7 @@ function ExpressDealCard({ product }) {
 
   return (
     <Link
-      to={`/landing-tienda-preview/producto/${product.id}`}
+      to={`/llantas/producto/${product.id}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -481,7 +481,7 @@ function FreeShippingLandscapeCard({ product }) {
 
   return (
     <Link
-      to={`/landing-tienda-preview/producto/${product.id}`}
+      to={`/llantas/producto/${product.id}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="jasman-shipping-landscape-card"
@@ -762,7 +762,7 @@ function MsiInstallmentCard({ product }) {
 
   return (
     <Link
-      to={`/landing-tienda-preview/producto/${product.id}`}
+      to={`/llantas/producto/${product.id}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -1237,7 +1237,7 @@ export default function TiendaHomeCarousels() {
               }}
             >
               <Link
-                to="/landing-tienda-preview/catalogo"
+                to="/llantas/catalogo"
                 style={{
                   padding: '11px 16px',
                   borderRadius: 9999,
@@ -1481,7 +1481,7 @@ export default function TiendaHomeCarousels() {
               <ChevronRight size={18} />
             </button>
             <Link
-              to="/landing-tienda-preview/catalogo"
+              to="/llantas/catalogo"
               className="jasman-carousel-cta"
               style={{
                 padding: '11px 18px',
@@ -1696,7 +1696,7 @@ export default function TiendaHomeCarousels() {
               <ChevronRight size={18} />
             </button>
             <Link
-              to="/landing-tienda-preview/catalogo"
+              to="/llantas/catalogo"
               style={{
                 padding: '11px 18px',
                 borderRadius: 9999,

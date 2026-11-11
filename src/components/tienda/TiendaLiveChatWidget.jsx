@@ -3,6 +3,7 @@ import { C, F } from '../../hooks/useAnimations';
 import { useWixCatalogProducts, formatMXN } from '../../data/productosMasterData';
 import { useTiendaState } from '../../hooks/useTiendaState';
 import { saveContactoWeb } from '../../services/wixService';
+import { sendFormSubmitEmail } from '../../services/formSubmitService';
 import {
   MessageSquare,
   X,
@@ -324,6 +325,18 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
     const cleanEmail = correo.trim();
     const firstMsg = pendingInitialMessage.trim();
 
+    sendFormSubmitEmail({
+      seccion: 'Chat en Vivo — Tienda de Llantas Jasman',
+      asuntoCorreo: `Jasman Chat en Vivo — ${cleanName} (${cleanPhone})`,
+      correoRespuesta: cleanEmail,
+      campos: {
+        'Nombre Completo': cleanName,
+        'Teléfono / WhatsApp': cleanPhone,
+        'Correo Electrónico': cleanEmail,
+        'Mensaje Inicial': firstMsg || 'Cliente registró sus datos para atención en el chat de la tienda',
+      },
+    }).catch(() => {});
+
     try {
       const res = await fetch('/api/wix-inbox', {
         method: 'POST',
@@ -337,7 +350,7 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
           pagina:
             typeof window !== 'undefined'
               ? window.location.pathname
-              : '/landing-tienda-preview',
+              : '/llantas',
         }),
       });
 
@@ -378,6 +391,7 @@ export default function TiendaLiveChatWidget({ positionLeft = false }) {
     } catch {
       // Resilient fallback if offline / dev API unavailable
       saveContactoWeb({
+        _skipFormSubmit: true,
         nombre: cleanName,
         telefono: cleanPhone,
         email: cleanEmail,

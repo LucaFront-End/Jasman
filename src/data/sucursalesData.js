@@ -1,11 +1,8 @@
 /* ═══ Real Jasman branches from corporate spreadsheet ═══ */
 
-const buildWhatsApp = (phone, branchName) => {
-  if (!phone) return null;
-  const clean = phone.replace(/[\s\-()]/g, '');
-  const num = clean.startsWith('52') ? clean : (clean.startsWith('+52') ? clean.slice(1) : `52${clean}`);
-  const msg = encodeURIComponent(`SW -Hola quisiera más información de sus servicios automotrices en su sucursal "${branchName}"`);
-  return `https://api.whatsapp.com/send/?phone=${num}&text=${msg}`;
+const buildWhatsApp = (_phone, branchName) => {
+  const msg = encodeURIComponent(`SW - Hola quisiera más información de sus servicios automotrices en su sucursal "${branchName}"`);
+  return `https://api.whatsapp.com/send/?phone=5215510024945&text=${msg}`;
 };
 
 const raw = [

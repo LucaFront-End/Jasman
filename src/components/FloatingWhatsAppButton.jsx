@@ -1,7 +1,7 @@
 import { F } from '../hooks/useAnimations';
 
 export default function FloatingWhatsAppButton() {
-  const whatsappUrl = `https://api.whatsapp.com/send/?phone=5215579337994&text=${encodeURIComponent(
+  const whatsappUrl = `https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent(
     'SW - Hola Jasman, me gustaría recibir atención de un asesor.'
   )}`;
 
@@ -16,7 +16,7 @@ export default function FloatingWhatsAppButton() {
         style={{
           position: 'fixed',
           bottom: 20,
-          left: 20,
+          right: 20,
           zIndex: 998,
           height: 48,
           padding: '0 18px 0 14px',
@@ -71,7 +71,7 @@ export default function FloatingWhatsAppButton() {
         @media (max-width: 640px) {
           .jasman-floating-whatsapp {
             bottom: 14px !important;
-            left: 14px !important;
+            right: 14px !important;
             height: 42px !important;
             padding: 0 14px 0 10px !important;
             font-size: 12px !important;
@@ -82,4 +82,3 @@ export default function FloatingWhatsAppButton() {
     </>
   );
 }
-

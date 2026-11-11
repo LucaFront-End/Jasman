@@ -53,9 +53,11 @@ export default function TiendaMostRequestedSection({
     catalogProducts.find((p) => p.id === id)
   ).filter(Boolean);
 
+  const basePath = mode === 'all' ? '/landing-tienda-preview' : '/llantas';
+
   const handleSelectMeasure = (rawMeasure) => {
     if (onAfterSelect) onAfterSelect();
-    const targetUrl = `/landing-tienda-preview/catalogo?measure=${encodeURIComponent(rawMeasure)}`;
+    const targetUrl = `${basePath}/catalogo?measure=${encodeURIComponent(rawMeasure)}`;
     navigate(targetUrl);
     setTimeout(() => {
       triggerTiendaUI({ type: 'FILTER_CATALOG', measure: rawMeasure });
@@ -64,7 +66,7 @@ export default function TiendaMostRequestedSection({
 
   const handleSelectBrand = (brandName) => {
     if (onAfterSelect) onAfterSelect();
-    const targetUrl = `/landing-tienda-preview/catalogo?brand=${encodeURIComponent(brandName)}`;
+    const targetUrl = `${basePath}/catalogo?brand=${encodeURIComponent(brandName)}`;
     navigate(targetUrl);
     setTimeout(() => {
       triggerTiendaUI({ type: 'FILTER_CATALOG', brand: brandName });
@@ -73,7 +75,7 @@ export default function TiendaMostRequestedSection({
 
   const handleSelectVehicle = (vehicleId) => {
     if (onAfterSelect) onAfterSelect();
-    const targetUrl = `/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(vehicleId)}`;
+    const targetUrl = `${basePath}/catalogo?vehicle=${encodeURIComponent(vehicleId)}`;
     navigate(targetUrl);
     setTimeout(() => {
       triggerTiendaUI({ type: 'FILTER_CATALOG', vehicle: vehicleId });
@@ -82,7 +84,7 @@ export default function TiendaMostRequestedSection({
 
   const handleSelectCarModel = (carModelObj) => {
     if (onAfterSelect) onAfterSelect();
-    const targetUrl = `/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(
+    const targetUrl = `${basePath}/catalogo?vehicle=${encodeURIComponent(
       carModelObj.vehicle
     )}&carModel=${encodeURIComponent(carModelObj.id)}`;
     navigate(targetUrl);
@@ -593,7 +595,7 @@ export default function TiendaMostRequestedSection({
             {topTires.map((tire) => (
               <Link
                 key={tire.id}
-                to={`/landing-tienda-preview/producto/${tire.id}`}
+                to={`${basePath}/producto/${tire.id}`}
                 onClick={() => {
                   if (onAfterSelect) onAfterSelect();
                 }}

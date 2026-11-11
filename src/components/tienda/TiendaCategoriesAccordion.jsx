@@ -220,7 +220,7 @@ export default function TiendaCategoriesAccordion() {
         count: allForBrand.length,
         minPrice,
         tireCutout: transparentCutoutItem?.cutoutImage || panel.fallbackTire,
-        href: `/landing-tienda-preview/catalogo?brand=${encodeURIComponent(panel.brandKey)}`,
+        href: `/llantas/catalogo?brand=${encodeURIComponent(panel.brandKey)}`,
       };
     });
   }, [catalogProducts]);
@@ -277,7 +277,7 @@ export default function TiendaCategoriesAccordion() {
           </div>
 
           <Link
-            to="/landing-tienda-preview/catalogo"
+            to="/llantas/catalogo"
             className="sutra-brands-all-btn"
             style={{
               padding: '12px 22px',
@@ -1079,7 +1079,7 @@ export default function TiendaCategoriesAccordion() {
               return (
                 <Link
                   key={vt.id}
-                  to={`/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(vt.id)}`}
+                  to={`/llantas/catalogo?vehicle=${encodeURIComponent(vt.id)}`}
                   className="sutra-vehicle-card"
                   style={{
                     padding: '18px 18px 16px',
@@ -1201,7 +1201,7 @@ export default function TiendaCategoriesAccordion() {
             {POPULAR_CAR_MODELS.map((cm) => (
               <Link
                 key={cm.id}
-                to={`/landing-tienda-preview/catalogo?vehicle=${encodeURIComponent(
+                to={`/llantas/catalogo?vehicle=${encodeURIComponent(
                   cm.vehicle
                 )}&carModel=${encodeURIComponent(cm.id)}`}
                 className="sutra-car-model-pill"

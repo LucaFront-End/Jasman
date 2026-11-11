@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
 import { C, F } from '../hooks/useAnimations';
 import { saveContactoWeb } from '../services/wixService';
-import { X, Tag, Check, Sparkles, AlertCircle, Phone, User, Mail, MapPin, Copy, ExternalLink, ShieldCheck } from 'lucide-react';
+import {
+  X,
+  Tag,
+  Check,
+  Sparkles,
+  AlertCircle,
+  Phone,
+  User,
+  Mail,
+  MapPin,
+  ExternalLink,
+  ShieldCheck,
+} from 'lucide-react';
 
 const CITIES = [
   'Ciudad de México (CDMX)',
@@ -21,8 +33,6 @@ const CITIES = [
 export default function PromotionsPopup() {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [couponCode, setCouponCode] = useState('');
-  const [copied, setCopied] = useState(false);
 
   // Form fields
   const [nombre, setNombre] = useState('');
@@ -42,6 +52,7 @@ export default function PromotionsPopup() {
       }, 4000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, []);
 
   const handleClose = () => {
@@ -53,12 +64,10 @@ export default function PromotionsPopup() {
     setOpen(true);
   };
 
-  // Validation function with strict rules as requested:
-  // "Aplica restricciones de nombres raros, o numeros en nombres y todas esas cosas."
+  // Validation rules
   const validate = () => {
     const errs = {};
 
-    // 1. Nombre validation:
     const trimmedName = nombre.trim();
     if (!trimmedName) {
       errs.nombre = 'Por favor ingresa tu nombre completo.';
@@ -69,25 +78,20 @@ export default function PromotionsPopup() {
     } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/.test(trimmedName)) {
       errs.nombre = 'El nombre contiene símbolos no permitidos.';
     } else if (/([a-zA-Z])\1{3,}/.test(trimmedName)) {
-      // e.g. "aaaaa" or "zzzzz"
       errs.nombre = 'Por favor ingresa un nombre real y válido.';
     } else if (trimmedName.split(/\s+/).length < 2) {
-      // Require at least first name and last name
       errs.nombre = 'Por favor ingresa tu nombre y apellido.';
     }
 
-    // 2. Teléfono validation: 10 digits
     const cleanPhone = telefono.replace(/\D/g, '');
     if (!cleanPhone) {
       errs.telefono = 'Por favor ingresa tu teléfono a 10 dígitos.';
     } else if (cleanPhone.length !== 10) {
       errs.telefono = 'El teléfono debe ser exactamente de 10 dígitos.';
     } else if (/^(\d)\1{9}$/.test(cleanPhone)) {
-      // e.g. "0000000000" or "1111111111"
       errs.telefono = 'Ingresa un número telefónico real.';
     }
 
-    // 3. Correo validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!correo.trim()) {
       errs.correo = 'Por favor ingresa tu correo electrónico.';
@@ -95,7 +99,6 @@ export default function PromotionsPopup() {
       errs.correo = 'Ingresa un correo electrónico válido.';
     }
 
-    // 4. Ciudad validation
     if (!ciudad) {
       errs.ciudad = 'Selecciona tu ciudad o estado.';
     }
@@ -108,21 +111,17 @@ export default function PromotionsPopup() {
     e.preventDefault();
     if (!validate()) return;
 
-    // Generate unique coupon code
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const code = `JASMAN10-${randomSuffix}`;
-    setCouponCode(code);
-
-    // Save lead to Wix CMS Contactoweb and localStorage
     saveContactoWeb({
       nombre: nombre.trim(),
       telefono: telefono.replace(/\D/g, ''),
       email: correo.trim(),
       ciudad,
-      cupon: code,
-      asunto: `Cupón 10% Descuento: ${code}`,
-      origen: 'Popup Descuento 10%',
-    }).catch(err => console.warn('Wix save error in popup:', err));
+      cupon: 'Pendiente de envío por correo (10% Primer Servicio)',
+      asunto: 'Solicitud de Cupón 10% Primer Servicio Automotriz',
+      mensaje:
+        'Cliente registrado para recibir su cupón del 10% de descuento por correo electrónico.',
+      origen: 'Popup Descuento 10% Servicio Automotriz',
+    }).catch((err) => console.warn('Wix save error in popup:', err));
 
     try {
       const existingLeads = JSON.parse(localStorage.getItem('jasman_10_leads') || '[]');
@@ -131,7 +130,7 @@ export default function PromotionsPopup() {
         telefono: telefono.replace(/\D/g, ''),
         correo: correo.trim(),
         ciudad,
-        couponCode: code,
+        status: 'envio_por_correo',
         date: new Date().toISOString(),
       });
       localStorage.setItem('jasman_10_leads', JSON.stringify(existingLeads));
@@ -142,20 +141,22 @@ export default function PromotionsPopup() {
     setSubmitted(true);
   };
 
-  const copyCoupon = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(couponCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    }
-  };
-
-  // WhatsApp redemption link
   const cleanPhone = telefono.replace(/\D/g, '');
-  const waMessage = `¡Hola Jasman! Acabo de registrarme para obtener mi 10% de descuento en mi primer servicio.%0A%0A*Código de Cupón:* ${couponCode}%0A*Nombre:* ${encodeURIComponent(nombre.trim())}%0A*Ciudad:* ${encodeURIComponent(ciudad)}%0A*Tel:* ${cleanPhone}%0A%0AMe gustaría agendar mi visita en su sucursal más cercana.`;
-  const whatsappUrl = `https://wa.me/525543317799?text=${waMessage}`;
+  const waText = [
+    'SW - ¡Hola Jasman! Acabo de registrarme en el sitio web para recibir por correo mi cupón de 10% de descuento en mi primer servicio.',
+    `Nombre: ${nombre.trim()}`,
+    `Ciudad: ${ciudad}`,
+    `Tel: ${cleanPhone}`,
+    `Correo: ${correo.trim()}`,
+    'Me gustaría recibir asesoría para agendar mi visita.',
+  ].join('\n');
+  const whatsappUrl = `https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent(
+    waText
+  )}`;
 
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 1200
+  );
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -163,20 +164,21 @@ export default function PromotionsPopup() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const isMobile = windowWidth < 640;
+  const isMobile = windowWidth <= 640;
 
-  // Minimized floating trigger button (visible when popup is closed)
+  // Minimized floating trigger button stacked cleanly at bottom-right above WhatsApp
   if (!open) {
     return (
       <button
+        type="button"
         onClick={handleOpen}
-        aria-label="Abrir cupón de 10% de descuento"
+        aria-label="Abrir beneficio de 10% de descuento"
         style={{
           position: 'fixed',
-          bottom: isMobile ? 14 : 20,
+          bottom: isMobile ? 64 : 78,
           right: isMobile ? 14 : 20,
           zIndex: 999,
-          padding: isMobile ? '8px 14px' : '12px 20px',
+          padding: isMobile ? '8px 14px' : '11px 18px',
           borderRadius: 9999,
           background: `linear-gradient(135deg, ${C.red}, #E52E35)`,
           color: C.white,
@@ -184,33 +186,35 @@ export default function PromotionsPopup() {
           cursor: 'pointer',
           fontFamily: F.heading,
           fontWeight: 800,
-          fontSize: isMobile ? 12 : 13,
+          fontSize: isMobile ? 12 : 12.5,
           display: 'flex',
           alignItems: 'center',
-          gap: isMobile ? 6 : 9,
+          gap: isMobile ? 6 : 8,
           boxShadow: '0 8px 30px rgba(196,30,36,0.45), 0 2px 10px rgba(0,0,0,0.15)',
           transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
           animation: 'pulseGlow 2.5s infinite',
         }}
-        onMouseEnter={e => {
+        onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-3px) scale(1.03)';
           e.currentTarget.style.boxShadow = '0 12px 35px rgba(196,30,36,0.6)';
         }}
-        onMouseLeave={e => {
+        onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0) scale(1)';
           e.currentTarget.style.boxShadow = '0 8px 30px rgba(196,30,36,0.45)';
         }}
       >
-        <span style={{
-          width: isMobile ? 18 : 22,
-          height: isMobile ? 18 : 22,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.25)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: isMobile ? 11 : 12,
-        }}>
+        <span
+          style={{
+            width: isMobile ? 18 : 22,
+            height: isMobile ? 18 : 22,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: isMobile ? 11 : 12,
+          }}
+        >
           🎁
         </span>
         <span>{isMobile ? '10% OFF*' : '¡10% OFF en tu Servicio!*'}</span>
@@ -254,20 +258,21 @@ export default function PromotionsPopup() {
         }}
       >
         {/* Header Ribbon / Banner */}
-        <div style={{
-          background: `linear-gradient(135deg, ${C.navy} 0%, #0F1322 100%)`,
-          padding: '24px 22px 20px',
-          position: 'relative',
-          color: C.white,
-          borderTopLeftRadius: 25,
-          borderTopRightRadius: 25,
-          borderBottom: '3px solid #C41E24',
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}>
-          {/* Close button */}
+        <div
+          style={{
+            background: `linear-gradient(135deg, ${C.navy} 0%, #0F1322 100%)`,
+            padding: '24px 22px 20px',
+            position: 'relative',
+            color: C.white,
+            borderTopLeftRadius: 25,
+            borderTopRightRadius: 25,
+            borderBottom: '3px solid #C41E24',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
           <button
             type="button"
             onClick={handleClose}
@@ -288,72 +293,85 @@ export default function PromotionsPopup() {
               cursor: 'pointer',
               transition: 'background 0.2s',
             }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(196,30,36,0.8)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(196,30,36,0.8)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+            }}
           >
             <X size={18} />
           </button>
 
-          {/* Badge */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '4px 12px',
-            borderRadius: 9999,
-            background: 'rgba(196,30,36,0.2)',
-            border: '1px solid rgba(196,30,36,0.4)',
-            color: '#FF6B6B',
-            fontFamily: F.heading,
-            fontSize: 11,
-            fontWeight: 800,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            marginBottom: 10,
-          }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '4px 12px',
+              borderRadius: 9999,
+              background: 'rgba(196,30,36,0.2)',
+              border: '1px solid rgba(196,30,36,0.4)',
+              color: '#FF6B6B',
+              fontFamily: F.heading,
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              marginBottom: 10,
+            }}
+          >
             <Sparkles size={13} /> BENEFICIO EXCLUSIVO WEB
           </div>
 
-          <h3 style={{
-            fontFamily: F.heading,
-            fontWeight: 900,
-            fontSize: 'clamp(1.4rem, 4.5vw, 1.85rem)',
-            lineHeight: 1.15,
-            color: C.white,
-            margin: 0,
-            textAlign: 'center',
-          }}>
+          <h3
+            style={{
+              fontFamily: F.heading,
+              fontWeight: 900,
+              fontSize: 'clamp(1.4rem, 4.5vw, 1.85rem)',
+              lineHeight: 1.15,
+              color: C.white,
+              margin: 0,
+              textAlign: 'center',
+            }}
+          >
             ¡Obtén <span style={{ color: '#FF4D4F' }}>10% de Descuento*</span>!
           </h3>
 
-          <p style={{
-            fontSize: 13,
-            color: 'rgba(255,255,255,0.8)',
-            marginTop: 8,
-            lineHeight: 1.45,
-            marginBottom: 0,
-            textAlign: 'center',
-          }}>
-            Déjanos tus datos para generar tu cupón digital válido en tu primer servicio automotriz en cualquiera de nuestras sucursales.
+          <p
+            style={{
+              fontSize: 13,
+              color: 'rgba(255,255,255,0.8)',
+              marginTop: 8,
+              lineHeight: 1.45,
+              marginBottom: 0,
+              textAlign: 'center',
+            }}
+          >
+            Déjanos tus datos y <strong>te llegará por correo electrónico</strong> tu cupón válido en tu primer servicio automotriz en nuestras sucursales.
           </p>
         </div>
 
         {/* Content Body */}
         <div style={{ padding: '22px 22px 20px' }}>
           {!submitted ? (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {/* Field 1: Nombre */}
+            <form
+              onSubmit={handleSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+            >
               <div>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontFamily: F.heading,
-                  fontWeight: 700,
-                  fontSize: 12,
-                  color: C.navy,
-                  marginBottom: 5,
-                }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontFamily: F.heading,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    color: C.navy,
+                    marginBottom: 5,
+                  }}
+                >
                   <User size={13} color={C.red} /> Nombre y Apellido:
                 </label>
                 <input
@@ -362,7 +380,7 @@ export default function PromotionsPopup() {
                   value={nombre}
                   onChange={(e) => {
                     setNombre(e.target.value);
-                    if (errors.nombre) setErrors(prev => ({ ...prev, nombre: null }));
+                    if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: null }));
                   }}
                   style={{
                     width: '100%',
@@ -379,24 +397,35 @@ export default function PromotionsPopup() {
                   }}
                 />
                 {errors.nombre && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#DC2626', fontSize: 11, marginTop: 4, fontWeight: 600 }}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      color: '#DC2626',
+                      fontSize: 11,
+                      marginTop: 4,
+                      fontWeight: 600,
+                    }}
+                  >
                     <AlertCircle size={12} /> {errors.nombre}
                   </span>
                 )}
               </div>
 
-              {/* Field 2: Teléfono */}
               <div>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontFamily: F.heading,
-                  fontWeight: 700,
-                  fontSize: 12,
-                  color: C.navy,
-                  marginBottom: 5,
-                }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontFamily: F.heading,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    color: C.navy,
+                    marginBottom: 5,
+                  }}
+                >
                   <Phone size={13} color={C.red} /> Teléfono (WhatsApp a 10 dígitos):
                 </label>
                 <input
@@ -406,7 +435,7 @@ export default function PromotionsPopup() {
                   value={telefono}
                   onChange={(e) => {
                     setTelefono(e.target.value.replace(/\D/g, ''));
-                    if (errors.telefono) setErrors(prev => ({ ...prev, telefono: null }));
+                    if (errors.telefono) setErrors((prev) => ({ ...prev, telefono: null }));
                   }}
                   style={{
                     width: '100%',
@@ -423,24 +452,35 @@ export default function PromotionsPopup() {
                   }}
                 />
                 {errors.telefono && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#DC2626', fontSize: 11, marginTop: 4, fontWeight: 600 }}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      color: '#DC2626',
+                      fontSize: 11,
+                      marginTop: 4,
+                      fontWeight: 600,
+                    }}
+                  >
                     <AlertCircle size={12} /> {errors.telefono}
                   </span>
                 )}
               </div>
 
-              {/* Field 3: Correo */}
               <div>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontFamily: F.heading,
-                  fontWeight: 700,
-                  fontSize: 12,
-                  color: C.navy,
-                  marginBottom: 5,
-                }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontFamily: F.heading,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    color: C.navy,
+                    marginBottom: 5,
+                  }}
+                >
                   <Mail size={13} color={C.red} /> Correo Electrónico:
                 </label>
                 <input
@@ -449,7 +489,7 @@ export default function PromotionsPopup() {
                   value={correo}
                   onChange={(e) => {
                     setCorreo(e.target.value);
-                    if (errors.correo) setErrors(prev => ({ ...prev, correo: null }));
+                    if (errors.correo) setErrors((prev) => ({ ...prev, correo: null }));
                   }}
                   style={{
                     width: '100%',
@@ -466,31 +506,42 @@ export default function PromotionsPopup() {
                   }}
                 />
                 {errors.correo && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#DC2626', fontSize: 11, marginTop: 4, fontWeight: 600 }}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      color: '#DC2626',
+                      fontSize: 11,
+                      marginTop: 4,
+                      fontWeight: 600,
+                    }}
+                  >
                     <AlertCircle size={12} /> {errors.correo}
                   </span>
                 )}
               </div>
 
-              {/* Field 4: Ciudad */}
               <div>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontFamily: F.heading,
-                  fontWeight: 700,
-                  fontSize: 12,
-                  color: C.navy,
-                  marginBottom: 5,
-                }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontFamily: F.heading,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    color: C.navy,
+                    marginBottom: 5,
+                  }}
+                >
                   <MapPin size={13} color={C.red} /> Ciudad o Estado:
                 </label>
                 <select
                   value={ciudad}
                   onChange={(e) => {
                     setCiudad(e.target.value);
-                    if (errors.ciudad) setErrors(prev => ({ ...prev, ciudad: null }));
+                    if (errors.ciudad) setErrors((prev) => ({ ...prev, ciudad: null }));
                   }}
                   style={{
                     width: '100%',
@@ -509,17 +560,28 @@ export default function PromotionsPopup() {
                 >
                   <option value="">Selecciona tu ciudad...</option>
                   {CITIES.map((c, i) => (
-                    <option key={i} value={c}>{c}</option>
+                    <option key={i} value={c}>
+                      {c}
+                    </option>
                   ))}
                 </select>
                 {errors.ciudad && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#DC2626', fontSize: 11, marginTop: 4, fontWeight: 600 }}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      color: '#DC2626',
+                      fontSize: 11,
+                      marginTop: 4,
+                      fontWeight: 600,
+                    }}
+                  >
                     <AlertCircle size={12} /> {errors.ciudad}
                   </span>
                 )}
               </div>
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 style={{
@@ -541,123 +603,150 @@ export default function PromotionsPopup() {
                   justifyContent: 'center',
                   gap: 8,
                 }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
               >
-                <Tag size={17} /> Obtener Mi Cupón del 10%
+                <Tag size={17} /> Recibir Mi Cupón por Correo
               </button>
 
-              {/* Mandatory Disclaimer as requested by user */}
-              <div style={{
-                marginTop: 4,
-                padding: '10px 12px',
-                borderRadius: 10,
-                background: '#F1F5F9',
-                border: '1px solid #E2E8F0',
-                fontSize: 10.5,
-                lineHeight: 1.45,
-                color: '#64748B',
-                fontFamily: F.body,
-              }}>
+              <div
+                style={{
+                  marginTop: 4,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  background: '#F1F5F9',
+                  border: '1px solid #E2E8F0',
+                  fontSize: 10.5,
+                  lineHeight: 1.45,
+                  color: '#64748B',
+                  fontFamily: F.body,
+                }}
+              >
                 <strong style={{ color: '#334155' }}>*Aviso: </strong>
-                Descuento válido para clientes nuevos y solo para el primer servicio, no acumulable. Aplica restricciones de nombres raros, o numeros en nombres y todas esas cosas.
+                Descuento válido para clientes nuevos y solo para el primer servicio, no acumulable. Tu cupón te llegará directamente a tu correo electrónico registrado.
               </div>
             </form>
           ) : (
-            /* Success confirmation */
+            /* Success confirmation without coupon code ("Te llegará por correo") */
             <div style={{ textAlign: 'center', padding: '10px 0' }}>
-              <div style={{
-                width: 60,
-                height: 60,
-                borderRadius: '50%',
-                background: '#DCFCE7',
-                border: '2px solid #22C55E',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px',
-                color: '#16A34A',
-              }}>
+              <div
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: '50%',
+                  background: '#DCFCE7',
+                  border: '2px solid #22C55E',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                  color: '#16A34A',
+                }}
+              >
                 <Check size={32} strokeWidth={3} />
               </div>
 
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                color: '#16A34A',
-                fontFamily: F.heading,
-                fontWeight: 700,
-                fontSize: 12,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}>
-                <ShieldCheck size={14} /> ¡Cupón Generado con Éxito!
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  color: '#16A34A',
+                  fontFamily: F.heading,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                <ShieldCheck size={14} /> ¡Solicitud Registrada con Éxito!
               </span>
 
-              <h4 style={{
-                fontFamily: F.heading,
-                fontWeight: 900,
-                fontSize: 22,
-                color: C.navy,
-                marginTop: 6,
-                marginBottom: 6,
-              }}>
-                ¡Felicidades, {nombre.split(' ')[0]}!
+              <h4
+                style={{
+                  fontFamily: F.heading,
+                  fontWeight: 900,
+                  fontSize: 22,
+                  color: C.navy,
+                  marginTop: 6,
+                  marginBottom: 8,
+                }}
+              >
+                ¡Te llegará por correo, {nombre.trim().split(/\s+/)[0]}!
               </h4>
 
-              <p style={{ fontSize: 13, color: '#475569', margin: '0 auto 18px', maxWidth: 360, lineHeight: 1.5 }}>
-                Tu <strong>10% de descuento*</strong> está activo. Presenta este código al llegar a tu sucursal Jasman o envíalo por WhatsApp para agendar tu cita:
+              <p
+                style={{
+                  fontSize: 13.5,
+                  color: '#475569',
+                  margin: '0 auto 18px',
+                  maxWidth: 370,
+                  lineHeight: 1.55,
+                }}
+              >
+                Registramos tu solicitud del <strong>10% de descuento*</strong> para tu primer servicio automotriz.{' '}
+                <strong>Te enviaremos tu cupón directamente a tu correo electrónico.</strong>
               </p>
 
-              {/* Coupon Box */}
-              <div style={{
-                padding: '16px 20px',
-                borderRadius: 16,
-                background: '#FFF1F2',
-                border: '2px dashed #C41E24',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 16,
-              }}>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#991B1B', textTransform: 'uppercase' }}>
-                    Tu Código de Descuento
-                  </div>
-                  <div style={{
-                    fontFamily: F.heading,
-                    fontWeight: 900,
-                    fontSize: 22,
-                    color: C.red,
-                    letterSpacing: '0.08em',
-                  }}>
-                    {couponCode}
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={copyCoupon}
+              {/* Email Delivery Box */}
+              <div
+                style={{
+                  padding: '15px 18px',
+                  borderRadius: 16,
+                  background: '#F8FAFC',
+                  border: '1.5px solid #E2E8F0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  marginBottom: 16,
+                  textAlign: 'left',
+                }}
+              >
+                <div
                   style={{
-                    padding: '8px 14px',
-                    borderRadius: 10,
-                    background: copied ? '#16A34A' : C.white,
-                    color: copied ? C.white : C.navy,
-                    border: '1px solid #CBD5E1',
-                    fontFamily: F.heading,
-                    fontWeight: 700,
-                    fontSize: 12,
-                    cursor: 'pointer',
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    background: 'rgba(196, 30, 36, 0.08)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 6,
-                    transition: 'all 0.2s',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  {copied ? <Check size={14} /> : <Copy size={14} />}
-                  {copied ? '¡Copiado!' : 'Copiar'}
-                </button>
+                  <Mail size={19} color={C.red} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 10.5,
+                      fontFamily: F.heading,
+                      fontWeight: 700,
+                      color: '#64748B',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                    }}
+                  >
+                    Lo recibirás en tu correo
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: F.heading,
+                      fontWeight: 800,
+                      fontSize: 14,
+                      color: C.navy,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {correo.trim()}
+                  </div>
+                </div>
               </div>
 
               {/* WhatsApp CTA */}
@@ -677,14 +766,14 @@ export default function PromotionsPopup() {
                   color: C.white,
                   fontFamily: F.heading,
                   fontWeight: 800,
-                  fontSize: 15,
+                  fontSize: 14.5,
                   textDecoration: 'none',
                   boxShadow: '0 8px 24px rgba(37,211,102,0.3)',
                   marginBottom: 12,
                   boxSizing: 'border-box',
                 }}
               >
-                <span>Agendar por WhatsApp con Mi 10%</span>
+                <span>Agendar Visita por WhatsApp</span>
                 <ExternalLink size={16} />
               </a>
 
@@ -705,16 +794,17 @@ export default function PromotionsPopup() {
                 Continuar navegando en el sitio
               </button>
 
-              {/* Disclaimer */}
-              <div style={{
-                marginTop: 14,
-                fontSize: 10,
-                color: '#94A3B8',
-                lineHeight: 1.4,
-                borderTop: '1px solid #E2E8F0',
-                paddingTop: 10,
-              }}>
-                *Descuento válido para clientes nuevos y solo para el primer servicio, no acumulable. Aplica restricciones de nombres raros, o numeros en nombres y todas esas cosas.
+              <div
+                style={{
+                  marginTop: 14,
+                  fontSize: 10,
+                  color: '#94A3B8',
+                  lineHeight: 1.4,
+                  borderTop: '1px solid #E2E8F0',
+                  paddingTop: 10,
+                }}
+              >
+                *Descuento válido para clientes nuevos y solo para el primer servicio, no acumulable.
               </div>
             </div>
           )}

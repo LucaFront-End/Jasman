@@ -247,7 +247,7 @@ export const footerContent = {
       { label: 'Servicios', href: '/servicios' },
       { label: 'Sucursales', href: '/sucursales' },
       { label: 'Flotillas', href: '/flotillas' },
-      { label: 'Llantas', href: '/landing-tienda-preview' },
+      { label: 'Llantas', href: '/llantas' },
       { label: 'Bolsa de Trabajo', href: '/bolsa-de-trabajo' },
       { label: 'Proveedores', href: '/proveedores' },
       { label: 'Contacto', href: '/contacto' },
@@ -261,8 +261,8 @@ export const footerContent = {
   },
   contact: {
     phone: '800 8010 290',
-    email: 'jasmanteescucha@jasman.com.mx',
-    whatsapp: '+52 1 55 7933 7994',
+    email: 'jasmanonline@jasman.com.mx',
+    whatsapp: '+52 1 55 1002 4945',
   },
   social: {
     facebook: '#',
@@ -276,6 +276,6 @@ export const navLinks = [
   { label: 'Servicios', href: '/servicios' },
   { label: 'Sucursales', href: '/sucursales' },
   { label: 'Flotillas', href: '/flotillas' },
-  { label: 'Llantas', href: '/landing-tienda-preview' },
+  { label: 'Llantas', href: '/llantas' },
   { label: 'Contacto', href: '/contacto' },
 ];

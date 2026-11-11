@@ -99,7 +99,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href={`mailto:${footerContent.contact.email}`}
+                  href={`mailto:${footerContent.contact.email}?cc=hola@dilodigitalmx.com`}
                   className="site-footer-contact-item"
                 >
                   <Mail size={15} style={{ flexShrink: 0, color: C.red }} />
@@ -108,13 +108,13 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href={`https://api.whatsapp.com/send/?phone=52${footerContent.contact.whatsapp.replace(/[\s+]/g, '')}&text=${encodeURIComponent('SW -Hola quisiera más información sobre sus servicios')}`}
+                  href={`https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent('SW - Hola quisiera más información sobre sus servicios')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="site-footer-contact-item"
                 >
                   <MessageCircle size={15} style={{ flexShrink: 0, color: '#25D366' }} />
-                  <span>WhatsApp Atención</span>
+                  <span>WhatsApp · 55 1002 4945</span>
                 </a>
               </li>
             </ul>

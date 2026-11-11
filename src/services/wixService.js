@@ -1,5 +1,6 @@
 import { createClient, OAuthStrategy } from '@wix/sdk';
 import { items } from '@wix/data';
+import { sendFormSubmitEmail } from './formSubmitService';
 
 export const WIX_CLIENT_ID = '5aabc542-16cf-44de-bedf-d8eb7ad08c46';
 export const WIX_SITE_ID = '7fd3b8ea-a3f3-4b51-9b48-4ec1f53d2cc9';
@@ -176,17 +177,22 @@ export async function getWixBranches() {
           }
         }
 
+        const fullBranchLabel = title.startsWith('Jasman') ? title : `Jasman Automotriz - Suc. ${title}`;
+        const unifiedWaMsg = encodeURIComponent(
+          `SW - Hola quisiera más información de sus servicios automotrices en su sucursal "${fullBranchLabel}"`
+        );
+
         return {
           id: b._id,
           name: cleanName || title,
-          fullName: title.startsWith('Jasman') ? title : `Jasman Automotriz - Suc. ${title}`,
+          fullName: fullBranchLabel,
           address: fullAddr,
           city,
           state,
           lat: Number(lat),
           lng: Number(lng),
-          phone: phone ? `${phone.slice(0, 2)} ${phone.slice(2, 6)} ${phone.slice(6)}` : '55 7933 7994',
-          whatsappUrl: b.whatsapp || null,
+          phone: phone ? `${phone.slice(0, 2)} ${phone.slice(2, 6)} ${phone.slice(6)}` : '55 1002 4945',
+          whatsappUrl: `https://api.whatsapp.com/send/?phone=5215510024945&text=${unifiedWaMsg}`,
           mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${title} ${fullAddr}`)}`,
           source: 'wix-cms',
         };
@@ -218,15 +224,20 @@ export async function saveBookingLead(booking) {
     existing.unshift(leadRecord);
     localStorage.setItem('jasman_cms_bookings', JSON.stringify(existing.slice(0, 50)));
 
-    // 2. Also register in Contactoweb CMS collection
+    // 2. Also register in Contactoweb CMS collection (which also dispatches FormSubmit email)
     try {
       await saveContactoWeb({
+        folio: leadRecord.folio,
         nombre: leadRecord.nombre,
         telefono: leadRecord.telefono,
+        email: leadRecord.email || leadRecord.correo || '',
         sucursal: leadRecord.sucursalNombre,
-        asunto: `Cita: ${leadRecord.vehiculo || 'Automóvil'} - ${leadRecord.fechaVisita || 'Por agendar'}`,
-        mensaje: `Folio: ${leadRecord.folio} | Promo: ${leadRecord.promocion || 'Alineación y Balanceo'}`,
-        origen: 'Landing Promociones',
+        vehiculo: leadRecord.vehiculo || 'Automóvil',
+        fechaVisita: leadRecord.fechaVisita || 'Por agendar',
+        promocion: leadRecord.promocion || 'Alineación y Balanceo',
+        asunto: `Cita Web: ${leadRecord.vehiculo || 'Automóvil'} — ${leadRecord.fechaVisita || 'Por agendar'}`,
+        mensaje: `Folio: ${leadRecord.folio} | Promoción: ${leadRecord.promocion || 'Alineación y Balanceo'} | Vehículo: ${leadRecord.vehiculo || 'Automóvil'} | Fecha tentativa: ${leadRecord.fechaVisita || 'Por agendar'}`,
+        origen: 'Landing Promociones / Agenda de Cita',
       });
     } catch {
       // Ignored
@@ -255,11 +266,11 @@ export async function saveBookingLead(booking) {
 }
 
 /**
- * Saves ANY web contact form submission into Wix CMS collection "Contactoweb"
- * and local cache.
+ * Saves ANY web contact form submission into Wix CMS collection "Contactoweb",
+ * local cache, AND dispatches Spanish white-template email via FormSubmit.co.
  */
 export async function saveContactoWeb(contactData) {
-  const folio = 'CW-' + Math.floor(100000 + Math.random() * 900000);
+  const folio = contactData.folio || 'CW-' + Math.floor(100000 + Math.random() * 900000);
   const record = {
     title: `${contactData.nombre || contactData.name || 'Contacto'} - ${contactData.origen || 'Web'} - ${folio}`,
     nombre: contactData.nombre || contactData.name || '',
@@ -277,6 +288,34 @@ export async function saveContactoWeb(contactData) {
     folio,
     fecha: new Date().toISOString(),
   };
+
+  // 0. Send Spanish email notification via FormSubmit.co (white template) to corporate inboxes
+  if (!contactData._skipFormSubmit) {
+    sendFormSubmitEmail({
+      seccion: record.origen,
+      asuntoCorreo: record.asunto
+        ? `Jasman Web — ${record.asunto}`
+        : `Jasman Web — ${record.origen} (${record.nombre || record.email || folio})`,
+      correoRespuesta: record.email,
+      campos: {
+        'Folio de Registro': record.folio,
+        'Nombre Completo': record.nombre,
+        'Teléfono / WhatsApp': record.telefono,
+        'Correo Electrónico': record.email,
+        'Ciudad o Estado': record.ciudad,
+        'Sucursal': record.sucursal,
+        'Empresa': record.empresa,
+        'RFC': record.rfc,
+        'Categoría / Detalle': record.tipo,
+        'Vehículo': contactData.vehiculo || '',
+        'Fecha Tentativa de Visita': contactData.fechaVisita || '',
+        'Promoción': contactData.promocion || '',
+        'Beneficio / Cupón': record.cupon,
+        'Asunto': record.asunto,
+        'Mensaje': record.mensaje,
+      },
+    }).catch((err) => console.warn('FormSubmit aviso (ContactoWeb):', err?.message || err));
+  }
 
   // 1. Always save in localStorage queue
   try {
@@ -363,6 +402,23 @@ export async function saveBolsaTrabajo(applicationData) {
     folio,
     fecha: new Date().toISOString(),
   };
+
+  // 0. Send Spanish email notification via FormSubmit.co (white template) to corporate inboxes
+  sendFormSubmitEmail({
+    seccion: record.origen,
+    asuntoCorreo: `Jasman Bolsa de Trabajo — ${record.puesto || 'Postulación'} (${record.nombre || folio})`,
+    correoRespuesta: record.email,
+    campos: {
+      'Folio de Postulación': record.folio,
+      'Nombre Completo': record.nombre,
+      'Teléfono / WhatsApp': record.telefono,
+      'Correo Electrónico': record.email,
+      'Ciudad': record.ciudad,
+      'Vacante o Puesto': record.puesto,
+      'Experiencia Laboral': record.experiencia,
+      'Enlace CV': record.cvUrl,
+    },
+  }).catch((err) => console.warn('FormSubmit aviso (BolsaTrabajo):', err?.message || err));
 
   // 1. Always save in localStorage queue
   try {
@@ -600,6 +656,21 @@ export async function registerWixMember({
   } catch (err) {
     console.warn('Aviso al guardar cuenta en nube:', err?.message || err);
   }
+
+  sendFormSubmitEmail({
+    seccion: isUpdate ? 'Actualización de Perfil — Tienda Jasman' : 'Registro de Nueva Cuenta — Tienda Jasman',
+    asuntoCorreo: isUpdate
+      ? `Jasman Tienda — Perfil actualizado (${cleanName || cleanEmail})`
+      : `Jasman Tienda — Nuevo cliente registrado (${cleanName || cleanEmail})`,
+    correoRespuesta: cleanEmail,
+    campos: {
+      'Nombre Completo': cleanName,
+      'Correo Electrónico': cleanEmail,
+      'Teléfono / WhatsApp': cleanPhone,
+      'Sucursal Preferida': sucursalPreferida,
+      'Tipo de Movimiento': isUpdate ? 'Actualización de datos de cuenta' : 'Alta de nueva cuenta en Tienda Online',
+    },
+  }).catch((err) => console.warn('FormSubmit aviso (Cuenta Tienda):', err?.message || err));
 
   const memberProfile = {
     nombre: cleanName,

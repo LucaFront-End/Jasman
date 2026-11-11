@@ -47,7 +47,7 @@ export default function CatalogoPreviewPage() {
             style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}
           >
             <Link
-              to="/landing-tienda-preview"
+              to="/llantas"
               className="jasman-catalogo-back-pill"
               style={{
                 display: 'inline-flex',

@@ -528,7 +528,7 @@ export default function TiendaStickyShowcase() {
             </button>
 
             <Link
-              to={`/landing-tienda-preview/producto/${prod.id}`}
+              to={`/llantas/producto/${prod.id}`}
               style={{
                 width: 42,
                 height: 42,
