@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Truck,
   Search,
+  ArrowLeft,
   ArrowRight,
   ArrowUpRight,
 } from 'lucide-react';
@@ -148,8 +149,6 @@ export default function TiendaNavbar({ legacyMode = false }) {
         { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
       ]
     : [
-        { label: '← Home', href: '/', isMainHome: true },
-        { label: 'Tienda', href: '/llantas#hero-stage' },
         { label: 'Catálogo', href: '/llantas/catalogo' },
         {
           label: 'Marcas',
@@ -158,19 +157,17 @@ export default function TiendaNavbar({ legacyMode = false }) {
           megaMode: 'brands',
         },
         {
-          label: 'Top Medidas',
+          label: 'Medidas',
           href: '/llantas/catalogo',
           hasMega: true,
           megaMode: 'measures',
         },
         {
-          label: 'Tipo de Vehículos',
+          label: 'Vehículos',
           href: '/llantas/catalogo',
           hasMega: true,
           megaMode: 'vehicles',
         },
-        { label: 'Servicios', href: '/servicios' },
-        { label: 'Sucursales', href: '/sucursales' },
       ];
 
   // Live instant search matches (measures, brands, vehicle types, and compatible car models)
@@ -325,113 +322,267 @@ export default function TiendaNavbar({ legacyMode = false }) {
         />
       )}
 
-      {/* Top Circulating "Envío Gratis" Legend Bar */}
-      <div
-        style={{
-          width: '100%',
-          height: scrolled ? 0 : 28,
-          opacity: scrolled ? 0 : 1,
-          background: C.navy,
-          color: '#FFFFFF',
-          borderBottom: scrolled ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
-          overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'center',
-          pointerEvents: scrolled ? 'none' : 'auto',
-          position: 'relative',
-          zIndex: 3,
-          transition: 'height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
-        }}
-      >
+      {/* Top Bar: Nike/Michelin Ecosystem Eyebrow (!legacyMode) or Legacy Marquee */}
+      {legacyMode ? (
         <div
           style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 48,
-            background: 'linear-gradient(90deg, #1A1F36 0%, rgba(26,31,54,0) 100%)',
-            zIndex: 2,
-            pointerEvents: 'none',
+            width: '100%',
+            height: scrolled ? 0 : 28,
+            opacity: scrolled ? 0 : 1,
+            background: C.navy,
+            color: '#FFFFFF',
+            borderBottom: scrolled ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            pointerEvents: scrolled ? 'none' : 'auto',
+            position: 'relative',
+            zIndex: 3,
+            transition: 'height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
           }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: 48,
-            background: 'linear-gradient(270deg, #1A1F36 0%, rgba(26,31,54,0) 100%)',
-            zIndex: 2,
-            pointerEvents: 'none',
-          }}
-        />
+        >
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 48,
+              background: 'linear-gradient(90deg, #1A1F36 0%, rgba(26,31,54,0) 100%)',
+              zIndex: 2,
+              pointerEvents: 'none',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 48,
+              background: 'linear-gradient(270deg, #1A1F36 0%, rgba(26,31,54,0) 100%)',
+              zIndex: 2,
+              pointerEvents: 'none',
+            }}
+          />
 
-        <div className="tienda-shipping-marquee-track">
-          {[...Array(3)].map((_, loopIdx) => (
+          <div className="tienda-shipping-marquee-track">
+            {[...Array(3)].map((_, loopIdx) => (
+              <div
+                key={loopIdx}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 28,
+                  paddingRight: 28,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {SHIPPING_TICKER_ITEMS.map((text, idx) => (
+                  <span
+                    key={`${loopIdx}-${idx}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontFamily: F.heading,
+                      fontSize: 9.5,
+                      fontWeight: 800,
+                      letterSpacing: '0.15em',
+                      textTransform: 'uppercase',
+                      color: idx === 0 ? '#FFFFFF' : 'rgba(255, 255, 255, 0.85)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {idx === 0 ? (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '2px 7px',
+                          borderRadius: 9999,
+                          background: C.red,
+                          color: '#FFFFFF',
+                          fontSize: 8.5,
+                          fontWeight: 900,
+                          letterSpacing: '0.12em',
+                          gap: 4,
+                        }}
+                      >
+                        <Truck size={10} /> ENVÍO GRATIS
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          width: 4,
+                          height: 4,
+                          borderRadius: '50%',
+                          background: C.red,
+                          display: 'inline-block',
+                        }}
+                      />
+                    )}
+                    <span>{text}</span>
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div
+          className="tienda-eyebrow-bar"
+          style={{
+            width: '100%',
+            height: scrolled ? 0 : 32,
+            opacity: scrolled ? 0 : 1,
+            background: '#111627',
+            color: '#FFFFFF',
+            borderBottom: scrolled ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            pointerEvents: scrolled ? 'none' : 'auto',
+            position: 'relative',
+            zIndex: 3,
+            transition: 'height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
+          }}
+        >
+          <div
+            className="tienda-eyebrow-inner"
+            style={{
+              maxWidth: 1180,
+              width: '100%',
+              margin: '0 auto',
+              padding: '0 22px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            {/* Left: Jasman Automotriz Corporate Ecosystem Navigation */}
             <div
-              key={loopIdx}
               style={{
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
-                gap: 28,
-                paddingRight: 28,
+                gap: 14,
+                minWidth: 0,
                 whiteSpace: 'nowrap',
               }}
             >
-              {SHIPPING_TICKER_ITEMS.map((text, idx) => (
+              <Link
+                to="/"
+                className="tienda-eyebrow-home-pill"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '2.5px 10px',
+                  borderRadius: 9999,
+                  background: 'rgba(255, 255, 255, 0.10)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#FFFFFF',
+                  fontFamily: F.heading,
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  letterSpacing: '0.01em',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <ArrowLeft size={11} />
+                <span>Home Jasman</span>
+              </Link>
+
+              <div
+                className="tienda-eyebrow-corp-links"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 16,
+                }}
+              >
                 <span
-                  key={`${loopIdx}-${idx}`}
+                  aria-hidden="true"
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    fontFamily: F.heading,
-                    fontSize: 9.5,
-                    fontWeight: 800,
-                    letterSpacing: '0.15em',
-                    textTransform: 'uppercase',
-                    color: idx === 0 ? '#FFFFFF' : 'rgba(255, 255, 255, 0.85)',
-                    whiteSpace: 'nowrap',
+                    width: 1,
+                    height: 12,
+                    background: 'rgba(255, 255, 255, 0.16)',
+                    display: 'inline-block',
                   }}
-                >
-                  {idx === 0 ? (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '2px 7px',
-                        borderRadius: 9999,
-                        background: C.red,
-                        color: '#FFFFFF',
-                        fontSize: 8.5,
-                        fontWeight: 900,
-                        letterSpacing: '0.12em',
-                        gap: 4,
-                      }}
-                    >
-                      <Truck size={10} /> ENVÍO GRATIS
-                    </span>
-                  ) : (
-                    <span
-                      style={{
-                        width: 4,
-                        height: 4,
-                        borderRadius: '50%',
-                        background: C.red,
-                        display: 'inline-block',
-                      }}
-                    />
-                  )}
-                  <span>{text}</span>
-                </span>
-              ))}
+                />
+                {[
+                  { label: 'Nosotros', href: '/#nosotros' },
+                  { label: 'Servicios', href: '/servicios' },
+                  { label: 'Sucursales', href: '/sucursales' },
+                  { label: 'Flotillas', href: '/flotillas' },
+                  { label: 'Contacto', href: '/contacto' },
+                ].map((corp) => (
+                  <Link
+                    key={corp.label}
+                    to={corp.href}
+                    className="tienda-eyebrow-link"
+                    style={{
+                      fontFamily: F.heading,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: 'rgba(255, 255, 255, 0.76)',
+                      textDecoration: 'none',
+                      transition: 'color 0.2s ease',
+                    }}
+                  >
+                    {corp.label}
+                  </Link>
+                ))}
+              </div>
             </div>
-          ))}
+
+            {/* Right: Store Official Shipping & Volume Benefit */}
+            <div
+              className="tienda-eyebrow-promo"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '2px 8px',
+                  borderRadius: 9999,
+                  background: C.red,
+                  color: '#FFFFFF',
+                  fontFamily: F.heading,
+                  fontSize: 8.5,
+                  fontWeight: 800,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                <Truck size={10} /> Envío Gratis
+              </span>
+              <span
+                className="tienda-eyebrow-promo-detail"
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  color: 'rgba(255, 255, 255, 0.82)',
+                }}
+              >
+                Toda la República · −10% en juego de 4 llantas
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Floating Apple-Style Glass Pill Navbar */}
       <div
@@ -446,9 +597,15 @@ export default function TiendaNavbar({ legacyMode = false }) {
         <div
           className="tienda-apple-pill-inner"
           style={{
-            maxWidth: legacyMode ? (scrolled ? 1160 : 1260) : scrolled ? 1240 : 1280,
+            maxWidth: legacyMode ? (scrolled ? 1160 : 1260) : scrolled ? 980 : 1080,
             margin: '0 auto',
-            padding: scrolled ? '9px 16px 9px 20px' : '10px 18px 10px 22px',
+            padding: legacyMode
+              ? scrolled
+                ? '9px 16px 9px 20px'
+                : '10px 18px 10px 22px'
+              : scrolled
+                ? '8px 12px 8px 22px'
+                : '9px 14px 9px 24px',
             borderRadius: 9999,
             background: 'rgba(255, 255, 255, 0.94)',
             backdropFilter: 'saturate(180%) blur(24px)',
@@ -460,7 +617,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 10,
+            gap: 14,
             pointerEvents: 'auto',
             transition: 'all 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
@@ -567,36 +724,40 @@ export default function TiendaNavbar({ legacyMode = false }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: legacyMode ? 4 : 2,
+              gap: legacyMode ? 4 : 8,
               flex: 1,
               minWidth: 0,
             }}
           >
             {navItems.map((item) => {
               const isLocalAnchor =
-                (item.href === '/llantas#hero-stage' &&
-                  (pathname === '/llantas' || pathname === '/landing-tienda-preview')) ||
-                (item.href.startsWith('/landing-tienda-preview#') &&
-                  pathname === '/landing-tienda-preview');
+                item.href.startsWith('/landing-tienda-preview#') &&
+                pathname === '/landing-tienda-preview';
               const isMegaActive =
                 megaOpen && item.hasMega && !legacyMode && megaMode === item.megaMode;
+              const isCatalogActive =
+                !legacyMode &&
+                !item.hasMega &&
+                !megaOpen &&
+                pathname.endsWith('/catalogo') &&
+                item.href.endsWith('/catalogo');
               const linkStyle = {
-                padding: legacyMode ? '7px 13px' : '7px 11px',
+                padding: legacyMode ? '7px 13px' : '8px 16px',
                 borderRadius: 9999,
                 fontFamily: F.heading,
-                fontSize: legacyMode ? 12 : 11.5,
-                fontWeight: item.isMainHome ? 700 : 600,
+                fontSize: legacyMode ? 12 : 13,
+                fontWeight: isCatalogActive ? 700 : 600,
                 letterSpacing: '-0.01em',
                 background: isMegaActive
                   ? C.red
-                  : item.isMainHome
+                  : isCatalogActive
                     ? 'rgba(26, 31, 54, 0.05)'
                     : 'transparent',
                 color: isMegaActive ? C.white : C.navy,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 4,
+                gap: 5,
                 whiteSpace: 'nowrap',
                 flexShrink: 0,
                 transition: 'all 0.25s ease',
@@ -616,7 +777,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
 
               const handleLeave = (e) => {
                 if (!isMegaActive) {
-                  e.currentTarget.style.background = item.isMainHome
+                  e.currentTarget.style.background = isCatalogActive
                     ? 'rgba(26, 31, 54, 0.05)'
                     : 'transparent';
                   e.currentTarget.style.color = C.navy;
@@ -636,7 +797,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
                   onClick={() => setMegaOpen(false)}
                 >
                   <span>{item.label}</span>
-                  {item.hasMega && <ChevronDown size={12} />}
+                  {item.hasMega && <ChevronDown size={13} />}
                 </a>
               ) : (
                 <Link
@@ -650,23 +811,23 @@ export default function TiendaNavbar({ legacyMode = false }) {
                   }
                 >
                   <span>{item.label}</span>
-                  {item.hasMega && <ChevronDown size={12} />}
+                  {item.hasMega && <ChevronDown size={13} />}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Right: Minimalist Search + Account + Cart + Mobile Burger */}
+          {/* Right: Minimalist Circular Icons (Search + Account) + Red Cart Pill + Mobile Burger */}
           <div
             className="tienda-apple-actions"
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 7,
+              gap: legacyMode ? 7 : 8,
               flexShrink: 0,
             }}
           >
-            {/* Minimalist Header Search Trigger (New Store Experience) */}
+            {/* Minimalist Circular Search Icon Trigger (New Store Experience) */}
             {!legacyMode && (
               <button
                 type="button"
@@ -675,48 +836,33 @@ export default function TiendaNavbar({ legacyMode = false }) {
                   setMobileMenu(false);
                   setSearchOpen((v) => !v);
                 }}
+                title="Buscar por medida, marca o vehículo (Ctrl+K)"
                 aria-label="Buscar llantas por medida, marca o modelo"
                 aria-expanded={searchOpen}
                 className="tienda-apple-search-btn"
                 style={{
-                  padding: '7px 13px',
-                  borderRadius: 9999,
+                  width: 36,
+                  height: 36,
+                  padding: 0,
+                  borderRadius: '50%',
                   border: searchOpen
                     ? `1px solid ${C.navy}`
-                    : '1px solid rgba(26, 31, 54, 0.10)',
-                  background: searchOpen ? C.navy : '#F8F9FA',
+                    : '1px solid rgba(26, 31, 54, 0.09)',
+                  background: searchOpen ? C.navy : '#F4F6F9',
                   color: searchOpen ? '#FFFFFF' : C.navy,
-                  fontFamily: F.heading,
-                  fontSize: 11.5,
-                  fontWeight: 700,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 6,
-                  whiteSpace: 'nowrap',
                   flexShrink: 0,
                   transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
-                <Search size={13.5} color={searchOpen ? '#FFFFFF' : C.red} />
-                <span className="tienda-apple-search-txt">Buscar</span>
-                <span
-                  className="tienda-apple-search-kbd"
-                  style={{
-                    padding: '1px 5px',
-                    borderRadius: 5,
-                    background: searchOpen
-                      ? 'rgba(255,255,255,0.16)'
-                      : 'rgba(26,31,54,0.06)',
-                    color: searchOpen ? 'rgba(255,255,255,0.85)' : '#64748B',
-                    fontSize: 9,
-                    fontWeight: 800,
-                    letterSpacing: '0.04em',
-                  }}
-                >
-                  ⌘K
-                </span>
+                <Search
+                  size={15.5}
+                  strokeWidth={2.2}
+                  color={searchOpen ? '#FFFFFF' : C.navy}
+                />
               </button>
             )}
 
@@ -753,37 +899,80 @@ export default function TiendaNavbar({ legacyMode = false }) {
               </button>
             )}
 
-            <Link
-              to={`${storeBasePath}/cuenta`}
-              onClick={handleAccountAction}
-              aria-label="Mi Cuenta"
-              className="tienda-apple-account-btn"
-              style={{
-                padding: '7px 13px',
-                borderRadius: 9999,
-                border: user
-                  ? '1px solid rgba(22, 163, 74, 0.24)'
-                  : '1px solid rgba(26, 31, 54, 0.08)',
-                background: user ? 'rgba(22, 163, 74, 0.07)' : '#F8F9FA',
-                color: C.navy,
-                fontFamily: F.heading,
-                fontSize: 11.5,
-                fontWeight: 700,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-                transition: 'all 0.25s ease',
-              }}
-            >
-              <User size={14} color={user ? '#16A34A' : C.red} />
-              <span className="tienda-apple-user-txt">
-                {user ? user.nombre.split(' ')[0] : 'Cuenta'}
-              </span>
-            </Link>
+            {legacyMode ? (
+              <Link
+                to={`${storeBasePath}/cuenta`}
+                onClick={handleAccountAction}
+                aria-label="Mi Cuenta"
+                className="tienda-apple-account-btn"
+                style={{
+                  padding: '7px 13px',
+                  borderRadius: 9999,
+                  border: user
+                    ? '1px solid rgba(22, 163, 74, 0.24)'
+                    : '1px solid rgba(26, 31, 54, 0.08)',
+                  background: user ? 'rgba(22, 163, 74, 0.07)' : '#F8F9FA',
+                  color: C.navy,
+                  fontFamily: F.heading,
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  transition: 'all 0.25s ease',
+                }}
+              >
+                <User size={14} color={user ? '#16A34A' : C.red} />
+                <span className="tienda-apple-user-txt">
+                  {user ? user.nombre.split(' ')[0] : 'Cuenta'}
+                </span>
+              </Link>
+            ) : (
+              <Link
+                to={`${storeBasePath}/cuenta`}
+                onClick={handleAccountAction}
+                title={user ? `Mi Cuenta (${user.nombre})` : 'Mi Cuenta / Iniciar sesión'}
+                aria-label="Mi Cuenta"
+                className="tienda-apple-account-btn"
+                style={{
+                  width: user ? 'auto' : 36,
+                  height: 36,
+                  padding: user ? '0 13px' : 0,
+                  borderRadius: user ? 9999 : '50%',
+                  border: user
+                    ? '1px solid rgba(22, 163, 74, 0.26)'
+                    : '1px solid rgba(26, 31, 54, 0.09)',
+                  background: user ? 'rgba(22, 163, 74, 0.08)' : '#F4F6F9',
+                  color: C.navy,
+                  fontFamily: F.heading,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              >
+                <User
+                  size={15}
+                  strokeWidth={2.2}
+                  color={user ? '#16A34A' : C.navy}
+                />
+                {user && (
+                  <span className="tienda-apple-user-txt">
+                    {user.nombre.split(' ')[0]}
+                  </span>
+                )}
+              </Link>
+            )}
 
             <button
               type="button"
@@ -795,25 +984,27 @@ export default function TiendaNavbar({ legacyMode = false }) {
               aria-label="Abrir carrito"
               className="tienda-apple-cart-btn"
               style={{
-                padding: '7px 14px',
+                height: legacyMode ? 'auto' : 36,
+                padding: legacyMode ? '7px 14px' : '0 15px',
                 borderRadius: 9999,
                 border: 'none',
                 background: C.red,
                 color: C.white,
                 fontFamily: F.heading,
-                fontSize: 11.5,
+                fontSize: 12,
                 fontWeight: 800,
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: 6,
                 whiteSpace: 'nowrap',
                 flexShrink: 0,
-                boxShadow: '0 6px 20px rgba(196, 30, 36, 0.3)',
+                boxShadow: '0 6px 20px rgba(196, 30, 36, 0.28)',
                 transition: 'transform 0.25s ease',
               }}
             >
-              <ShoppingBag size={13} />
+              <ShoppingBag size={14} strokeWidth={2.2} />
               <span>{cartCount}</span>
             </button>
 
@@ -828,11 +1019,11 @@ export default function TiendaNavbar({ legacyMode = false }) {
               className="tienda-apple-burger"
               style={{
                 display: 'none',
-                width: 34,
-                height: 34,
+                width: 36,
+                height: 36,
                 borderRadius: '50%',
-                border: '1px solid rgba(26,31,54,0.08)',
-                background: mobileMenu ? C.navy : '#F8F9FA',
+                border: '1px solid rgba(26,31,54,0.09)',
+                background: mobileMenu ? C.navy : '#F4F6F9',
                 color: mobileMenu ? '#FFFFFF' : C.navy,
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1868,9 +2059,23 @@ export default function TiendaNavbar({ legacyMode = false }) {
         .tienda-shipping-marquee-track:hover {
           animation-play-state: paused;
         }
-        .tienda-apple-search-btn:hover {
+        .tienda-eyebrow-home-pill:hover {
+          background: #C41E24 !important;
+          border-color: #C41E24 !important;
+          color: #FFFFFF !important;
+        }
+        .tienda-eyebrow-link:hover {
+          color: #FFFFFF !important;
+        }
+        .tienda-apple-search-btn:hover,
+        .tienda-apple-account-btn:hover {
           border-color: rgba(196, 30, 36, 0.35) !important;
+          background: #FFFFFF !important;
           transform: translateY(-1px);
+        }
+        .tienda-apple-cart-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 10px 24px rgba(196, 30, 36, 0.38) !important;
         }
         .tienda-search-quick-pill {
           transition: all 0.2s ease;
@@ -1886,32 +2091,34 @@ export default function TiendaNavbar({ legacyMode = false }) {
           background: #FFFFFF !important;
           box-shadow: 0 10px 24px rgba(26, 31, 54, 0.06);
         }
-        @media (max-width: 1180px) {
-          .tienda-apple-search-kbd { display: none !important; }
+        @media (max-width: 980px) {
+          .tienda-eyebrow-promo-detail { display: none !important; }
         }
-        @media (max-width: 1120px) {
+        @media (max-width: 880px) {
+          .tienda-eyebrow-corp-links { display: none !important; }
+          .tienda-eyebrow-inner { padding: 0 14px !important; }
           .tienda-apple-nav { display: none !important; }
           .tienda-apple-burger { display: inline-flex !important; }
           .tienda-apple-pill-outer { padding: 8px 12px 0 !important; }
-          .tienda-apple-pill-inner { padding: 8px 12px 8px 16px !important; gap: 8px !important; }
+          .tienda-apple-pill-inner { padding: 8px 10px 8px 16px !important; gap: 8px !important; }
         }
         @media (max-width: 640px) {
           .tienda-apple-coupon,
-          .tienda-apple-user-txt,
-          .tienda-apple-search-txt { display: none !important; }
+          .tienda-apple-user-txt { display: none !important; }
           .tienda-apple-search-btn,
-          .tienda-apple-account-btn {
+          .tienda-apple-account-btn,
+          .tienda-apple-burger {
             width: 34px !important;
             height: 34px !important;
             padding: 0 !important;
           }
           .tienda-apple-cart-btn {
             height: 34px !important;
-            padding: 0 11px !important;
+            padding: 0 12px !important;
           }
           .tienda-apple-logo-img { height: 24px !important; }
           .tienda-apple-logo-badge { padding-left: 7px !important; font-size: 8.5px !important; letter-spacing: 0.16em !important; }
-          .tienda-apple-actions { gap: 5px !important; }
+          .tienda-apple-actions { gap: 6px !important; }
           .tienda-spotlight-results-grid { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 390px) {
