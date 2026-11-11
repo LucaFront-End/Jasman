@@ -24,22 +24,15 @@ function getApiKey() {
   ).trim();
 }
 
-function getAccountId() {
-  return (
-    process.env.WIX_ACCOUNT_ID ||
-    process.env.VITE_WIX_ACCOUNT_ID ||
-    ''
-  ).trim();
-}
-
 function createInboxSdkClient(apiKey) {
-  const accountId = getAccountId();
+  // Important: pass only { apiKey, siteId } without accountId so contributor/agency
+  // API keys (where ownerAccountId !== contributorAccountId) authenticate cleanly
+  // without triggering METASITE_AND_ACCOUNT_MISMATCH.
   return createClient({
     modules: { conversations, messages, items },
     auth: ApiKeyStrategy({
       apiKey,
       siteId: WIX_SITE_ID,
-      ...(accountId ? { accountId } : {}),
     }),
   });
 }
@@ -477,13 +470,16 @@ export default async function handler(req, res) {
             mode = 'wix_inbox_live';
 
             // Send structured lead form into Wix Inbox with notifications enabled & customer sender
+            const leadFormTitle = pagina.startsWith('/llantas')
+              ? 'Datos del Cliente · Tienda Jasman'
+              : 'Datos del Cliente · Jasman Automotriz';
             await sendParticipantInboxMessage(inboxClient, conversationId, {
               direction: 'PARTICIPANT_TO_BUSINESS',
               visibility: 'BUSINESS_AND_PARTICIPANT',
               content: {
                 previewText: `Datos de chat: ${nombre} · ${telefono}`,
                 form: {
-                  title: 'Datos del Cliente · Tienda Jasman',
+                  title: leadFormTitle,
                   description: `Origen: ${pagina}`,
                   fields: [
                     { name: 'Nombre', value: nombre },
