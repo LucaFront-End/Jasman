@@ -385,6 +385,7 @@ export default function ProductoPreviewPage() {
       <TiendaLiveChatWidget />
 
       <div
+        className="jasman-pdp-page-wrap"
         style={{
           maxWidth: 1280,
           margin: '0 auto',
@@ -469,6 +470,7 @@ export default function ProductoPreviewPage() {
           >
             {/* 1. PURE WHITE ARCHITECTURAL GALLERY STAGE */}
             <div
+              className="jasman-pdp-gallery-stage"
               onMouseMove={onMouseMove}
               onMouseLeave={onMouseLeave}
               style={{
@@ -728,6 +730,7 @@ export default function ProductoPreviewPage() {
 
               {/* Bottom Telemetry Strip inside Stage: Anatomía de la Medida */}
               <div
+                className="jasman-pdp-anatomy-grid"
                 style={{
                   position: 'relative',
                   zIndex: 4,
@@ -978,6 +981,7 @@ export default function ProductoPreviewPage() {
 
             {/* 3. SYMMETRICAL 2x2 HIGH-TECH TRUST BADGES */}
             <div
+              className="jasman-pdp-trust-grid"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
@@ -1068,8 +1072,10 @@ export default function ProductoPreviewPage() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             {/* PROMINENT BRAND WITH OFFICIAL LOGO IMAGE CARD ("Marca con imagen") */}
             <div
+              className="jasman-pdp-brand-card"
               style={{
                 width: '100%',
+                boxSizing: 'border-box',
                 padding: '14px 18px',
                 borderRadius: 20,
                 background: '#FFFFFF',
@@ -1158,6 +1164,7 @@ export default function ProductoPreviewPage() {
               </div>
 
               <span
+                className="jasman-pdp-brand-veh-pill"
                 style={{
                   fontFamily: F.heading,
                   fontSize: 10,
@@ -1891,6 +1898,7 @@ export default function ProductoPreviewPage() {
 
         {/* VERIFIED DRIVER REVIEWS CAROUSEL */}
         <div
+          className="jasman-pdp-reviews-card"
           style={{
             background: '#FFFFFF',
             borderRadius: 32,
@@ -2319,6 +2327,7 @@ export default function ProductoPreviewPage() {
       {/* FLOATING STICKY BUY BAR WHEN SCROLLING PAST THE MAIN BUY BUTTON */}
       {showFloatingBuyBar && product.inStock && (
         <div
+          className="jasman-pdp-sticky-bar"
           style={{
             position: 'fixed',
             left: '50%',
@@ -2343,6 +2352,7 @@ export default function ProductoPreviewPage() {
         >
           {/* Left: Tire Thumbnail + Title + Delivery Badge */}
           <div
+            className="jasman-pdp-sticky-left"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -2352,6 +2362,7 @@ export default function ProductoPreviewPage() {
             }}
           >
             <div
+              className="jasman-pdp-sticky-thumb"
               style={{
                 width: 48,
                 height: 48,
@@ -2433,6 +2444,7 @@ export default function ProductoPreviewPage() {
 
           {/* Right: Quantity Selector + Add to Cart Button */}
           <div
+            className="jasman-pdp-sticky-right"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -2505,6 +2517,7 @@ export default function ProductoPreviewPage() {
             <button
               type="button"
               onClick={handleAddToCart}
+              className="jasman-pdp-sticky-add-btn"
               style={{
                 height: 44,
                 padding: '0 20px',
@@ -2543,20 +2556,89 @@ export default function ProductoPreviewPage() {
       <style>{`
         @media (max-width: 940px) {
           .bruce-tire-detail-grid {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: minmax(0, 1fr) !important;
             gap: 32px !important;
+          }
+          .bruce-tire-detail-grid > * {
+            min-width: 0 !important;
+            max-width: 100% !important;
           }
           .bruce-tire-visuals-col {
             position: relative !important;
             top: 0 !important;
           }
           .bruce-related-tires-grid {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: minmax(0, 1fr) !important;
           }
         }
         @media (max-width: 640px) {
+          .jasman-pdp-page-wrap {
+            padding: 102px 14px 156px !important;
+          }
+          .jasman-pdp-gallery-stage {
+            height: 310px !important;
+            border-radius: 26px !important;
+          }
+          .jasman-pdp-brand-card {
+            padding: 12px 14px !important;
+            gap: 10px !important;
+          }
+          .jasman-pdp-brand-veh-pill {
+            display: none !important;
+          }
           .bruce-tire-detail-grid {
-            gap: 24px !important;
+            gap: 20px !important;
+            margin-bottom: 52px !important;
+          }
+          .jasman-pdp-anatomy-grid {
+            gap: 6px !important;
+          }
+          .jasman-pdp-anatomy-grid > div {
+            padding: 7px 6px !important;
+          }
+          .jasman-pdp-trust-grid {
+            gap: 8px !important;
+          }
+          .jasman-pdp-trust-grid > div {
+            padding: 11px 12px !important;
+            gap: 9px !important;
+            border-radius: 16px !important;
+          }
+          .jasman-pdp-reviews-card {
+            padding: 24px 18px !important;
+            border-radius: 24px !important;
+            margin-bottom: 48px !important;
+          }
+          .jasman-pdp-sticky-bar {
+            bottom: 68px !important;
+            width: calc(100vw - 24px) !important;
+            box-sizing: border-box !important;
+            padding: 11px 13px !important;
+            border-radius: 20px !important;
+            gap: 8px !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            flex-wrap: nowrap !important;
+          }
+          .jasman-pdp-sticky-thumb {
+            display: none !important;
+          }
+          .jasman-pdp-sticky-left {
+            flex: 0 0 auto !important;
+            width: 100% !important;
+            gap: 6px !important;
+          }
+          .jasman-pdp-sticky-right {
+            width: 100% !important;
+            justify-content: space-between !important;
+          }
+          .jasman-pdp-sticky-add-btn {
+            flex: 1 1 auto !important;
+            justify-content: center !important;
+            padding: 0 14px !important;
+          }
+          .jasman-pdp-sticky-bar button[type="button"] {
+            font-size: 11.5px !important;
           }
         }
       `}</style>

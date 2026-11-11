@@ -176,13 +176,11 @@ export default function ServiciosPage() {
                       ¿Buscas comprar llantas en línea con envío o montaje?
                     </h3>
                     <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 4, lineHeight: 1.5 }}>
-                      Visita nuestro catálogo digital con las mejores marcas (Michelin, Continental, Pirelli, Goodyear, Bridgestone y más) en <strong>llantas.jasman.com.mx</strong>.
+                      Visita nuestro catálogo digital con las mejores marcas (Michelin, Continental, Pirelli, Goodyear, Bridgestone y más) en nuestra <strong>Tienda Jasman en Línea</strong>.
                     </p>
                   </div>
-                  <a
-                    href="https://llantas.jasman.com.mx/"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    to="/landing-tienda-preview"
                     style={{
                       padding: '13px 28px', borderRadius: 14, background: C.red, color: C.white,
                       fontFamily: F.heading, fontWeight: 700, fontSize: 14, textDecoration: 'none',
@@ -193,8 +191,8 @@ export default function ServiciosPage() {
                     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = C.redDark; }}
                     onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = C.red; }}
                   >
-                    Ver Catálogo en llantas.jasman.com.mx <ArrowRight size={16} />
-                  </a>
+                    Ir a Tienda de Llantas <ArrowRight size={16} />
+                  </Link>
                 </div>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>

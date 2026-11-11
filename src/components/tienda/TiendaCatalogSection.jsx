@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
 import {
@@ -17,6 +17,8 @@ import {
   ArrowRight,
   ChevronUp,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   SlidersHorizontal,
   X,
 } from 'lucide-react';
@@ -173,7 +175,10 @@ export default function TiendaCatalogSection({
   const [visibleCount, setVisibleCount] = useState(
     isFullCatalogPage ? 48 : isHomePreview ? 7 : 12
   );
-  const [filtersExpanded, setFiltersExpanded] = useState(true);
+  const [filtersExpanded, setFiltersExpanded] = useState(
+    forceStaticCatalog ? true : false
+  );
+  const vehicleCarouselRef = useRef(null);
 
   // Sync when URL query params change (e.g. navigating from Home or Navbar Mega-Menu)
   const [prevSearchStr, setPrevSearchStr] = useState(location.search);
@@ -414,6 +419,7 @@ export default function TiendaCatalogSection({
   return (
     <section
       id={id}
+      className="jasman-catalog-main-section"
       style={{
         background: '#F5F5F7',
         padding: isHomePreview
@@ -427,6 +433,7 @@ export default function TiendaCatalogSection({
       <div style={{ maxWidth: 1260, margin: '0 auto' }}>
         {/* 1. HEADER + REALISTIC VEHICLE SVG SELECTORS IN ONE CLEAN ROW */}
         <div
+          className="jasman-catalog-header-row"
           style={{
             display: 'flex',
             flexWrap: 'wrap',
@@ -582,8 +589,81 @@ export default function TiendaCatalogSection({
 
         {/* 1B. 8 MINIMALIST VEHICLE TYPE SVG SELECTORS + CAR MODELS BAR (Live Store) */}
         {!forceStaticCatalog && (
-          <div style={{ marginBottom: 24 }}>
+          <div className="jasman-catalog-vehicles-block" style={{ marginBottom: 24 }}>
             <div
+              className="catalog-mobile-vehicle-carousel-bar"
+              style={{ display: 'none' }}
+            >
+              <span
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: '#64748B',
+                }}
+              >
+                Tipo de vehículo · Desliza
+              </span>
+              <div style={{ display: 'inline-flex', gap: 6 }}>
+                <button
+                  type="button"
+                  aria-label="Anterior tipo de vehículo"
+                  onClick={() => {
+                    if (vehicleCarouselRef.current) {
+                      vehicleCarouselRef.current.scrollBy({
+                        left: -220,
+                        behavior: 'smooth',
+                      });
+                    }
+                  }}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    border: '1px solid rgba(26, 31, 54, 0.12)',
+                    background: '#FFFFFF',
+                    color: C.navy,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Siguiente tipo de vehículo"
+                  onClick={() => {
+                    if (vehicleCarouselRef.current) {
+                      vehicleCarouselRef.current.scrollBy({
+                        left: 220,
+                        behavior: 'smooth',
+                      });
+                    }
+                  }}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    border: '1px solid rgba(26, 31, 54, 0.12)',
+                    background: '#FFFFFF',
+                    color: C.navy,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div
+              ref={vehicleCarouselRef}
               className="catalog-8vehicles-grid"
               style={{
                 display: 'grid',
@@ -603,6 +683,9 @@ export default function TiendaCatalogSection({
                   <button
                     key={vt.id}
                     type="button"
+                    className={`jasman-selectable-filter catalog-8vehicle-card${
+                      isSelected ? ' is-selected' : ''
+                    }`}
                     onClick={() => {
                       if (isSelected) {
                         setVehicleType('Todos');
@@ -817,7 +900,7 @@ export default function TiendaCatalogSection({
               gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 0.85fr)',
               gap: 28,
               alignItems: 'stretch',
-              maxHeight: filtersExpanded ? 480 : 0,
+              maxHeight: filtersExpanded ? 780 : 0,
               opacity: filtersExpanded ? 1 : 0,
               overflow: 'hidden',
               pointerEvents: filtersExpanded ? 'auto' : 'none',
@@ -896,6 +979,9 @@ export default function TiendaCatalogSection({
                     <button
                       key={m.raw}
                       type="button"
+                      className={`jasman-selectable-filter${
+                        isSelected ? ' is-selected' : ''
+                      }`}
                       onClick={() => {
                         if (!isFullCatalogPage) {
                           navigateToStoreCatalog({ measure: m.raw });
@@ -1009,6 +1095,9 @@ export default function TiendaCatalogSection({
                     <button
                       key={brandName}
                       type="button"
+                      className={`jasman-selectable-filter${
+                        active ? ' is-selected' : ''
+                      }`}
                       onClick={() => {
                         if (!isFullCatalogPage) {
                           navigateToStoreCatalog({ brand: brandName });
@@ -1056,6 +1145,7 @@ export default function TiendaCatalogSection({
 
           {/* Bottom Slim Precision Search, Parameter Bar & Subir/Bajar Filtros Toggle */}
           <div
+            className="catalog-bottom-filter-row"
             style={{
               paddingTop: filtersExpanded ? 18 : 0,
               borderTop: filtersExpanded ? '1px solid rgba(26, 31, 54, 0.06)' : 'none',
@@ -1068,15 +1158,20 @@ export default function TiendaCatalogSection({
           >
             {/* Search + Ancho / Perfil / Rin */}
             <div
+              className="catalog-bottom-filter-left"
               style={{
                 display: 'flex',
                 flexWrap: 'wrap',
                 alignItems: 'center',
                 gap: 8,
                 flex: 1,
+                minWidth: 0,
               }}
             >
-              <div style={{ position: 'relative', flex: '1 1 220px', maxWidth: 320 }}>
+              <div
+                className="catalog-search-input-wrap"
+                style={{ position: 'relative', flex: '1 1 200px', maxWidth: 300 }}
+              >
                 <Search
                   size={15}
                   style={{
@@ -1106,20 +1201,17 @@ export default function TiendaCatalogSection({
                 />
               </div>
 
-              {/* Tipo de Vehículo (8 Segmentos) */}
-              {!forceStaticCatalog && (
+              {/* Marca select preserved ONLY on frozen legacy copy */}
+              {forceStaticCatalog && (
                 <select
-                  value={vehicleType}
-                  onChange={(e) => {
-                    setVehicleType(e.target.value);
-                    setCarModel('');
-                  }}
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
                   style={{
                     padding: '10px 14px',
                     borderRadius: 9999,
                     border: 'none',
-                    background: vehicleType !== 'Todos' ? C.navy : '#F5F5F7',
-                    color: vehicleType !== 'Todos' ? C.white : C.navy,
+                    background: brand !== 'Todas' ? C.navy : '#F5F5F7',
+                    color: brand !== 'Todas' ? C.white : C.navy,
                     fontFamily: F.heading,
                     fontSize: 11,
                     fontWeight: 700,
@@ -1127,44 +1219,13 @@ export default function TiendaCatalogSection({
                     cursor: 'pointer',
                   }}
                 >
-                  <option value="Todos" style={{ background: C.white, color: C.navy }}>
-                    Vehículo (Todos)
-                  </option>
-                  {VEHICLE_TYPE_OPTIONS.map((vt) => (
-                    <option
-                      key={vt.id}
-                      value={vt.id}
-                      style={{ background: C.white, color: C.navy }}
-                    >
-                      {vt.label}
+                  {availableBrands.map((b) => (
+                    <option key={b} value={b} style={{ background: C.white, color: C.navy }}>
+                      {b === 'Todas' ? 'Marca (Todas)' : b}
                     </option>
                   ))}
                 </select>
               )}
-
-              {/* Marca (Todas las marcas del catálogo) */}
-              <select
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: 9999,
-                  border: 'none',
-                  background: brand !== 'Todas' ? C.navy : '#F5F5F7',
-                  color: brand !== 'Todas' ? C.white : C.navy,
-                  fontFamily: F.heading,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                {availableBrands.map((b) => (
-                  <option key={b} value={b} style={{ background: C.white, color: C.navy }}>
-                    {b === 'Todas' ? 'Marca (Todas)' : b}
-                  </option>
-                ))}
-              </select>
 
               {/* Ancho */}
               <select
@@ -1493,7 +1554,13 @@ export default function TiendaCatalogSection({
       </div>
 
       <style>{`
-        @media (max-width: 1180px) {
+        @media (min-width: 981px) {
+          .catalog-bottom-filter-row,
+          .catalog-bottom-filter-left {
+            flex-wrap: nowrap !important;
+          }
+        }
+        @media (max-width: 1180px) and (min-width: 781px) {
           .catalog-8vehicles-grid {
             grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
           }
@@ -1511,8 +1578,59 @@ export default function TiendaCatalogSection({
           }
         }
         @media (max-width: 780px) {
+          .jasman-catalog-main-section {
+            padding: 12px 14px 96px !important;
+          }
+          .jasman-catalog-header-row {
+            margin-bottom: 14px !important;
+            gap: 10px !important;
+          }
+          .jasman-catalog-vehicles-block {
+            margin-bottom: 14px !important;
+          }
+          .catalog-mobile-vehicle-carousel-bar {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 0 2px;
+          }
           .catalog-8vehicles-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            scroll-snap-type: x mandatory;
+            gap: 10px !important;
+            padding: 4px 2px 8px !important;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+          }
+          .catalog-8vehicles-grid::-webkit-scrollbar {
+            display: none;
+          }
+          .catalog-8vehicle-card {
+            flex: 0 0 132px !important;
+            min-width: 132px !important;
+            scroll-snap-align: start;
+            padding: 10px 8px 9px !important;
+          }
+          #medidas-pedidas {
+            position: relative !important;
+            top: auto !important;
+            padding: 14px !important;
+            border-radius: 22px !important;
+            margin-bottom: 20px !important;
+          }
+          .catalog-search-input-wrap {
+            flex: 1 1 100% !important;
+            max-width: 100% !important;
+          }
+          .catalog-bottom-filter-left select {
+            flex: 1 1 calc(33.33% - 6px) !important;
+            min-width: 0 !important;
+            padding: 9px 10px !important;
+            font-size: 11px !important;
           }
           .tienda-spotlight-card {
             grid-column: span 1 !important;
@@ -1523,6 +1641,10 @@ export default function TiendaCatalogSection({
           }
           .catalog-brands-tile-grid {
             grid-template-columns: repeat(3, 1fr) !important;
+          }
+          .tienda-bento-product-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
           }
         }
       `}</style>

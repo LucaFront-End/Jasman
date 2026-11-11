@@ -17,7 +17,7 @@ export default function CuentaPreviewPage() {
         forceOpen={true}
         onCloseForce={() => navigate('/landing-tienda-preview')}
       />
-      <FirstPurchasePopup />
+      <FirstPurchasePopup autoOpen={false} />
       <TiendaLiveChatWidget />
       <TiendaUserSection isStandalonePage />
     </div>

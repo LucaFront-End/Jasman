@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollProgress from './components/ScrollProgress';
 import PromotionsPopup from './components/PromotionsPopup';
+import FloatingWhatsAppButton from './components/FloatingWhatsAppButton';
 import HomePage from './pages/HomePage';
 import NosotrosPage from './pages/NosotrosPage';
 import ServiciosPage from './pages/ServiciosPage';
@@ -96,7 +97,10 @@ export default function App() {
         !pathname.includes('alineacion') &&
         !pathname.includes('alineación') &&
         !pathname.includes('llantas') && (
-          <PromotionsPopup />
+          <>
+            <PromotionsPopup />
+            <FloatingWhatsAppButton />
+          </>
         )}
     </>
   );

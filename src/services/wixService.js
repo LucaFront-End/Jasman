@@ -926,8 +926,8 @@ export async function completeWixOAuthCallbackIfPresent() {
       provider === 'facebook'
         ? 'Facebook'
         : provider === 'google'
-        ? 'Google'
-        : 'Red Social';
+          ? 'Google'
+          : 'Red Social';
 
     // Fetch real authenticated member profile (email, name, phone) using OAuth access token
     let realEmail = '';

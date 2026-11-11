@@ -18,7 +18,7 @@ export default function CatalogoPreviewPage() {
       <TiendaNavbar />
       <TiendaCartDrawer />
       <TiendaAuthModal />
-      <FirstPurchasePopup />
+      <FirstPurchasePopup autoOpen={false} />
       <TiendaLiveChatWidget />
 
       {/* Minimalist Architectural Top Header for the Full Catalog Page */}
@@ -30,6 +30,7 @@ export default function CatalogoPreviewPage() {
         }}
       >
         <div
+          className="jasman-catalogo-top-inner"
           style={{
             maxWidth: 1260,
             margin: '0 auto',
@@ -41,9 +42,13 @@ export default function CatalogoPreviewPage() {
           }}
         >
           {/* Left: Back to Store Landing */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div
+            className="jasman-catalogo-back-wrap"
+            style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}
+          >
             <Link
               to="/landing-tienda-preview"
+              className="jasman-catalogo-back-pill"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -67,15 +72,19 @@ export default function CatalogoPreviewPage() {
           </div>
 
           {/* Right: Store Value Pills */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div
+            className="jasman-catalogo-perks-wrap"
+            style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}
+          >
             {[
-              { icon: Truck, label: 'Entrega a Domicilio Gratis' },
-              { icon: MapPin, label: '+80 Sucursales Jasman' },
+              { icon: Truck, label: 'Entrega a Domicilio Gratis', short: 'Envío Gratis' },
+              { icon: MapPin, label: '+80 Sucursales Jasman', short: '+80 Sucursales' },
             ].map((item) => {
               const IconComp = item.icon;
               return (
                 <div
                   key={item.label}
+                  className="jasman-catalogo-perk-pill"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -89,8 +98,11 @@ export default function CatalogoPreviewPage() {
                     color: C.navy,
                   }}
                 >
-                  <IconComp size={13} color={C.red} />
-                  <span>{item.label}</span>
+                  <IconComp size={13} color={C.red} style={{ flexShrink: 0 }} />
+                  <span className="jasman-perk-full">{item.label}</span>
+                  <span className="jasman-perk-short" style={{ display: 'none' }}>
+                    {item.short}
+                  </span>
                 </div>
               );
             })}
@@ -106,7 +118,41 @@ export default function CatalogoPreviewPage() {
       <style>{`
         @media (max-width: 640px) {
           .jasman-catalogo-top-header {
-            padding: 96px 16px 6px !important;
+            padding: 90px 14px 2px !important;
+          }
+          .jasman-catalogo-top-inner {
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            gap: 8px !important;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          .jasman-catalogo-top-inner::-webkit-scrollbar {
+            display: none;
+          }
+          .jasman-catalogo-back-wrap,
+          .jasman-catalogo-perks-wrap {
+            flex-wrap: nowrap !important;
+            gap: 6px !important;
+            flex-shrink: 0 !important;
+          }
+          .jasman-catalogo-back-pill {
+            padding: 6px 12px !important;
+            font-size: 10px !important;
+            gap: 5px !important;
+            white-space: nowrap !important;
+          }
+          .jasman-catalogo-perk-pill {
+            padding: 6px 10px !important;
+            font-size: 10px !important;
+            gap: 5px !important;
+            white-space: nowrap !important;
+          }
+          .jasman-perk-full {
+            display: none !important;
+          }
+          .jasman-perk-short {
+            display: inline !important;
           }
         }
       `}</style>

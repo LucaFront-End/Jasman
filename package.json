@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@wix/crm": "^1.0.1700",
     "@wix/data": "^1.0.527",
+    "@wix/inbox": "^1.0.116",
     "@wix/sdk": "^1.21.17",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.0.1",

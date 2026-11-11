@@ -1324,8 +1324,13 @@ export default function TiendaHomeCarousels() {
                   color: '#64748B',
                 }}
               >
-                <MoveHorizontal size={13} color={C.red} /> Carrusel interactivo · Pasa el
-                mouse en los extremos para navegar
+                <MoveHorizontal size={13} color={C.red} />{' '}
+                <span className="jasman-carousel-mouse-hint">
+                  Carrusel interactivo · Pasa el mouse en los extremos para navegar
+                </span>
+                <span className="jasman-carousel-touch-hint" style={{ display: 'none' }}>
+                  Carrusel continuo · Desliza para explorar
+                </span>
               </span>
             </div>
 
@@ -1785,6 +1790,12 @@ export default function TiendaHomeCarousels() {
           .jasman-carousel-card-add {
             padding: 0 12px !important;
           }
+          .jasman-carousel-mouse-hint {
+            display: none !important;
+          }
+          .jasman-carousel-touch-hint {
+            display: inline !important;
+          }
         }
         @media (max-width: 640px) {
           .jasman-carousel-sec {
@@ -1792,15 +1803,20 @@ export default function TiendaHomeCarousels() {
             padding-bottom: 52px !important;
           }
           .jasman-shipping-slide-wrap {
-            flex: 0 0 308px !important;
+            flex: 0 0 338px !important;
           }
           .jasman-shipping-landscape-card {
-            grid-template-columns: 106px minmax(0, 1fr) !important;
-            gap: 12px !important;
+            grid-template-columns: 94px minmax(0, 1fr) !important;
+            gap: 11px !important;
             padding: 13px !important;
           }
+          .jasman-shipping-landscape-card .jasman-carousel-card-add {
+            height: 32px !important;
+            padding: 0 10px !important;
+            font-size: 9.5px !important;
+          }
           .jasman-shipping-tire-pod {
-            height: 136px !important;
+            height: 128px !important;
           }
         }
       `}</style>

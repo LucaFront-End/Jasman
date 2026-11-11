@@ -716,6 +716,7 @@ export default function LandingTiendaPreviewPage() {
                   fontSize: 13,
                   fontWeight: 900,
                   color: C.navy,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 4.9 / 5.0
@@ -743,6 +744,7 @@ export default function LandingTiendaPreviewPage() {
           {/* Left Optical Blur Shield */}
           <div
             aria-hidden="true"
+            className="jasman-reviews-blur-shield"
             style={{
               position: 'absolute',
               top: 0,
@@ -765,6 +767,7 @@ export default function LandingTiendaPreviewPage() {
           {/* Right Optical Blur Shield */}
           <div
             aria-hidden="true"
+            className="jasman-reviews-blur-shield"
             style={{
               position: 'absolute',
               top: 0,
@@ -1005,6 +1008,7 @@ export default function LandingTiendaPreviewPage() {
                 />
               )}
               <span
+                className="fe-minimal-top-sep"
                 style={{
                   width: 1,
                   height: 18,
@@ -1707,9 +1711,24 @@ export default function LandingTiendaPreviewPage() {
         @media (max-width: 640px) {
           .jasman-hero-primary-buy {
             flex: 1 1 100% !important;
+            box-sizing: border-box !important;
           }
           .jasman-hero-secondary-btn {
             flex: 1 1 calc(50% - 6px) !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            font-size: 9.8px !important;
+            padding: 11px 8px !important;
+            white-space: nowrap !important;
+            letter-spacing: 0.04em !important;
+          }
+          .jasman-reviews-blur-shield {
+            width: 22px !important;
+            backdrop-filter: blur(2.5px) !important;
+            -webkit-backdrop-filter: blur(2.5px) !important;
+          }
+          .fe-minimal-top-sep {
+            display: none !important;
           }
           .jasman-hero-excerpt-bar {
             flex-direction: column !important;

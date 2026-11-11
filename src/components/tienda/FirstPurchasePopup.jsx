@@ -4,7 +4,7 @@ import { saveContactoWeb } from '../../services/wixService';
 import { useTiendaState } from '../../hooks/useTiendaState';
 import { X, Tag, Check, Copy, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
 
-export default function FirstPurchasePopup() {
+export default function FirstPurchasePopup({ autoOpen = true }) {
   const { coupon, applyFirstPurchaseCoupon, user, saveUser } = useTiendaState();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -15,12 +15,14 @@ export default function FirstPurchasePopup() {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    if (!autoOpen) return undefined;
     const dismissed = sessionStorage.getItem('jasman_tienda_popup_dismissed');
     if (!dismissed && !coupon) {
       const timer = setTimeout(() => setOpen(true), 2600);
       return () => clearTimeout(timer);
     }
-  }, [coupon]);
+    return undefined;
+  }, [coupon, autoOpen]);
 
   useEffect(() => {
     const handleUI = (e) => {
@@ -221,6 +223,7 @@ export default function FirstPurchasePopup() {
       >
         {/* Left editorial visual column */}
         <div
+          className="jasman-coupon-modal-left"
           style={{
             background: `linear-gradient(155deg, ${C.navy} 0%, #0E1220 100%)`,
             color: C.white,
@@ -345,11 +348,15 @@ export default function FirstPurchasePopup() {
         </div>
 
         {/* Right form / coupon activation column */}
-        <div style={{ padding: '40px 36px', position: 'relative', background: C.white }}>
+        <div
+          className="jasman-coupon-modal-right"
+          style={{ padding: '40px 36px', position: 'relative', background: C.white }}
+        >
           <button
             type="button"
             onClick={handleClose}
             aria-label="Cerrar"
+            className="jasman-coupon-close-btn"
             style={{
               position: 'absolute',
               top: 18,
@@ -682,6 +689,45 @@ export default function FirstPurchasePopup() {
           )}
         </div>
       </div>
+      <style>{`
+        @media (max-width: 640px) {
+          .jasman-coupon-modal-card {
+            max-height: 92dvh !important;
+            border-radius: 20px !important;
+            grid-template-columns: 1fr !important;
+          }
+          .jasman-coupon-modal-left {
+            padding: 20px 20px 16px !important;
+          }
+          .jasman-coupon-modal-left img {
+            height: 22px !important;
+            margin-bottom: 12px !important;
+          }
+          .jasman-coupon-modal-left h3 {
+            font-size: 16px !important;
+            margin-bottom: 6px !important;
+          }
+          .jasman-coupon-modal-left p {
+            font-size: 12px !important;
+            line-height: 1.45 !important;
+          }
+          .jasman-coupon-modal-left > div:last-child {
+            display: none !important;
+          }
+          .jasman-coupon-modal-right {
+            padding: 20px 20px 22px !important;
+            position: static !important;
+          }
+          .jasman-coupon-close-btn {
+            top: 14px !important;
+            right: 14px !important;
+            z-index: 20 !important;
+            background: rgba(255, 255, 255, 0.14) !important;
+            border-color: rgba(255, 255, 255, 0.25) !important;
+            color: #FFFFFF !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

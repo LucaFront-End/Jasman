@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { servicesContent } from '../data/content';
 import { C, F } from '../hooks/useAnimations';
 import Icon from './Icon';
@@ -184,10 +185,8 @@ export default function Services() {
             {/* CTA button */}
             <div style={{ textAlign: isMobile ? 'center' : 'left', marginBottom: isMobile ? 28 : 0 }}>
               {s.title === 'Llantas' ? (
-                <a
-                  href="https://llantas.jasman.com.mx/"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  to="/landing-tienda-preview"
                   className="glow-btn"
                   style={{
                     width: isMobile ? '100%' : 'auto',
@@ -201,7 +200,7 @@ export default function Services() {
                 >
                   Comprar Llantas en Línea
                   <ArrowRight size={17} />
-                </a>
+                </Link>
               ) : (
                 <a
                   href={`https://api.whatsapp.com/send/?phone=5215579337994&text=${encodeURIComponent(`SW- Hola, quisiera cotizar el servicio de ${s.title}`)}`}

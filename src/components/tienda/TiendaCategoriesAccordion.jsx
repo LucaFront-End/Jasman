@@ -185,6 +185,7 @@ const SUTRA_BRAND_PANELS = [
 
 export default function TiendaCategoriesAccordion() {
   const [activeId, setActiveId] = useState(SUTRA_BRAND_PANELS[0].id);
+  const [showAllMobileBrands, setShowAllMobileBrands] = useState(false);
   const { products: catalogProducts } = useWixCatalogProducts();
 
   const enrichedPanels = useMemo(() => {
@@ -689,7 +690,12 @@ export default function TiendaCategoriesAccordion() {
             gap: 10,
           }}
         >
-          {enrichedPanels.map((panel) => {
+          {enrichedPanels
+            .filter(
+              (panel, idx) =>
+                showAllMobileBrands || idx < 5 || panel.id === activeId
+            )
+            .map((panel) => {
             const isOpen = panel.id === activeId;
             return (
               <div
@@ -959,6 +965,42 @@ export default function TiendaCategoriesAccordion() {
               </div>
             );
           })}
+
+          {enrichedPanels.length > 5 && (
+            <button
+              type="button"
+              onClick={() => setShowAllMobileBrands((prev) => !prev)}
+              style={{
+                marginTop: 4,
+                padding: '13px 18px',
+                borderRadius: 18,
+                border: '1px solid rgba(26, 31, 54, 0.12)',
+                background: '#F8FAFC',
+                color: C.navy,
+                fontFamily: F.heading,
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              {showAllMobileBrands ? (
+                <>
+                  <Minus size={14} color={C.red} /> Contraer lista de marcas
+                </>
+              ) : (
+                <>
+                  <Plus size={14} color={C.red} /> Ver las 13 marcas oficiales (+
+                  {enrichedPanels.length - 5})
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         {/* VEHICLE TYPE & CAR MODELS MINIMALIST SVG SHOWCASE BELOW BRANDS */}
@@ -1237,7 +1279,24 @@ export default function TiendaCategoriesAccordion() {
             padding: 58px 16px 52px !important;
           }
           .sutra-vehicle-types-grid {
-            grid-template-columns: 1fr !important;
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            scroll-snap-type: x mandatory;
+            gap: 11px !important;
+            padding: 4px 2px 10px !important;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+          }
+          .sutra-vehicle-types-grid::-webkit-scrollbar {
+            display: none;
+          }
+          .sutra-vehicle-card {
+            flex: 0 0 198px !important;
+            min-width: 198px !important;
+            scroll-snap-align: start;
+            padding: 15px 15px 14px !important;
           }
         }
       `}</style>
