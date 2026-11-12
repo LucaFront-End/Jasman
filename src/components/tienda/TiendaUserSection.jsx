@@ -114,6 +114,22 @@ function UserAccountWorkspace() {
     });
   }, [saveUser, mergeSyncedOrders]);
 
+  // Auto-sync live Wix eCommerce & cloud orders whenever a logged-in member opens Mi Cuenta
+  useEffect(() => {
+    if (!user?.correo) return undefined;
+    let active = true;
+    fetchWixMemberProfileAndOrders(user.correo)
+      .then(({ orders: remoteOrders }) => {
+        if (active && Array.isArray(remoteOrders) && remoteOrders.length > 0) {
+          mergeSyncedOrders(remoteOrders);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [user?.correo, mergeSyncedOrders]);
+
   const handleSocialAuth = async (provider) => {
     setFeedback(null);
     setSocialLoading(provider);

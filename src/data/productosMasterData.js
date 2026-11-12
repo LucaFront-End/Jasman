@@ -1,6 +1,10 @@
 // Master product catalog derived directly from "Relacioón productos master.csv" + Live Wix Stores/Products Sync
 import { useState, useEffect, useMemo } from 'react';
-import { getWixStoreProducts, formatWixImageUrl } from '../services/wixService.js';
+import {
+  getWixStoreProducts,
+  getCachedWixStoreProductsSync,
+  formatWixImageUrl,
+} from '../services/wixService.js';
 
 export const RAW_PRODUCTOS_MASTER = [
   {
@@ -1973,6 +1977,38 @@ const WIX_CATALOG_EVENT = 'jasman-wix-catalog-updated';
 let wixCatalogLoaded = false;
 let wixCatalogPromise = null;
 
+function buildSortedWixCatalog(rawWixItems) {
+  const normalized = rawWixItems.map((item, idx) =>
+    normalizeWixStoreProduct(item, idx)
+  );
+
+  // Order: Flagship #539 first, then items with real Wix media / Hero spotlights, then in-stock items
+  const priorityIds = new Set([539, 572, 561, 568, 543, 590]);
+  normalized.sort((a, b) => {
+    if (a.id === 539) return -1;
+    if (b.id === 539) return 1;
+    const aPriority = priorityIds.has(a.id) ? 1 : 0;
+    const bPriority = priorityIds.has(b.id) ? 1 : 0;
+    if (aPriority !== bPriority) return bPriority - aPriority;
+    if (a.hasUploadedWixMedia !== b.hasUploadedWixMedia) {
+      return a.hasUploadedWixMedia ? -1 : 1;
+    }
+    if (a.inStock !== b.inStock) return a.inStock ? -1 : 1;
+    return 0;
+  });
+
+  return normalized;
+}
+
+// Instant 0ms stale-while-revalidate hydration from session cache (avoids CSV price flash)
+(() => {
+  const cachedRaw = getCachedWixStoreProductsSync();
+  if (Array.isArray(cachedRaw) && cachedRaw.length > 0) {
+    const hydrated = buildSortedWixCatalog(cachedRaw);
+    PRODUCTOS_MASTER.splice(0, PRODUCTOS_MASTER.length, ...hydrated);
+  }
+})();
+
 export async function loadWixCatalogProducts({ forceRefresh = false } = {}) {
   if (wixCatalogLoaded && !forceRefresh && PRODUCTOS_MASTER.length > STATIC_PRODUCTOS_MASTER.length) {
     return PRODUCTOS_MASTER;
@@ -1988,24 +2024,7 @@ export async function loadWixCatalogProducts({ forceRefresh = false } = {}) {
         return PRODUCTOS_MASTER;
       }
 
-      const normalized = rawWixItems.map((item, idx) =>
-        normalizeWixStoreProduct(item, idx)
-      );
-
-      // Order: Flagship #539 first, then items with real Wix media / Hero spotlights, then in-stock items
-      const priorityIds = new Set([539, 572, 561, 568, 543, 590]);
-      normalized.sort((a, b) => {
-        if (a.id === 539) return -1;
-        if (b.id === 539) return 1;
-        const aPriority = priorityIds.has(a.id) ? 1 : 0;
-        const bPriority = priorityIds.has(b.id) ? 1 : 0;
-        if (aPriority !== bPriority) return bPriority - aPriority;
-        if (a.hasUploadedWixMedia !== b.hasUploadedWixMedia) {
-          return a.hasUploadedWixMedia ? -1 : 1;
-        }
-        if (a.inStock !== b.inStock) return a.inStock ? -1 : 1;
-        return 0;
-      });
+      const normalized = buildSortedWixCatalog(rawWixItems);
 
       PRODUCTOS_MASTER.splice(0, PRODUCTOS_MASTER.length, ...normalized);
       wixCatalogLoaded = true;

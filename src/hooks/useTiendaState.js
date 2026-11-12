@@ -210,10 +210,29 @@ export function useTiendaState() {
   const mergeSyncedOrders = useCallback((remoteOrders = []) => {
     if (!Array.isArray(remoteOrders) || remoteOrders.length === 0) return;
     const currentOrders = readJSON(STORAGE_KEYS.ORDERS, []);
-    const existingIds = new Set(currentOrders.map((o) => o.id));
-    const additions = remoteOrders.filter((ro) => ro && ro.id && !existingIds.has(ro.id));
-    if (additions.length > 0) {
-      writeJSON(STORAGE_KEYS.ORDERS, [...additions, ...currentOrders]);
+    const remoteById = new Map(
+      remoteOrders.filter((ro) => ro && ro.id).map((ro) => [String(ro.id), ro])
+    );
+
+    let changed = false;
+    const updatedCurrent = currentOrders.map((existing) => {
+      const remote = remoteById.get(String(existing.id));
+      if (!remote) return existing;
+      remoteById.delete(String(existing.id));
+      if (
+        existing.status !== remote.status ||
+        existing.total !== remote.total ||
+        existing.branchName !== remote.branchName
+      ) {
+        changed = true;
+        return { ...existing, ...remote };
+      }
+      return existing;
+    });
+
+    const additions = Array.from(remoteById.values());
+    if (additions.length > 0 || changed) {
+      writeJSON(STORAGE_KEYS.ORDERS, [...additions, ...updatedCurrent]);
     }
   }, []);
 

@@ -97,6 +97,24 @@ export const wixCheckoutClient = createClient({
 });
 
 let sessionInitPromise = null;
+let lastSyncedItemsSignature = '';
+let lastSyncedCartCache = null;
+let cartMutex = Promise.resolve();
+
+function runExclusiveCartOp(fn) {
+  const next = cartMutex.then(fn, fn);
+  cartMutex = next.catch(() => {});
+  return next;
+}
+
+function computeItemsSignature(resolvedEntries) {
+  return resolvedEntries
+    .map(
+      (e) =>
+        `${e.lineItem.catalogReference.catalogItemId}:${e.lineItem.quantity}`
+    )
+    .join('|');
+}
 
 export async function ensureWixCheckoutSession() {
   if (typeof window === 'undefined') return wixCheckoutClient;
@@ -134,11 +152,6 @@ export async function ensureWixCheckoutSession() {
 /**
  * Ensures the Wix redirect URL always targets Jasman's Wix base domain:
  * https://sistemas5160.wixsite.com/website-4/...
- *
- * Since www.jasman.com.mx is hosted on Vercel (Headless frontend), any checkout
- * redirect URL that accidentally points to jasman.com.mx or another host is
- * normalized to https://sistemas5160.wixsite.com/website-4 while preserving
- * postFlowUrl and thankYouPageUrl callbacks back to the storefront origin.
  */
 export function normalizeJasmanWixCheckoutUrl(rawFullUrl) {
   if (!rawFullUrl || typeof rawFullUrl !== 'string') return rawFullUrl;
@@ -155,7 +168,6 @@ export function normalizeJasmanWixCheckoutUrl(rawFullUrl) {
     const innerAlreadyMatches =
       !innerRedirectRaw || innerRedirectRaw.startsWith(JASMAN_WIX_BASE_URL);
 
-    // Preserve exact byte-for-byte Wix URL if it already points to sistemas5160.wixsite.com/website-4
     if (outerAlreadyMatches && innerAlreadyMatches) {
       return rawFullUrl;
     }
@@ -199,9 +211,6 @@ export function normalizeJasmanWixCheckoutUrl(rawFullUrl) {
   }
 }
 
-/**
- * Resolves live Wix catalog UUID (`wixId`) for every item in Jasman's cart.
- */
 async function resolveWixLineItems(cartItems) {
   const needsCatalogLoad = cartItems.some((item) => !item?.product?.wixId);
   if (needsCatalogLoad) {
@@ -244,173 +253,371 @@ async function resolveWixLineItems(cartItems) {
   return resolved;
 }
 
+function parseWixCartEstimate(estimate, couponError = '') {
+  if (!estimate) return null;
+
+  const payNow = estimate.payNow || {};
+  const cartObj = estimate.cart || {};
+
+  const subtotalAmount = Number(
+    payNow.subtotal?.amount ?? cartObj.subtotal?.amount ?? 0
+  );
+  const discountAmount = Number(
+    payNow.discount?.amount ?? cartObj.discount?.amount ?? 0
+  );
+  const shippingAmount = Number(payNow.shipping?.amount ?? 0);
+  const taxAmount = Number(payNow.tax?.amount ?? 0);
+  const totalAmount = Number(
+    payNow.total?.amount ??
+      cartObj.subtotalAfterDiscounts?.amount ??
+      Math.max(0, subtotalAmount - discountAmount + shippingAmount + taxAmount)
+  );
+
+  const shippingTitle =
+    estimate.shippingInfo?.selectedCarrierServiceOption?.title ||
+    'Entrega a Domicilio Nacional';
+
+  const rawDiscounts =
+    estimate.appliedDiscounts || cartObj.appliedDiscounts || [];
+
+  let appliedCoupon = null;
+  const automaticDiscounts = [];
+
+  for (const d of rawDiscounts) {
+    if (d.coupon?.code) {
+      appliedCoupon = {
+        code: d.coupon.code,
+        name: d.coupon.name || d.coupon.code,
+        amount: Number(d.coupon.amount?.amount ?? discountAmount) || 0,
+      };
+    } else {
+      const ruleName =
+        d.merchantDiscount?.description ||
+        d.discountRuleName ||
+        'Descuento Automático';
+      const ruleAmt =
+        Number(
+          d.merchantDiscount?.amount?.amount ??
+            d.discount?.amount?.amount ??
+            0
+        ) || 0;
+      if (ruleAmt > 0) {
+        automaticDiscounts.push({ label: ruleName, amount: ruleAmt });
+      }
+    }
+  }
+
+  return {
+    subtotalAmount,
+    discountAmount,
+    shippingAmount,
+    isFreeShipping: shippingAmount === 0,
+    shippingTitle,
+    taxAmount,
+    totalAmount,
+    appliedCoupon,
+    automaticDiscounts,
+    couponError,
+    cart: cartObj,
+  };
+}
+
+function formatWixCouponError(err) {
+  const rawCode = String(
+    err?.details?.applicationError?.code ||
+      err?.details?.validationError?.fieldViolations?.[0]?.violatedRule ||
+      ''
+  ).toUpperCase();
+  const rawDesc = String(err?.details?.applicationError?.description || '').trim();
+  const rawMsg = String(rawDesc || err?.message || '').toUpperCase();
+
+  if (
+    rawCode.includes('SUBTOTAL') ||
+    rawMsg.includes('MINIMUM') ||
+    rawMsg.includes('SUBTOTAL')
+  ) {
+    return rawDesc && /\d/.test(rawDesc)
+      ? `Este cupón requiere un monto mínimo de compra de ${rawDesc} MXN para aplicarse.`
+      : 'Este cupón requiere un monto mínimo de compra mayor para aplicarse.';
+  }
+  if (rawCode.includes('EXPIRED') || rawMsg.includes('EXPIRED')) {
+    return 'Este cupón ha expirado.';
+  }
+  if (rawCode.includes('LIMIT') || rawMsg.includes('LIMIT')) {
+    return 'Este cupón ya alcanzó su límite de uso.';
+  }
+  return 'Este código no está activo actualmente. Si te registraste al 10%, recibirás tu cupón oficial por correo.';
+}
+
+/**
+ * Syncs local cart items to Wix eCommerce Current Cart and returns 100% live
+ * totals, shipping, automatic discounts, and validated Wix coupons.
+ */
+export async function syncAndEstimateWixCart({
+  cartItems = [],
+  couponCode = null,
+} = {}) {
+  return runExclusiveCartOp(async () => {
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      lastSyncedItemsSignature = '';
+      lastSyncedCartCache = null;
+      return null;
+    }
+
+    await ensureWixCheckoutSession();
+
+    const resolvedEntries = await resolveWixLineItems(cartItems);
+    if (resolvedEntries.length === 0) return null;
+
+    const signature = computeItemsSignature(resolvedEntries);
+
+    // Only recreate Wix currentCart lineItems when items or quantities actually changed
+    if (signature !== lastSyncedItemsSignature) {
+      await wixCheckoutClient.currentCart.deleteCurrentCart().catch(() => {});
+      const addRes = await wixCheckoutClient.currentCart.addToCurrentCart({
+        lineItems: resolvedEntries.map((e) => e.lineItem),
+      });
+      lastSyncedItemsSignature = signature;
+      lastSyncedCartCache = addRes?.cart || null;
+    }
+
+    let couponError = '';
+    if (couponCode) {
+      try {
+        const updated = await wixCheckoutClient.currentCart.updateCurrentCart({
+          couponCode: String(couponCode).trim(),
+        });
+        if (updated?.cart) {
+          lastSyncedCartCache = updated.cart;
+        }
+      } catch (err) {
+        couponError = formatWixCouponError(err);
+      }
+    }
+
+    const estimate =
+      await wixCheckoutClient.currentCart.estimateCurrentCartTotals();
+    if (estimate?.cart) {
+      lastSyncedCartCache = estimate.cart;
+    }
+
+    return parseWixCartEstimate(estimate, couponError);
+  });
+}
+
+/**
+ * Removes an applied coupon from Wix Current Cart and returns updated live totals.
+ */
+export async function removeCouponFromWixCart() {
+  return runExclusiveCartOp(async () => {
+    await ensureWixCheckoutSession();
+    await wixCheckoutClient.currentCart.removeCouponFromCurrentCart().catch(() => {});
+    const estimate =
+      await wixCheckoutClient.currentCart.estimateCurrentCartTotals();
+    if (estimate?.cart) {
+      lastSyncedCartCache = estimate.cart;
+    }
+    return parseWixCartEstimate(estimate, '');
+  });
+}
+
 /**
  * Clears the current Wix eCommerce cart (used after purchase completion on /thank-you).
  */
 export async function clearWixCurrentCart() {
-  try {
-    await ensureWixCheckoutSession();
-    await wixCheckoutClient.currentCart.deleteCurrentCart();
-  } catch {
-    // OWNED_CART_NOT_FOUND is expected when cart is already empty
-  }
+  return runExclusiveCartOp(async () => {
+    lastSyncedItemsSignature = '';
+    lastSyncedCartCache = null;
+    try {
+      await ensureWixCheckoutSession();
+      await wixCheckoutClient.currentCart.deleteCurrentCart();
+    } catch {
+      // OWNED_CART_NOT_FOUND is expected when cart is already empty
+    }
+  });
 }
 
 /**
- * Syncs Jasman's cart items into Wix eCommerce Current Cart, creates a Wix Checkout,
- * generates a Wix Redirect Session targeting https://sistemas5160.wixsite.com/website-4,
+ * Syncs Jasman's cart items into Wix eCommerce Current Cart (reusing existing
+ * synced cart when already up-to-date), creates a Wix Checkout, generates a
+ * Wix Redirect Session targeting https://sistemas5160.wixsite.com/website-4,
  * caches the snapshot for /thank-you, and redirects the browser.
  */
 export async function redirectToJasmanWixCheckout({
   cartItems = [],
   couponCode = null,
   subtotal = 0,
-  volumeDiscountAmount = 0,
-  discountAmount = 0,
   totalAfterDiscount = 0,
   totalTireUnits = 0,
+  liveEstimate = null,
 } = {}) {
-  if (!Array.isArray(cartItems) || cartItems.length === 0) {
-    throw new Error('Tu carrito está vacío.');
-  }
-
-  await ensureWixCheckoutSession();
-
-  const resolvedEntries = await resolveWixLineItems(cartItems);
-  if (resolvedEntries.length === 0) {
-    throw new Error(
-      'No se pudieron sincronizar los productos con el catálogo oficial de Wix. Intenta de nuevo en unos segundos.'
-    );
-  }
-
-  // Reset current Wix cart so quantities always match the exact drawer selection
-  await wixCheckoutClient.currentCart.deleteCurrentCart().catch(() => {});
-
-  const addResponse = await wixCheckoutClient.currentCart.addToCurrentCart({
-    lineItems: resolvedEntries.map((entry) => entry.lineItem),
-  });
-
-  let syncedCart = addResponse?.cart || null;
-
-  // Apply coupon code in Wix currentCart if provided and active in Wix
-  if (couponCode) {
-    try {
-      const updated = await wixCheckoutClient.currentCart.updateCurrentCart({
-        couponCode: String(couponCode).trim(),
-      });
-      if (updated?.cart) {
-        syncedCart = updated.cart;
-      }
-    } catch (couponErr) {
-      console.warn('[Jasman Checkout] Coupon not applied on currentCart:', couponErr?.message || couponErr);
+  return runExclusiveCartOp(async () => {
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      throw new Error('Tu carrito está vacío.');
     }
-  }
 
-  // Create Wix eCommerce Checkout from Current Cart
-  const checkout = await wixCheckoutClient.currentCart.createCheckoutFromCurrentCart({
-    channelType: 'WEB',
-  });
+    await ensureWixCheckoutSession();
 
-  if (!checkout?.checkoutId) {
-    throw new Error('No se pudo inicializar la sesión de pago en Wix.');
-  }
-
-  const origin =
-    typeof window !== 'undefined' ? window.location.origin : 'https://www.jasman.com.mx';
-
-  const { redirectSession } = await wixCheckoutClient.redirects.createRedirectSession({
-    ecomCheckout: { checkoutId: checkout.checkoutId },
-    callbacks: {
-      postFlowUrl: `${origin}/llantas`,
-      thankYouPageUrl: `${origin}/thank-you`,
-    },
-  });
-
-  if (!redirectSession?.fullUrl) {
-    throw new Error('No se pudo obtener la URL de redirección al checkout de Wix.');
-  }
-
-  const checkoutUrl = normalizeJasmanWixCheckoutUrl(redirectSession.fullUrl);
-
-  // Cache checkout snapshot in sessionStorage for instant display on /thank-you
-  if (typeof window !== 'undefined') {
-    try {
-      const wixLineItems = syncedCart?.lineItems || [];
-      const snapshotItems = resolvedEntries.map(({ localItem, resolvedProduct }, idx) => {
-        const wixItem = wixLineItems[idx] || {};
-        const qty = Math.max(1, Number(localItem.quantity) || 1);
-        const unitNum = Number(
-          wixItem.price?.amount ||
-            localItem.unitPrice ||
-            resolvedProduct.finalPriceTaxExcluded ||
-            0
-        );
-        const rawWixImg = wixItem.image?.url || wixItem.image || '';
-        const localCutout = resolvedProduct.cutoutImage || resolvedProduct.primaryImage || '';
-        const imageUrl =
-          localCutout ||
-          formatWixImageUrl(rawWixImg, '/images/service-tires.png');
-
-        return {
-          id: resolvedProduct.id,
-          wixId: resolvedProduct.wixId || null,
-          catalogItemId: resolvedProduct.wixId || null,
-          sku: resolvedProduct.reference || '',
-          name:
-            resolvedProduct.cleanTitle ||
-            wixItem.productName?.translated ||
-            wixItem.productName?.original ||
-            resolvedProduct.name ||
-            'Llanta Oficial Jasman',
-          quantity: qty,
-          price: formatMXN(unitNum),
-          totalPrice: formatMXN(unitNum * qty),
-          unitPriceNum: unitNum,
-          image: imageUrl,
-          options: [
-            resolvedProduct.measure ? `Medida: ${resolvedProduct.measure}` : null,
-            resolvedProduct.reference ? `SKU: ${resolvedProduct.reference}` : null,
-          ].filter(Boolean),
-        };
-      });
-
-      const computedSubtotalNum =
-        Number(syncedCart?.subtotal?.amount) || Number(subtotal) || 0;
-      const computedTotalNum =
-        Number(syncedCart?.subtotal?.amount) || Number(totalAfterDiscount) || computedSubtotalNum;
-      const totalDiscountNum =
-        (Number(volumeDiscountAmount) || 0) + (Number(discountAmount) || 0);
-
-      window.sessionStorage.setItem(
-        LAST_CHECKOUT_STORAGE_KEY,
-        JSON.stringify({
-          checkoutId: checkout.checkoutId,
-          items: snapshotItems,
-          totalQuantity:
-            totalTireUnits ||
-            snapshotItems.reduce((acc, curr) => acc + (curr.quantity || 1), 0),
-          subtotal: formatMXN(computedSubtotalNum),
-          subtotalAmount: computedSubtotalNum,
-          total: formatMXN(computedTotalNum),
-          totalAmount: computedTotalNum,
-          isFreeShipping: true,
-          shipping: 'GRATIS',
-          discount: totalDiscountNum > 0 ? `-${formatMXN(totalDiscountNum)}` : null,
-          couponCode: couponCode || '',
-          currency: 'MXN',
-          timestamp: Date.now(),
-        })
+    const resolvedEntries = await resolveWixLineItems(cartItems);
+    if (resolvedEntries.length === 0) {
+      throw new Error(
+        'No se pudieron sincronizar los productos con el catálogo oficial de Wix. Intenta de nuevo en unos segundos.'
       );
-    } catch (storageErr) {
-      console.warn('[Jasman Checkout] Failed to cache checkout snapshot:', storageErr);
     }
 
-    window.location.href = checkoutUrl;
-  }
+    const signature = computeItemsSignature(resolvedEntries);
+    let syncedCart = lastSyncedCartCache;
 
-  return {
-    checkoutId: checkout.checkoutId,
-    checkoutUrl,
-  };
+    if (signature !== lastSyncedItemsSignature || !syncedCart) {
+      await wixCheckoutClient.currentCart.deleteCurrentCart().catch(() => {});
+      const addResponse = await wixCheckoutClient.currentCart.addToCurrentCart({
+        lineItems: resolvedEntries.map((entry) => entry.lineItem),
+      });
+      syncedCart = addResponse?.cart || null;
+      lastSyncedItemsSignature = signature;
+      lastSyncedCartCache = syncedCart;
+
+      if (couponCode) {
+        try {
+          const updated = await wixCheckoutClient.currentCart.updateCurrentCart({
+            couponCode: String(couponCode).trim(),
+          });
+          if (updated?.cart) {
+            syncedCart = updated.cart;
+            lastSyncedCartCache = syncedCart;
+          }
+        } catch {
+          // ignore invalid/inactive coupon during checkout redirect
+        }
+      }
+    } else if (couponCode && !liveEstimate?.appliedCoupon) {
+      try {
+        const updated = await wixCheckoutClient.currentCart.updateCurrentCart({
+          couponCode: String(couponCode).trim(),
+        });
+        if (updated?.cart) {
+          syncedCart = updated.cart;
+          lastSyncedCartCache = syncedCart;
+        }
+      } catch {
+        // ignore invalid/inactive coupon during checkout redirect
+      }
+    }
+
+    const checkout = await wixCheckoutClient.currentCart.createCheckoutFromCurrentCart({
+      channelType: 'WEB',
+    });
+
+    if (!checkout?.checkoutId) {
+      throw new Error('No se pudo inicializar la sesión de pago en Wix.');
+    }
+
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : 'https://www.jasman.com.mx';
+
+    const { redirectSession } = await wixCheckoutClient.redirects.createRedirectSession({
+      ecomCheckout: { checkoutId: checkout.checkoutId },
+      callbacks: {
+        postFlowUrl: `${origin}/llantas`,
+        thankYouPageUrl: `${origin}/thank-you`,
+      },
+    });
+
+    if (!redirectSession?.fullUrl) {
+      throw new Error('No se pudo obtener la URL de redirección al checkout de Wix.');
+    }
+
+    const checkoutUrl = normalizeJasmanWixCheckoutUrl(redirectSession.fullUrl);
+
+    // Cache checkout snapshot in sessionStorage for instant display on /thank-you
+    if (typeof window !== 'undefined') {
+      try {
+        const wixLineItems = syncedCart?.lineItems || [];
+        const snapshotItems = resolvedEntries.map(({ localItem, resolvedProduct }, idx) => {
+          const wixItem = wixLineItems[idx] || {};
+          const qty = Math.max(1, Number(localItem.quantity) || 1);
+          const unitNum = Number(
+            wixItem.price?.amount ||
+              localItem.unitPrice ||
+              resolvedProduct.finalPriceTaxExcluded ||
+              0
+          );
+          const rawWixImg = wixItem.image?.url || wixItem.image || '';
+          const localCutout = resolvedProduct.cutoutImage || resolvedProduct.primaryImage || '';
+          const imageUrl =
+            localCutout ||
+            formatWixImageUrl(rawWixImg, '/images/service-tires.png');
+
+          return {
+            id: resolvedProduct.id,
+            wixId: resolvedProduct.wixId || null,
+            catalogItemId: resolvedProduct.wixId || null,
+            sku: resolvedProduct.reference || '',
+            name:
+              resolvedProduct.cleanTitle ||
+              wixItem.productName?.translated ||
+              wixItem.productName?.original ||
+              resolvedProduct.name ||
+              'Llanta Oficial Jasman',
+            quantity: qty,
+            price: formatMXN(unitNum),
+            totalPrice: formatMXN(unitNum * qty),
+            unitPriceNum: unitNum,
+            image: imageUrl,
+            options: [
+              resolvedProduct.measure ? `Medida: ${resolvedProduct.measure}` : null,
+              resolvedProduct.reference ? `SKU: ${resolvedProduct.reference}` : null,
+            ].filter(Boolean),
+          };
+        });
+
+        const computedSubtotalNum =
+          liveEstimate?.subtotalAmount ||
+          Number(syncedCart?.subtotal?.amount) ||
+          Number(subtotal) ||
+          0;
+        const computedDiscountNum = liveEstimate?.discountAmount || 0;
+        const computedTotalNum =
+          liveEstimate?.totalAmount ||
+          Number(syncedCart?.subtotalAfterDiscounts?.amount) ||
+          Number(syncedCart?.subtotal?.amount) ||
+          Number(totalAfterDiscount) ||
+          computedSubtotalNum;
+
+        window.sessionStorage.setItem(
+          LAST_CHECKOUT_STORAGE_KEY,
+          JSON.stringify({
+            checkoutId: checkout.checkoutId,
+            items: snapshotItems,
+            totalQuantity:
+              totalTireUnits ||
+              snapshotItems.reduce((acc, curr) => acc + (curr.quantity || 1), 0),
+            subtotal: formatMXN(computedSubtotalNum),
+            subtotalAmount: computedSubtotalNum,
+            total: formatMXN(computedTotalNum),
+            totalAmount: computedTotalNum,
+            isFreeShipping: liveEstimate ? liveEstimate.isFreeShipping : true,
+            shipping:
+              liveEstimate && !liveEstimate.isFreeShipping
+                ? formatMXN(liveEstimate.shippingAmount)
+                : 'GRATIS',
+            discount:
+              computedDiscountNum > 0 ? `-${formatMXN(computedDiscountNum)}` : null,
+            couponCode: liveEstimate?.appliedCoupon?.code || couponCode || '',
+            currency: 'MXN',
+            timestamp: Date.now(),
+          })
+        );
+      } catch (storageErr) {
+        console.warn('[Jasman Checkout] Failed to cache checkout snapshot:', storageErr);
+      }
+
+      window.location.href = checkoutUrl;
+    }
+
+    return {
+      checkoutId: checkout.checkoutId,
+      checkoutUrl,
+    };
+  });
 }
-

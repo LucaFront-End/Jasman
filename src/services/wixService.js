@@ -1,4 +1,4 @@
-import { createClient, OAuthStrategy } from '@wix/sdk';
+import { createClient, OAuthStrategy, EMPTY_TOKENS } from '@wix/sdk';
 import { items } from '@wix/data';
 import { sendFormSubmitEmail } from './formSubmitService';
 
@@ -6,16 +6,58 @@ export const WIX_CLIENT_ID = '5aabc542-16cf-44de-bedf-d8eb7ad08c46';
 export const WIX_SITE_ID = '7fd3b8ea-a3f3-4b51-9b48-4ec1f53d2cc9';
 
 const WIX_TOKENS_STORAGE_KEY = 'jasman_wix_member_tokens_v1';
+const WIX_VISITOR_TOKENS_KEY = 'jasman_wix_session';
 const WIX_OAUTH_DATA_KEY = 'jasman_wix_oauth_data_v1';
 
-function getStoredWixTokens() {
-  if (typeof window === 'undefined') return undefined;
-  try {
-    const raw = window.localStorage.getItem(WIX_TOKENS_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : undefined;
-  } catch {
-    return undefined;
-  }
+function hasTokenPair(parsed) {
+  return Boolean(parsed?.accessToken?.value && parsed?.refreshToken?.value);
+}
+
+function createSharedWixTokenStorage() {
+  return {
+    getTokens() {
+      if (typeof window === 'undefined') return EMPTY_TOKENS;
+      try {
+        const memberRaw = window.localStorage.getItem(WIX_TOKENS_STORAGE_KEY);
+        if (memberRaw) {
+          const parsedMember = JSON.parse(memberRaw);
+          if (hasTokenPair(parsedMember)) return parsedMember;
+        }
+      } catch {
+        // ignore
+      }
+      try {
+        const visitorRaw = window.localStorage.getItem(WIX_VISITOR_TOKENS_KEY);
+        if (visitorRaw) {
+          const parsedVisitor = JSON.parse(visitorRaw);
+          if (hasTokenPair(parsedVisitor)) return parsedVisitor;
+        }
+      } catch {
+        // ignore
+      }
+      return EMPTY_TOKENS;
+    },
+    setTokens(tokens) {
+      if (typeof window === 'undefined') return;
+      try {
+        const memberRaw = window.localStorage.getItem(WIX_TOKENS_STORAGE_KEY);
+        if (memberRaw) {
+          const currentMember = JSON.parse(memberRaw);
+          if (
+            currentMember?.refreshToken?.value &&
+            currentMember.refreshToken.value === tokens?.refreshToken?.value
+          ) {
+            window.localStorage.setItem(WIX_TOKENS_STORAGE_KEY, JSON.stringify(tokens));
+            return;
+          }
+          if (hasTokenPair(currentMember)) return;
+        }
+        window.localStorage.setItem(WIX_VISITOR_TOKENS_KEY, JSON.stringify(tokens));
+      } catch {
+        // ignore storage errors
+      }
+    },
+  };
 }
 
 export function persistWixTokens(tokens) {
@@ -31,12 +73,12 @@ export function persistWixTokens(tokens) {
   }
 }
 
-// Initialize Wix Headless Client with OAuthStrategy
+// Initialize Wix Headless Client with shared OAuthStrategy tokenStorage
 export const wixClient = createClient({
   modules: { items },
   auth: OAuthStrategy({
     clientId: WIX_CLIENT_ID,
-    tokens: getStoredWixTokens(),
+    tokenStorage: createSharedWixTokenStorage(),
   }),
 });
 
@@ -530,6 +572,59 @@ export async function fetchWixMemberProfileAndOrders(email) {
             // ignore malformed JSON
           }
         }
+      }
+    }
+    // Also pull live Wix eCommerce orders by buyer email via /api/order?email=...
+    if (typeof window !== 'undefined') {
+      try {
+        const ecomRes = await fetch(
+          `/api/order?email=${encodeURIComponent(cleanEmail)}`
+        );
+        if (ecomRes.ok) {
+          const ecomData = await ecomRes.json();
+          if (Array.isArray(ecomData?.orders)) {
+            const seenIds = new Set(orders.map((o) => String(o.id)));
+            for (const wo of ecomData.orders) {
+              const displayId = wo.orderNumber || wo.orderId;
+              if (!displayId || seenIds.has(String(displayId))) continue;
+              seenIds.add(String(displayId));
+
+              let statusLabel = 'Pagado · En preparación';
+              if (wo.fulfillmentStatus === 'FULFILLED') {
+                statusLabel = 'Pagado · Enviado';
+              } else if (wo.paymentStatus === 'NOT_PAID') {
+                statusLabel = 'Pago pendiente';
+              }
+
+              orders.unshift({
+                id: displayId,
+                wixOrderId: wo.orderId,
+                createdAt: wo.createdDate || new Date().toISOString(),
+                status: statusLabel,
+                items: (wo.items || []).map((it) => ({
+                  id: it.sku || it.id,
+                  wixId: it.catalogItemId || null,
+                  reference: it.sku || '',
+                  name: it.name || 'Llanta Oficial Jasman',
+                  quantity: it.quantity || 1,
+                  unitPrice: it.netPriceNum || it.originalPriceNum || 0,
+                })),
+                subtotal: wo.subtotalAmount || 0,
+                total: wo.totalAmount || 0,
+                couponCode: wo.couponCode || null,
+                branchName: wo.shippingAddress || 'Entrega a Domicilio Nacional',
+                customer: {
+                  nombre: wo.customerName || profile?.nombre || cleanEmail,
+                  correo: wo.customerEmail || cleanEmail,
+                  telefono: wo.customerPhone || profile?.telefono || '',
+                },
+                source: 'wix-ecom',
+              });
+            }
+          }
+        }
+      } catch {
+        // non-blocking if offline
       }
     }
   } catch (err) {
@@ -1225,9 +1320,24 @@ const WIX_PRODUCTS_SESSION_KEY = 'jasman_wix_store_products_cache_v2';
 let wixProductsMemoryCache = null;
 let wixProductsFetchPromise = null;
 
+export function getCachedWixStoreProductsSync() {
+  if (Array.isArray(wixProductsMemoryCache) && wixProductsMemoryCache.length > 0) {
+    return wixProductsMemoryCache;
+  }
+  if (typeof window === 'undefined') return null;
+  try {
+    const cached = window.sessionStorage.getItem(WIX_PRODUCTS_SESSION_KEY);
+    if (!cached) return null;
+    const parsed = JSON.parse(cached);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Fetches all products from the Wix Stores catalog ("Stores/Products"),
- * paginating automatically to retrieve all items (336+ tires) including assigned Collections.
+ * paginating in parallel to retrieve all items (336+ tires) including assigned Collections.
  * Always fetches live from Wix once per page load so dashboard edits reflect on refresh.
  */
 export async function getWixStoreProducts({ forceRefresh = false } = {}) {
@@ -1242,19 +1352,53 @@ export async function getWixStoreProducts({ forceRefresh = false } = {}) {
   wixProductsFetchPromise = (async () => {
     try {
       const allItems = [];
+      let includeCollections = true;
       let res;
       try {
         res = await wixClient.items.query('Stores/Products').include('collections').limit(100).find();
       } catch {
+        includeCollections = false;
         res = await wixClient.items.query('Stores/Products').limit(100).find();
       }
       if (res?.items?.length) {
         allItems.push(...res.items);
       }
-      while (res && typeof res.hasNext === 'function' && res.hasNext()) {
-        res = await res.next();
-        if (res?.items?.length) {
-          allItems.push(...res.items);
+
+      const fetchBatchPage = (skip) => {
+        const q = wixClient.items.query('Stores/Products');
+        return (includeCollections ? q.include('collections') : q)
+          .skip(skip)
+          .limit(100)
+          .find();
+      };
+
+      const totalCount = typeof res?.totalCount === 'number' ? res.totalCount : 0;
+      if (totalCount > allItems.length) {
+        const offsets = [];
+        for (let skip = allItems.length; skip < totalCount; skip += 100) {
+          offsets.push(skip);
+        }
+        const pageResults = await Promise.all(offsets.map(fetchBatchPage));
+        for (const pageRes of pageResults) {
+          if (pageRes?.items?.length) {
+            allItems.push(...pageRes.items);
+          }
+        }
+      } else if (res && typeof res.hasNext === 'function' && res.hasNext()) {
+        // Stores/Products omits totalCount; batch 3 parallel pages at a time to cut latency
+        let nextOffset = allItems.length;
+        let hasMore = true;
+        while (hasMore) {
+          const offsets = [nextOffset, nextOffset + 100, nextOffset + 200];
+          const batchResults = await Promise.all(offsets.map(fetchBatchPage));
+          for (const pageRes of batchResults) {
+            if (pageRes?.items?.length) {
+              allItems.push(...pageRes.items);
+            }
+          }
+          const lastPage = batchResults[batchResults.length - 1];
+          hasMore = Boolean(lastPage?.items?.length === 100 && lastPage?.hasNext?.());
+          nextOffset += offsets.length * 100;
         }
       }
 
@@ -1271,17 +1415,8 @@ export async function getWixStoreProducts({ forceRefresh = false } = {}) {
       return allItems;
     } catch (err) {
       console.warn('Error consultando Stores/Products:', err?.message || err);
-      if (typeof window !== 'undefined') {
-        try {
-          const cached = window.sessionStorage.getItem(WIX_PRODUCTS_SESSION_KEY);
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-          }
-        } catch {
-          // ignore
-        }
-      }
+      const cached = getCachedWixStoreProductsSync();
+      if (cached) return cached;
       return wixProductsMemoryCache || [];
     } finally {
       wixProductsFetchPromise = null;

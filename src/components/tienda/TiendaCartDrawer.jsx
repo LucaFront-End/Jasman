@@ -5,7 +5,11 @@ import { formatMXN } from '../../data/productosMasterData';
 import { sucursales } from '../../data/sucursalesData';
 import { useTiendaState, triggerTiendaUI } from '../../hooks/useTiendaState';
 import { saveContactoWeb } from '../../services/wixService';
-import { redirectToJasmanWixCheckout } from '../../services/wixCheckoutService';
+import {
+  redirectToJasmanWixCheckout,
+  syncAndEstimateWixCart,
+  removeCouponFromWixCart,
+} from '../../services/wixCheckoutService';
 import {
   X,
   ShoppingBag,
@@ -45,8 +49,9 @@ export default function TiendaCartDrawer() {
 
   const [open, setOpen] = useState(false);
   const [manualCode, setManualCode] = useState('');
-  const [pendingCouponCode, setPendingCouponCode] = useState('');
   const [couponFeedback, setCouponFeedback] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [wixEstimate, setWixEstimate] = useState(null);
   const [orderCompleted, setOrderCompleted] = useState(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
@@ -63,10 +68,53 @@ export default function TiendaCartDrawer() {
     return () => window.removeEventListener('jasman-tienda-ui', handleUI);
   }, []);
 
+  // Dynamically sync & estimate real Wix Current Cart totals whenever drawer is open
+  const cartSyncKey = cartItems
+    .map((i) => `${i.product.id}:${i.quantity}`)
+    .join('|');
+
+  useEffect(() => {
+    if (isLegacyCopyRoute) return undefined;
+    if (!cartSyncKey) {
+      setWixEstimate(null);
+      return undefined;
+    }
+    if (!open) return undefined;
+
+    let cancelled = false;
+    const preserveCoupon = wixEstimate?.appliedCoupon?.code || null;
+
+    syncAndEstimateWixCart({ cartItems, couponCode: preserveCoupon })
+      .then((est) => {
+        if (!cancelled && est) {
+          setWixEstimate(est);
+          if (preserveCoupon && !est.appliedCoupon && est.couponError) {
+            setCouponFeedback(est.couponError);
+          }
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isLegacyCopyRoute, cartSyncKey]);
+
   if (!open) return null;
 
   const selectedBranch =
     sucursales.find((s) => s.slug === selectedBranchSlug) || sucursales[0];
+
+  const liveSubtotal =
+    !isLegacyCopyRoute && wixEstimate ? wixEstimate.subtotalAmount : subtotal;
+  const liveTotal =
+    !isLegacyCopyRoute && wixEstimate
+      ? wixEstimate.totalAmount
+      : isLegacyCopyRoute
+        ? totalAfterDiscount
+        : subtotal;
+  const activeWixCoupon = !isLegacyCopyRoute ? wixEstimate?.appliedCoupon : null;
 
   const cartWhatsappMessage = [
     'SW- Hola, quisiera asesoría sobre mi carrito en Jasman Tienda:',
@@ -76,8 +124,12 @@ export default function TiendaCartDrawer() {
           i.unitPrice * i.quantity
         )}`
     ),
-    coupon?.code ? `• Cupón activo: ${coupon.code}` : null,
-    `• Total Con IVA: ${formatMXN(totalAfterDiscount)}`,
+    activeWixCoupon?.code
+      ? `• Cupón Wix activo: ${activeWixCoupon.code}`
+      : coupon?.code
+        ? `• Cupón activo: ${coupon.code}`
+        : null,
+    `• Total Con IVA: ${formatMXN(liveTotal)}`,
   ]
     .filter(Boolean)
     .join('\n');
@@ -86,15 +138,58 @@ export default function TiendaCartDrawer() {
     cartWhatsappMessage
   )}`;
 
-  const handleManualCoupon = (e) => {
+  const handleManualCoupon = async (e) => {
     e.preventDefault();
     const clean = manualCode.trim().toUpperCase();
-    if (!clean) return;
-    setPendingCouponCode(clean);
-    setCouponFeedback(
-      'Si tu código está activo, se validará automáticamente en el Checkout Seguro de Wix. (Si te registraste al 10%, recibirás tu cupón oficial por correo).'
-    );
-    setManualCode('');
+    if (!clean || couponLoading) return;
+
+    if (isLegacyCopyRoute) {
+      setCouponFeedback(
+        'Este código aún no está activo. Si te registraste al 10%, recibirás tu cupón oficial por correo electrónico.'
+      );
+      setManualCode('');
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponFeedback('');
+    try {
+      const est = await syncAndEstimateWixCart({
+        cartItems,
+        couponCode: clean,
+      });
+      if (est) {
+        setWixEstimate(est);
+        if (est.appliedCoupon?.code) {
+          setCouponFeedback('');
+          setManualCode('');
+        } else if (est.couponError) {
+          setCouponFeedback(est.couponError);
+        } else {
+          setCouponFeedback(
+            'Este código no está activo actualmente. Si te registraste al 10%, recibirás tu cupón oficial por correo.'
+          );
+        }
+      }
+    } catch {
+      setCouponFeedback(
+        'No se pudo validar el código en este momento. Podrás ingresarlo directamente en el Checkout Seguro.'
+      );
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveWixCoupon = async () => {
+    if (couponLoading) return;
+    setCouponLoading(true);
+    try {
+      const est = await removeCouponFromWixCart();
+      setWixEstimate(est);
+      setCouponFeedback('');
+    } finally {
+      setCouponLoading(false);
+    }
   };
 
   const handleConfirmOrder = async () => {
@@ -164,12 +259,11 @@ export default function TiendaCartDrawer() {
     try {
       await redirectToJasmanWixCheckout({
         cartItems,
-        couponCode: coupon?.code || pendingCouponCode || null,
-        subtotal,
-        volumeDiscountAmount,
-        discountAmount,
-        totalAfterDiscount,
+        couponCode: activeWixCoupon?.code || coupon?.code || null,
+        subtotal: liveSubtotal,
+        totalAfterDiscount: liveTotal,
         totalTireUnits,
+        liveEstimate: wixEstimate,
       });
     } catch (err) {
       console.error('[TiendaCartDrawer] Checkout redirect error:', err);
@@ -395,11 +489,17 @@ export default function TiendaCartDrawer() {
                     }}
                   >
                     <Truck size={13} />
-                    {totalTireUnits >= 4
-                      ? '¡10% OFF por juego completo + Envío Gratis!'
-                      : totalTireUnits >= 2
-                        ? `¡5% OFF activo! Agrega ${4 - totalTireUnits} más para 10% OFF`
-                        : 'Agrega 1 llanta más y obtén 5% OFF adicional'}
+                    {isLegacyCopyRoute || (wixEstimate?.automaticDiscounts || []).length > 0
+                      ? totalTireUnits >= 4
+                        ? '¡10% OFF por juego completo + Envío Gratis!'
+                        : totalTireUnits >= 2
+                          ? `¡5% OFF activo! Agrega ${4 - totalTireUnits} más para 10% OFF`
+                          : 'Agrega 1 llanta más y obtén 5% OFF adicional'
+                      : totalTireUnits >= 4
+                        ? '¡Juego completo de 4 llantas + Envío Nacional Gratis!'
+                        : totalTireUnits >= 2
+                          ? 'Par de llantas listo · Envío Nacional Gratis incluido'
+                          : 'Envío Nacional Gratis incluido en tu pedido'}
                   </span>
                   <span
                     style={{
@@ -598,11 +698,43 @@ export default function TiendaCartDrawer() {
                 style={{
                   padding: 14,
                   borderRadius: 14,
-                  background: coupon ? '#FFF1F2' : '#FAFAFC',
-                  border: `1px dashed ${coupon ? C.red : C.border}`,
+                  background: activeWixCoupon || (isLegacyCopyRoute && coupon) ? '#FFF1F2' : '#FAFAFC',
+                  border: `1px dashed ${activeWixCoupon || (isLegacyCopyRoute && coupon) ? C.red : C.border}`,
                 }}
               >
-                {coupon ? (
+                {activeWixCoupon ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Tag size={14} color={C.red} />
+                      <div>
+                        <div style={{ fontFamily: F.heading, fontSize: 11.5, fontWeight: 800, color: C.red }}>
+                          {activeWixCoupon.code} (Cupón Oficial Aplicado)
+                        </div>
+                        <div style={{ fontSize: 11, color: '#15803D', fontWeight: 700 }}>
+                          Ahorras {formatMXN(activeWixCoupon.amount)}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveWixCoupon}
+                      disabled={couponLoading}
+                      style={{
+                        border: 'none',
+                        background: 'rgba(196, 30, 36, 0.1)',
+                        color: C.red,
+                        borderRadius: 6,
+                        padding: '4px 8px',
+                        fontSize: 10.5,
+                        fontFamily: F.heading,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                ) : isLegacyCopyRoute && coupon ? (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <Tag size={14} color={C.red} />
@@ -636,6 +768,7 @@ export default function TiendaCartDrawer() {
                     />
                     <button
                       type="submit"
+                      disabled={couponLoading}
                       style={{
                         padding: '9px 14px',
                         borderRadius: 8,
@@ -645,10 +778,11 @@ export default function TiendaCartDrawer() {
                         fontFamily: F.heading,
                         fontSize: 11,
                         fontWeight: 700,
-                        cursor: 'pointer',
+                        cursor: couponLoading ? 'wait' : 'pointer',
+                        opacity: couponLoading ? 0.75 : 1,
                       }}
                     >
-                      Aplicar
+                      {couponLoading ? '...' : 'Aplicar'}
                     </button>
                   </form>
                 )}
@@ -672,23 +806,55 @@ export default function TiendaCartDrawer() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: C.gray }}>
                 <span>Subtotal (Con IVA)</span>
-                <span>{formatMXN(subtotal)}</span>
+                <span>{formatMXN(liveSubtotal)}</span>
               </div>
-              {volumeDiscountAmount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#15803D', fontWeight: 700 }}>
-                  <span>{volumeTier.label}</span>
-                  <span>−{formatMXN(volumeDiscountAmount)}</span>
-                </div>
-              )}
-              {discountAmount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: C.red, fontWeight: 700 }}>
-                  <span>10% Primera Compra ({coupon?.code})</span>
-                  <span>−{formatMXN(discountAmount)}</span>
-                </div>
+              {isLegacyCopyRoute ? (
+                <>
+                  {volumeDiscountAmount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#15803D', fontWeight: 700 }}>
+                      <span>{volumeTier.label}</span>
+                      <span>−{formatMXN(volumeDiscountAmount)}</span>
+                    </div>
+                  )}
+                  {discountAmount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: C.red, fontWeight: 700 }}>
+                      <span>10% Primera Compra ({coupon?.code})</span>
+                      <span>−{formatMXN(discountAmount)}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {(wixEstimate?.automaticDiscounts || []).map((ad, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: 13,
+                        color: '#15803D',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span>{ad.label}</span>
+                      <span>−{formatMXN(ad.amount)}</span>
+                    </div>
+                  ))}
+                  {activeWixCoupon && activeWixCoupon.amount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: C.red, fontWeight: 700 }}>
+                      <span>Cupón ({activeWixCoupon.code})</span>
+                      <span>−{formatMXN(activeWixCoupon.amount)}</span>
+                    </div>
+                  )}
+                </>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: '#15803D', fontWeight: 700 }}>
                 <span>Entrega a Domicilio Nacional</span>
-                <span>GRATIS</span>
+                <span>
+                  {!isLegacyCopyRoute && wixEstimate && !wixEstimate.isFreeShipping
+                    ? formatMXN(wixEstimate.shippingAmount)
+                    : 'GRATIS'}
+                </span>
               </div>
               <div
                 style={{
@@ -703,7 +869,7 @@ export default function TiendaCartDrawer() {
                   Total (Con IVA)
                 </span>
                 <span style={{ fontFamily: F.heading, fontSize: 20, fontWeight: 900, color: C.navy }}>
-                  {formatMXN(totalAfterDiscount)}
+                  {formatMXN(liveTotal)}
                 </span>
               </div>
             </div>

@@ -7,10 +7,7 @@ import {
   useWixCatalogProducts,
   findCatalogProductById,
 } from '../data/productosMasterData';
-import {
-  useTiendaState,
-  getVolumeDiscountTier,
-} from '../hooks/useTiendaState';
+import { useTiendaState } from '../hooks/useTiendaState';
 import { useAppleTilt } from '../hooks/useAppleScrollPhysics';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
@@ -166,7 +163,7 @@ export default function ProductoPreviewPage() {
 
   const { tilt, onMouseMove, onMouseLeave } = useAppleTilt(4);
 
-  const { addToCart, coupon } = useTiendaState();
+  const { addToCart } = useTiendaState();
 
   // Show bottom floating buy bar when user scrolls past the main buy button
   useEffect(() => {
@@ -190,32 +187,17 @@ export default function ProductoPreviewPage() {
   };
 
   const basePrice = product.finalPriceTaxExcluded || 0;
-  const unitsPerItem = product.unitsPerItem || 1;
-  const effectiveTiresCount = qty * unitsPerItem;
+  const regularPrice = product.regularPrice || product.priceTaxExcluded || basePrice;
+  const hasWixSale = basePrice > 0 && regularPrice > basePrice + 0.01;
+  const wixSalePercent = hasWixSale
+    ? Math.round(((regularPrice - basePrice) / regularPrice) * 100)
+    : 0;
 
-  // Volume discount tier based on selected quantity
-  const activeVolumeTier = useMemo(
-    () => getVolumeDiscountTier(effectiveTiresCount),
-    [effectiveTiresCount]
-  );
-
-  const priceAfterVolume = useMemo(
-    () => basePrice * (1 - activeVolumeTier.rate),
-    [basePrice, activeVolumeTier.rate]
-  );
-
-  const unitEffectivePrice = useMemo(
-    () => (coupon && priceAfterVolume > 0 ? priceAfterVolume * 0.9 : priceAfterVolume),
-    [coupon, priceAfterVolume]
-  );
-
-  const rawTotalWithoutDiscounts = basePrice * qty;
-  const tiresSubtotalForSelection = unitEffectivePrice * qty;
-  const finalTotalForSelection = tiresSubtotalForSelection;
-  const totalSavingsForSelection = Math.max(
-    0,
-    rawTotalWithoutDiscounts - tiresSubtotalForSelection
-  );
+  const unitEffectivePrice = basePrice;
+  const finalTotalForSelection = unitEffectivePrice * qty;
+  const totalSavingsForSelection = hasWixSale
+    ? Math.max(0, (regularPrice - basePrice) * qty)
+    : 0;
 
   // Build gallery: first image prefers the transparent PNG cutout, followed by all CSV angles
   const galleryImages = useMemo(() => {
@@ -468,9 +450,18 @@ export default function ProductoPreviewPage() {
               gap: 16,
             }}
           >
-            {/* 1. PURE WHITE ARCHITECTURAL GALLERY STAGE */}
             <div
-              className="jasman-pdp-gallery-stage"
+              className="jasman-pdp-media-stack"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16,
+                width: '100%',
+              }}
+            >
+              {/* 1. PURE WHITE ARCHITECTURAL GALLERY STAGE */}
+              <div
+                className="jasman-pdp-gallery-stage"
               onMouseMove={onMouseMove}
               onMouseLeave={onMouseLeave}
               style={{
@@ -978,6 +969,7 @@ export default function ProductoPreviewPage() {
                 `}</style>
               </div>
             )}
+            </div>
 
             {/* 3. SYMMETRICAL 2x2 HIGH-TECH TRUST BADGES */}
             <div
@@ -1069,7 +1061,10 @@ export default function ProductoPreviewPage() {
           </div>
 
           {/* RIGHT COLUMN: Minimalist High-Converting Buying Experience */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <div
+            className="jasman-pdp-info-col"
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
+          >
             {/* PROMINENT BRAND WITH OFFICIAL LOGO IMAGE CARD ("Marca con imagen") */}
             <div
               className="jasman-pdp-brand-card"
@@ -1182,7 +1177,16 @@ export default function ProductoPreviewPage() {
               </span>
             </div>
 
-            {/* Product Title */}
+            <div
+              className="jasman-pdp-core-details"
+              style={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+              }}
+            >
+              {/* Product Title */}
             <h1
               style={{
                 fontFamily: F.heading,
@@ -1247,15 +1251,13 @@ export default function ProductoPreviewPage() {
                       style={{
                         padding: '4px 11px',
                         borderRadius: 9999,
-                        border:
-                          activeVolumeTier.percent > 0
-                            ? '1px solid rgba(22, 163, 74, 0.3)'
-                            : '1px solid rgba(196, 30, 36, 0.22)',
-                        background:
-                          activeVolumeTier.percent > 0
-                            ? 'rgba(22, 163, 74, 0.1)'
-                            : 'rgba(196, 30, 36, 0.07)',
-                        color: activeVolumeTier.percent > 0 ? '#15803D' : C.red,
+                        border: hasWixSale
+                          ? '1px solid rgba(22, 163, 74, 0.3)'
+                          : '1px solid rgba(196, 30, 36, 0.22)',
+                        background: hasWixSale
+                          ? 'rgba(22, 163, 74, 0.1)'
+                          : 'rgba(196, 30, 36, 0.07)',
+                        color: hasWixSale ? '#15803D' : C.red,
                         fontFamily: F.heading,
                         fontSize: 10.5,
                         fontWeight: 800,
@@ -1269,14 +1271,14 @@ export default function ProductoPreviewPage() {
                     >
                       <Tag size={11} />
                       <span>
-                        {activeVolumeTier.percent > 0
-                          ? `−${activeVolumeTier.percent}% Descuento activo`
-                          : 'Agrega más y obtén descuento'}
+                        {hasWixSale
+                          ? `−${wixSalePercent}% Oferta Oficial Activa`
+                          : '10% OFF en tu 1ra Compra'}
                       </span>
                       <Info size={11} />
                     </button>
 
-                    {/* Floating Discount Info Popover ("la info aparezca con un flotante") */}
+                    {/* Floating Discount Info Popover */}
                     {showDiscountFloat && (
                       <div
                         style={{
@@ -1307,7 +1309,7 @@ export default function ProductoPreviewPage() {
                             marginBottom: 8,
                           }}
                         >
-                          Descuento automático por volumen
+                          Beneficios Oficiales Jasman Tienda
                         </div>
                         <div
                           style={{
@@ -1324,16 +1326,11 @@ export default function ProductoPreviewPage() {
                               alignItems: 'center',
                               padding: '6px 9px',
                               borderRadius: 10,
-                              background:
-                                qty >= 2 && qty < 4
-                                  ? 'rgba(22, 163, 74, 0.25)'
-                                  : 'rgba(255, 255, 255, 0.07)',
+                              background: 'rgba(255, 255, 255, 0.08)',
                             }}
                           >
-                            <span>2 a 3 llantas (Par)</span>
-                            <strong style={{ color: '#86EFAC' }}>
-                              −5% OFF ({formatMXN(basePrice * 0.95)} c/u)
-                            </strong>
+                            <span>Cupón 1ra Compra</span>
+                            <strong style={{ color: '#86EFAC' }}>−10% OFF Oficial</strong>
                           </div>
                           <div
                             style={{
@@ -1342,16 +1339,11 @@ export default function ProductoPreviewPage() {
                               alignItems: 'center',
                               padding: '6px 9px',
                               borderRadius: 10,
-                              background:
-                                qty >= 4
-                                  ? 'rgba(22, 163, 74, 0.25)'
-                                  : 'rgba(255, 255, 255, 0.07)',
+                              background: 'rgba(22, 163, 74, 0.22)',
                             }}
                           >
-                            <span>4+ llantas (Juego)</span>
-                            <strong style={{ color: '#86EFAC' }}>
-                              −10% OFF ({formatMXN(basePrice * 0.9)} c/u)
-                            </strong>
+                            <span>Cobertura Nacional</span>
+                            <strong style={{ color: '#86EFAC' }}>Envío GRATIS</strong>
                           </div>
                         </div>
                         <div
@@ -1362,7 +1354,7 @@ export default function ProductoPreviewPage() {
                             lineHeight: 1.4,
                           }}
                         >
-                          Se aplica automáticamente al subir la cantidad de llantas.
+                          Ingresa tu código promocional en tu Carrito o directamente en el Checkout Seguro de Wix.
                         </div>
                       </div>
                     )}
@@ -1395,12 +1387,11 @@ export default function ProductoPreviewPage() {
                     fontFamily: F.heading,
                     fontSize: basePrice > 0 ? 'clamp(2.1rem, 3.1vw, 2.65rem)' : 20,
                     fontWeight: 900,
-                    color:
-                      (activeVolumeTier.rate > 0 || coupon) && basePrice > 0
-                        ? C.red
-                        : basePrice > 0
-                          ? C.navy
-                          : C.gray,
+                    color: hasWixSale
+                      ? C.red
+                      : basePrice > 0
+                        ? C.navy
+                        : C.gray,
                     letterSpacing: '-0.035em',
                     lineHeight: 1,
                   }}
@@ -1408,7 +1399,7 @@ export default function ProductoPreviewPage() {
                   {formatMXN(unitEffectivePrice)}
                 </span>
 
-                {(activeVolumeTier.rate > 0 || coupon) && basePrice > 0 && (
+                {hasWixSale && (
                   <span
                     style={{
                       fontSize: 14,
@@ -1417,7 +1408,7 @@ export default function ProductoPreviewPage() {
                       fontWeight: 600,
                     }}
                   >
-                    {formatMXN(basePrice)}
+                    {formatMXN(regularPrice)}
                   </span>
                 )}
 
@@ -1892,6 +1883,7 @@ export default function ProductoPreviewPage() {
                   )}
                 </div>
               )}
+            </div>
             </div>
           </div>
         </div>
@@ -2557,15 +2549,30 @@ export default function ProductoPreviewPage() {
         @media (max-width: 940px) {
           .bruce-tire-detail-grid {
             grid-template-columns: minmax(0, 1fr) !important;
-            gap: 32px !important;
+            gap: 20px !important;
           }
           .bruce-tire-detail-grid > * {
             min-width: 0 !important;
             max-width: 100% !important;
           }
-          .bruce-tire-visuals-col {
+          .bruce-tire-visuals-col,
+          .jasman-pdp-info-col {
+            display: contents !important;
             position: relative !important;
             top: 0 !important;
+          }
+          .jasman-pdp-media-stack {
+            order: 1 !important;
+          }
+          .jasman-pdp-core-details {
+            order: 2 !important;
+          }
+          .jasman-pdp-trust-grid {
+            order: 3 !important;
+          }
+          .jasman-pdp-brand-card {
+            order: 4 !important;
+            margin-bottom: 0 !important;
           }
           .bruce-related-tires-grid {
             grid-template-columns: minmax(0, 1fr) !important;

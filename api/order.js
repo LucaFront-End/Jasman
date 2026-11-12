@@ -1,9 +1,10 @@
 /**
- * Wix eCommerce Order Details API Endpoint (Jasman Automotriz)
- * URL: /api/order?orderId=...
+ * Wix eCommerce Order Details & Buyer Orders Search API Endpoint (Jasman Automotriz)
+ * - Single Order: GET /api/order?orderId=...
+ * - Buyer Orders: GET /api/order?email=...
  *
  * Securely retrieves live order details using server-side Wix credentials
- * and normalizes the response 100% dynamically for Jasman's Thank You page.
+ * and normalizes responses 100% dynamically for ThankYouPage and Mi Cuenta.
  */
 
 import process from 'node:process';
@@ -39,8 +40,7 @@ async function wixFetch(path, options = {}) {
     throw err;
   }
 
-  // Note: Do NOT pass wix-account-id because contributor/agency API keys
-  // require only Authorization + wix-site-id.
+  // Contributor/agency API keys require only Authorization + wix-site-id (no wix-account-id)
   const url = `${WIX_API_BASE}${path}`;
   const res = await fetch(url, {
     ...options,
@@ -75,51 +75,9 @@ async function wixFetch(path, options = {}) {
   return data;
 }
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Content-Type', 'application/json');
+function normalizeWixOrder(rawOrder, fallbackId = '') {
+  const resolvedId = rawOrder.id || rawOrder._id || fallbackId;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  const orderId = req.query?.orderId;
-  if (!orderId) {
-    return res.status(400).json({ error: 'Missing orderId parameter' });
-  }
-
-  let rawOrder = null;
-
-  // 1. Primary: Wix eCommerce v1 orders endpoint
-  try {
-    const ecomRes = await wixFetch(`/ecom/v1/orders/${encodeURIComponent(orderId)}`);
-    rawOrder = ecomRes.order || ecomRes;
-  } catch (err1) {
-    console.warn('[api/order] ecom v1 fetch failed:', err1.message);
-
-    // 2. Fallback: Wix Stores v2 orders endpoint
-    try {
-      const storesRes = await wixFetch(`/stores/v2/orders/${encodeURIComponent(orderId)}`);
-      rawOrder = storesRes.order || storesRes;
-    } catch (err2) {
-      console.warn('[api/order] stores v2 fetch failed:', err2.message);
-    }
-  }
-
-  if (!rawOrder) {
-    return res.status(404).json({
-      error: 'Order not found',
-      orderId,
-    });
-  }
-
-  // Extract customer contact details dynamically (billing, shipping, and recipientInfo)
   const billingContact =
     rawOrder.billingInfo?.contactDetails ||
     rawOrder.billingInfo?.address?.contactDetails ||
@@ -153,7 +111,6 @@ export default async function handler(req, res) {
     recipientContact.phone ||
     '';
 
-  // Extract shipping destination address dynamically
   const shippingDest =
     rawOrder.shippingInfo?.logistics?.shippingDestination?.address ||
     rawOrder.shippingInfo?.shipmentDetails?.address ||
@@ -177,7 +134,6 @@ export default async function handler(req, res) {
   const country = shippingDest.country === 'MX' ? 'México' : shippingDest.country || '';
   const formattedAddress = [street, cityStateZip, country].filter(Boolean).join(' • ');
 
-  // Extract coupon details & total discounts dynamically
   let totalDiscountAmount = 0;
   let couponCode = '';
   let couponName = '';
@@ -209,7 +165,6 @@ export default async function handler(req, res) {
     totalDiscountAmount = summaryDiscountNum;
   }
 
-  // Extract line items with original and discounted values
   const rawItems = rawOrder.lineItems || [];
   const items = rawItems.map((item) => {
     let imageUrl = '';
@@ -336,7 +291,6 @@ export default async function handler(req, res) {
     calculatedSubtotal > rawSubtotalNum ? calculatedSubtotal : rawSubtotalNum;
   const subtotalFormatted = formatCurrencyMXN(finalSubtotalNum);
 
-  // Shipping
   const rawShippingNum =
     Number(summary.shipping?.amount) ||
     Number(rawOrder.shippingInfo?.logistics?.deliveryCost?.amount) ||
@@ -345,7 +299,6 @@ export default async function handler(req, res) {
   const isFreeShipping = rawShippingNum === 0;
   const shippingFormatted = formatCurrencyMXN(rawShippingNum);
 
-  // Taxes
   const rawTaxNum =
     Number(summary.tax?.amount) ||
     Number(summary.taxSummary?.taxAmount?.amount) ||
@@ -354,21 +307,19 @@ export default async function handler(req, res) {
     0;
   const taxFormatted = formatCurrencyMXN(rawTaxNum);
 
-  // Discount
   const discountFormatted =
     totalDiscountAmount > 0 ? `-${formatCurrencyMXN(totalDiscountAmount)}` : null;
 
-  // Grand Total
   const rawTotalNum = Number(
     summary.total?.amount ?? summary.totalPrice?.amount ?? summary.total ?? 0
   );
   const totalFormatted = formatCurrencyMXN(rawTotalNum);
 
-  return res.status(200).json({
-    orderId: rawOrder.id || orderId,
+  return {
+    orderId: resolvedId,
     orderNumber: rawOrder.number
       ? `#${rawOrder.number}`
-      : `#${String(orderId).substring(0, 8).toUpperCase()}`,
+      : `#${String(resolvedId).substring(0, 8).toUpperCase()}`,
     customerName: buyerName,
     customerEmail: buyerEmail,
     customerPhone: buyerPhone,
@@ -389,6 +340,84 @@ export default async function handler(req, res) {
     couponCode: couponCode || couponName || '',
     currency: 'MXN',
     paymentStatus: rawOrder.paymentStatus || 'PAID',
+    fulfillmentStatus: rawOrder.fulfillmentStatus || 'NOT_FULFILLED',
     createdDate: rawOrder.createdDate || rawOrder._createdDate,
-  });
+  };
+}
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Content-Type', 'application/json');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const emailQuery = String(req.query?.email || '').trim().toLowerCase();
+  const orderId = String(req.query?.orderId || '').trim();
+
+  // Mode A: Search buyer orders dynamically by email for Mi Cuenta -> Mis Pedidos
+  if (emailQuery && emailQuery.includes('@')) {
+    try {
+      const searchRes = await wixFetch('/ecom/v1/orders/search', {
+        method: 'POST',
+        body: JSON.stringify({
+          search: {
+            filter: {
+              'buyerInfo.email': { $eq: emailQuery },
+              status: { $ne: 'INITIALIZED' },
+            },
+            cursorPaging: { limit: 25 },
+          },
+        }),
+      });
+      const rawOrders = Array.isArray(searchRes?.orders) ? searchRes.orders : [];
+      const normalizedOrders = rawOrders
+        .map((o) => normalizeWixOrder(o, o.id))
+        .sort(
+          (a, b) =>
+            new Date(b.createdDate || 0).getTime() -
+            new Date(a.createdDate || 0).getTime()
+        );
+      return res.status(200).json({ orders: normalizedOrders });
+    } catch (err) {
+      console.warn('[api/order] orders search by email failed:', err.message);
+      return res.status(200).json({ orders: [] });
+    }
+  }
+
+  // Mode B: Fetch single authoritative order by orderId for /thank-you
+  if (!orderId) {
+    return res.status(400).json({ error: 'Missing orderId or email parameter' });
+  }
+
+  let rawOrder = null;
+
+  try {
+    const ecomRes = await wixFetch(`/ecom/v1/orders/${encodeURIComponent(orderId)}`);
+    rawOrder = ecomRes.order || ecomRes;
+  } catch (err1) {
+    console.warn('[api/order] ecom v1 fetch failed:', err1.message);
+    try {
+      const storesRes = await wixFetch(`/stores/v2/orders/${encodeURIComponent(orderId)}`);
+      rawOrder = storesRes.order || storesRes;
+    } catch (err2) {
+      console.warn('[api/order] stores v2 fetch failed:', err2.message);
+    }
+  }
+
+  if (!rawOrder) {
+    return res.status(404).json({
+      error: 'Order not found',
+      orderId,
+    });
+  }
+
+  return res.status(200).json(normalizeWixOrder(rawOrder, orderId));
 }
