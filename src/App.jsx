@@ -3,7 +3,6 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollProgress from './components/ScrollProgress';
-import PromotionsPopup from './components/PromotionsPopup';
 import FloatingWhatsAppButton from './components/FloatingWhatsAppButton';
 import TiendaLiveChatWidget from './components/tienda/TiendaLiveChatWidget';
 import HomePage from './pages/HomePage';
@@ -157,7 +156,6 @@ export default function App() {
         !pathname.includes('alineacion') &&
         !pathname.includes('alineación') && (
           <>
-            <PromotionsPopup />
             <TiendaLiveChatWidget
               stackedAboveWhatsApp
               buttonLabel="Chat en Vivo"

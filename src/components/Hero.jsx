@@ -18,7 +18,14 @@ export default function Hero() {
   const [videoReady, setVideoReady] = useState(false);
   const videoRef = useRef(null);
 
-  useEffect(() => { setTimeout(() => setLoaded(true), 300); }, []);
+  useEffect(() => {
+    setTimeout(() => setLoaded(true), 300);
+    const v = videoRef.current;
+    if (v) {
+      v.muted = true;
+      v.play().catch(() => {});
+    }
+  }, []);
 
   // Scroll parallax for video
   const [scrollY, setScrollY] = useState(0);
@@ -44,7 +51,7 @@ export default function Hero() {
       overflow: 'hidden', background: '#0a0c14',
       padding: isMobile ? '80px 12px 60px' : '0',
     }}>
-      {/* Poster image (fallback while YouTube loads) */}
+      {/* Poster image (fallback while video loads) */}
       <img
         src={heroContent.videoPoster}
         alt=""
@@ -52,34 +59,41 @@ export default function Hero() {
           position: 'absolute', inset: '-8%', width: '116%', height: '116%',
           objectFit: 'cover', zIndex: 0,
           opacity: videoReady ? 0 : 1,
-          transition: 'opacity 1.5s ease-out',
+          transition: 'opacity 1.2s ease-out',
           transform: `translateY(${parallaxOffset}px)`,
         }}
       />
 
-      {/* YouTube video background */}
+      {/* Local HTML5 video background */}
       <div style={{
-        position: 'absolute', inset: '-20%', zIndex: 0,
+        position: 'absolute', inset: '-8%', zIndex: 0,
         overflow: 'hidden',
         opacity: videoReady ? 1 : 0,
-        transition: 'opacity 1.5s ease-out',
+        transition: 'opacity 1.2s ease-out',
         transform: `translateY(${parallaxOffset * 0.6}px)`,
         pointerEvents: 'none',
       }}>
-        <iframe
+        <video
           ref={videoRef}
-          src="https://www.youtube.com/embed/PUkAIAIzA0I?autoplay=1&mute=1&loop=1&playlist=PUkAIAIzA0I&controls=0&showinfo=0&modestbranding=1&disablekb=1&fs=0&iv_load_policy=3&rel=0&start=2&playsinline=1&enablejsapi=1"
-          title=""
-          allow="autoplay; encrypted-media"
+          src="/videos/jasman-web.mp4"
+          poster={heroContent.videoPoster}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          onLoadedData={() => setVideoReady(true)}
+          onCanPlay={() => {
+            setVideoReady(true);
+            videoRef.current?.play().catch(() => {});
+          }}
           style={{
-            position: 'absolute',
-            top: '50%', left: '50%',
-            width: '140vw', height: '140vh',
-            minWidth: '177.78vh', minHeight: '56.25vw',
-            transform: 'translate(-50%, -50%)',
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
             border: 'none',
           }}
-          onLoad={() => setTimeout(() => setVideoReady(true), 1500)}
         />
       </div>
 

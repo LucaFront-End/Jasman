@@ -18,7 +18,7 @@ export default function CatalogoPreviewPage() {
       <TiendaNavbar />
       <TiendaCartDrawer />
       <TiendaAuthModal />
-      <FirstPurchasePopup autoOpen={false} />
+      <FirstPurchasePopup />
       <TiendaLiveChatWidget />
 
       {/* Minimalist Architectural Top Header for the Full Catalog Page */}

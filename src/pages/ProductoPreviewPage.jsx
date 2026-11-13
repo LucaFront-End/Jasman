@@ -13,6 +13,7 @@ import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
 import TiendaAuthModal from '../components/tienda/TiendaAuthModal';
 import TiendaLiveChatWidget from '../components/tienda/TiendaLiveChatWidget';
+import FirstPurchasePopup from '../components/tienda/FirstPurchasePopup';
 import TiendaVehicleSvg from '../components/tienda/TiendaVehicleTypeIcons';
 import {
   ArrowLeft,
@@ -364,6 +365,7 @@ export default function ProductoPreviewPage() {
       <TiendaNavbar />
       <TiendaCartDrawer />
       <TiendaAuthModal />
+      <FirstPurchasePopup />
       <TiendaLiveChatWidget />
 
       <div
@@ -2647,6 +2649,13 @@ export default function ProductoPreviewPage() {
           .jasman-pdp-sticky-bar button[type="button"] {
             font-size: 11.5px !important;
           }
+          ${showFloatingBuyBar && product.inStock ? `
+          .jasman-coupon-float-btn {
+            bottom: 14px !important;
+            left: 12px !important;
+            right: auto !important;
+          }
+          ` : ''}
         }
       `}</style>
     </div>

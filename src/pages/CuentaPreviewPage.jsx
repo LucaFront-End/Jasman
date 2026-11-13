@@ -17,7 +17,7 @@ export default function CuentaPreviewPage() {
         forceOpen={true}
         onCloseForce={() => navigate('/llantas')}
       />
-      <FirstPurchasePopup autoOpen={false} />
+      <FirstPurchasePopup />
       <TiendaLiveChatWidget />
       <TiendaUserSection isStandalonePage />
     </div>
