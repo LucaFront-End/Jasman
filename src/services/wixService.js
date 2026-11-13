@@ -307,6 +307,37 @@ export async function saveBookingLead(booking) {
   return leadRecord;
 }
 
+function dispatchFormToWixInbox({
+  seccion,
+  folio,
+  nombre,
+  telefono,
+  correo,
+  asunto,
+  campos,
+}) {
+  if (typeof window === 'undefined') return;
+  const cleanEmail = String(correo || '').trim();
+  const cleanPhone = String(telefono || '').replace(/\D/g, '');
+  if (!cleanEmail.includes('@') && cleanPhone.length < 7) return;
+
+  fetch('/api/wix-inbox', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'form_submission',
+      seccion,
+      folio,
+      nombre,
+      telefono: cleanPhone,
+      correo: cleanEmail,
+      asunto,
+      pagina: window.location?.pathname || '/',
+      campos,
+    }),
+  }).catch(() => {});
+}
+
 /**
  * Saves ANY web contact form submission into Wix CMS collection "Contactoweb",
  * local cache, AND dispatches Spanish white-template email via FormSubmit.co.
@@ -331,6 +362,24 @@ export async function saveContactoWeb(contactData) {
     fecha: new Date().toISOString(),
   };
 
+  const emailFields = {
+    'Folio de Registro': record.folio,
+    'Nombre Completo': record.nombre,
+    'Teléfono / WhatsApp': record.telefono,
+    'Correo Electrónico': record.email,
+    'Ciudad o Estado': record.ciudad,
+    'Sucursal': record.sucursal,
+    'Empresa': record.empresa,
+    'RFC': record.rfc,
+    'Categoría / Detalle': record.tipo,
+    'Vehículo': contactData.vehiculo || '',
+    'Fecha Tentativa de Visita': contactData.fechaVisita || '',
+    'Promoción': contactData.promocion || '',
+    'Beneficio / Cupón': record.cupon,
+    'Asunto': record.asunto,
+    'Mensaje': record.mensaje,
+  };
+
   // 0. Send Spanish email notification via FormSubmit.co (white template) to corporate inboxes
   if (!contactData._skipFormSubmit) {
     sendFormSubmitEmail({
@@ -339,24 +388,21 @@ export async function saveContactoWeb(contactData) {
         ? `Jasman Web — ${record.asunto}`
         : `Jasman Web — ${record.origen} (${record.nombre || record.email || folio})`,
       correoRespuesta: record.email,
-      campos: {
-        'Folio de Registro': record.folio,
-        'Nombre Completo': record.nombre,
-        'Teléfono / WhatsApp': record.telefono,
-        'Correo Electrónico': record.email,
-        'Ciudad o Estado': record.ciudad,
-        'Sucursal': record.sucursal,
-        'Empresa': record.empresa,
-        'RFC': record.rfc,
-        'Categoría / Detalle': record.tipo,
-        'Vehículo': contactData.vehiculo || '',
-        'Fecha Tentativa de Visita': contactData.fechaVisita || '',
-        'Promoción': contactData.promocion || '',
-        'Beneficio / Cupón': record.cupon,
-        'Asunto': record.asunto,
-        'Mensaje': record.mensaje,
-      },
+      campos: emailFields,
     }).catch((err) => console.warn('FormSubmit aviso (ContactoWeb):', err?.message || err));
+  }
+
+  // 0b. Mirror incoming form submission to Wix Inbox (Bandeja de entrada de Wix)
+  if (!contactData._skipWixInbox) {
+    dispatchFormToWixInbox({
+      seccion: record.origen,
+      folio: record.folio,
+      nombre: record.nombre,
+      telefono: record.telefono,
+      correo: record.email,
+      asunto: record.asunto || `${record.origen} (${record.folio})`,
+      campos: emailFields,
+    });
   }
 
   // 1. Always save in localStorage queue
@@ -408,22 +454,35 @@ export async function saveFlotillasContacto(flotillaData) {
     submissionTime: fecha,
   };
 
+  const emailFields = {
+    'Folio de Registro': folio,
+    'Nombre Completo': nombre,
+    'Empresa': empresa,
+    'Tamaño de Flotilla (unidades)': unidades,
+    'Teléfono / WhatsApp': telefono,
+    'Correo Electrónico': email,
+    'Mensaje': mensaje,
+  };
+
   // 1. Send Spanish email notification via FormSubmit.co (white template) exclusively to Flotillas inboxes
   sendFormSubmitEmail({
     seccion: 'Formulario Flotillas Corporativas',
     asuntoCorreo: `Jasman Flotillas — Solicitud de ${empresa || nombre || folio} (${unidades || 'N/A'} unidades)`,
     correoRespuesta: email,
     destinatarios: FLOTILLAS_EMAIL_RECIPIENTS,
-    campos: {
-      'Folio de Registro': folio,
-      'Nombre Completo': nombre,
-      'Empresa': empresa,
-      'Tamaño de Flotilla (unidades)': unidades,
-      'Teléfono / WhatsApp': telefono,
-      'Correo Electrónico': email,
-      'Mensaje': mensaje,
-    },
+    campos: emailFields,
   }).catch((err) => console.warn('FormSubmit aviso (Flotillas):', err?.message || err));
+
+  // 1b. Mirror Flotillas submission into Wix Inbox
+  dispatchFormToWixInbox({
+    seccion: 'Formulario Flotillas Corporativas',
+    folio,
+    nombre,
+    telefono,
+    correo: email,
+    asunto: `Flotillas: ${empresa || nombre || folio} (${unidades || 'N/A'} uds)`,
+    campos: emailFields,
+  });
 
   // 2. Local cache backup
   try {
@@ -511,22 +570,35 @@ export async function saveBolsaTrabajo(applicationData) {
     fecha: new Date().toISOString(),
   };
 
+  const emailFields = {
+    'Folio de Postulación': record.folio,
+    'Nombre Completo': record.nombre,
+    'Teléfono / WhatsApp': record.telefono,
+    'Correo Electrónico': record.email,
+    'Ciudad': record.ciudad,
+    'Vacante o Puesto': record.puesto,
+    'Experiencia Laboral': record.experiencia,
+    'Enlace CV': record.cvUrl,
+  };
+
   // 0. Send Spanish email notification via FormSubmit.co (white template) to corporate inboxes
   sendFormSubmitEmail({
     seccion: record.origen,
     asuntoCorreo: `Jasman Bolsa de Trabajo — ${record.puesto || 'Postulación'} (${record.nombre || folio})`,
     correoRespuesta: record.email,
-    campos: {
-      'Folio de Postulación': record.folio,
-      'Nombre Completo': record.nombre,
-      'Teléfono / WhatsApp': record.telefono,
-      'Correo Electrónico': record.email,
-      'Ciudad': record.ciudad,
-      'Vacante o Puesto': record.puesto,
-      'Experiencia Laboral': record.experiencia,
-      'Enlace CV': record.cvUrl,
-    },
+    campos: emailFields,
   }).catch((err) => console.warn('FormSubmit aviso (BolsaTrabajo):', err?.message || err));
+
+  // 0b. Mirror Bolsa de Trabajo application into Wix Inbox
+  dispatchFormToWixInbox({
+    seccion: record.origen,
+    folio: record.folio,
+    nombre: record.nombre,
+    telefono: record.telefono,
+    correo: record.email,
+    asunto: `Bolsa de Trabajo: ${record.puesto || 'Postulación'} (${record.nombre || folio})`,
+    campos: emailFields,
+  });
 
   // 1. Always save in localStorage queue
   try {

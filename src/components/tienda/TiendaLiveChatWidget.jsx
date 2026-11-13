@@ -244,6 +244,7 @@ export default function TiendaLiveChatWidget({
         } else {
           // Direct browser fallback to Wix CMS if serverless endpoint unreachable
           saveContactoWeb({
+            _skipWixInbox: true,
             nombre: activeSession.nombre,
             telefono: activeSession.telefono,
             email: activeSession.correo,
@@ -257,6 +258,7 @@ export default function TiendaLiveChatWidget({
         setTimeout(() => setDeliveredNotice(false), 2600);
       } catch {
         saveContactoWeb({
+          _skipWixInbox: true,
           nombre: activeSession.nombre,
           telefono: activeSession.telefono,
           email: activeSession.correo,
@@ -430,6 +432,7 @@ export default function TiendaLiveChatWidget({
       // Resilient fallback if offline / dev API unavailable
       saveContactoWeb({
         _skipFormSubmit: true,
+        _skipWixInbox: true,
         nombre: cleanName,
         telefono: cleanPhone,
         email: cleanEmail,

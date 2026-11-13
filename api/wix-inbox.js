@@ -546,6 +546,119 @@ export default async function handler(req, res) {
     });
   }
 
+  // 2b. Mirror Web Form Submission directly into Wix Inbox (without duplicating CMS rows)
+  if (action === 'form_submission') {
+    const nombre = String(body.nombre || 'Visitante Web').trim();
+    const telefono = String(body.telefono || '').replace(/\D/g, '');
+    const correo = String(body.correo || '').trim();
+    const seccion = String(body.seccion || 'Formulario Sitio Web').trim();
+    const folio = String(body.folio || '').trim();
+    const asunto = String(body.asunto || seccion).trim();
+    const pagina = String(body.pagina || '/').trim();
+    const rawCampos =
+      body.campos && typeof body.campos === 'object' ? body.campos : {};
+
+    if (!correo.includes('@') && telefono.length < 7) {
+      return res.status(200).json({
+        ok: false,
+        skipped: true,
+        reason: 'missing_contact_identifier',
+      });
+    }
+
+    if (!apiKey) {
+      return res.status(200).json({
+        ok: false,
+        skipped: true,
+        reason: 'missing_wix_api_key',
+      });
+    }
+
+    try {
+      let contactId = await resolveOrCreateWixContact(apiKey, {
+        nombre,
+        correo,
+        telefono,
+      }).catch(() => '');
+
+      if (!contactId) {
+        contactId = await submitVisitorCrmContact({ nombre, correo, telefono });
+      }
+
+      if (!contactId) {
+        return res.status(200).json({
+          ok: false,
+          skipped: true,
+          reason: 'contact_not_resolved',
+        });
+      }
+
+      const inboxClient = createInboxSdkClient(apiKey);
+      const convRes = await inboxClient.conversations.getOrCreateConversation({
+        contactId,
+      });
+      const conversationId =
+        convRes?.conversation?._id || convRes?.conversation?.id || '';
+
+      if (!conversationId) {
+        return res.status(200).json({
+          ok: false,
+          skipped: true,
+          reason: 'conversation_not_created',
+        });
+      }
+
+      const fieldsList = Object.entries(rawCampos)
+        .filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== '')
+        .map(([k, v]) => ({ name: String(k), value: String(v).trim() }));
+
+      const summaryLines = [
+        `📋 *${seccion}*${folio ? ` (${folio})` : ''}`,
+        ...fieldsList.map((f) => `• ${f.name}: ${f.value}`),
+        pagina ? `• Página: ${pagina}` : '',
+      ].filter(Boolean);
+      const summaryText = summaryLines.join('\n').slice(0, 1800);
+
+      if (fieldsList.length > 0) {
+        await sendParticipantInboxMessage(inboxClient, conversationId, {
+          direction: 'PARTICIPANT_TO_BUSINESS',
+          visibility: 'BUSINESS_AND_PARTICIPANT',
+          content: {
+            previewText: `${seccion}: ${nombre}`.slice(0, 120),
+            form: {
+              title: asunto.slice(0, 100),
+              description: `Origen: ${pagina}${folio ? ` · Folio: ${folio}` : ''}`,
+              fields: fieldsList.slice(0, 20),
+            },
+          },
+        }).catch(() => {});
+      }
+
+      await sendParticipantInboxMessage(inboxClient, conversationId, {
+        direction: 'PARTICIPANT_TO_BUSINESS',
+        visibility: 'BUSINESS_AND_PARTICIPANT',
+        content: {
+          previewText: summaryText.slice(0, 120),
+          basic: {
+            items: [{ text: summaryText }],
+          },
+        },
+      });
+
+      return res.status(200).json({
+        ok: true,
+        mode: 'wix_inbox_form',
+        contactId,
+        conversationId,
+      });
+    } catch (err) {
+      return res.status(200).json({
+        ok: false,
+        error: err?.message || 'wix_inbox_form_failed',
+      });
+    }
+  }
+
   // 3. Send Visitor Message to Wix Inbox
   if (action === 'send') {
     let conversationId = String(body.conversationId || '').trim();
