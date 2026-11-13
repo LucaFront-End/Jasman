@@ -31,7 +31,7 @@ const HERO_SPOTLIGHTS = [
   {
     id: 572,
     label: 'Continental 205/55R16',
-    promoTag: 'Promo: −10% en Juego de 4 + Envío Gratis',
+    promoTag: 'Promo: −5% en Juego de 4 + Envío Gratis',
   },
   {
     id: 561,

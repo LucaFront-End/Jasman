@@ -29,7 +29,7 @@ import {
 
 const SHIPPING_TICKER_ITEMS = [
   'ENVÍO GRATIS EN TODA LA REPÚBLICA MEXICANA',
-  'AGREGA MÁS Y OBTÉN DESCUENTO: −5% EN PAR · −10% EN JUEGO DE 4 LLANTAS',
+  'AGREGA MÁS Y OBTÉN DESCUENTO: −2% EN PAR · −5% EN JUEGO DE 4 LLANTAS',
   'INSTALACIÓN CERTIFICADA EN +80 SUCURSALES JASMAN',
   '−10% ADICIONAL EN TU PRIMERA COMPRA REGISTRÁNDOTE EN LÍNEA',
   'GARANTÍA OFICIAL DIRECTA DE FÁBRICA',
@@ -577,7 +577,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
                   color: 'rgba(255, 255, 255, 0.82)',
                 }}
               >
-                Toda la República · −10% en juego de 4 llantas
+                Toda la República · −5% en juego de 4 llantas
               </span>
             </div>
           </div>

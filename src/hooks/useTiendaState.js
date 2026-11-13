@@ -56,28 +56,28 @@ export function triggerTiendaUI(action) {
 /**
  * Calculates volume discount rate based on total number of tires:
  * - 1 tire: 0%
- * - 2 to 3 tires (Par): 5% extra off
- * - 4+ tires (Juego completo): 10% extra off
+ * - 2 to 3 tires (Par): 2% extra off
+ * - 4+ tires (Juego completo): 5% extra off
  */
 export function getVolumeDiscountTier(totalUnits) {
   const units = Number(totalUnits) || 0;
   if (units >= 4) {
     return {
-      rate: 0.1,
-      percent: 10,
-      label: 'Juego de 4+ Llantas (−10% Volumen)',
+      rate: 0.05,
+      percent: 5,
+      label: 'Juego de 4+ Llantas (−5% Volumen)',
       nextUnitsNeeded: 0,
-      nextPercent: 10,
+      nextPercent: 5,
       progress: 100,
     };
   }
   if (units >= 2) {
     return {
-      rate: 0.05,
-      percent: 5,
-      label: 'Par de Llantas (−5% Volumen)',
+      rate: 0.02,
+      percent: 2,
+      label: 'Par de Llantas (−2% Volumen)',
       nextUnitsNeeded: 4 - units,
-      nextPercent: 10,
+      nextPercent: 5,
       progress: units === 3 ? 75 : 50,
     };
   }
@@ -86,7 +86,7 @@ export function getVolumeDiscountTier(totalUnits) {
     percent: 0,
     label: 'Precio unitario base',
     nextUnitsNeeded: Math.max(1, 2 - units),
-    nextPercent: 5,
+    nextPercent: 2,
     progress: units === 1 ? 25 : 0,
   };
 }

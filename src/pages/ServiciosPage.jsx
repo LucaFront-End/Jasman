@@ -7,6 +7,8 @@ import Icon from '../components/Icon';
 import { Check, ArrowRight, Clock, Sparkles, Star, Search } from 'lucide-react';
 
 const badgeColors = { 'PREMIUM': { bg: C.red, c: '#fff' }, 'POPULAR': { bg: C.amber, c: C.navy }, 'ESENCIAL': { bg: '#22c55e', c: '#fff' } };
+// Ocultar precios temporalmente sin eliminar la información base
+const SHOW_SERVICE_PRICES = false;
 
 export default function ServiciosPage() {
   const [activeCategory, setActiveCategory] = useState('Todos');
@@ -112,7 +114,9 @@ export default function ServiciosPage() {
                         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>{pkg.subtitle}</div>
                         <h3 style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 22, color: C.white, marginTop: 4 }}>{pkg.title}</h3>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12 }}>
-                          <span style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 26, color: C.redLight }}>{pkg.price}</span>
+                          {SHOW_SERVICE_PRICES && (
+                            <span style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 26, color: C.redLight }}>{pkg.price}</span>
+                          )}
                           <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
                             <Clock size={12} /> {pkg.time}
                           </span>
@@ -218,8 +222,10 @@ export default function ServiciosPage() {
                       <div style={{ fontSize: 12, color: C.gray, marginTop: 2 }}>{s.category} • {s.time}</div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 14, color: C.red }}>{s.price}</div>
-                      <ArrowRight size={14} color={C.gray} style={{ marginTop: 4 }} />
+                      {SHOW_SERVICE_PRICES && (
+                        <div style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 14, color: C.red }}>{s.price}</div>
+                      )}
+                      <ArrowRight size={14} color={C.gray} style={{ marginTop: SHOW_SERVICE_PRICES ? 4 : 0 }} />
                     </div>
                   </Link>
                 ))}

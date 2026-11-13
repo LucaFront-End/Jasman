@@ -5,6 +5,9 @@ import { C, F } from '../hooks/useAnimations';
 import Icon from './Icon';
 import { Star, Clock, ShieldCheck, Check, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
+// Ocultar precios temporalmente sin eliminar la información base
+const SHOW_SERVICE_PRICES = false;
+
 const serviceDetails = {
   'Llantas': { time: '45 min', price: 'Desde $899', includes: ['Instalación profesional', 'Balanceo dinámico', 'Válvulas nuevas', 'Revisión de presión'], warranty: '1 año', rating: 4.8 },
   'Alineación y Balanceo': { time: '30 min', price: 'Desde $599', includes: ['Alineación computarizada 3D', 'Balanceo 4 ruedas', 'Check-up de suspensión', 'Reporte digital'], warranty: '6 meses', rating: 4.7 },
@@ -148,10 +151,10 @@ export default function Services() {
               textAlign: isMobile ? 'center' : 'left',
             }}>{s.description}</p>
 
-            {/* 3 Stats cards: Responsive 3-columns */}
-            <div className="services-stats-row">
+            {/* Stats cards: Responsive 2 or 3 columns */}
+            <div className={`services-stats-row${SHOW_SERVICE_PRICES ? '' : ' services-stats-row--two'}`}>
               {[
-                { label: 'Precio', value: detail.price, color: C.redLight, icon: null },
+                ...(SHOW_SERVICE_PRICES ? [{ label: 'Precio', value: detail.price, color: C.redLight, icon: null }] : []),
                 { label: 'Tiempo', value: detail.time, color: C.white, icon: <Clock size={13} color="rgba(255,255,255,0.5)" /> },
                 { label: 'Rating', value: `${detail.rating} ★`, color: C.amber, icon: <Star size={13} color={C.amber} fill={C.amber} /> },
               ].map((stat, j) => (

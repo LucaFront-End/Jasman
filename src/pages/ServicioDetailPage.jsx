@@ -5,6 +5,9 @@ import { servicios, paquetes } from '../data/serviciosData';
 import Icon from '../components/Icon';
 import { Check, Clock, ShieldCheck, ArrowRight, ArrowLeft, Scan } from 'lucide-react';
 
+// Ocultar precios temporalmente sin eliminar la información base
+const SHOW_SERVICE_PRICES = false;
+
 export default function ServicioDetailPage() {
   const { slug } = useParams();
   const service = [...servicios, ...paquetes].find(s => s.slug === slug);
@@ -92,7 +95,9 @@ export default function ServicioDetailPage() {
                       <Icon name={r.icon} size={18} color={C.red} />
                       <div>
                         <div style={{ fontFamily: F.heading, fontWeight: 600, fontSize: 13, color: C.navy }}>{r.title}</div>
-                        <div style={{ fontSize: 11, color: C.gray }}>{r.price}</div>
+                        {SHOW_SERVICE_PRICES && (
+                          <div style={{ fontSize: 11, color: C.gray }}>{r.price}</div>
+                        )}
                       </div>
                     </Link>
                   ))}
@@ -109,7 +114,7 @@ export default function ServicioDetailPage() {
               color: C.white, marginBottom: 20,
             }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 28 }}>
-                {service.price && (
+                {SHOW_SERVICE_PRICES && service.price && (
                   <div style={{
                     padding: '16px 20px', borderRadius: 16,
                     background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',

@@ -491,10 +491,10 @@ export default function TiendaCartDrawer() {
                     <Truck size={13} />
                     {isLegacyCopyRoute || (wixEstimate?.automaticDiscounts || []).length > 0
                       ? totalTireUnits >= 4
-                        ? '¡10% OFF por juego completo + Envío Gratis!'
+                        ? '¡5% OFF por juego completo + Envío Gratis!'
                         : totalTireUnits >= 2
-                          ? `¡5% OFF activo! Agrega ${4 - totalTireUnits} más para 10% OFF`
-                          : 'Agrega 1 llanta más y obtén 5% OFF adicional'
+                          ? `¡2% OFF activo! Agrega ${4 - totalTireUnits} más para 5% OFF`
+                          : 'Agrega 1 llanta más y obtén 2% OFF adicional'
                       : totalTireUnits >= 4
                         ? '¡Juego completo de 4 llantas + Envío Nacional Gratis!'
                         : totalTireUnits >= 2

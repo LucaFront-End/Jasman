@@ -1204,8 +1204,8 @@ export default function TiendaHomeCarousels() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
-                  '−5% extra llevando 2 o 3 llantas',
-                  '−10% extra en juego de 4 llantas',
+                  '−2% extra llevando 2 o 3 llantas',
+                  '−5% extra en juego de 4 llantas',
                   'Garantía directa de fábrica',
                 ].map((perk) => (
                   <div

@@ -1276,6 +1276,9 @@ main {
     gap: 8px !important;
     margin-bottom: 24px !important;
   }
+  .services-stats-row--two {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
 }
 
 .process-steps-grid {

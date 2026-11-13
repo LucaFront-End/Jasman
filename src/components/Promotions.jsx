@@ -28,6 +28,18 @@ const TIRE_PROMOTIONS = [
     ctaLabel: 'Ver Llantas Hankook',
     to: '/llantas/catalogo?brand=Hankook',
   },
+  {
+    id: 'continental-buen-fin-30',
+    brand: 'Continental',
+    badge: 'HASTA 30% DCTO.',
+    title: 'Continental: Hasta 30% de descuento desde Rin 17',
+    vigencia: 'Vigencia del 13 al 17 de Noviembre del 2026',
+    summary:
+      'Buen Fin en llantas Continental de auto y camioneta desde 1 llanta: 25% en Rin 17 a 18 y 30% en Rin 19 a 23 (no participan rines 13" a 16").',
+    image: '/images/promos/promo-continental.jpg',
+    ctaLabel: 'Ver Llantas Continental',
+    to: '/llantas/catalogo?brand=Continental',
+  },
 ];
 
 export default function Promotions() {
@@ -146,8 +158,8 @@ export default function Promotions() {
           className="jasman-tire-promos-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-            gap: 'clamp(18px, 3vw, 28px)',
+            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            gap: 'clamp(16px, 2.2vw, 24px)',
             ...gridStyle,
           }}
         >
@@ -449,7 +461,12 @@ export default function Promotions() {
       )}
 
       <style>{`
-        @media (max-width: 820px) {
+        @media (max-width: 1024px) {
+          .jasman-tire-promos-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+        }
+        @media (max-width: 720px) {
           .jasman-tire-promos-grid {
             grid-template-columns: 1fr !important;
           }
