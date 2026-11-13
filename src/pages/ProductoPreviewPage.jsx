@@ -609,10 +609,14 @@ export default function ProductoPreviewPage() {
 
               {/* Center Interactive Tire Image with Prev/Next Glass Controls */}
               <div
+                className="jasman-pdp-stage-body"
                 style={{
                   position: 'relative',
                   zIndex: 3,
                   flex: 1,
+                  minHeight: 0,
+                  width: '100%',
+                  overflow: 'hidden',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -663,6 +667,7 @@ export default function ProductoPreviewPage() {
 
                 <img
                   key={`${product.id}-${selectedImageIdx}`}
+                  className="jasman-pdp-main-tire-img"
                   src={activeSlide.url}
                   alt={product.cleanTitle}
                   onError={(e) => {
@@ -673,8 +678,8 @@ export default function ProductoPreviewPage() {
                     }
                   }}
                   style={{
-                    maxWidth: '78%',
-                    maxHeight: 330,
+                    maxWidth: '82%',
+                    maxHeight: '100%',
                     width: 'auto',
                     height: 'auto',
                     objectFit: 'contain',
@@ -683,8 +688,8 @@ export default function ProductoPreviewPage() {
                       ? 'drop-shadow(0 24px 32px rgba(26, 31, 54, 0.20)) contrast(1.04)'
                       : 'contrast(1.05)',
                     transform: tilt.active
-                      ? `perspective(1000px) rotateX(${tilt.rx * 0.7}deg) rotateY(${tilt.ry * 0.9}deg) scale(1.05)`
-                      : 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)',
+                      ? `perspective(1000px) rotateX(${tilt.rx * 0.7}deg) rotateY(${tilt.ry * 0.9}deg) scale(${activeSlide.isCutout ? 1.05 : 1.24})`
+                      : `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(${activeSlide.isCutout ? 1 : 1.18})`,
                     transition: tilt.active
                       ? 'transform 0.14s ease-out'
                       : 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -932,21 +937,35 @@ export default function ProductoPreviewPage() {
                           transition: 'border-color 0.22s ease, box-shadow 0.22s ease',
                         }}
                       >
-                        <img
-                          src={imgItem.url}
-                          alt={`${product.cleanTitle} ${imgItem.label}`}
-                          onError={(e) => {
-                            e.currentTarget.src = imgItem.fallbackUrl;
-                          }}
+                        <div
                           style={{
-                            height: 46,
-                            width: 'auto',
-                            maxWidth: '85%',
-                            objectFit: 'contain',
-                            mixBlendMode: imgItem.isCutout ? 'normal' : 'multiply',
-                            opacity: isActive ? 1 : 0.76,
+                            width: '100%',
+                            flex: 1,
+                            minHeight: 0,
+                            overflow: 'hidden',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}
-                        />
+                        >
+                          <img
+                            src={imgItem.url}
+                            alt={`${product.cleanTitle} ${imgItem.label}`}
+                            onError={(e) => {
+                              e.currentTarget.src = imgItem.fallbackUrl;
+                            }}
+                            style={{
+                              height: '100%',
+                              width: '100%',
+                              maxHeight: 54,
+                              objectFit: 'contain',
+                              mixBlendMode: imgItem.isCutout ? 'normal' : 'multiply',
+                              transform: imgItem.isCutout ? 'scale(1.06)' : 'scale(1.52)',
+                              opacity: isActive ? 1 : 0.82,
+                              transition: 'transform 0.2s ease, opacity 0.2s ease',
+                            }}
+                          />
+                        </div>
                         <span
                           style={{
                             fontFamily: F.heading,
@@ -2585,8 +2604,13 @@ export default function ProductoPreviewPage() {
             padding: 102px 14px 156px !important;
           }
           .jasman-pdp-gallery-stage {
-            height: 310px !important;
+            height: 320px !important;
+            padding: 16px 16px 18px !important;
             border-radius: 26px !important;
+          }
+          .jasman-pdp-main-tire-img {
+            max-height: 205px !important;
+            max-width: 82% !important;
           }
           .jasman-pdp-brand-card {
             padding: 12px 14px !important;

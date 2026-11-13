@@ -1,8 +1,15 @@
+import { useLocation } from 'react-router-dom';
 import { F } from '../hooks/useAnimations';
 
 export default function FloatingWhatsAppButton() {
-  const whatsappUrl = `https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent(
-    'SW - Hola Jasman, me gustaría recibir atención de un asesor.'
+  const { pathname } = useLocation();
+  const isFlotillas = pathname.startsWith('/flotillas');
+  const phone = isFlotillas ? '5215545990295' : '5215510024945';
+  const defaultMsg = isFlotillas
+    ? 'SW - Hola, me interesa el servicio de flotillas de Jasman.'
+    : 'SW - Hola Jasman, me gustaría recibir atención de un asesor.';
+  const whatsappUrl = `https://api.whatsapp.com/send/?phone=${phone}&text=${encodeURIComponent(
+    defaultMsg
   )}`;
 
   return (

@@ -379,6 +379,72 @@ export async function saveContactoWeb(contactData) {
   }
 }
 
+export const FLOTILLAS_COLLECTION_ID = 'contact0316';
+export const FLOTILLAS_EMAIL_RECIPIENTS = [
+  'flotillas@jasman.com.mx',
+  'auxflotillas@jasman.com.mx',
+];
+
+/**
+ * Saves Flotillas form submission into dedicated Wix CMS collection ("contact0316" / Contacto - Flotillas),
+ * local cache, AND dispatches Spanish white-template email via FormSubmit.co to Flotillas inboxes.
+ */
+export async function saveFlotillasContacto(flotillaData) {
+  const folio = flotillaData.folio || 'FL-' + Math.floor(100000 + Math.random() * 900000);
+  const unidades = flotillaData.unidades || flotillaData.fleetSize || '';
+  const nombre = flotillaData.nombre || flotillaData.name || '';
+  const empresa = flotillaData.empresa || flotillaData.company || '';
+  const telefono = flotillaData.telefono || flotillaData.phone || '';
+  const email = flotillaData.email || flotillaData.correo || '';
+  const mensaje = flotillaData.mensaje || flotillaData.message || '';
+  const fecha = new Date().toISOString();
+
+  const cmsRecord = {
+    firstName: nombre,
+    empresa,
+    email,
+    phone: telefono,
+    message: `[Folio: ${folio}]${unidades ? ` [Flotilla: ${unidades} unidades]` : ''}\n${mensaje || 'Sin mensaje adicional'}`,
+    submissionTime: fecha,
+  };
+
+  // 1. Send Spanish email notification via FormSubmit.co (white template) exclusively to Flotillas inboxes
+  sendFormSubmitEmail({
+    seccion: 'Formulario Flotillas Corporativas',
+    asuntoCorreo: `Jasman Flotillas — Solicitud de ${empresa || nombre || folio} (${unidades || 'N/A'} unidades)`,
+    correoRespuesta: email,
+    destinatarios: FLOTILLAS_EMAIL_RECIPIENTS,
+    campos: {
+      'Folio de Registro': folio,
+      'Nombre Completo': nombre,
+      'Empresa': empresa,
+      'Tamaño de Flotilla (unidades)': unidades,
+      'Teléfono / WhatsApp': telefono,
+      'Correo Electrónico': email,
+      'Mensaje': mensaje,
+    },
+  }).catch((err) => console.warn('FormSubmit aviso (Flotillas):', err?.message || err));
+
+  // 2. Local cache backup
+  try {
+    const existing = JSON.parse(localStorage.getItem('jasman_cms_flotillas') || '[]');
+    existing.unshift({ ...cmsRecord, folio, unidades });
+    localStorage.setItem('jasman_cms_flotillas', JSON.stringify(existing.slice(0, 100)));
+  } catch (e) {
+    console.warn('Local storage flotillas save error:', e);
+  }
+
+  // 3. Insert into dedicated Wix CMS collection contact0316 ("Contacto - Flotillas")
+  try {
+    const inserted = await wixClient.items.insert(FLOTILLAS_COLLECTION_ID, cmsRecord);
+    console.log('Flotillas guardado exitosamente en Wix CMS contact0316:', inserted._id);
+    return { success: true, id: inserted._id, folio, record: cmsRecord };
+  } catch (err) {
+    console.warn('Wix Headless: Aviso al insertar en Flotillas (contact0316):', err?.message || err);
+    return { success: false, error: err?.message, folio, record: cmsRecord };
+  }
+}
+
 /**
  * Normalizes a job opening item from Wix CMS collection "Vacantes"
  */

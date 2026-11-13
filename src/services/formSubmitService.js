@@ -38,7 +38,12 @@ export async function sendFormSubmitEmail({
   asuntoCorreo = '',
   correoRespuesta = '',
   campos = {},
+  destinatarios = null,
 } = {}) {
+  const recipientList =
+    Array.isArray(destinatarios) && destinatarios.length > 0
+      ? destinatarios
+      : FORMSUBMIT_RECIPIENTS;
   const cleanFields = {};
 
   cleanFields['Formulario'] = seccion;
@@ -77,7 +82,7 @@ export async function sendFormSubmitEmail({
   }
 
   const results = await Promise.allSettled(
-    FORMSUBMIT_RECIPIENTS.map(async (recipientEmail) => {
+    recipientList.map(async (recipientEmail) => {
       const response = await fetch(
         `https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`,
         {

@@ -4,7 +4,26 @@ import { C, F, useReveal, useCountUp } from '../hooks/useAnimations';
 import Icon from '../components/Icon';
 import { Phone, MessageCircle, Send, CheckCircle2, ArrowRight, Building2, User, Mail, Users, Truck, BarChart3 } from 'lucide-react';
 import { flotillasContent } from '../data/flotillasData';
-import { saveContactoWeb } from '../services/wixService';
+import { saveFlotillasContacto } from '../services/wixService';
+
+const FLOTILLAS_WHATSAPP_PHONE = '5215545990295';
+const FLOTILLAS_WHATSAPP_DISPLAY = '55 4599 0295';
+
+function buildFlotillasWaUrl(data, folio) {
+  const lines = [
+    'SW - Hola equipo de Flotillas Jasman, envié una solicitud desde el sitio web:',
+    folio ? `• Folio: ${folio}` : null,
+    data.name ? `• Nombre: ${data.name}` : null,
+    data.company ? `• Empresa: ${data.company}` : null,
+    data.fleetSize ? `• Tamaño de flotilla: ${data.fleetSize} unidades` : null,
+    data.phone ? `• Teléfono: ${data.phone}` : null,
+    data.email ? `• Email: ${data.email}` : null,
+    data.message ? `• Mensaje: ${data.message}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return `https://api.whatsapp.com/send/?phone=${FLOTILLAS_WHATSAPP_PHONE}&text=${encodeURIComponent(lines)}`;
+}
 
 function StatCard2({ number, suffix, label }) {
   const { ref, count } = useCountUp(number, 2000);
@@ -19,20 +38,26 @@ function StatCard2({ number, suffix, label }) {
 export default function FlotillasPage() {
   const [formData, setFormData] = useState({ name: '', company: '', fleetSize: '', phone: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
-  const header = useReveal();
+  const [submittedWaUrl, setSubmittedWaUrl] = useState('');
+  const { ref: headerRef, style: headerStyle } = useReveal();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    saveContactoWeb({
+    const folio = 'FL-' + Math.floor(100000 + Math.random() * 900000);
+    const waUrl = buildFlotillasWaUrl(formData, folio);
+    setSubmittedWaUrl(waUrl);
+
+    saveFlotillasContacto({
+      folio,
       nombre: formData.name,
       empresa: formData.company,
       telefono: formData.phone,
       email: formData.email,
-      tipo: `Flotilla de ${formData.fleetSize} unidades`,
-      asunto: `Cotización Flotilla: ${formData.company} (${formData.fleetSize} unidades)`,
+      unidades: formData.fleetSize,
       mensaje: formData.message,
-      origen: 'Formulario Flotillas',
     }).catch(err => console.warn('Wix save error in flotillas:', err));
+
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
     setSubmitted(true);
   };
 
@@ -59,7 +84,7 @@ export default function FlotillasPage() {
       {/* Benefits */}
       <section style={{ padding: 'clamp(4rem, 8vw, 7rem) 1.5rem', background: C.white }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div ref={header.ref} style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto 56px', ...header.style }}>
+          <div ref={headerRef} style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto 56px', ...headerStyle }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
               background: 'rgba(196,30,36,0.08)', color: C.red,
@@ -142,10 +167,37 @@ export default function FlotillasPage() {
             <h2 style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 22, color: C.navy, marginBottom: 8 }}>Contáctanos</h2>
             <p style={{ fontSize: 14, color: C.gray, marginBottom: 28 }}>Déjanos tus datos y un ejecutivo se pondrá en contacto contigo.</p>
             {submitted ? (
-              <div style={{ textAlign: 'center', padding: '48px 0' }}>
+              <div style={{ textAlign: 'center', padding: '36px 0' }}>
                 <CheckCircle2 size={48} color="#22c55e" style={{ marginBottom: 16 }} />
                 <h3 style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 20, color: C.navy, marginBottom: 8 }}>¡Mensaje Enviado!</h3>
-                <p style={{ fontSize: 14, color: C.gray }}>Un ejecutivo se pondrá en contacto contigo pronto.</p>
+                <p style={{ fontSize: 14, color: C.gray, marginBottom: 22 }}>
+                  Tu solicitud quedó registrada y enviada a nuestro equipo de Flotillas.
+                </p>
+                {submittedWaUrl && (
+                  <a
+                    href={submittedWaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 9,
+                      padding: '13px 22px',
+                      borderRadius: 12,
+                      background: '#25d366',
+                      color: C.white,
+                      fontFamily: F.heading,
+                      fontWeight: 700,
+                      fontSize: 14,
+                      textDecoration: 'none',
+                      boxShadow: '0 8px 24px rgba(37, 211, 102, 0.28)',
+                    }}
+                  >
+                    <MessageCircle size={17} />
+                    Enviar por WhatsApp ({FLOTILLAS_WHATSAPP_DISPLAY})
+                  </a>
+                )}
               </div>
             ) : (
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -219,7 +271,7 @@ export default function FlotillasPage() {
                     <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 18 }}>{flotillasContent.hero.phone}</div>
                   </div>
                 </a>
-                <a href={`https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent('SW - Hola, me interesa el servicio de flotillas de Jasman')}`}
+                <a href={`https://api.whatsapp.com/send/?phone=${FLOTILLAS_WHATSAPP_PHONE}&text=${encodeURIComponent('SW - Hola, me interesa el servicio de flotillas de Jasman')}`}
                   target="_blank" rel="noopener noreferrer" style={{
                     padding: '18px 24px', borderRadius: 16,
                     background: 'rgba(37,211,102,0.08)', border: '1px solid rgba(37,211,102,0.15)',
@@ -235,8 +287,8 @@ export default function FlotillasPage() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}><MessageCircle size={20} color={C.white} /></div>
                   <div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>WhatsApp</div>
-                    <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 18 }}>55 1002 4945</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>WhatsApp Flotillas</div>
+                    <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 18 }}>{FLOTILLAS_WHATSAPP_DISPLAY}</div>
                   </div>
                 </a>
               </div>

@@ -1301,7 +1301,10 @@ export default function TiendaCatalogSection({
             </div>
 
             {/* Right: Count + Sort + Reset + Subir/Bajar Filtros */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div
+              className="catalog-bottom-filter-right"
+              style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}
+            >
               {activeFilterCount > 0 && (
                 <button
                   type="button"
@@ -1622,8 +1625,18 @@ export default function TiendaCatalogSection({
             border-radius: 22px !important;
             margin-bottom: 20px !important;
           }
+          .catalog-bottom-filter-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+          }
+          .catalog-bottom-filter-left {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+          }
           .catalog-search-input-wrap {
             flex: 1 1 100% !important;
+            width: 100% !important;
             max-width: 100% !important;
           }
           .catalog-bottom-filter-left select {
@@ -1631,6 +1644,10 @@ export default function TiendaCatalogSection({
             min-width: 0 !important;
             padding: 9px 10px !important;
             font-size: 11px !important;
+          }
+          .catalog-bottom-filter-right {
+            width: 100% !important;
+            justify-content: space-between !important;
           }
           .tienda-spotlight-card {
             grid-column: span 1 !important;
