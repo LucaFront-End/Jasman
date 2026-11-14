@@ -435,19 +435,18 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
   const promoTextLower = `${promotion.headline || ''} ${promotion.title || ''} ${promotion.subheadline || ''} ${promotion.slug || ''}`.toLowerCase();
   const isAlignmentPromo = isAdsPromo || /alineaci[oó]n|balanceo|750/.test(promoTextLower);
 
-  // Build WhatsApp URL with "SW-" standard prefix and dynamic Wix promo details
+  // Build WhatsApp URL with "SW-" standard prefix and dynamic Wix promo Title sent directly to the branch phone
   const getWhatsAppPromoUrl = (branch, bookingDetails = null) => {
     const targetBranch = branch || selectedBranch || nearbyBranches[0];
     const phoneWithCountry = targetBranch?.whatsappPhone || '5215510024945';
     const branchName = targetBranch ? targetBranch.fullName : 'Jasman Automotriz';
-    const promoTitle = promoDisplayTitle;
-    const subInfo = promotion.subheadline && promotion.subheadline !== promoTitle ? ` (${promotion.subheadline})` : '';
+    const promoTitleForWa = promotion.title || promotion.headline || 'Promoción Vigente';
 
     let text = '';
     if (bookingDetails) {
-      text = `SW- Hola, deseo confirmar mi visita para la promoción "${promoTitle}"${subInfo} en sucursal "${branchName}". Folio: ${bookingDetails.folio}. Nombre: ${bookingDetails.nombre}, Teléfono: ${bookingDetails.telefono}, Vehículo: ${bookingDetails.vehiculo}, Fecha tentativa: ${bookingDetails.fechaVisita}.`;
+      text = `SW- Hola quisiera más información de su promoción de ${promoTitleForWa}. Sucursal: ${branchName}. Folio: ${bookingDetails.folio}. Nombre: ${bookingDetails.nombre}, Teléfono: ${bookingDetails.telefono}, Vehículo: ${bookingDetails.vehiculo}, Fecha tentativa: ${bookingDetails.fechaVisita}.`;
     } else {
-      text = `SW- Hola, quisiera agendar o cotizar la promoción "${promoTitle}"${subInfo} en sucursal "${branchName}".`;
+      text = `SW- Hola quisiera más información de su promoción de ${promoTitleForWa}`;
     }
 
     return `https://api.whatsapp.com/send/?phone=${phoneWithCountry}&text=${encodeURIComponent(text)}`;

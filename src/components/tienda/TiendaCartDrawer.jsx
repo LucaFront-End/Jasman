@@ -108,15 +108,22 @@ export default function TiendaCartDrawer() {
   const selectedBranch =
     sucursales.find((s) => s.slug === selectedBranchSlug) || sucursales[0];
 
-  const liveSubtotal =
-    !isLegacyCopyRoute && wixEstimate ? wixEstimate.subtotalAmount : subtotal;
-  const liveTotal =
-    !isLegacyCopyRoute && wixEstimate
-      ? wixEstimate.totalAmount
-      : isLegacyCopyRoute
-        ? totalAfterDiscount
-        : subtotal;
+  const liveSubtotal = subtotal;
+  const liveVolumeDiscount = volumeDiscountAmount;
   const activeWixCoupon = !isLegacyCopyRoute ? wixEstimate?.appliedCoupon : null;
+  const liveCouponDiscount = activeWixCoupon
+    ? Number(activeWixCoupon.amount) || 0
+    : isLegacyCopyRoute
+      ? discountAmount
+      : 0;
+  const liveShippingAmount =
+    !isLegacyCopyRoute && wixEstimate && !wixEstimate.isFreeShipping
+      ? Number(wixEstimate.shippingAmount) || 0
+      : 0;
+  const liveTotal = Math.max(
+    0,
+    liveSubtotal - liveVolumeDiscount - liveCouponDiscount + liveShippingAmount
+  );
 
   const cartWhatsappMessage = [
     'SW- Hola, quisiera asesoría sobre mi carrito en Jasman Tienda:',
@@ -126,6 +133,9 @@ export default function TiendaCartDrawer() {
           i.unitPrice * i.quantity
         )}`
     ),
+    liveVolumeDiscount > 0
+      ? `• ${volumeTier.label}: −${formatMXN(liveVolumeDiscount)}`
+      : null,
     activeWixCoupon?.code
       ? `• Cupón Wix activo: ${activeWixCoupon.code}`
       : coupon?.code
@@ -501,17 +511,11 @@ export default function TiendaCartDrawer() {
                     }}
                   >
                     <Truck size={13} />
-                    {isLegacyCopyRoute || (wixEstimate?.automaticDiscounts || []).length > 0
-                      ? totalTireUnits >= 4
-                        ? '¡5% OFF por juego completo + Envío Gratis!'
-                        : totalTireUnits >= 2
-                          ? `¡2% OFF activo! Agrega ${4 - totalTireUnits} más para 5% OFF`
-                          : 'Agrega 1 llanta más y obtén 2% OFF adicional'
-                      : totalTireUnits >= 4
-                        ? '¡Juego completo de 4 llantas + Envío Nacional Gratis!'
-                        : totalTireUnits >= 2
-                          ? 'Par de llantas listo · Envío Nacional Gratis incluido'
-                          : 'Envío Nacional Gratis incluido en tu pedido'}
+                    {totalTireUnits >= 4
+                      ? '¡5% OFF por juego completo + Envío Gratis!'
+                      : totalTireUnits >= 2
+                        ? `¡2% OFF activo! Agrega ${4 - totalTireUnits} más para 5% OFF`
+                        : 'Agrega 1 llanta más y obtén 2% OFF adicional'}
                   </span>
                   <span
                     style={{
@@ -820,45 +824,21 @@ export default function TiendaCartDrawer() {
                 <span>Subtotal (Con IVA)</span>
                 <span>{formatMXN(liveSubtotal)}</span>
               </div>
-              {isLegacyCopyRoute ? (
-                <>
-                  {volumeDiscountAmount > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#15803D', fontWeight: 700 }}>
-                      <span>{volumeTier.label}</span>
-                      <span>−{formatMXN(volumeDiscountAmount)}</span>
-                    </div>
-                  )}
-                  {discountAmount > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: C.red, fontWeight: 700 }}>
-                      <span>10% Primera Compra ({coupon?.code})</span>
-                      <span>−{formatMXN(discountAmount)}</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  {(wixEstimate?.automaticDiscounts || []).map((ad, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        fontSize: 13,
-                        color: '#15803D',
-                        fontWeight: 700,
-                      }}
-                    >
-                      <span>{ad.label}</span>
-                      <span>−{formatMXN(ad.amount)}</span>
-                    </div>
-                  ))}
-                  {activeWixCoupon && activeWixCoupon.amount > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: C.red, fontWeight: 700 }}>
-                      <span>Cupón ({activeWixCoupon.code})</span>
-                      <span>−{formatMXN(activeWixCoupon.amount)}</span>
-                    </div>
-                  )}
-                </>
+              {liveVolumeDiscount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#15803D', fontWeight: 700 }}>
+                  <span>{volumeTier.label}</span>
+                  <span>−{formatMXN(liveVolumeDiscount)}</span>
+                </div>
+              )}
+              {liveCouponDiscount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: C.red, fontWeight: 700 }}>
+                  <span>
+                    {activeWixCoupon?.code
+                      ? `Cupón (${activeWixCoupon.code})`
+                      : `10% Primera Compra (${coupon?.code})`}
+                  </span>
+                  <span>−{formatMXN(liveCouponDiscount)}</span>
+                </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: '#15803D', fontWeight: 700 }}>
                 <span>Entrega a Domicilio Nacional</span>

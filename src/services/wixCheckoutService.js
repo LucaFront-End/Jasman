@@ -259,6 +259,14 @@ function parseWixCartEstimate(estimate, couponError = '') {
   const payNow = estimate.payNow || {};
   const cartObj = estimate.cart || {};
 
+  const itemsPreDiscountSubtotal = (cartObj.lineItems || []).reduce((acc, li) => {
+    const qty = Math.max(1, Number(li?.quantity) || 1);
+    const unitBefore = Number(
+      li?.priceBeforeDiscounts?.amount ?? li?.price?.amount ?? 0
+    );
+    return acc + unitBefore * qty;
+  }, 0);
+
   const subtotalAmount = Number(
     payNow.subtotal?.amount ?? cartObj.subtotal?.amount ?? 0
   );
@@ -292,12 +300,15 @@ function parseWixCartEstimate(estimate, couponError = '') {
       };
     } else {
       const ruleName =
+        d.discountRule?.name?.translated ||
+        d.discountRule?.name?.original ||
         d.merchantDiscount?.description ||
         d.discountRuleName ||
         'Descuento Automático';
       const ruleAmt =
         Number(
-          d.merchantDiscount?.amount?.amount ??
+          d.discountRule?.amount?.amount ??
+            d.merchantDiscount?.amount?.amount ??
             d.discount?.amount?.amount ??
             0
         ) || 0;
@@ -309,6 +320,7 @@ function parseWixCartEstimate(estimate, couponError = '') {
 
   return {
     subtotalAmount,
+    itemsPreDiscountSubtotal,
     discountAmount,
     shippingAmount,
     isFreeShipping: shippingAmount === 0,
@@ -572,16 +584,21 @@ export async function redirectToJasmanWixCheckout({
         });
 
         const computedSubtotalNum =
+          Number(subtotal) ||
+          liveEstimate?.itemsPreDiscountSubtotal ||
           liveEstimate?.subtotalAmount ||
           Number(syncedCart?.subtotal?.amount) ||
-          Number(subtotal) ||
           0;
-        const computedDiscountNum = liveEstimate?.discountAmount || 0;
+        const computedDiscountNum = Math.max(
+          0,
+          computedSubtotalNum -
+            (Number(totalAfterDiscount) || computedSubtotalNum)
+        );
         const computedTotalNum =
+          Number(totalAfterDiscount) ||
           liveEstimate?.totalAmount ||
           Number(syncedCart?.subtotalAfterDiscounts?.amount) ||
           Number(syncedCart?.subtotal?.amount) ||
-          Number(totalAfterDiscount) ||
           computedSubtotalNum;
 
         window.sessionStorage.setItem(

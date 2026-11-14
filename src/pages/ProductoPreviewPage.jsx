@@ -7,7 +7,7 @@ import {
   useWixCatalogProducts,
   findCatalogProductById,
 } from '../data/productosMasterData';
-import { useTiendaState } from '../hooks/useTiendaState';
+import { useTiendaState, getVolumeDiscountTier } from '../hooks/useTiendaState';
 import { useAppleTilt } from '../hooks/useAppleScrollPhysics';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
@@ -195,10 +195,14 @@ export default function ProductoPreviewPage() {
     : 0;
 
   const unitEffectivePrice = basePrice;
-  const finalTotalForSelection = unitEffectivePrice * qty;
-  const totalSavingsForSelection = hasWixSale
-    ? Math.max(0, (regularPrice - basePrice) * qty)
-    : 0;
+  const selectionUnits = (product.unitsPerItem || 1) * qty;
+  const selectionVolumeTier = getVolumeDiscountTier(selectionUnits);
+  const rawSelectionTotal = unitEffectivePrice * qty;
+  const selectionVolumeDiscount = rawSelectionTotal * selectionVolumeTier.rate;
+  const finalTotalForSelection = Math.max(0, rawSelectionTotal - selectionVolumeDiscount);
+  const totalSavingsForSelection =
+    (hasWixSale ? Math.max(0, (regularPrice - basePrice) * qty) : 0) +
+    selectionVolumeDiscount;
 
   // Build gallery: first image prefers the transparent PNG cutout, followed by all CSV angles
   const galleryImages = useMemo(() => {
@@ -464,532 +468,532 @@ export default function ProductoPreviewPage() {
               {/* 1. PURE WHITE ARCHITECTURAL GALLERY STAGE */}
               <div
                 className="jasman-pdp-gallery-stage"
-              onMouseMove={onMouseMove}
-              onMouseLeave={onMouseLeave}
-              style={{
-                height: 495,
-                borderRadius: 32,
-                background: '#FFFFFF',
-                border: '1px solid rgba(26, 31, 54, 0.07)',
-                boxShadow: '0 24px 60px rgba(26, 31, 54, 0.05)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                padding: '24px 28px',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Subtle Architectural Dot Matrix */}
-              <div
+                onMouseMove={onMouseMove}
+                onMouseLeave={onMouseLeave}
                 style={{
-                  position: 'absolute',
-                  inset: 0,
-                  backgroundImage:
-                    'radial-gradient(rgba(26, 31, 54, 0.035) 1px, transparent 1px)',
-                  backgroundSize: '24px 24px',
-                  pointerEvents: 'none',
-                }}
-              />
-
-              {/* Giant Subtle Watermark behind tire */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '48%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  fontFamily: F.heading,
-                  fontSize: 'clamp(6rem, 13vw, 11rem)',
-                  fontWeight: 900,
-                  letterSpacing: '-0.06em',
-                  color: 'rgba(26, 31, 54, 0.028)',
-                  whiteSpace: 'nowrap',
-                  pointerEvents: 'none',
-                  userSelect: 'none',
-                }}
-              >
-                {product.rim || product.brand}
-              </div>
-
-              {/* Top Header inside Stage: Official Brand Image Badge + Measure + Stock */}
-              <div
-                style={{
-                  position: 'relative',
-                  zIndex: 4,
+                  height: 495,
+                  borderRadius: 32,
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(26, 31, 54, 0.07)',
+                  boxShadow: '0 24px 60px rgba(26, 31, 54, 0.05)',
                   display: 'flex',
-                  alignItems: 'center',
+                  flexDirection: 'column',
                   justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 10,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {/* Framed Brand Image Pill inside Gallery */}
-                  <div
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: 9999,
-                      background: '#F8F9FA',
-                      border: '1px solid rgba(26, 31, 54, 0.08)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    {brandMeta?.logo && (
-                      <img
-                        src={brandMeta.logo}
-                        alt={product.brand}
-                        style={{
-                          height: 20,
-                          maxWidth: 102,
-                          width: 'auto',
-                          objectFit: 'contain',
-                          borderRadius: 3,
-                        }}
-                      />
-                    )}
-                  </div>
-
-                  {product.measure && (
-                    <span
-                      style={{
-                        padding: '6px 13px',
-                        borderRadius: 9999,
-                        background: C.navy,
-                        color: C.white,
-                        fontFamily: F.heading,
-                        fontSize: 11,
-                        fontWeight: 800,
-                        letterSpacing: '0.05em',
-                      }}
-                    >
-                      {product.measure}
-                    </span>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {galleryImages.length > 1 && (
-                    <span
-                      style={{
-                        padding: '5px 11px',
-                        borderRadius: 9999,
-                        background: '#F8F9FA',
-                        border: '1px solid rgba(26,31,54,0.07)',
-                        color: C.navy,
-                        fontFamily: F.heading,
-                        fontSize: 10.5,
-                        fontWeight: 800,
-                        letterSpacing: '0.08em',
-                      }}
-                    >
-                      {String(selectedImageIdx + 1).padStart(2, '0')} /{' '}
-                      {String(galleryImages.length).padStart(2, '0')}
-                    </span>
-                  )}
-                  <span
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: 9999,
-                      background: product.inStock
-                        ? 'rgba(22, 163, 74, 0.08)'
-                        : '#F1F5F9',
-                      color: product.inStock ? '#15803D' : C.gray,
-                      fontFamily: F.heading,
-                      fontSize: 11,
-                      fontWeight: 800,
-                    }}
-                  >
-                    ● {product.inStock ? `${product.quantity} en stock` : 'Agotado'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Center Interactive Tire Image with Prev/Next Glass Controls */}
-              <div
-                className="jasman-pdp-stage-body"
-                style={{
+                  padding: '24px 28px',
                   position: 'relative',
-                  zIndex: 3,
-                  flex: 1,
-                  minHeight: 0,
-                  width: '100%',
                   overflow: 'hidden',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                 }}
               >
-                {galleryImages.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={prevImage}
-                    aria-label="Foto anterior"
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      zIndex: 5,
-                      width: 40,
-                      height: 40,
-                      borderRadius: '50%',
-                      border: '1px solid rgba(26, 31, 54, 0.09)',
-                      background: 'rgba(255, 255, 255, 0.92)',
-                      backdropFilter: 'blur(12px)',
-                      color: C.navy,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 8px 20px rgba(26, 31, 54, 0.06)',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                )}
-
-                {/* Soft ground contact shadow */}
+                {/* Subtle Architectural Dot Matrix */}
                 <div
                   style={{
                     position: 'absolute',
-                    bottom: 8,
-                    width: '48%',
-                    height: 22,
-                    borderRadius: '50%',
-                    background:
-                      'radial-gradient(ellipse at center, rgba(26, 31, 54, 0.22) 0%, rgba(26, 31, 54, 0) 74%)',
-                    filter: 'blur(6px)',
+                    inset: 0,
+                    backgroundImage:
+                      'radial-gradient(rgba(26, 31, 54, 0.035) 1px, transparent 1px)',
+                    backgroundSize: '24px 24px',
                     pointerEvents: 'none',
                   }}
                 />
 
-                <img
-                  key={`${product.id}-${selectedImageIdx}`}
-                  className="jasman-pdp-main-tire-img"
-                  src={activeSlide.url}
-                  alt={product.cleanTitle}
-                  onError={(e) => {
-                    if (e.currentTarget.src !== activeSlide.fallbackUrl) {
-                      e.currentTarget.src = activeSlide.fallbackUrl;
-                    } else {
-                      e.currentTarget.src = '/images/service-tires.png';
-                    }
-                  }}
-                  style={{
-                    maxWidth: '82%',
-                    maxHeight: '100%',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                    mixBlendMode: activeSlide.isCutout ? 'normal' : 'multiply',
-                    filter: activeSlide.isCutout
-                      ? 'drop-shadow(0 24px 32px rgba(26, 31, 54, 0.20)) contrast(1.04)'
-                      : 'contrast(1.05)',
-                    transform: tilt.active
-                      ? `perspective(1000px) rotateX(${tilt.rx * 0.7}deg) rotateY(${tilt.ry * 0.9}deg) scale(${activeSlide.isCutout ? 1.05 : 1.24})`
-                      : `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(${activeSlide.isCutout ? 1 : 1.18})`,
-                    transition: tilt.active
-                      ? 'transform 0.14s ease-out'
-                      : 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                    animation: 'heroFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                  }}
-                />
-
-                {galleryImages.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={nextImage}
-                    aria-label="Foto siguiente"
-                    style={{
-                      position: 'absolute',
-                      right: 0,
-                      zIndex: 5,
-                      width: 40,
-                      height: 40,
-                      borderRadius: '50%',
-                      border: '1px solid rgba(26, 31, 54, 0.09)',
-                      background: 'rgba(255, 255, 255, 0.92)',
-                      backdropFilter: 'blur(12px)',
-                      color: C.navy,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 8px 20px rgba(26, 31, 54, 0.06)',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                )}
-              </div>
-
-              {/* Bottom Telemetry Strip inside Stage: Anatomía de la Medida */}
-              <div
-                className="jasman-pdp-anatomy-grid"
-                style={{
-                  position: 'relative',
-                  zIndex: 4,
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: 8,
-                  paddingTop: 14,
-                  borderTop: '1px solid rgba(26, 31, 54, 0.06)',
-                }}
-              >
-                {[
-                  {
-                    k: 'Ancho',
-                    v: product.tableWidthLabel || (product.width ? `${product.width} mm` : '—'),
-                  },
-                  {
-                    k: 'Perfil',
-                    v: product.tableProfileLabel || (product.profile ? `Serie ${product.profile}` : '—'),
-                  },
-                  {
-                    k: 'Rin',
-                    v: product.rim || product.tableRimLabel || '—',
-                  },
-                  {
-                    k: 'Índice',
-                    v: product.loadSpeed || 'Oficial',
-                  },
-                ].map((spec) => (
-                  <div
-                    key={spec.k}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: 14,
-                      background: '#F8F9FA',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: F.heading,
-                        fontSize: 9,
-                        fontWeight: 800,
-                        letterSpacing: '0.14em',
-                        textTransform: 'uppercase',
-                        color: '#64748B',
-                      }}
-                    >
-                      {spec.k}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: F.heading,
-                        fontSize: 13.5,
-                        fontWeight: 900,
-                        color: C.navy,
-                        marginTop: 2,
-                      }}
-                    >
-                      {spec.v}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 2. INTERACTIVE CONTINUOUS GALLERY THUMBNAIL CAROUSEL */}
-            {galleryImages.length > 1 && (
-              <div
-                onMouseEnter={() => {
-                  thumbsPausedRef.current = true;
-                }}
-                onMouseLeave={() => {
-                  thumbsPausedRef.current = false;
-                }}
-                onTouchStart={() => {
-                  thumbsPausedRef.current = true;
-                }}
-                onTouchEnd={() => {
-                  thumbsPausedRef.current = false;
-                }}
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                }}
-              >
-                {isContinuousThumbs && (
-                  <>
-                    <button
-                      type="button"
-                      aria-label="Vistas anteriores"
-                      onClick={() => {
-                        if (thumbsTrackRef.current) {
-                          thumbsTrackRef.current.scrollBy({
-                            left: -250,
-                            behavior: 'smooth',
-                          });
-                        }
-                      }}
-                      style={{
-                        position: 'absolute',
-                        left: -8,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        zIndex: 5,
-                        width: 30,
-                        height: 30,
-                        borderRadius: '50%',
-                        border: '1px solid rgba(26, 31, 54, 0.12)',
-                        background: 'rgba(255, 255, 255, 0.96)',
-                        color: C.navy,
-                        boxShadow: '0 6px 16px rgba(26, 31, 54, 0.10)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <ChevronLeft size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Siguientes vistas"
-                      onClick={() => {
-                        if (thumbsTrackRef.current) {
-                          thumbsTrackRef.current.scrollBy({
-                            left: 250,
-                            behavior: 'smooth',
-                          });
-                        }
-                      }}
-                      style={{
-                        position: 'absolute',
-                        right: -8,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        zIndex: 5,
-                        width: 30,
-                        height: 30,
-                        borderRadius: '50%',
-                        border: '1px solid rgba(26, 31, 54, 0.12)',
-                        background: 'rgba(255, 255, 255, 0.96)',
-                        color: C.navy,
-                        boxShadow: '0 6px 16px rgba(26, 31, 54, 0.10)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <ChevronRight size={15} />
-                    </button>
-                  </>
-                )}
-
+                {/* Giant Subtle Watermark behind tire */}
                 <div
-                  ref={thumbsTrackRef}
-                  className="jasman-product-thumbs-carousel"
                   style={{
-                    display: 'flex',
-                    flexWrap: 'nowrap',
-                    gap: 10,
-                    overflowX: 'auto',
-                    padding: '4px 2px 6px',
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none',
-                    maskImage: isContinuousThumbs
-                      ? 'linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%)'
-                      : 'none',
-                    WebkitMaskImage: isContinuousThumbs
-                      ? 'linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%)'
-                      : 'none',
+                    position: 'absolute',
+                    top: '48%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontFamily: F.heading,
+                    fontSize: 'clamp(6rem, 13vw, 11rem)',
+                    fontWeight: 900,
+                    letterSpacing: '-0.06em',
+                    color: 'rgba(26, 31, 54, 0.028)',
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
                   }}
                 >
-                  {loopGalleryImages.map((imgItem, renderIdx) => {
-                    const realIdx = imgItem.originalIdx ?? renderIdx;
-                    const isActive = realIdx === selectedImageIdx;
-                    return (
-                      <button
-                        key={`${realIdx}-${renderIdx}`}
-                        type="button"
-                        onClick={() => setSelectedImageIdx(realIdx)}
+                  {product.rim || product.brand}
+                </div>
+
+                {/* Top Header inside Stage: Official Brand Image Badge + Measure + Stock */}
+                <div
+                  style={{
+                    position: 'relative',
+                    zIndex: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 10,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {/* Framed Brand Image Pill inside Gallery */}
+                    <div
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 9999,
+                        background: '#F8F9FA',
+                        border: '1px solid rgba(26, 31, 54, 0.08)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}
+                    >
+                      {brandMeta?.logo && (
+                        <img
+                          src={brandMeta.logo}
+                          alt={product.brand}
+                          style={{
+                            height: 20,
+                            maxWidth: 102,
+                            width: 'auto',
+                            objectFit: 'contain',
+                            borderRadius: 3,
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    {product.measure && (
+                      <span
                         style={{
-                          flex: isContinuousThumbs
-                            ? '0 0 116px'
-                            : `1 1 ${Math.floor(100 / galleryImages.length)}%`,
-                          minWidth: isContinuousThumbs ? 116 : 96,
-                          height: 86,
-                          borderRadius: 18,
-                          border: isActive
-                            ? `2px solid ${C.red}`
-                            : '1px solid rgba(26, 31, 54, 0.08)',
-                          background: '#FFFFFF',
-                          padding: '8px 10px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 4,
-                          boxShadow: isActive
-                            ? '0 10px 22px rgba(196, 30, 36, 0.12)'
-                            : '0 4px 12px rgba(26, 31, 54, 0.03)',
-                          transition: 'border-color 0.22s ease, box-shadow 0.22s ease',
+                          padding: '6px 13px',
+                          borderRadius: 9999,
+                          background: C.navy,
+                          color: C.white,
+                          fontFamily: F.heading,
+                          fontSize: 11,
+                          fontWeight: 800,
+                          letterSpacing: '0.05em',
                         }}
                       >
-                        <div
+                        {product.measure}
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {galleryImages.length > 1 && (
+                      <span
+                        style={{
+                          padding: '5px 11px',
+                          borderRadius: 9999,
+                          background: '#F8F9FA',
+                          border: '1px solid rgba(26,31,54,0.07)',
+                          color: C.navy,
+                          fontFamily: F.heading,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
+                        }}
+                      >
+                        {String(selectedImageIdx + 1).padStart(2, '0')} /{' '}
+                        {String(galleryImages.length).padStart(2, '0')}
+                      </span>
+                    )}
+                    <span
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: 9999,
+                        background: product.inStock
+                          ? 'rgba(22, 163, 74, 0.08)'
+                          : '#F1F5F9',
+                        color: product.inStock ? '#15803D' : C.gray,
+                        fontFamily: F.heading,
+                        fontSize: 11,
+                        fontWeight: 800,
+                      }}
+                    >
+                      ● {product.inStock ? `${product.quantity} en stock` : 'Agotado'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Center Interactive Tire Image with Prev/Next Glass Controls */}
+                <div
+                  className="jasman-pdp-stage-body"
+                  style={{
+                    position: 'relative',
+                    zIndex: 3,
+                    flex: 1,
+                    minHeight: 0,
+                    width: '100%',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {galleryImages.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={prevImage}
+                      aria-label="Foto anterior"
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        zIndex: 5,
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        border: '1px solid rgba(26, 31, 54, 0.09)',
+                        background: 'rgba(255, 255, 255, 0.92)',
+                        backdropFilter: 'blur(12px)',
+                        color: C.navy,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 8px 20px rgba(26, 31, 54, 0.06)',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                  )}
+
+                  {/* Soft ground contact shadow */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 8,
+                      width: '48%',
+                      height: 22,
+                      borderRadius: '50%',
+                      background:
+                        'radial-gradient(ellipse at center, rgba(26, 31, 54, 0.22) 0%, rgba(26, 31, 54, 0) 74%)',
+                      filter: 'blur(6px)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+
+                  <img
+                    key={`${product.id}-${selectedImageIdx}`}
+                    className="jasman-pdp-main-tire-img"
+                    src={activeSlide.url}
+                    alt={product.cleanTitle}
+                    onError={(e) => {
+                      if (e.currentTarget.src !== activeSlide.fallbackUrl) {
+                        e.currentTarget.src = activeSlide.fallbackUrl;
+                      } else {
+                        e.currentTarget.src = '/images/service-tires.png';
+                      }
+                    }}
+                    style={{
+                      maxWidth: '82%',
+                      maxHeight: '100%',
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain',
+                      mixBlendMode: activeSlide.isCutout ? 'normal' : 'multiply',
+                      filter: activeSlide.isCutout
+                        ? 'drop-shadow(0 24px 32px rgba(26, 31, 54, 0.20)) contrast(1.04)'
+                        : 'contrast(1.05)',
+                      transform: tilt.active
+                        ? `perspective(1000px) rotateX(${tilt.rx * 0.7}deg) rotateY(${tilt.ry * 0.9}deg) scale(${activeSlide.isCutout ? 1.05 : 1.24})`
+                        : `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(${activeSlide.isCutout ? 1 : 1.18})`,
+                      transition: tilt.active
+                        ? 'transform 0.14s ease-out'
+                        : 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                      animation: 'heroFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                  />
+
+                  {galleryImages.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={nextImage}
+                      aria-label="Foto siguiente"
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        zIndex: 5,
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        border: '1px solid rgba(26, 31, 54, 0.09)',
+                        background: 'rgba(255, 255, 255, 0.92)',
+                        backdropFilter: 'blur(12px)',
+                        color: C.navy,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 8px 20px rgba(26, 31, 54, 0.06)',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Bottom Telemetry Strip inside Stage: Anatomía de la Medida */}
+                <div
+                  className="jasman-pdp-anatomy-grid"
+                  style={{
+                    position: 'relative',
+                    zIndex: 4,
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: 8,
+                    paddingTop: 14,
+                    borderTop: '1px solid rgba(26, 31, 54, 0.06)',
+                  }}
+                >
+                  {[
+                    {
+                      k: 'Ancho',
+                      v: product.tableWidthLabel || (product.width ? `${product.width} mm` : '—'),
+                    },
+                    {
+                      k: 'Perfil',
+                      v: product.tableProfileLabel || (product.profile ? `Serie ${product.profile}` : '—'),
+                    },
+                    {
+                      k: 'Rin',
+                      v: product.rim || product.tableRimLabel || '—',
+                    },
+                    {
+                      k: 'Índice',
+                      v: product.loadSpeed || 'Oficial',
+                    },
+                  ].map((spec) => (
+                    <div
+                      key={spec.k}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: 14,
+                        background: '#F8F9FA',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: F.heading,
+                          fontSize: 9,
+                          fontWeight: 800,
+                          letterSpacing: '0.14em',
+                          textTransform: 'uppercase',
+                          color: '#64748B',
+                        }}
+                      >
+                        {spec.k}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: F.heading,
+                          fontSize: 13.5,
+                          fontWeight: 900,
+                          color: C.navy,
+                          marginTop: 2,
+                        }}
+                      >
+                        {spec.v}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. INTERACTIVE CONTINUOUS GALLERY THUMBNAIL CAROUSEL */}
+              {galleryImages.length > 1 && (
+                <div
+                  onMouseEnter={() => {
+                    thumbsPausedRef.current = true;
+                  }}
+                  onMouseLeave={() => {
+                    thumbsPausedRef.current = false;
+                  }}
+                  onTouchStart={() => {
+                    thumbsPausedRef.current = true;
+                  }}
+                  onTouchEnd={() => {
+                    thumbsPausedRef.current = false;
+                  }}
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                  }}
+                >
+                  {isContinuousThumbs && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label="Vistas anteriores"
+                        onClick={() => {
+                          if (thumbsTrackRef.current) {
+                            thumbsTrackRef.current.scrollBy({
+                              left: -250,
+                              behavior: 'smooth',
+                            });
+                          }
+                        }}
+                        style={{
+                          position: 'absolute',
+                          left: -8,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          zIndex: 5,
+                          width: 30,
+                          height: 30,
+                          borderRadius: '50%',
+                          border: '1px solid rgba(26, 31, 54, 0.12)',
+                          background: 'rgba(255, 255, 255, 0.96)',
+                          color: C.navy,
+                          boxShadow: '0 6px 16px rgba(26, 31, 54, 0.10)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <ChevronLeft size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Siguientes vistas"
+                        onClick={() => {
+                          if (thumbsTrackRef.current) {
+                            thumbsTrackRef.current.scrollBy({
+                              left: 250,
+                              behavior: 'smooth',
+                            });
+                          }
+                        }}
+                        style={{
+                          position: 'absolute',
+                          right: -8,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          zIndex: 5,
+                          width: 30,
+                          height: 30,
+                          borderRadius: '50%',
+                          border: '1px solid rgba(26, 31, 54, 0.12)',
+                          background: 'rgba(255, 255, 255, 0.96)',
+                          color: C.navy,
+                          boxShadow: '0 6px 16px rgba(26, 31, 54, 0.10)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <ChevronRight size={15} />
+                      </button>
+                    </>
+                  )}
+
+                  <div
+                    ref={thumbsTrackRef}
+                    className="jasman-product-thumbs-carousel"
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'nowrap',
+                      gap: 10,
+                      overflowX: 'auto',
+                      padding: '4px 2px 6px',
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                      maskImage: isContinuousThumbs
+                        ? 'linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%)'
+                        : 'none',
+                      WebkitMaskImage: isContinuousThumbs
+                        ? 'linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%)'
+                        : 'none',
+                    }}
+                  >
+                    {loopGalleryImages.map((imgItem, renderIdx) => {
+                      const realIdx = imgItem.originalIdx ?? renderIdx;
+                      const isActive = realIdx === selectedImageIdx;
+                      return (
+                        <button
+                          key={`${realIdx}-${renderIdx}`}
+                          type="button"
+                          onClick={() => setSelectedImageIdx(realIdx)}
                           style={{
-                            width: '100%',
-                            flex: 1,
-                            minHeight: 0,
-                            overflow: 'hidden',
+                            flex: isContinuousThumbs
+                              ? '0 0 116px'
+                              : `1 1 ${Math.floor(100 / galleryImages.length)}%`,
+                            minWidth: isContinuousThumbs ? 116 : 96,
+                            height: 86,
+                            borderRadius: 18,
+                            border: isActive
+                              ? `2px solid ${C.red}`
+                              : '1px solid rgba(26, 31, 54, 0.08)',
+                            background: '#FFFFFF',
+                            padding: '8px 10px',
+                            cursor: 'pointer',
                             display: 'flex',
+                            flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            gap: 4,
+                            boxShadow: isActive
+                              ? '0 10px 22px rgba(196, 30, 36, 0.12)'
+                              : '0 4px 12px rgba(26, 31, 54, 0.03)',
+                            transition: 'border-color 0.22s ease, box-shadow 0.22s ease',
                           }}
                         >
-                          <img
-                            src={imgItem.url}
-                            alt={`${product.cleanTitle} ${imgItem.label}`}
-                            onError={(e) => {
-                              e.currentTarget.src = imgItem.fallbackUrl;
-                            }}
+                          <div
                             style={{
-                              height: '100%',
                               width: '100%',
-                              maxHeight: 54,
-                              objectFit: 'contain',
-                              mixBlendMode: imgItem.isCutout ? 'normal' : 'multiply',
-                              transform: imgItem.isCutout ? 'scale(1.06)' : 'scale(1.52)',
-                              opacity: isActive ? 1 : 0.82,
-                              transition: 'transform 0.2s ease, opacity 0.2s ease',
+                              flex: 1,
+                              minHeight: 0,
+                              overflow: 'hidden',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
                             }}
-                          />
-                        </div>
-                        <span
-                          style={{
-                            fontFamily: F.heading,
-                            fontSize: 9.5,
-                            fontWeight: 800,
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            color: isActive ? C.red : '#64748B',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {imgItem.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <style>{`
+                          >
+                            <img
+                              src={imgItem.url}
+                              alt={`${product.cleanTitle} ${imgItem.label}`}
+                              onError={(e) => {
+                                e.currentTarget.src = imgItem.fallbackUrl;
+                              }}
+                              style={{
+                                height: '100%',
+                                width: '100%',
+                                maxHeight: 54,
+                                objectFit: 'contain',
+                                mixBlendMode: imgItem.isCutout ? 'normal' : 'multiply',
+                                transform: imgItem.isCutout ? 'scale(1.06)' : 'scale(1.52)',
+                                opacity: isActive ? 1 : 0.82,
+                                transition: 'transform 0.2s ease, opacity 0.2s ease',
+                              }}
+                            />
+                          </div>
+                          <span
+                            style={{
+                              fontFamily: F.heading,
+                              fontSize: 9.5,
+                              fontWeight: 800,
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                              color: isActive ? C.red : '#64748B',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {imgItem.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <style>{`
                   .jasman-product-thumbs-carousel::-webkit-scrollbar {
                     display: none;
                   }
                 `}</style>
-              </div>
-            )}
+                </div>
+              )}
             </div>
 
             {/* 3. SYMMETRICAL 2x2 HIGH-TECH TRUST BADGES */}
@@ -1208,703 +1212,723 @@ export default function ProductoPreviewPage() {
               }}
             >
               {/* Product Title */}
-            <h1
-              style={{
-                fontFamily: F.heading,
-                fontSize: 'clamp(1.75rem, 2.8vw, 2.4rem)',
-                fontWeight: 900,
-                color: C.navy,
-                lineHeight: 1.12,
-                letterSpacing: '-0.03em',
-                margin: '0 0 10px',
-              }}
-            >
-              {product.cleanTitle}
-            </h1>
-
-            {/* Rating + SKU + Discount Legend with Floating Popover Row */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 10,
-                marginBottom: 16,
-                position: 'relative',
-              }}
-            >
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ display: 'flex', gap: 2 }}>
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} fill="#F59E0B" color="#F59E0B" />
-                  ))}
-                </div>
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: C.navy,
-                    fontFamily: F.heading,
-                  }}
-                >
-                  5.0 Reseñas
-                </span>
-              </div>
-
-              <span style={{ color: '#CBD5E1' }}>·</span>
-
-              <span style={{ fontSize: 12, color: '#64748B', fontFamily: F.body }}>
-                SKU: <strong style={{ color: C.navy }}>{product.reference}</strong>
-              </span>
-
-              {basePrice > 0 && (
-                <>
-                  <span style={{ color: '#CBD5E1' }}>·</span>
-
-                  <div
-                    onMouseEnter={() => setShowDiscountFloat(true)}
-                    onMouseLeave={() => setShowDiscountFloat(false)}
-                    style={{ position: 'relative', display: 'inline-flex' }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setShowDiscountFloat((v) => !v)}
-                      style={{
-                        padding: '4px 11px',
-                        borderRadius: 9999,
-                        border: hasWixSale
-                          ? '1px solid rgba(22, 163, 74, 0.3)'
-                          : '1px solid rgba(196, 30, 36, 0.22)',
-                        background: hasWixSale
-                          ? 'rgba(22, 163, 74, 0.1)'
-                          : 'rgba(196, 30, 36, 0.07)',
-                        color: hasWixSale ? '#15803D' : C.red,
-                        fontFamily: F.heading,
-                        fontSize: 10.5,
-                        fontWeight: 800,
-                        letterSpacing: '0.03em',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 5,
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      <Tag size={11} />
-                      <span>
-                        {hasWixSale
-                          ? `−${wixSalePercent}% Oferta Oficial Activa`
-                          : '10% OFF en tu 1ra Compra'}
-                      </span>
-                      <Info size={11} />
-                    </button>
-
-                    {/* Floating Discount Info Popover */}
-                    {showDiscountFloat && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: 'calc(100% + 8px)',
-                          left: 0,
-                          zIndex: 45,
-                          width: 290,
-                          padding: '14px 16px',
-                          borderRadius: 18,
-                          background: 'rgba(26, 31, 54, 0.97)',
-                          backdropFilter: 'blur(16px)',
-                          WebkitBackdropFilter: 'blur(16px)',
-                          color: '#FFFFFF',
-                          border: '1px solid rgba(255, 255, 255, 0.12)',
-                          boxShadow: '0 20px 44px rgba(15, 23, 42, 0.28)',
-                          animation: 'heroFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontFamily: F.heading,
-                            fontSize: 10,
-                            fontWeight: 800,
-                            letterSpacing: '0.14em',
-                            textTransform: 'uppercase',
-                            color: '#FCA5A5',
-                            marginBottom: 8,
-                          }}
-                        >
-                          Beneficios Oficiales Jasman Tienda
-                        </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 6,
-                            fontSize: 11.5,
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              padding: '6px 9px',
-                              borderRadius: 10,
-                              background: 'rgba(255, 255, 255, 0.08)',
-                            }}
-                          >
-                            <span>Cupón 1ra Compra</span>
-                            <strong style={{ color: '#86EFAC' }}>−10% OFF Oficial</strong>
-                          </div>
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              padding: '6px 9px',
-                              borderRadius: 10,
-                              background: 'rgba(22, 163, 74, 0.22)',
-                            }}
-                          >
-                            <span>Cobertura Nacional</span>
-                            <strong style={{ color: '#86EFAC' }}>Envío GRATIS</strong>
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 10.5,
-                            color: '#CBD5E1',
-                            marginTop: 8,
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          Ingresa tu código promocional en tu Carrito o directamente en el Checkout Seguro de Wix.
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Price Directly Below (No Container Box) */}
-            <div
-              style={{
-                width: '100%',
-                marginTop: 4,
-                marginBottom: 18,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-              }}
-            >
-              <div
+              <h1
                 style={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  flexWrap: 'wrap',
-                  gap: 12,
+                  fontFamily: F.heading,
+                  fontSize: 'clamp(1.75rem, 2.8vw, 2.4rem)',
+                  fontWeight: 900,
+                  color: C.navy,
+                  lineHeight: 1.12,
+                  letterSpacing: '-0.03em',
+                  margin: '0 0 10px',
                 }}
               >
-                <span
-                  style={{
-                    fontFamily: F.heading,
-                    fontSize: basePrice > 0 ? 'clamp(2.1rem, 3.1vw, 2.65rem)' : 20,
-                    fontWeight: 900,
-                    color: hasWixSale
-                      ? C.red
-                      : basePrice > 0
-                        ? C.navy
-                        : C.gray,
-                    letterSpacing: '-0.035em',
-                    lineHeight: 1,
-                  }}
-                >
-                  {formatMXN(unitEffectivePrice)}
-                </span>
+                {product.cleanTitle}
+              </h1>
 
-                {hasWixSale && (
-                  <span
-                    style={{
-                      fontSize: 14,
-                      color: '#94A3B8',
-                      textDecoration: 'line-through',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {formatMXN(regularPrice)}
-                  </span>
-                )}
-
-                {totalSavingsForSelection > 0 && (
-                  <span
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: 9999,
-                      background: 'rgba(22, 163, 74, 0.1)',
-                      color: '#15803D',
-                      fontFamily: F.heading,
-                      fontSize: 10.5,
-                      fontWeight: 800,
-                    }}
-                  >
-                    Ahorras {formatMXN(totalSavingsForSelection)}
-                  </span>
-                )}
-              </div>
-
+              {/* Rating + SKU + Discount Legend with Floating Popover Row */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   flexWrap: 'wrap',
                   gap: 10,
-                  fontSize: 12,
-                  color: '#64748B',
-                  fontWeight: 500,
+                  marginBottom: 16,
+                  position: 'relative',
                 }}
               >
-                <span>Precio unitario en MXN · Con IVA</span>
-                <span style={{ color: '#CBD5E1' }}>•</span>
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    color: '#15803D',
-                    fontWeight: 700,
-                  }}
-                >
-                  <Truck size={13} /> Envío gratis a domicilio incluido
-                </span>
-              </div>
-            </div>
-
-            {/* Quantity Picker + Primary Add to Cart Button */}
-            {product.inStock && (
-              <div
-                ref={buyButtonRef}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  gap: 12,
-                  marginBottom: 12,
-                }}
-              >
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    borderRadius: 16,
-                    border: '1px solid rgba(26, 31, 54, 0.12)',
-                    background: '#FFFFFF',
-                    padding: 6,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setQty((q) => Math.max(1, q - 1))}
-                    style={{
-                      width: 38,
-                      height: 40,
-                      borderRadius: 11,
-                      border: 'none',
-                      background: 'transparent',
-                      fontSize: 18,
-                      fontWeight: 700,
-                      color: C.navy,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    −
-                  </button>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 2 }}>
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={14} fill="#F59E0B" color="#F59E0B" />
+                    ))}
+                  </div>
                   <span
                     style={{
-                      minWidth: 32,
-                      textAlign: 'center',
-                      fontFamily: F.heading,
-                      fontSize: 15,
-                      fontWeight: 900,
-                      color: C.navy,
-                    }}
-                  >
-                    {qty}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setQty((q) => Math.min(product.quantity, q + 1))}
-                    style={{
-                      width: 38,
-                      height: 40,
-                      borderRadius: 11,
-                      border: 'none',
-                      background: 'transparent',
-                      fontSize: 18,
+                      fontSize: 12,
                       fontWeight: 700,
                       color: C.navy,
-                      cursor: 'pointer',
+                      fontFamily: F.heading,
                     }}
                   >
-                    +
-                  </button>
+                    5.0 Reseñas
+                  </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleAddToCart}
-                  style={{
-                    flex: 1,
-                    padding: '16px 24px',
-                    borderRadius: 16,
-                    border: 'none',
-                    background: added ? '#16A34A' : C.red,
-                    color: C.white,
-                    fontFamily: F.heading,
-                    fontSize: 12.5,
-                    fontWeight: 800,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 10,
-                    boxShadow: '0 14px 32px rgba(196, 30, 36, 0.28)',
-                    transition: 'all 0.25s ease',
-                  }}
-                >
-                  {added ? (
-                    <>
-                      <Check size={17} /> ¡Añadido al Carrito!
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag size={17} /> Agregar · {formatMXN(finalTotalForSelection)}
-                    </>
-                  )}
-                </button>
+                <span style={{ color: '#CBD5E1' }}>·</span>
+
+                <span style={{ fontSize: 12, color: '#64748B', fontFamily: F.body }}>
+                  SKU: <strong style={{ color: C.navy }}>{product.reference}</strong>
+                </span>
+
+                {basePrice > 0 && (
+                  <>
+                    <span style={{ color: '#CBD5E1' }}>·</span>
+
+                    <div
+                      onMouseEnter={() => setShowDiscountFloat(true)}
+                      onMouseLeave={() => setShowDiscountFloat(false)}
+                      style={{ position: 'relative', display: 'inline-flex' }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setShowDiscountFloat((v) => !v)}
+                        style={{
+                          padding: '4px 11px',
+                          borderRadius: 9999,
+                          border: hasWixSale
+                            ? '1px solid rgba(22, 163, 74, 0.3)'
+                            : '1px solid rgba(196, 30, 36, 0.22)',
+                          background: hasWixSale
+                            ? 'rgba(22, 163, 74, 0.1)'
+                            : 'rgba(196, 30, 36, 0.07)',
+                          color: hasWixSale ? '#15803D' : C.red,
+                          fontFamily: F.heading,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          letterSpacing: '0.03em',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Tag size={11} />
+                        <span>
+                          {hasWixSale
+                            ? `−${wixSalePercent}% Oferta Oficial Activa`
+                            : '10% OFF en tu 1ra Compra'}
+                        </span>
+                        <Info size={11} />
+                      </button>
+
+                      {/* Floating Discount Info Popover */}
+                      {showDiscountFloat && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 8px)',
+                            left: 0,
+                            zIndex: 45,
+                            width: 290,
+                            padding: '14px 16px',
+                            borderRadius: 18,
+                            background: 'rgba(26, 31, 54, 0.97)',
+                            backdropFilter: 'blur(16px)',
+                            WebkitBackdropFilter: 'blur(16px)',
+                            color: '#FFFFFF',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
+                            boxShadow: '0 20px 44px rgba(15, 23, 42, 0.28)',
+                            animation: 'heroFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontFamily: F.heading,
+                              fontSize: 10,
+                              fontWeight: 800,
+                              letterSpacing: '0.14em',
+                              textTransform: 'uppercase',
+                              color: '#FCA5A5',
+                              marginBottom: 8,
+                            }}
+                          >
+                            Beneficios Oficiales Jasman Tienda
+                          </div>
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 6,
+                              fontSize: 11.5,
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '6px 9px',
+                                borderRadius: 10,
+                                background: 'rgba(255, 255, 255, 0.08)',
+                              }}
+                            >
+                              <span>Cupón 1ra Compra</span>
+                              <strong style={{ color: '#86EFAC' }}>−10% OFF Oficial</strong>
+                            </div>
+                            <div
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '6px 9px',
+                                borderRadius: 10,
+                                background: 'rgba(22, 163, 74, 0.22)',
+                              }}
+                            >
+                              <span>Cobertura Nacional</span>
+                              <strong style={{ color: '#86EFAC' }}>Envío GRATIS</strong>
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 10.5,
+                              color: '#CBD5E1',
+                              marginTop: 8,
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            Ingresa tu código promocional en tu Carrito o directamente en el Checkout Seguro de Wix.
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-            )}
 
-            {/* Direct WhatsApp Advisor Button with Product Info */}
-            <a
-              href={whatsappAdvisorUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                width: '100%',
-                padding: '14px 22px',
-                borderRadius: 16,
-                border: '1.5px solid rgba(22, 163, 74, 0.28)',
-                background: '#FFFFFF',
-                color: C.navy,
-                fontFamily: F.heading,
-                fontSize: 12,
-                fontWeight: 800,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                marginBottom: 22,
-                transition: 'all 0.25s ease',
-                boxSizing: 'border-box',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#16A34A';
-                e.currentTarget.style.borderColor = '#16A34A';
-                e.currentTarget.style.color = '#FFFFFF';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow =
-                  '0 12px 26px rgba(22, 163, 74, 0.24)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#FFFFFF';
-                e.currentTarget.style.borderColor = 'rgba(22, 163, 74, 0.28)';
-                e.currentTarget.style.color = C.navy;
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              <MessageCircle size={16} color="currentColor" style={{ color: 'inherit' }} />
-              <span>Consultar con Asesor por WhatsApp</span>
-            </a>
-
-            {/* Interactive Glass Accordions Deck */}
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              {/* Compatible Vehicle Types Mini SVG Pills */}
-              {Array.isArray(product.vehicleTypes) && product.vehicleTypes.length > 0 && (
+              {/* Price Directly Below (No Container Box) */}
+              <div
+                style={{
+                  width: '100%',
+                  marginTop: 4,
+                  marginBottom: 18,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                }}
+              >
                 <div
                   style={{
-                    padding: '12px 16px',
-                    borderRadius: 18,
-                    background: '#FFFFFF',
-                    border: '1px solid rgba(26, 31, 54, 0.07)',
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: 'baseline',
                     flexWrap: 'wrap',
-                    gap: 8,
+                    gap: 12,
                   }}
                 >
                   <span
                     style={{
                       fontFamily: F.heading,
-                      fontSize: 9.5,
-                      fontWeight: 800,
-                      letterSpacing: '0.14em',
-                      textTransform: 'uppercase',
-                      color: '#64748B',
-                      marginRight: 2,
+                      fontSize: basePrice > 0 ? 'clamp(2.1rem, 3.1vw, 2.65rem)' : 20,
+                      fontWeight: 900,
+                      color: hasWixSale
+                        ? C.red
+                        : basePrice > 0
+                          ? C.navy
+                          : C.gray,
+                      letterSpacing: '-0.035em',
+                      lineHeight: 1,
                     }}
                   >
-                    Vehículo compatible:
+                    {formatMXN(unitEffectivePrice)}
                   </span>
-                  {product.vehicleTypes.map((vtName) => (
-                    <Link
-                      key={vtName}
-                      to={`/llantas/catalogo?vehicle=${encodeURIComponent(
-                        vtName
-                      )}`}
+
+                  {hasWixSale && (
+                    <span
+                      style={{
+                        fontSize: 14,
+                        color: '#94A3B8',
+                        textDecoration: 'line-through',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {formatMXN(regularPrice)}
+                    </span>
+                  )}
+
+                  {totalSavingsForSelection > 0 && (
+                    <span
                       style={{
                         padding: '4px 10px',
                         borderRadius: 9999,
-                        background: '#F8FAFC',
-                        border: '1px solid rgba(26, 31, 54, 0.09)',
-                        textDecoration: 'none',
-                        color: C.navy,
+                        background: 'rgba(22, 163, 74, 0.1)',
+                        color: '#15803D',
                         fontFamily: F.heading,
                         fontSize: 10.5,
                         fontWeight: 800,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
                       }}
                     >
-                      <TiendaVehicleSvg type={vtName} width={40} height={15} />
-                      <span>{vtName}</span>
-                    </Link>
-                  ))}
+                      Ahorras {formatMXN(totalSavingsForSelection)}
+                    </span>
+                  )}
                 </div>
-              )}
 
-              {[
-                {
-                  id: 'ficha',
-                  title: 'Especificaciones Técnicas · Tabla Oficial',
-                  content: (
-                    <div
-                      style={{
-                        borderRadius: 14,
-                        border: '1px solid rgba(26, 31, 54, 0.08)',
-                        overflow: 'hidden',
-                        background: '#FFFFFF',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'minmax(0, 0.46fr) minmax(0, 0.54fr)',
-                          padding: '9px 14px',
-                          background: '#F8FAFC',
-                          borderBottom: '1px solid rgba(26, 31, 54, 0.08)',
-                          fontFamily: F.heading,
-                          fontSize: 10,
-                          fontWeight: 800,
-                          letterSpacing: '0.14em',
-                          textTransform: 'uppercase',
-                          color: '#64748B',
-                        }}
-                      >
-                        <span>Característica</span>
-                        <span style={{ textAlign: 'right' }}>Especificación</span>
-                      </div>
-
-                      {specRows.map((row, idx) => (
-                        <div
-                          key={`${row.label}-${idx}`}
-                          style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'minmax(0, 0.46fr) minmax(0, 0.54fr)',
-                            alignItems: 'center',
-                            gap: 10,
-                            padding: '9px 14px',
-                            background: idx % 2 === 1 ? '#FAFBFD' : '#FFFFFF',
-                            borderBottom:
-                              idx < specRows.length - 1
-                                ? '1px solid #F1F5F9'
-                                : 'none',
-                            fontSize: 12.5,
-                          }}
-                        >
-                          <span style={{ color: '#64748B', fontWeight: 500 }}>
-                            {row.label}
-                          </span>
-                          <strong
-                            style={{
-                              color: C.navy,
-                              textAlign: 'right',
-                              fontFamily: F.heading,
-                              fontWeight: 800,
-                              wordBreak: 'break-word',
-                            }}
-                          >
-                            {row.value}
-                          </strong>
-                        </div>
-                      ))}
-                    </div>
-                  ),
-                },
-                {
-                  id: 'sucursal',
-                  title: 'Envío Gratis & +80 Sucursales Jasman',
-                  content: (
-                    <div style={{ fontSize: 12.5, color: '#64748B', lineHeight: 1.6 }}>
-                      <p style={{ margin: '0 0 4px', color: C.navy, fontWeight: 800 }}>
-                        Cobertura Nacional Sin Costo de Envío
-                      </p>
-                      <p style={{ margin: 0 }}>
-                        Entrega directa a domicilio en toda la República Mexicana. Si requieres montaje y balanceo en alguna de nuestras +80 sucursales, consulta la cotización exacta para tu medida por WhatsApp.
-                      </p>
-                    </div>
-                  ),
-                },
-              ].map((acc) => {
-                const isOpen = openAccordion === acc.id;
-                return (
-                  <div
-                    key={acc.id}
-                    className="jasman-accordion-card"
-                    style={{
-                      borderRadius: 18,
-                      background: '#FFFFFF',
-                      border: '1px solid rgba(26, 31, 54, 0.07)',
-                      padding: 0,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setOpenAccordion(isOpen ? '' : acc.id)}
-                      className="jasman-accordion-trigger"
-                      style={{
-                        width: '100%',
-                        padding: '16px 20px',
-                        border: 'none',
-                        background: 'transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        cursor: 'pointer',
-                        fontFamily: F.heading,
-                        fontSize: 11.5,
-                        fontWeight: 800,
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                        color: C.navy,
-                        boxSizing: 'border-box',
-                      }}
-                    >
-                      <span>{acc.title}</span>
-                      <ChevronDown
-                        size={16}
-                        style={{
-                          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                          transition: 'transform 0.25s ease',
-                        }}
-                      />
-                    </button>
-                    {isOpen && (
-                      <div style={{ padding: '4px 20px 18px' }}>{acc.content}</div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Product Excerpt + Wix Description Benefits right below the Ficha Técnica */}
-              {(product.excerpt || (product.benefits && product.benefits.length > 0)) && (
                 <div
                   style={{
-                    marginTop: 6,
-                    padding: '18px 22px',
-                    borderRadius: 20,
-                    background: '#FFFFFF',
-                    border: '1px solid rgba(26, 31, 54, 0.07)',
-                    boxShadow: '0 8px 24px rgba(26, 31, 54, 0.025)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 10,
+                    fontSize: 12,
+                    color: '#64748B',
+                    fontWeight: 500,
+                  }}
+                >
+                  <span>Precio unitario en MXN · Con IVA</span>
+                  <span style={{ color: '#CBD5E1' }}>•</span>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      color: '#15803D',
+                      fontWeight: 700,
+                    }}
+                  >
+                    <Truck size={13} /> Envío gratis a domicilio incluido
+                  </span>
+                </div>
+                {selectionVolumeTier.percent > 0 && (
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '5px 11px',
+                      borderRadius: 9999,
+                      background: 'rgba(22, 163, 74, 0.1)',
+                      border: '1px solid rgba(22, 163, 74, 0.24)',
+                      color: '#15803D',
+                      fontFamily: F.heading,
+                      fontSize: 11,
+                      fontWeight: 800,
+                      width: 'fit-content',
+                    }}
+                  >
+                    <Check size={12} /> {selectionVolumeTier.label}: −{formatMXN(selectionVolumeDiscount)}
+                  </div>
+                )}
+              </div>
+
+              {/* Quantity Picker + Primary Add to Cart Button */}
+              {product.inStock && (
+                <div
+                  ref={buyButtonRef}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    gap: 12,
+                    marginBottom: 12,
                   }}
                 >
                   <div
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 6,
-                      fontFamily: F.heading,
-                      fontSize: 10,
-                      fontWeight: 800,
-                      letterSpacing: '0.16em',
-                      textTransform: 'uppercase',
-                      color: C.red,
-                      marginBottom: 8,
+                      borderRadius: 16,
+                      border: '1px solid rgba(26, 31, 54, 0.12)',
+                      background: '#FFFFFF',
+                      padding: 6,
                     }}
                   >
-                    <Sparkles size={12} /> Resumen & Beneficios Principales
+                    <button
+                      type="button"
+                      onClick={() => setQty((q) => Math.max(1, q - 1))}
+                      style={{
+                        width: 38,
+                        height: 40,
+                        borderRadius: 11,
+                        border: 'none',
+                        background: 'transparent',
+                        fontSize: 18,
+                        fontWeight: 700,
+                        color: C.navy,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      −
+                    </button>
+                    <span
+                      style={{
+                        minWidth: 32,
+                        textAlign: 'center',
+                        fontFamily: F.heading,
+                        fontSize: 15,
+                        fontWeight: 900,
+                        color: C.navy,
+                      }}
+                    >
+                      {qty}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setQty((q) => Math.min(product.quantity, q + 1))}
+                      style={{
+                        width: 38,
+                        height: 40,
+                        borderRadius: 11,
+                        border: 'none',
+                        background: 'transparent',
+                        fontSize: 18,
+                        fontWeight: 700,
+                        color: C.navy,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      +
+                    </button>
                   </div>
-                  {product.excerpt && (
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 13.5,
-                        color: '#475569',
-                        lineHeight: 1.65,
-                      }}
-                    >
-                      {product.excerpt}
-                    </p>
-                  )}
 
-                  {Array.isArray(product.benefits) && product.benefits.length > 0 && (
-                    <ul
-                      style={{
-                        margin: product.excerpt ? '12px 0 0' : 0,
-                        padding: 0,
-                        listStyle: 'none',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 6,
-                      }}
-                    >
-                      {product.benefits.map((bText, bIdx) => (
-                        <li
-                          key={bIdx}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: 8,
-                            fontSize: 12.5,
-                            color: C.navy,
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          <Check
-                            size={14}
-                            color="#16A34A"
-                            style={{ flexShrink: 0, marginTop: 2 }}
-                          />
-                          <span>{bText}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    style={{
+                      flex: 1,
+                      padding: '16px 24px',
+                      borderRadius: 16,
+                      border: 'none',
+                      background: added ? '#16A34A' : C.red,
+                      color: C.white,
+                      fontFamily: F.heading,
+                      fontSize: 12.5,
+                      fontWeight: 800,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 10,
+                      boxShadow: '0 14px 32px rgba(196, 30, 36, 0.28)',
+                      transition: 'all 0.25s ease',
+                    }}
+                  >
+                    {added ? (
+                      <>
+                        <Check size={17} /> ¡Añadido al Carrito!
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag size={17} /> Agregar · {formatMXN(finalTotalForSelection)}
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
-            </div>
+
+              {/* Direct WhatsApp Advisor Button with Product Info */}
+              <a
+                href={whatsappAdvisorUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  width: '100%',
+                  padding: '14px 22px',
+                  borderRadius: 16,
+                  border: '1.5px solid rgba(22, 163, 74, 0.28)',
+                  background: '#FFFFFF',
+                  color: C.navy,
+                  fontFamily: F.heading,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  marginBottom: 22,
+                  transition: 'all 0.25s ease',
+                  boxSizing: 'border-box',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#16A34A';
+                  e.currentTarget.style.borderColor = '#16A34A';
+                  e.currentTarget.style.color = '#FFFFFF';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow =
+                    '0 12px 26px rgba(22, 163, 74, 0.24)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#FFFFFF';
+                  e.currentTarget.style.borderColor = 'rgba(22, 163, 74, 0.28)';
+                  e.currentTarget.style.color = C.navy;
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <MessageCircle size={16} color="currentColor" style={{ color: 'inherit' }} />
+                <span>Consultar con Asesor por WhatsApp</span>
+              </a>
+
+              {/* Interactive Glass Accordions Deck */}
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                {/* Compatible Vehicle Types Mini SVG Pills */}
+                {Array.isArray(product.vehicleTypes) && product.vehicleTypes.length > 0 && (
+                  <div
+                    style={{
+                      padding: '12px 16px',
+                      borderRadius: 18,
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(26, 31, 54, 0.07)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 8,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: F.heading,
+                        fontSize: 9.5,
+                        fontWeight: 800,
+                        letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                        color: '#64748B',
+                        marginRight: 2,
+                      }}
+                    >
+                      Vehículo compatible:
+                    </span>
+                    {product.vehicleTypes.map((vtName) => (
+                      <Link
+                        key={vtName}
+                        to={`/llantas/catalogo?vehicle=${encodeURIComponent(
+                          vtName
+                        )}`}
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: 9999,
+                          background: '#F8FAFC',
+                          border: '1px solid rgba(26, 31, 54, 0.09)',
+                          textDecoration: 'none',
+                          color: C.navy,
+                          fontFamily: F.heading,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <TiendaVehicleSvg type={vtName} width={40} height={15} />
+                        <span>{vtName}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                {[
+                  {
+                    id: 'ficha',
+                    title: 'Especificaciones Técnicas · Tabla Oficial',
+                    content: (
+                      <div
+                        style={{
+                          borderRadius: 14,
+                          border: '1px solid rgba(26, 31, 54, 0.08)',
+                          overflow: 'hidden',
+                          background: '#FFFFFF',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'minmax(0, 0.46fr) minmax(0, 0.54fr)',
+                            padding: '9px 14px',
+                            background: '#F8FAFC',
+                            borderBottom: '1px solid rgba(26, 31, 54, 0.08)',
+                            fontFamily: F.heading,
+                            fontSize: 10,
+                            fontWeight: 800,
+                            letterSpacing: '0.14em',
+                            textTransform: 'uppercase',
+                            color: '#64748B',
+                          }}
+                        >
+                          <span>Característica</span>
+                          <span style={{ textAlign: 'right' }}>Especificación</span>
+                        </div>
+
+                        {specRows.map((row, idx) => (
+                          <div
+                            key={`${row.label}-${idx}`}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'minmax(0, 0.46fr) minmax(0, 0.54fr)',
+                              alignItems: 'center',
+                              gap: 10,
+                              padding: '9px 14px',
+                              background: idx % 2 === 1 ? '#FAFBFD' : '#FFFFFF',
+                              borderBottom:
+                                idx < specRows.length - 1
+                                  ? '1px solid #F1F5F9'
+                                  : 'none',
+                              fontSize: 12.5,
+                            }}
+                          >
+                            <span style={{ color: '#64748B', fontWeight: 500 }}>
+                              {row.label}
+                            </span>
+                            <strong
+                              style={{
+                                color: C.navy,
+                                textAlign: 'right',
+                                fontFamily: F.heading,
+                                fontWeight: 800,
+                                wordBreak: 'break-word',
+                              }}
+                            >
+                              {row.value}
+                            </strong>
+                          </div>
+                        ))}
+                      </div>
+                    ),
+                  },
+                  {
+                    id: 'sucursal',
+                    title: 'Envío Gratis & +80 Sucursales Jasman',
+                    content: (
+                      <div style={{ fontSize: 12.5, color: '#64748B', lineHeight: 1.6 }}>
+                        <p style={{ margin: '0 0 4px', color: C.navy, fontWeight: 800 }}>
+                          Cobertura Nacional Sin Costo de Envío
+                        </p>
+                        <p style={{ margin: 0 }}>
+                          Entrega directa a domicilio en toda la República Mexicana. Si requieres montaje y balanceo en alguna de nuestras +80 sucursales, consulta la cotización exacta para tu medida por WhatsApp.
+                        </p>
+                      </div>
+                    ),
+                  },
+                ].map((acc) => {
+                  const isOpen = openAccordion === acc.id;
+                  return (
+                    <div
+                      key={acc.id}
+                      className="jasman-accordion-card"
+                      style={{
+                        borderRadius: 18,
+                        background: '#FFFFFF',
+                        border: '1px solid rgba(26, 31, 54, 0.07)',
+                        padding: 0,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setOpenAccordion(isOpen ? '' : acc.id)}
+                        className="jasman-accordion-trigger"
+                        style={{
+                          width: '100%',
+                          padding: '16px 20px',
+                          border: 'none',
+                          background: 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          fontFamily: F.heading,
+                          fontSize: 11.5,
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: C.navy,
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <span>{acc.title}</span>
+                        <ChevronDown
+                          size={16}
+                          style={{
+                            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.25s ease',
+                          }}
+                        />
+                      </button>
+                      {isOpen && (
+                        <div style={{ padding: '4px 20px 18px' }}>{acc.content}</div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Product Excerpt + Wix Description Benefits right below the Ficha Técnica */}
+                {(product.excerpt || (product.benefits && product.benefits.length > 0)) && (
+                  <div
+                    style={{
+                      marginTop: 6,
+                      padding: '18px 22px',
+                      borderRadius: 20,
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(26, 31, 54, 0.07)',
+                      boxShadow: '0 8px 24px rgba(26, 31, 54, 0.025)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontFamily: F.heading,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        letterSpacing: '0.16em',
+                        textTransform: 'uppercase',
+                        color: C.red,
+                        marginBottom: 8,
+                      }}
+                    >
+                      <Sparkles size={12} /> Resumen & Beneficios Principales
+                    </div>
+                    {product.excerpt && (
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: 13.5,
+                          color: '#475569',
+                          lineHeight: 1.65,
+                        }}
+                      >
+                        {product.excerpt}
+                      </p>
+                    )}
+
+                    {Array.isArray(product.benefits) && product.benefits.length > 0 && (
+                      <ul
+                        style={{
+                          margin: product.excerpt ? '12px 0 0' : 0,
+                          padding: 0,
+                          listStyle: 'none',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 6,
+                        }}
+                      >
+                        {product.benefits.map((bText, bIdx) => (
+                          <li
+                            key={bIdx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: 8,
+                              fontSize: 12.5,
+                              color: C.navy,
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            <Check
+                              size={14}
+                              color="#16A34A"
+                              style={{ flexShrink: 0, marginTop: 2 }}
+                            />
+                            <span>{bText}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
