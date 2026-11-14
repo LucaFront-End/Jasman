@@ -7,7 +7,34 @@ import {
 
 export const AUTHORIZED_META_ADMIN_EMAIL = 'wixpartner@dilodigitalmx.com';
 export const TRACKING_CONFIG_STORAGE_KEY = 'jasman_tracking_config_v1';
+export const META_ADMIN_TOKEN_KEY = 'jasman_meta_admin_token_v1';
 export const TRACKING_CONFIG_EVENT = 'jasman-tracking-config-updated';
+
+function getStoredMetaAdminToken() {
+  if (typeof window === 'undefined') return '';
+  try {
+    return window.localStorage.getItem(META_ADMIN_TOKEN_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function persistMetaAdminToken(token) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (token) {
+      window.localStorage.setItem(META_ADMIN_TOKEN_KEY, token);
+    } else {
+      window.localStorage.removeItem(META_ADMIN_TOKEN_KEY);
+    }
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function getActiveAdminAuthToken() {
+  return getStoredMetaAdminToken() || getStoredWixMemberAccessToken();
+}
 
 export const DEFAULT_TRACKING_CONFIG = {
   slug: 'global-meta-config',
@@ -116,7 +143,7 @@ export async function fetchPublicTrackingConfig() {
  * (which validates against Wix Members API for wixpartner@dilodigitalmx.com).
  */
 export async function verifyMetaAdminSession() {
-  const token = getStoredWixMemberAccessToken();
+  const token = getActiveAdminAuthToken();
   if (!token) {
     return {
       authorized: false,
@@ -156,6 +183,10 @@ export async function verifyMetaAdminSession() {
           data.message ||
           `La cuenta actual no tiene acceso. Exclusivo para ${AUTHORIZED_META_ADMIN_EMAIL}.`,
       };
+    }
+
+    if (res.status === 401) {
+      persistMetaAdminToken(null);
     }
 
     return {
@@ -202,10 +233,43 @@ export async function loginStrictMetaAdmin({ email, password }) {
     return {
       success: false,
       errorCode: 'invalidPassword',
-      message: 'Ingresa la contraseña de tu cuenta de Wix.',
+      message: 'Ingresa la contraseña de acceso.',
     };
   }
 
+  // 1. Validate predetermined admin password on the server (/api/tracking-config)
+  try {
+    const serverRes = await fetch('/api/tracking-config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'admin_login',
+        email: cleanEmail,
+        password,
+      }),
+    });
+    const serverData = await serverRes.json().catch(() => ({}));
+    if (serverRes.ok && serverData?.ok && serverData?.token) {
+      persistMetaAdminToken(serverData.token);
+      return {
+        success: true,
+        member: serverData.member,
+      };
+    }
+    if (serverRes.status === 403 || serverRes.status >= 500) {
+      return {
+        success: false,
+        errorCode: serverData?.reason || 'server_error',
+        message: serverData?.message || 'No se pudo validar el acceso administrativo.',
+      };
+    }
+  } catch {
+    // Fall through to Wix Member direct login if server endpoint unreachable
+  }
+
+  // 2. Fallback: native Wix Member direct login with Wix password
   try {
     const response = await wixClient.auth.login({
       email: cleanEmail,
@@ -271,19 +335,20 @@ export async function loginStrictMetaAdmin({ email, password }) {
       success: false,
       errorCode: errCode,
       message:
-        'No se pudo iniciar sesión directamente con contraseña en Wix. Si normalmente entras con Google en Wix, usa "Entrar con Google (Wix)" o solicita el enlace de contraseña.',
+        'Contraseña incorrecta. Verifica tu contraseña predeterminada o usa "Continuar con Google (Wix)".',
     };
   } catch (err) {
     return {
       success: false,
       message:
         err?.message ||
-        'Error al autenticar con Wix. Intenta con "Entrar con Google (Wix)".',
+        'Error al autenticar. Verifica tu contraseña o usa "Continuar con Google (Wix)".',
     };
   }
 }
 
 export async function logoutMetaAdmin() {
+  persistMetaAdminToken(null);
   await logoutWixMember();
 }
 
@@ -291,7 +356,7 @@ export async function logoutMetaAdmin() {
  * Publishes updated Meta Pixel + custom code configuration to Wix CMS ConfiguracionMeta.
  */
 export async function saveTrackingConfig(configPayload) {
-  const token = getStoredWixMemberAccessToken();
+  const token = getActiveAdminAuthToken();
   if (!token) {
     return {
       success: false,
