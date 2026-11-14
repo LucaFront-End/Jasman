@@ -126,7 +126,21 @@ export default function Footer() {
       <div className="site-footer-bottom">
         <div className="site-footer-bottom-inner">
           <span>© {year} Jasman Automotriz. Todos los derechos reservados.</span>
-          <span>Centro de Soluciones Automotrices</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 14 }}>
+            <span>Centro de Soluciones Automotrices</span>
+            <Link
+              to="/admin-meta"
+              style={{
+                fontSize: 11,
+                color: 'inherit',
+                opacity: 0.45,
+                textDecoration: 'none',
+              }}
+              title="Acceso exclusivo Wix Partner"
+            >
+              Admin Meta
+            </Link>
+          </span>
         </div>
       </div>
     </footer>

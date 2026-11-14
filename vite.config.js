@@ -19,7 +19,8 @@ function localVercelApiPlugin() {
           if (
             routeName !== 'wix-inbox' &&
             routeName !== 'wix-oauth-check' &&
-            routeName !== 'order'
+            routeName !== 'order' &&
+            routeName !== 'tracking-config'
           ) {
             return next();
           }

@@ -24,6 +24,8 @@ import ProductoPreviewPage from './pages/ProductoPreviewPage';
 import HomeTiendaPreviewPage from './pages/HomeTiendaPreviewPage';
 import CuentaPreviewPage from './pages/CuentaPreviewPage';
 import ThankYouPage from './pages/ThankYouPage';
+import MetaAdminPage from './pages/MetaAdminPage';
+import TrackingScriptsManager from './components/TrackingScriptsManager';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -65,10 +67,16 @@ export default function App() {
   const isPromoSlugUnderLlantas =
     pathname.startsWith('/llantas/') && !isLlantasStoreRoute;
 
+  const isMetaAdminRoute =
+    pathname === '/admin-meta' ||
+    pathname === '/meta-pixel' ||
+    pathname === '/configuracion-meta';
+
   return (
     <>
       <ScrollToTop />
-      {!isDedicatedStoreLanding && <Navbar />}
+      <TrackingScriptsManager />
+      {!isDedicatedStoreLanding && !isMetaAdminRoute && <Navbar />}
       <ScrollProgress />
       <main>
         <Routes>
@@ -158,6 +166,11 @@ export default function App() {
           />
           <Route path="/landing-tienda-preview/cuenta" element={<CuentaPreviewPage />} />
           <Route path="/home-tienda-preview" element={<HomeTiendaPreviewPage />} />
+
+          {/* Protected Meta Pixel & Global Code Admin Console (wixpartner@dilodigitalmx.com only) */}
+          <Route path="/admin-meta" element={<MetaAdminPage />} />
+          <Route path="/meta-pixel" element={<MetaAdminPage />} />
+          <Route path="/configuracion-meta" element={<MetaAdminPage />} />
         </Routes>
       </main>
       <Footer />
@@ -165,6 +178,7 @@ export default function App() {
       {!isPromoSubdomain &&
         !isDedicatedStoreLanding &&
         !isPromoSlugUnderLlantas &&
+        !isMetaAdminRoute &&
         !pathname.includes('alineacion') &&
         !pathname.includes('alineación') && (
           <>

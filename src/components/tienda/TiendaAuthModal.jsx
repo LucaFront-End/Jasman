@@ -90,9 +90,16 @@ export default function TiendaAuthModal({ forceOpen = false, onCloseForce }) {
         if (result.orders && result.orders.length > 0) {
           mergeSyncedOrders(result.orders);
         }
+        if (
+          result.returnTo &&
+          result.returnTo.startsWith('/') &&
+          result.returnTo !== window.location.pathname
+        ) {
+          navigate(result.returnTo);
+        }
       }
     });
-  }, [saveUser, mergeSyncedOrders]);
+  }, [saveUser, mergeSyncedOrders, navigate]);
 
   const handleClose = () => {
     setOpen(false);

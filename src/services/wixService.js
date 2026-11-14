@@ -73,6 +73,18 @@ export function persistWixTokens(tokens) {
   }
 }
 
+export function getStoredWixMemberAccessToken() {
+  if (typeof window === 'undefined') return '';
+  try {
+    const raw = window.localStorage.getItem(WIX_TOKENS_STORAGE_KEY);
+    if (!raw) return '';
+    const parsed = JSON.parse(raw);
+    return parsed?.accessToken?.value || '';
+  } catch {
+    return '';
+  }
+}
+
 // Initialize Wix Headless Client with shared OAuthStrategy tokenStorage
 export const wixClient = createClient({
   modules: { items },
@@ -1053,7 +1065,7 @@ export async function startWixSocialLogin(
       const oauthData = wixClient.auth.generateOAuthData(primaryRedirectUri, originalUri);
       window.localStorage.setItem(
         WIX_OAUTH_DATA_KEY,
-        JSON.stringify({ ...oauthData, provider })
+        JSON.stringify({ ...oauthData, provider, returnTo: returnPath })
       );
       const { authUrl } = await wixClient.auth.getAuthUrl(oauthData, {
         idp: provider,
@@ -1086,7 +1098,7 @@ export async function startWixSocialLogin(
           if (checkJson.allowed) {
             window.localStorage.setItem(
               WIX_OAUTH_DATA_KEY,
-              JSON.stringify({ ...oauthData, provider })
+              JSON.stringify({ ...oauthData, provider, returnTo: returnPath })
             );
             window.location.href = authUrl;
             return { success: true, redirected: true, authUrl };
@@ -1285,6 +1297,7 @@ export async function completeWixOAuthCallbackIfPresent() {
         return {
           tokens,
           provider,
+          returnTo: oauthData.returnTo || '',
           orders: synced.orders || [],
           member: {
             ...synced.member,
@@ -1299,6 +1312,7 @@ export async function completeWixOAuthCallbackIfPresent() {
     return {
       tokens,
       provider,
+      returnTo: oauthData.returnTo || '',
       orders: [],
       member: {
         nombre: realName || `Cliente Jasman (${providerLabel})`,
