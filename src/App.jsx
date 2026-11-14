@@ -95,8 +95,20 @@ export default function App() {
           <Route path="/llantas/:slug" element={<LandingAlineacionPage />} />
 
           {/* Promotional campaign routes */}
-          <Route path="/alineacion-y-balanceo" element={<LandingAlineacionPage />} />
-          <Route path="/alineación-y-balanceo" element={<LandingAlineacionPage />} />
+          <Route path="/alineacion-y-balanceo" element={<LandingAlineacionPage key="all" />} />
+          <Route path="/alineación-y-balanceo" element={<LandingAlineacionPage key="all" />} />
+          <Route
+            path="/alineacion-y-balanceo-promo"
+            element={<LandingAlineacionPage key="ads" promoVariant="ads" />}
+          />
+          <Route
+            path="/alineacion-y-balanceo-ads"
+            element={<LandingAlineacionPage key="ads" promoVariant="ads" />}
+          />
+          <Route
+            path="/promocion-alineacion-y-balanceo"
+            element={<LandingAlineacionPage key="ads" promoVariant="ads" />}
+          />
           <Route
             path="/alineacion-y-balanceo-promocion-cdmx-octubre"
             element={<LandingAlineacionPage />}

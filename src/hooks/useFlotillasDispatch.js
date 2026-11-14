@@ -79,36 +79,16 @@ export function useFlotillasDispatch({ autoLoop = false } = {}) {
     return () => clearTimeout(t);
   }, [showCheck, persisted.dispatchedCount]);
 
-  // Realistic workshop cycle when autoLoop is enabled (e.g., Flotillas showcase)
+  // Gentle ambient workshop animation when autoLoop is enabled (no auto-dispatch spam)
   useEffect(() => {
     if (!autoLoop) return undefined;
 
     let step = 0;
-    const phases = ['entering', 'servicing', 'exiting'];
+    const phases = ['servicing', 'entering', 'servicing'];
     const timer = setInterval(() => {
       step = (step + 1) % phases.length;
-      const nextPhase = phases[step];
-      setBayPhase(nextPhase);
-      if (nextPhase === 'exiting') {
-        setShowCheck(true);
-        const vehicle = FLEET_VEHICLES[cycleRef.current % FLEET_VEHICLES.length];
-        setPersisted((prev) => {
-          const next = {
-            dispatchedCount: prev.dispatchedCount + 1,
-            lastDispatch: {
-              id: `FL-${Math.floor(100000 + Math.random() * 900000)}`,
-              source: 'loop',
-              label: vehicle.label,
-              bay: vehicle.bay,
-              timestamp: Date.now(),
-            },
-          };
-          writePersistedState(next);
-          return next;
-        });
-        setCycleIndex((idx) => (idx + 1) % FLEET_VEHICLES.length);
-      }
-    }, 3200);
+      setBayPhase(phases[step]);
+    }, 3600);
 
     return () => clearInterval(timer);
   }, [autoLoop]);

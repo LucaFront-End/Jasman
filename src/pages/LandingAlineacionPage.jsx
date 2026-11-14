@@ -8,8 +8,8 @@ import {
   sucursalesWithCoords,
   resolvePostalCodeCoords,
   getClosestBranches,
-  formatDistance,
 } from '../data/postalCodesData';
+import { getAdsPromoBranches } from '../data/adsPromoBranches';
 import {
   getLandingPromotion,
   getWixPostalCode,
@@ -127,22 +127,43 @@ const popularPostalCodes = [
   { cp: '88000', label: 'Nuevo Laredo (88000)' },
 ];
 
-export default function LandingAlineacionPage() {
+const adsPopularPostalCodes = [
+  { cp: '02710', label: 'Azcapotzalco (02710)' },
+  { cp: '03100', label: 'Portales / Vértiz (03100)' },
+  { cp: '01330', label: 'Santa Fe / Interlomas (01330)' },
+  { cp: '06720', label: 'Polanco / Roma (06720)' },
+  { cp: '53120', label: 'Lomas Verdes (53120)' },
+  { cp: '54060', label: 'Tlalnepantla (54060)' },
+  { cp: '50010', label: 'Toluca (50010)' },
+  { cp: '76000', label: 'Querétaro (76000)' },
+  { cp: '44160', label: 'Guadalajara (44160)' },
+  { cp: '37220', label: 'León / Gto (37220)' },
+  { cp: '64800', label: 'Monterrey (64800)' },
+  { cp: '58270', label: 'Morelia (58270)' },
+  { cp: '62740', label: 'Cuautla (62740)' },
+];
+
+export default function LandingAlineacionPage({ promoVariant = 'all' }) {
   const { slug } = useParams();
   const location = useLocation();
+  const isAdsPromo = promoVariant === 'ads';
+  const baseBranches = isAdsPromo
+    ? getAdsPromoBranches(sucursalesWithCoords)
+    : sucursalesWithCoords;
+  const quickCpList = isAdsPromo ? adsPopularPostalCodes : popularPostalCodes;
 
   // Dynamic promotion state loaded from Wix CMS "Landingdepromociones"
   const [promotion, setPromotion] = useState({
     id: 'default',
     title: 'Alineación y Balanceo',
-    slug: 'alineacion-y-balanceo',
+    slug: isAdsPromo ? 'alineacion-y-balanceo-promo' : 'alineacion-y-balanceo',
     headline: 'Alineación y Balanceo en las 4 Llantas',
     subheadline: 'Desde $750.00 MXN (IVA Incluido) · Rin 13" al 17"',
     bannerImage: '/images/promo-landing-banner.jpg',
     source: 'wix-connecting',
   });
-  const [allBranches, setAllBranches] = useState(sucursalesWithCoords);
-  const [isWixConnected, setIsWixConnected] = useState(false);
+  const [allBranches, setAllBranches] = useState(baseBranches);
+  const [, setIsWixConnected] = useState(false);
 
   // Input state
   const [postalCode, setPostalCode] = useState('02710');
@@ -186,7 +207,14 @@ export default function LandingAlineacionPage() {
 
     async function syncWixData() {
       try {
-        const currentSlug = slug || location.pathname.replace(/^\/promociones\/|^\/promocion\/|^\//, '');
+        const sourceList = isAdsPromo
+          ? getAdsPromoBranches(sucursalesWithCoords)
+          : sucursalesWithCoords;
+        setAllBranches(sourceList);
+
+        const currentSlug = isAdsPromo
+          ? 'alineacion-y-balanceo'
+          : slug || location.pathname.replace(/^\/promociones\/|^\/promocion\/|^\//, '');
         const promoData = await getLandingPromotion(currentSlug);
         if (isSubscribed && promoData) {
           setPromotion(promoData);
@@ -198,14 +226,17 @@ export default function LandingAlineacionPage() {
         const wixBranches = await getWixBranches();
         if (isSubscribed && wixBranches && wixBranches.length > 0) {
           const wixNameMap = new Map(wixBranches.map(b => [b.name.toLowerCase(), b]));
-          const merged = sucursalesWithCoords.map(localB => {
+          const merged = sourceList.map(localB => {
             const match = wixNameMap.get(localB.name.toLowerCase());
             return match
               ? {
                   ...localB,
                   ...match,
                   mapsUrl: localB.mapsUrl,
-                  whatsappPhone: localB.whatsappPhone || match.whatsappPhone || null,
+                  phone: isAdsPromo ? localB.phone : match.phone || localB.phone,
+                  whatsappPhone: isAdsPromo
+                    ? localB.whatsappPhone
+                    : localB.whatsappPhone || match.whatsappPhone || null,
                 }
               : localB;
           });
@@ -218,7 +249,7 @@ export default function LandingAlineacionPage() {
 
     syncWixData();
     return () => { isSubscribed = false; };
-  }, [slug, location.pathname]);
+  }, [slug, location.pathname, isAdsPromo]);
 
   // Initial automatic geolocation request on mount
   useEffect(() => {
@@ -887,7 +918,7 @@ export default function LandingAlineacionPage() {
               </span>
             </div>
             <div className="landing-cp-chips" style={{ marginTop: 4 }}>
-              {popularPostalCodes.map(item => (
+              {quickCpList.map(item => (
                 <button
                   key={item.cp}
                   type="button"
@@ -1419,7 +1450,10 @@ export default function LandingAlineacionPage() {
                   <span>⚫ Cercanas</span>
                 </div>
                 <span style={{ fontWeight: 700, color: C.navy, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <MapPin size={12} color={C.red} /> {allBranches.length}+ sucursales en todo México (click para elegir)
+                  <MapPin size={12} color={C.red} />{' '}
+                  {isAdsPromo
+                    ? `${allBranches.length} sucursales participantes (click para elegir)`
+                    : `${allBranches.length}+ sucursales en todo México (click para elegir)`}
                 </span>
               </div>
             </div>

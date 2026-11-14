@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { C, F } from '../hooks/useAnimations';
 import {
@@ -81,6 +81,7 @@ export default function ThankYouPage() {
   });
   const [loadedOrderId, setLoadedOrderId] = useState(null);
   const isLoading = Boolean(orderId) && loadedOrderId !== orderId;
+  const hasNotifiedDispatchRef = useRef(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -89,10 +90,13 @@ export default function ThankYouPage() {
     clearCart();
     clearWixCurrentCart().catch(() => {});
 
-    notifyCartDispatched({
-      folio: orderId ? `#${String(orderId).substring(0, 8).toUpperCase()}` : undefined,
-      label: 'Pedido Despachado · Salida de Almacén Jasman',
-    });
+    if (!hasNotifiedDispatchRef.current) {
+      hasNotifiedDispatchRef.current = true;
+      notifyCartDispatched({
+        folio: orderId ? `#${String(orderId).substring(0, 8).toUpperCase()}` : undefined,
+        label: 'Pedido Despachado · Salida de Almacén Jasman',
+      });
+    }
 
     if (!orderId) {
       return undefined;
