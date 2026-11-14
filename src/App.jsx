@@ -171,6 +171,9 @@ export default function App() {
           <Route path="/admin-meta" element={<MetaAdminPage />} />
           <Route path="/meta-pixel" element={<MetaAdminPage />} />
           <Route path="/configuracion-meta" element={<MetaAdminPage />} />
+
+          {/* Catch-all dynamic CMS promotional slug route (matches any slug created in Wix CMS Landingdepromociones) */}
+          <Route path="/:slug" element={<LandingAlineacionPage key={pathname} />} />
         </Routes>
       </main>
       <Footer />

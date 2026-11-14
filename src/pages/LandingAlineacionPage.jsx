@@ -82,28 +82,39 @@ const otherBranchIcon = new L.DivIcon({
 // Map Controller for Dynamic View/Fit Bounds
 function MapController({ center, zoom, bounds }) {
   const map = useMap();
-  useEffect(() => {
-    map.invalidateSize();
-    const t1 = setTimeout(() => map.invalidateSize(), 150);
-    const t2 = setTimeout(() => map.invalidateSize(), 500);
+  const boundsKey = bounds && bounds.length === 2
+    ? `${bounds[0]?.[0]},${bounds[0]?.[1]}|${bounds[1]?.[0]},${bounds[1]?.[1]}`
+    : '';
+  const centerKey = center ? `${center[0]},${center[1]},${zoom || 13}` : '';
 
-    if (bounds && bounds.length === 2) {
-      const [[lat1, lng1], [lat2, lng2]] = bounds;
-      const isSameSpot = Math.abs(lat1 - lat2) < 0.001 && Math.abs(lng1 - lng2) < 0.001;
-      if (isSameSpot) {
-        map.setView([lat1, lng1], 14, { animate: true });
-      } else {
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: true });
+  useEffect(() => {
+    if (!map || !map._mapPane) return;
+    map.invalidateSize();
+    const t1 = setTimeout(() => { if (map._mapPane) map.invalidateSize(); }, 150);
+    const t2 = setTimeout(() => { if (map._mapPane) map.invalidateSize(); }, 500);
+
+    try {
+      if (bounds && bounds.length === 2) {
+        const [[lat1, lng1], [lat2, lng2]] = bounds;
+        const isSameSpot = Math.abs(lat1 - lat2) < 0.001 && Math.abs(lng1 - lng2) < 0.001;
+        if (isSameSpot) {
+          map.setView([lat1, lng1], 14, { animate: false });
+        } else {
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: false });
+        }
+      } else if (center) {
+        map.setView(center, zoom || 13, { animate: false });
       }
-    } else if (center) {
-      map.setView(center, zoom || 13, { animate: true });
+    } catch {
+      // ignore Leaflet mid-unmount transitions
     }
 
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [center, zoom, bounds, map]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boundsKey, centerKey, map]);
   return null;
 }
 
@@ -160,9 +171,11 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
     headline: 'Promoción Especial Jasman',
     subheadline: 'Cotiza y agenda en línea en sucursales participantes',
     bannerImage: '/images/promo-landing-banner.jpg',
+    validBranches: [],
     source: 'wix-connecting',
   });
   const [allBranches, setAllBranches] = useState(baseBranches);
+  const [isPromoBranchFiltered, setIsPromoBranchFiltered] = useState(isAdsPromo);
   const [, setIsWixConnected] = useState(false);
 
   // Input state
@@ -207,40 +220,67 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
 
     async function syncWixData() {
       try {
-        const sourceList = isAdsPromo
-          ? getAdsPromoBranches(sucursalesWithCoords)
-          : sucursalesWithCoords;
-        setAllBranches(sourceList);
-
+        const cleanPathSlug = location.pathname
+          .replace(/^\/promociones\/|^\/promocion\/|^\/llantas\/|^\//, '')
+          .replace(/\/+$/, '');
         const currentSlug = isAdsPromo
-          ? 'alineacion-y-balanceo'
-          : slug || location.pathname.replace(/^\/promociones\/|^\/promocion\/|^\//, '');
-        const promoData = await getLandingPromotion(currentSlug);
-        if (isSubscribed && promoData) {
+          ? 'alineacion-y-balanceo-promo'
+          : slug || cleanPathSlug || '';
+
+        const [promoData, wixBranches] = await Promise.all([
+          getLandingPromotion(currentSlug),
+          getWixBranches(),
+        ]);
+
+        if (!isSubscribed) return;
+
+        if (promoData) {
           setPromotion(promoData);
           setIsWixConnected(promoData.source === 'wix-cms');
           document.title = `${promoData.headline || promoData.title} | Jasman Automotriz`;
         }
 
-        // Fetch custom branches from Wix CMS "Sucursales"
-        const wixBranches = await getWixBranches();
-        if (isSubscribed && wixBranches && wixBranches.length > 0) {
-          const wixNameMap = new Map(wixBranches.map(b => [b.name.toLowerCase(), b]));
-          const merged = sourceList.map(localB => {
-            const match = wixNameMap.get(localB.name.toLowerCase());
-            return match
-              ? {
-                  ...localB,
-                  ...match,
-                  mapsUrl: localB.mapsUrl,
-                  phone: isAdsPromo ? localB.phone : match.phone || localB.phone,
-                  whatsappPhone: isAdsPromo
-                    ? localB.whatsappPhone
-                    : localB.whatsappPhone || match.whatsappPhone || null,
-                }
-              : localB;
+        // 1. Build complete branch catalog prioritizing live Wix CMS "Sucursales"
+        const fullCatalog =
+          wixBranches && wixBranches.length > 0 ? wixBranches : sucursalesWithCoords;
+
+        const catalogByWixId = new Map();
+        const catalogByName = new Map();
+        for (const b of fullCatalog) {
+          if (b.wixId) catalogByWixId.set(String(b.wixId), b);
+          if (b.id) catalogByWixId.set(String(b.id), b);
+          if (b.name) catalogByName.set(b.name.toLowerCase().trim(), b);
+        }
+
+        // 2. Filter searcher by referenced "sucursalesVlidas" from the active promotion when linked in Wix CMS
+        const cmsValidBranches = Array.isArray(promoData?.validBranches)
+          ? promoData.validBranches
+          : [];
+
+        if (cmsValidBranches.length > 0) {
+          const filtered = cmsValidBranches.map((vb) => {
+            const fullMatch =
+              catalogByWixId.get(String(vb.wixId || vb.id)) ||
+              catalogByName.get((vb.name || '').toLowerCase().trim());
+            if (!fullMatch) return vb;
+            return {
+              ...fullMatch,
+              ...vb,
+              phone: vb.phone || fullMatch.phone,
+              whatsappPhone: vb.whatsappPhone || fullMatch.whatsappPhone,
+              cmsWhatsappUrl: vb.cmsWhatsappUrl || fullMatch.cmsWhatsappUrl,
+              whatsappUrl: vb.cmsWhatsappUrl ? vb.whatsappUrl : fullMatch.whatsappUrl,
+              mapsUrl: fullMatch.mapsUrl || vb.mapsUrl,
+            };
           });
-          setAllBranches(merged);
+          setAllBranches(filtered);
+          setIsPromoBranchFiltered(true);
+        } else if (isAdsPromo) {
+          setAllBranches(getAdsPromoBranches(fullCatalog));
+          setIsPromoBranchFiltered(true);
+        } else {
+          setAllBranches(fullCatalog);
+          setIsPromoBranchFiltered(false);
         }
       } catch (err) {
         console.warn('Wix Headless sync error:', err);
@@ -269,11 +309,6 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
             lng: longitude,
             isGps: true,
           });
-
-          const closest = getClosestBranches(latitude, longitude, 4, allBranches);
-          setNearbyBranches(closest);
-          setSelectedBranch(closest[0] || null);
-          setBookingBranchId(closest[0]?.id || '');
           setGeoLoading(false);
           setGeoError(null);
         },
@@ -285,6 +320,23 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
       );
     }
   }, []);
+
+  // Recompute closest branches & selection whenever branch catalog or user location updates (e.g. after Wix CMS filter)
+  useEffect(() => {
+    if (!allBranches || allBranches.length === 0) return;
+    const closest = getClosestBranches(currentLocation.lat, currentLocation.lng, 4, allBranches);
+    setNearbyBranches(closest);
+    setSelectedBranch((prev) => {
+      if (prev && allBranches.some((b) => b.id === prev.id || (b.wixId && b.wixId === prev.wixId))) {
+        return closest.find((b) => b.id === prev.id) || allBranches.find((b) => b.id === prev.id) || prev;
+      }
+      return closest[0] || null;
+    });
+    setBookingBranchId((prevId) => {
+      if (prevId && allBranches.some((b) => b.id === prevId)) return prevId;
+      return closest[0]?.id || '';
+    });
+  }, [allBranches, currentLocation.lat, currentLocation.lng]);
 
   // Sync booking branch id when selected branch changes
   useEffect(() => {
@@ -379,18 +431,23 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
     setTimeout(() => setCopiedAddress(false), 2500);
   };
 
+  const promoDisplayTitle = promotion.headline || promotion.title || 'Promoción Vigente Jasman';
+  const promoTextLower = `${promotion.headline || ''} ${promotion.title || ''} ${promotion.subheadline || ''} ${promotion.slug || ''}`.toLowerCase();
+  const isAlignmentPromo = isAdsPromo || /alineaci[oó]n|balanceo|750/.test(promoTextLower);
+
   // Build WhatsApp URL with "SW-" standard prefix and dynamic Wix promo details
   const getWhatsAppPromoUrl = (branch, bookingDetails = null) => {
     const targetBranch = branch || selectedBranch || nearbyBranches[0];
     const phoneWithCountry = targetBranch?.whatsappPhone || '5215510024945';
     const branchName = targetBranch ? targetBranch.fullName : 'Jasman Automotriz';
-    const promoTitle = promotion.headline || promotion.title || 'Alineación y Balanceo';
+    const promoTitle = promoDisplayTitle;
+    const subInfo = promotion.subheadline && promotion.subheadline !== promoTitle ? ` (${promotion.subheadline})` : '';
 
     let text = '';
     if (bookingDetails) {
-      text = `SW- Hola, deseo confirmar mi visita para la promoción "${promoTitle}" (${promotion.subheadline}) en sucursal "${branchName}". Folio: ${bookingDetails.folio}. Nombre: ${bookingDetails.nombre}, Teléfono: ${bookingDetails.telefono}, Vehículo: ${bookingDetails.vehiculo}, Fecha tentativa: ${bookingDetails.fechaVisita}.`;
+      text = `SW- Hola, deseo confirmar mi visita para la promoción "${promoTitle}"${subInfo} en sucursal "${branchName}". Folio: ${bookingDetails.folio}. Nombre: ${bookingDetails.nombre}, Teléfono: ${bookingDetails.telefono}, Vehículo: ${bookingDetails.vehiculo}, Fecha tentativa: ${bookingDetails.fechaVisita}.`;
     } else {
-      text = `SW- Hola, quisiera agendar el servicio de la promoción "${promoTitle}" (${promotion.subheadline}) en sucursal "${branchName}".`;
+      text = `SW- Hola, quisiera agendar o cotizar la promoción "${promoTitle}"${subInfo} en sucursal "${branchName}".`;
     }
 
     return `https://api.whatsapp.com/send/?phone=${phoneWithCountry}&text=${encodeURIComponent(text)}`;
@@ -402,7 +459,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
     if (!bookingName.trim() || !bookingPhone.trim()) return;
 
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const folio = `SW-ALIN-${randomSuffix}`;
+    const folio = isAlignmentPromo ? `SW-ALIN-${randomSuffix}` : `SW-PROMO-${randomSuffix}`;
     const targetBranch = allBranches.find(s => s.id === bookingBranchId) || primaryBranch;
 
     const newBooking = {
@@ -416,8 +473,8 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
       sucursalNombre: targetBranch?.fullName || 'Jasman Automotriz',
       sucursalTelefono: targetBranch?.phone || '',
       sucursalDireccion: targetBranch?.address || '',
-      servicio: promotion.headline || promotion.title || 'Alineación y Balanceo en 4 llantas',
-      precio: promotion.subheadline || 'Desde $750.00 MXN',
+      servicio: promoDisplayTitle,
+      precio: promotion.subheadline || 'Promoción vigente',
       promocionId: promotion.id,
       promocionSlug: promotion.slug,
       fechaRegistro: new Date().toISOString(),
@@ -439,28 +496,55 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
     [primaryBranch.lat, primaryBranch.lng]
   ] : null;
 
-  const faqItems = [
-    {
-      q: '¿Qué incluye el servicio de Alineación y Balanceo desde $750.00 MXN?',
-      a: 'Incluye la alineación computarizada 3D de alta precisión en las 4 llantas, el balanceo dinámico y estático de las 4 ruedas para rines desde 13" hasta 17", inspección visual de seguridad de 25 puntos en suspensión y frenos, y calibración de presión de inflado.'
-    },
-    {
-      q: '¿Cómo sé si mi auto necesita alineación y balanceo?',
-      a: 'Las señales más comunes son: vibraciones en el volante o en el asiento a velocidades mayores a 70-80 km/h, si el vehículo tira o se desvía hacia un lado al soltar suavemente el volante, desgaste irregular en los bordes de las llantas, o después de caer en un bache pronunciado.'
-    },
-    {
-      q: '¿En qué sucursales de Jasman es válida esta promoción?',
-      a: 'Es válida en sucursales participantes de Jasman Automotriz a nivel nacional (CDMX, Estado de México, Querétaro, Guanajuato, Jalisco, Nuevo León, Michoacán, Morelos e Hidalgo). Puedes consultar la disponibilidad directa en tu sucursal más cercana ingresando tu C.P.'
-    },
-    {
-      q: '¿Es necesario agendar cita previa o puedo llegar directo?',
-      a: 'Puedes llegar directamente a cualquiera de nuestras sucursales y serás atendido por orden de llegada, o bien agendar tu visita en línea o por WhatsApp para asegurar un lugar prioritario en rampa y reducir tu tiempo de espera.'
-    },
-    {
-      q: '¿Cuáles son las formas de pago aceptadas?',
-      a: 'Aceptamos pago en efectivo, tarjeta de débito, tarjeta de crédito en una sola exhibición y transferencia bancaria directa en mostrador. Todos nuestros precios ya incluyen IVA.'
-    }
-  ];
+  const faqItems = isAlignmentPromo
+    ? [
+        {
+          q: '¿Qué incluye el servicio de Alineación y Balanceo desde $750.00 MXN?',
+          a: 'Incluye la alineación computarizada 3D de alta precisión en las 4 llantas, el balanceo dinámico y estático de las 4 ruedas para rines desde 13" hasta 17", inspección visual de seguridad de 25 puntos en suspensión y frenos, y calibración de presión de inflado.'
+        },
+        {
+          q: '¿Cómo sé si mi auto necesita alineación y balanceo?',
+          a: 'Las señales más comunes son: vibraciones en el volante o en el asiento a velocidades mayores a 70-80 km/h, si el vehículo tira o se desvía hacia un lado al soltar suavemente el volante, desgaste irregular en los bordes de las llantas, o después de caer en un bache pronunciado.'
+        },
+        {
+          q: '¿En qué sucursales de Jasman es válida esta promoción?',
+          a: isPromoBranchFiltered
+            ? `Esta promoción aplica específicamente en las ${allBranches.length} sucursales participantes mostradas en el buscador y mapa de esta página. Ingresa tu C.P. para ubicar la más cercana.`
+            : 'Es válida en sucursales participantes de Jasman Automotriz a nivel nacional (CDMX, Estado de México, Querétaro, Guanajuato, Jalisco, Nuevo León, Michoacán, Morelos e Hidalgo). Puedes consultar la disponibilidad directa en tu sucursal más cercana ingresando tu C.P.'
+        },
+        {
+          q: '¿Es necesario agendar cita previa o puedo llegar directo?',
+          a: 'Puedes llegar directamente a cualquiera de nuestras sucursales y serás atendido por orden de llegada, o bien agendar tu visita en línea o por WhatsApp para asegurar un lugar prioritario en rampa y reducir tu tiempo de espera.'
+        },
+        {
+          q: '¿Cuáles son las formas de pago aceptadas?',
+          a: 'Aceptamos pago en efectivo, tarjeta de débito, tarjeta de crédito en una sola exhibición y transferencia bancaria directa en mostrador. Todos nuestros precios ya incluyen IVA.'
+        }
+      ]
+    : [
+        {
+          q: `¿En qué consiste "${promoDisplayTitle}"?`,
+          a: `${promotion.subheadline ? `${promotion.subheadline}. ` : ''}Consulta los detalles y vigencia indicados en el banner de la campaña o cotiza directamente con tu asesor de sucursal por WhatsApp para validar medidas y aplicaciones en tu vehículo.`
+        },
+        {
+          q: '¿En qué sucursales de Jasman es válida esta promoción?',
+          a: isPromoBranchFiltered
+            ? `Esta campaña es válida exclusivamente en las ${allBranches.length} sucursales participantes habilitadas en el buscador y mapa de esta página. Ingresa tu código postal para ver las más cercanas a ti.`
+            : `Válida en nuestras ${allBranches.length} sucursales de Jasman Automotriz a nivel nacional. Ingresa tu código postal arriba para encontrar la sucursal más cercana y confirmar disponibilidad.`
+        },
+        {
+          q: '¿La instalación incluye revisión de seguridad y garantía?',
+          a: 'Sí. Todos los servicios de llantas y mantenimiento en Jasman Automotriz incluyen instalación profesional con equipo calibrado, inspección visual de seguridad de 25 puntos en suspensión y garantía directa en taller.'
+        },
+        {
+          q: '¿Es necesario agendar cita previa o puedo llegar directo?',
+          a: 'Puedes llegar directamente a cualquiera de nuestras sucursales y serás atendido por orden de llegada, o bien agendar tu visita en línea o por WhatsApp para asegurar atención prioritaria y apartar tu lugar.'
+        },
+        {
+          q: '¿Cuáles son las formas de pago aceptadas?',
+          a: 'Aceptamos pago en efectivo, tarjeta de débito, tarjeta de crédito y transferencia bancaria directa en mostrador (consulta opciones de MSI vigentes en tienda). Todos nuestros precios incluyen IVA.'
+        }
+      ];
 
   return (
     <div className="landing-root" style={{ background: '#F8F9FA', color: C.charcoal, minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
@@ -759,10 +843,15 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
           <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', marginTop: 20 }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '5px 14px', borderRadius: 9999, background: C.white,
-              border: `1px solid ${C.border}`, fontSize: 12, fontWeight: 600, color: C.navy,
+              padding: '5px 14px', borderRadius: 9999,
+              background: isPromoBranchFiltered ? '#FEF2F2' : C.white,
+              border: `1px solid ${isPromoBranchFiltered ? 'rgba(196,30,36,0.35)' : C.border}`,
+              fontSize: 12, fontWeight: 700, color: isPromoBranchFiltered ? C.red : C.navy,
             }}>
-              <MapPin size={13} color={C.red} /> Más de 50 sucursales
+              <MapPin size={13} color={C.red} />{' '}
+              {isPromoBranchFiltered
+                ? `${allBranches.length} sucursales participantes en esta promoción`
+                : `${allBranches.length} sucursales disponibles`}
             </span>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -1452,9 +1541,9 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
                 </div>
                 <span style={{ fontWeight: 700, color: C.navy, display: 'flex', alignItems: 'center', gap: 4 }}>
                   <MapPin size={12} color={C.red} />{' '}
-                  {isAdsPromo
+                  {isPromoBranchFiltered
                     ? `${allBranches.length} sucursales participantes (click para elegir)`
-                    : `${allBranches.length}+ sucursales en todo México (click para elegir)`}
+                    : `${allBranches.length} sucursales en México (click para elegir)`}
                 </span>
               </div>
             </div>
@@ -1464,7 +1553,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
 
       </section>
 
-      {/* ═══════ 3. WHAT'S INCLUDED IN THE $750 MXN PROMOTION ═══════ */}
+      {/* ═══════ 3. WHAT'S INCLUDED IN THE PROMOTION ═══════ */}
       <section className="landing-section-padding" style={{ padding: '60px 16px', background: C.white, borderTop: `1px solid ${C.border}`, width: '100%', boxSizing: 'border-box' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
 
@@ -1477,44 +1566,80 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
               <CheckCircle size={15} /> SERVICIO PROFESIONAL GARANTIZADO
             </span>
             <h2 style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 'clamp(1.7rem, 3.5vw, 2.4rem)', color: C.navy }}>
-              ¿Qué incluye la promoción de Alineación y Balanceo?
+              {isAlignmentPromo
+                ? '¿Qué incluye la promoción de Alineación y Balanceo?'
+                : `¿Por qué elegir ${promoDisplayTitle} en Jasman?`}
             </h2>
             <p style={{ fontSize: 15, color: C.gray, marginTop: 10, maxWidth: 620, margin: '10px auto 0' }}>
-              Todo lo que tu automóvil necesita para un manejo suave, seguro y para alargar la vida útil de tus llantas.
+              {isAlignmentPromo
+                ? 'Todo lo que tu automóvil necesita para un manejo suave, seguro y para alargar la vida útil de tus llantas.'
+                : 'Instalación experta, equipo calibrado y garantía directa en nuestras sucursales participantes.'}
             </p>
           </div>
 
           <div className="landing-service-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 22 }}>
-            {[
-              {
-                title: 'Alineación Computarizada 3D',
-                desc: 'Ajuste milimétrico de los ángulos de las 4 ruedas (cámber, cáster y convergencia) según las especificaciones del fabricante.',
-                icon: <Compass size={20} color={C.red} />,
-                image: '/images/promo-alignment.png',
-                badge: 'Tecnología 3D',
-              },
-              {
-                title: 'Balanceo Dinámico en 4 Ruedas',
-                desc: 'Compensación precisa del peso de rines y llantas del Rin 13" al Rin 17" para eliminar vibraciones en el volante a cualquier velocidad.',
-                icon: <Wrench size={20} color={C.red} />,
-                image: '/images/service-alignment.png',
-                badge: '4 Ruedas',
-              },
-              {
-                title: 'Revisión de Suspensión y Dirección',
-                desc: 'Inspección de amortiguadores, rótulas, bieletas, bujes y terminales de dirección para garantizar estabilidad y seguridad.',
-                icon: <ShieldCheck size={20} color={C.red} />,
-                image: '/images/service-suspension.png',
-                badge: 'Seguridad Total',
-              },
-              {
-                title: 'Calibración e Inspección de Llantas',
-                desc: 'Revisión de profundidad de dibujo, desgaste simétrico y ajuste de presión con aire o nitrógeno para optimizar el consumo de combustible.',
-                icon: <CheckCircle size={20} color={C.red} />,
-                image: '/images/service-tires.png',
-                badge: 'Inspección Visual',
-              },
-            ].map((card, idx) => (
+            {(isAlignmentPromo
+              ? [
+                  {
+                    title: 'Alineación Computarizada 3D',
+                    desc: 'Ajuste milimétrico de los ángulos de las 4 ruedas (cámber, cáster y convergencia) según las especificaciones del fabricante.',
+                    icon: <Compass size={20} color={C.red} />,
+                    image: '/images/promo-alignment.png',
+                    badge: 'Tecnología 3D',
+                  },
+                  {
+                    title: 'Balanceo Dinámico en 4 Ruedas',
+                    desc: 'Compensación precisa del peso de rines y llantas del Rin 13" al Rin 17" para eliminar vibraciones en el volante a cualquier velocidad.',
+                    icon: <Wrench size={20} color={C.red} />,
+                    image: '/images/service-alignment.png',
+                    badge: '4 Ruedas',
+                  },
+                  {
+                    title: 'Revisión de Suspensión y Dirección',
+                    desc: 'Inspección de amortiguadores, rótulas, bieletas, bujes y terminales de dirección para garantizar estabilidad y seguridad.',
+                    icon: <ShieldCheck size={20} color={C.red} />,
+                    image: '/images/service-suspension.png',
+                    badge: 'Seguridad Total',
+                  },
+                  {
+                    title: 'Calibración e Inspección de Llantas',
+                    desc: 'Revisión de profundidad de dibujo, desgaste simétrico y ajuste de presión con aire o nitrógeno para optimizar el consumo de combustible.',
+                    icon: <CheckCircle size={20} color={C.red} />,
+                    image: '/images/service-tires.png',
+                    badge: 'Inspección Visual',
+                  },
+                ]
+              : [
+                  {
+                    title: 'Llantas y Productos Originales',
+                    desc: 'Garantía directa de fabricante en cada llanta y refacción disponible en las sucursales participantes de esta campaña.',
+                    icon: <ShieldCheck size={20} color={C.red} />,
+                    image: '/images/service-tires.png',
+                    badge: 'Garantía Oficial',
+                  },
+                  {
+                    title: 'Instalación y Balanceo Experto',
+                    desc: 'Montaje profesional con maquinaria de precisión para cuidar tus rines y optimizar el desempeño desde el primer kilómetro.',
+                    icon: <Wrench size={20} color={C.red} />,
+                    image: '/images/service-alignment.png',
+                    badge: 'Equipo Calibrado',
+                  },
+                  {
+                    title: 'Inspección de Seguridad 25 Puntos',
+                    desc: 'Revisión integral de suspensión, dirección y presión de inflado durante tu visita para que viajes con total tranquilidad.',
+                    icon: <Compass size={20} color={C.red} />,
+                    image: '/images/service-suspension.png',
+                    badge: 'Seguridad Total',
+                  },
+                  {
+                    title: 'Atención Prioritaria por Cita',
+                    desc: 'Agenda en línea o por WhatsApp con tu sucursal Jasman más cercana y reduce tiempos de espera en mostrador y rampa.',
+                    icon: <CheckCircle size={20} color={C.red} />,
+                    image: '/images/promo-alignment.png',
+                    badge: 'Cita Prioritaria',
+                  },
+                ]
+            ).map((card, idx) => (
               <div
                 key={idx}
                 style={{
@@ -1578,7 +1703,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
         </div>
       </section>
 
-      {/* ═══════ 4. APPOINTMENT FORM ("AGENDA TU SERVICIO DESDE $750") ═══════ */}
+      {/* ═══════ 4. APPOINTMENT FORM ═══════ */}
       <section ref={bookingSectionRef} className="landing-section-padding" style={{
         padding: '70px 16px',
         background: `linear-gradient(135deg, ${C.navy} 0%, #0D111E 100%)`,
@@ -1601,10 +1726,14 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
               <Calendar size={14} /> AGENDAR VISITA EN LÍNEA
             </span>
             <h2 style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', color: C.white, lineHeight: 1.15 }}>
-              Agenda tu servicio (desde $750 MXN)
+              {isAlignmentPromo
+                ? 'Agenda tu servicio (desde $750 MXN)'
+                : `Agenda tu promoción: ${promoDisplayTitle}`}
             </h2>
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.75)', marginTop: 10 }}>
-              Aparta tu lugar para el servicio de Alineación y Balanceo en las 4 llantas. Guardaremos tus datos en el sistema junto con la sucursal seleccionada para recibirte con prioridad.
+              {isAlignmentPromo
+                ? 'Aparta tu lugar para el servicio de Alineación y Balanceo en las 4 llantas. Guardaremos tus datos en el sistema junto con la sucursal seleccionada para recibirte con prioridad.'
+                : `Aparta tu lugar para "${promoDisplayTitle}". Guardaremos tus datos en el sistema junto con la sucursal seleccionada para recibirte con prioridad.`}
             </p>
           </div>
 
@@ -2006,13 +2135,28 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
             ))}
           </div>
 
-          {/* Legal restrictions footer note from original banner */}
+          {/* Legal restrictions footer note driven dynamically by active CMS promotion */}
           <div style={{ marginTop: 36, padding: '16px 20px', borderRadius: 12, background: C.white, border: `1px solid ${C.border}`, fontSize: 11, color: C.gray, lineHeight: 1.6 }}>
-            <strong>Términos y condiciones de la promoción:</strong> *Promoción válida hasta el 15 de noviembre del 2026.
-            El cliente recibirá el precio promocional desde $750.00 MXN en el paquete de alineación y balanceo (sobre precios de lista)
-            únicamente aplicando en vehículos de Rin 13" al Rin 17". Válido pagando en una sola exhibición con transferencia bancaria,
-            efectivo, tarjeta de débito y crédito en una sola exhibición. Promoción válida en sucursales participantes de Jasman Automotriz.
-            Aplican restricciones según condiciones mecánicas de la suspensión del vehículo.
+            <strong>Términos y condiciones de la promoción:</strong>{' '}
+            {isAlignmentPromo ? (
+              <>
+                {promotion.subheadline ? `${promotion.subheadline}. ` : 'Precio promocional desde $750.00 MXN en el paquete de alineación y balanceo (sobre precios de lista) '}
+                únicamente aplicando en vehículos de Rin 13" al Rin 17". Válido pagando en una sola exhibición con transferencia bancaria,
+                efectivo, tarjeta de débito y crédito en una sola exhibición.{' '}
+                {isPromoBranchFiltered
+                  ? `Promoción válida en las ${allBranches.length} sucursales participantes mostradas en el buscador.`
+                  : 'Promoción válida en sucursales participantes de Jasman Automotriz.'}{' '}
+                Aplican restricciones según condiciones mecánicas de la suspensión del vehículo.
+              </>
+            ) : (
+              <>
+                Campaña "{promoDisplayTitle}"{promotion.subheadline ? ` — ${promotion.subheadline}` : ''}. Consulta vigencia y modelos o medidas participantes directamente en el banner promocional y con tu asesor de sucursal.{' '}
+                {isPromoBranchFiltered
+                  ? `Válida exclusivamente en las ${allBranches.length} sucursales participantes mostradas en el buscador de esta página.`
+                  : `Válida en sucursales participantes de Jasman Automotriz (${allBranches.length} disponibles).`}{' '}
+                Sujeto a disponibilidad de inventario y condiciones mecánicas del vehículo. Aplican restricciones.
+              </>
+            )}
           </div>
 
         </div>

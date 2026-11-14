@@ -1,6 +1,11 @@
 import { createClient, OAuthStrategy, EMPTY_TOKENS } from '@wix/sdk';
 import { items } from '@wix/data';
 import { sendFormSubmitEmail } from './formSubmitService';
+import {
+  sucursalesWithCoords,
+  specificPostalCodes,
+  postalCodeCentroids,
+} from '../data/postalCodesData.js';
 
 export const WIX_CLIENT_ID = '5aabc542-16cf-44de-bedf-d8eb7ad08c46';
 export const WIX_SITE_ID = '7fd3b8ea-a3f3-4b51-9b48-4ec1f53d2cc9';
@@ -113,9 +118,163 @@ export function formatWixImageUrl(wixUri, fallbackUrl = '/images/promo-landing-b
   return fallbackUrl;
 }
 
+function normalizeBranchKey(raw) {
+  return String(raw || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/^jasman\s+automotriz\s*-?\s*(?:suc\.?)?\s*/i, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+const LOCAL_BRANCH_BY_KEY = new Map();
+for (const b of sucursalesWithCoords) {
+  const byName = normalizeBranchKey(b.name);
+  if (byName) LOCAL_BRANCH_BY_KEY.set(byName, b);
+  if (b.id) LOCAL_BRANCH_BY_KEY.set(b.id.toLowerCase(), b);
+}
+
+function resolveCoordsFromPostalCodeSync(cpRaw) {
+  const clean = String(cpRaw || '').replace(/\D/g, '').slice(0, 5);
+  if (clean.length === 5) {
+    if (specificPostalCodes[clean]) {
+      return { lat: specificPostalCodes[clean].lat, lng: specificPostalCodes[clean].lng };
+    }
+    const prefix2 = clean.slice(0, 2);
+    if (postalCodeCentroids[prefix2]) {
+      const c = postalCodeCentroids[prefix2];
+      const subDigit = (parseInt(clean.slice(2, 5), 10) || 500) / 1000 - 0.5;
+      return {
+        lat: c.lat + subDigit * 0.04,
+        lng: c.lng + subDigit * 0.04,
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Normalizes a Wix CMS "Sucursales" item (standalone or expanded via .include('sucursalesVlidas'))
+ * enriching missing coordinates or schedule from local directory while preserving CMS WhatsApp links.
+ */
+export function normalizeWixBranch(b) {
+  if (!b || typeof b !== 'object' || !b.title || !String(b.title).trim()) {
+    return null;
+  }
+
+  const title = String(b.title).trim();
+  const cleanName = title
+    .replace(/^Jasman\s+Automotriz\s*-?\s*(?:Suc\.?)?\s*/i, '')
+    .trim();
+  const key = normalizeBranchKey(cleanName || title);
+  const localMatch = LOCAL_BRANCH_BY_KEY.get(key) || LOCAL_BRANCH_BY_KEY.get(normalizeBranchKey(title));
+
+  const cmsCp = /^\d{5}$/.test(String(b.regin || '').trim())
+    ? String(b.regin).trim()
+    : (b.address?.postalCode ? String(b.address.postalCode).replace(/\D/g, '').slice(0, 5) : '');
+
+  const rawLat = b.latitud ?? b.address?.location?.latitude;
+  const rawLng = b.longitud ?? b.address?.location?.longitude;
+  let lat = rawLat !== undefined && rawLat !== null && rawLat !== '' ? Number(rawLat) : NaN;
+  let lng = rawLng !== undefined && rawLng !== null && rawLng !== '' ? Number(rawLng) : NaN;
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0 || lng === 0) {
+    if (localMatch && Number.isFinite(localMatch.lat) && Number.isFinite(localMatch.lng)) {
+      lat = localMatch.lat;
+      lng = localMatch.lng;
+    } else {
+      const cpCoords = resolveCoordsFromPostalCodeSync(cmsCp || localMatch?.cp);
+      lat = cpCoords ? cpCoords.lat : 19.4326;
+      lng = cpCoords ? cpCoords.lng : -99.1332;
+    }
+  }
+
+  const fullAddr =
+    b.address?.formatted ||
+    b.address?.streetAddress?.name ||
+    localMatch?.address ||
+    '';
+  const city =
+    b.address?.city ||
+    b.municipio ||
+    (cmsCp !== String(b.cp || '').trim() ? b.cp : '') ||
+    localMatch?.city ||
+    'Ciudad de México';
+  const state = b.estado || b.address?.subdivision || localMatch?.state || 'CDMX';
+
+  // Extract phone number from CMS WhatsApp URL (supports 52XXXXXXXXXX and 521XXXXXXXXXX)
+  const cmsWhatsappUrl = typeof b.whatsapp === 'string' && b.whatsapp.trim() ? b.whatsapp.trim() : '';
+  let tenDigits = '';
+  let whatsappPhone = '';
+  if (cmsWhatsappUrl) {
+    const m =
+      cmsWhatsappUrl.match(/phone=(?:521?)?(\d{10})/i) ||
+      cmsWhatsappUrl.match(/wa\.me\/(?:521?)?(\d{10})/i);
+    if (m && m[1]) {
+      tenDigits = m[1];
+      const fullM =
+        cmsWhatsappUrl.match(/phone=(\d+)/i) ||
+        cmsWhatsappUrl.match(/wa\.me\/(\d+)/i);
+      whatsappPhone = fullM ? fullM[1] : `52${tenDigits}`;
+    }
+  }
+
+  const displayPhone = tenDigits
+    ? `${tenDigits.slice(0, 2)} ${tenDigits.slice(2, 6)} ${tenDigits.slice(6)}`
+    : localMatch?.phone || '55 1002 4945';
+
+  const resolvedWhatsappPhone = whatsappPhone || localMatch?.whatsappPhone || '5215510024945';
+  const fullBranchLabel = title.startsWith('Jasman') ? title : `Jasman Automotriz - Suc. ${title}`;
+  const unifiedWaMsg = encodeURIComponent(
+    `SW - Hola quisiera más información de sus servicios automotrices en su sucursal "${fullBranchLabel}"`
+  );
+
+  return {
+    ...(localMatch || {}),
+    id: b._id || localMatch?.id || key || title,
+    wixId: b._id || '',
+    name: cleanName || localMatch?.name || title,
+    fullName: fullBranchLabel,
+    address: fullAddr,
+    city,
+    state,
+    cp: cmsCp || localMatch?.cp || '',
+    hours: localMatch?.hours || 'Lunes a Viernes 9:00 a 18:00 · Sábado 9:00 a 15:00',
+    lat,
+    lng,
+    phone: displayPhone,
+    whatsappPhone: resolvedWhatsappPhone,
+    cmsWhatsappUrl,
+    whatsappUrl: cmsWhatsappUrl || `https://api.whatsapp.com/send/?phone=${resolvedWhatsappPhone}&text=${unifiedWaMsg}`,
+    mapsUrl: localMatch?.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${title} ${fullAddr}`)}`,
+    source: 'wix-cms',
+  };
+}
+
+/**
+ * Fetches all promotions stored in Wix CMS collection "Landingdepromociones"
+ * including referenced valid branches ("sucursalesVlidas").
+ */
+export async function getAllLandingPromotions() {
+  try {
+    const res = await wixClient.items
+      .query('Landingdepromociones')
+      .include('sucursalesVlidas')
+      .descending('_updatedDate')
+      .limit(50)
+      .find();
+    return (res.items || []).map(normalizePromoItem);
+  } catch (err) {
+    console.warn('Wix Headless: Error listing Landingdepromociones:', err?.message || err);
+    return [];
+  }
+}
+
 /**
  * Fetches dynamic landing promotion from Wix CMS collection "Landingdepromociones".
- * Can search by slug, or fetch the most recently updated active promotion.
+ * Searches by exact slug first (or falls back to the newest updated promotion)
+ * and includes referenced "sucursalesVlidas" branch objects.
  */
 export async function getLandingPromotion(slug = null) {
   try {
@@ -125,6 +284,7 @@ export async function getLandingPromotion(slug = null) {
       const bySlug = await wixClient.items
         .query('Landingdepromociones')
         .eq('slug', cleanSlug)
+        .include('sucursalesVlidas')
         .limit(1)
         .find();
       if (bySlug.items && bySlug.items.length > 0) {
@@ -135,6 +295,7 @@ export async function getLandingPromotion(slug = null) {
     // Default or fallback: fetch newest promotion dynamically from Wix CMS
     const all = await wixClient.items
       .query('Landingdepromociones')
+      .include('sucursalesVlidas')
       .descending('_updatedDate')
       .limit(10)
       .find();
@@ -153,6 +314,7 @@ export async function getLandingPromotion(slug = null) {
     headline: 'Promoción Especial Jasman',
     subheadline: 'Cotiza y agenda en línea en cualquiera de nuestras sucursales',
     bannerImage: '/images/promo-landing-banner.jpg',
+    validBranches: [],
     source: 'local-fallback',
   };
 }
@@ -163,6 +325,11 @@ function normalizePromoItem(item) {
   const fallbackSub =
     item.title && item.title !== headline ? item.title : '';
 
+  const rawValidBranches = Array.isArray(item.sucursalesVlidas)
+    ? item.sucursalesVlidas
+    : [];
+  const validBranches = rawValidBranches.map(normalizeWixBranch).filter(Boolean);
+
   return {
     id: item._id,
     title: item.title || headline,
@@ -170,7 +337,7 @@ function normalizePromoItem(item) {
     headline,
     subheadline: item.secundariaDePromocin || fallbackSub,
     bannerImage: formatWixImageUrl(item.imagenDePromocin, '/images/promo-landing-banner.jpg'),
-    validBranches: item.sucursalesVlidas || [],
+    validBranches,
     createdDate: item._createdDate,
     updatedDate: item._updatedDate,
     raw: item,
@@ -213,55 +380,30 @@ export async function getWixPostalCode(cp) {
 }
 
 /**
- * Fetches all branches stored in Wix CMS collection "Sucursales".
- * Returns mapped array with full details and coordinates.
+ * Fetches all branches stored in Wix CMS collection "Sucursales" (paginated).
+ * Returns normalized array with full details, preserved CMS WhatsApp links, and coordinates.
  */
 export async function getWixBranches() {
   try {
-    const res = await wixClient.items
+    let res = await wixClient.items
       .query('Sucursales')
       .limit(100)
       .find();
 
-    if (res.items && res.items.length > 0) {
-      return res.items.map((b) => {
-        const title = b.title || '';
-        const cleanName = title.replace(/^Jasman Automotriz\s*-\s*Suc\.\s*/i, '').trim();
-        const lat = b.latitud || b.address?.location?.latitude;
-        const lng = b.longitud || b.address?.location?.longitude;
-        const fullAddr = b.address?.formatted || b.address?.streetAddress?.name || '';
-        const city = b.address?.city || 'Ciudad de México';
-        const state = b.address?.subdivision || 'CDMX';
+    const allItems = [...(res.items || [])];
+    while (typeof res?.hasNext === 'function' && res.hasNext()) {
+      res = await res.next();
+      if (res?.items?.length) {
+        allItems.push(...res.items);
+      } else {
+        break;
+      }
+    }
 
-        // Extract phone number from WhatsApp URL if available
-        let phone = '';
-        if (b.whatsapp) {
-          const phoneMatch = b.whatsapp.match(/phone=52(\d{10})/i) || b.whatsapp.match(/wa\.me\/52(\d{10})/i);
-          if (phoneMatch && phoneMatch[1]) {
-            phone = phoneMatch[1];
-          }
-        }
-
-        const fullBranchLabel = title.startsWith('Jasman') ? title : `Jasman Automotriz - Suc. ${title}`;
-        const unifiedWaMsg = encodeURIComponent(
-          `SW - Hola quisiera más información de sus servicios automotrices en su sucursal "${fullBranchLabel}"`
-        );
-
-        return {
-          id: b._id,
-          name: cleanName || title,
-          fullName: fullBranchLabel,
-          address: fullAddr,
-          city,
-          state,
-          lat: Number(lat),
-          lng: Number(lng),
-          phone: phone ? `${phone.slice(0, 2)} ${phone.slice(2, 6)} ${phone.slice(6)}` : '55 1002 4945',
-          whatsappUrl: `https://api.whatsapp.com/send/?phone=5215510024945&text=${unifiedWaMsg}`,
-          mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${title} ${fullAddr}`)}`,
-          source: 'wix-cms',
-        };
-      }).filter(b => !isNaN(b.lat) && !isNaN(b.lng));
+    if (allItems.length > 0) {
+      return allItems
+        .map(normalizeWixBranch)
+        .filter((b) => b && Number.isFinite(b.lat) && Number.isFinite(b.lng));
     }
   } catch (err) {
     console.warn('Wix Headless: Error querying Sucursales:', err?.message || err);
