@@ -8,7 +8,6 @@ import {
 } from '../data/productosMasterData';
 import { useTiendaState } from '../hooks/useTiendaState';
 import { useFlotillasDispatch } from '../hooks/useFlotillasDispatch';
-import IsometricWorkshopScene from '../components/IsometricWorkshopScene';
 import { LAST_CHECKOUT_STORAGE_KEY } from '../lib/wixClient';
 import {
   wixCheckoutClient,
@@ -54,13 +53,7 @@ export default function ThankYouPage() {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('orderId') || searchParams.get('checkoutId');
   const { clearCart, mergeSyncedOrders } = useTiendaState();
-  const {
-    bayPhase: fleetBayPhase,
-    dispatchedCount: fleetDispatchedCount,
-    lastDispatch: fleetLastDispatch,
-    activeVehicle: fleetActiveVehicle,
-    notifyCartDispatched,
-  } = useFlotillasDispatch();
+  const { notifyCartDispatched } = useFlotillasDispatch();
   // Ensure live Wix catalog is loaded so studio tire cutouts resolve by catalogItemId/SKU
   useWixCatalogProducts();
 
@@ -456,24 +449,6 @@ export default function ThankYouPage() {
               Hemos recibido tu pedido exitosamente. En breve recibirás la confirmación
               y guía de seguimiento en tu correo electrónico.
             </p>
-          </div>
-
-          {/* Live Isometric Dispatch Confirmation via Flotillas Hook */}
-          <div style={{ marginBottom: 24 }}>
-            <IsometricWorkshopScene
-              variant="compact"
-              bayPhase={fleetBayPhase}
-              showCheck={true}
-              dispatchedCount={fleetDispatchedCount}
-              lastDispatch={
-                fleetLastDispatch || {
-                  id: displayOrderNumber || 'ORDEN',
-                  source: 'cart',
-                  label: `Pedido ${displayOrderNumber || ''} · ${displayTotalQuantity || 1} uds despachadas`,
-                }
-              }
-              activeVehicle={fleetActiveVehicle}
-            />
           </div>
 
           {/* Comprehensive Order Summary Card */}

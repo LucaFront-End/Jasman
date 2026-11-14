@@ -115,23 +115,29 @@ export function formatWixImageUrl(wixUri, fallbackUrl = '/images/promo-landing-b
 
 /**
  * Fetches dynamic landing promotion from Wix CMS collection "Landingdepromociones".
- * Can search by slug, or fetch the first/default active promotion.
+ * Can search by slug, or fetch the most recently updated active promotion.
  */
 export async function getLandingPromotion(slug = null) {
   try {
-    let query = wixClient.items.query('Landingdepromociones');
-
     if (slug) {
       // Normalize slug (clean leading/trailing slashes)
       const cleanSlug = String(slug).replace(/^\/+|\/+$/g, '').trim();
-      const bySlug = await query.eq('slug', cleanSlug).find();
+      const bySlug = await wixClient.items
+        .query('Landingdepromociones')
+        .eq('slug', cleanSlug)
+        .limit(1)
+        .find();
       if (bySlug.items && bySlug.items.length > 0) {
         return normalizePromoItem(bySlug.items[0]);
       }
     }
 
-    // Default or fallback: fetch all and take first
-    const all = await wixClient.items.query('Landingdepromociones').limit(10).find();
+    // Default or fallback: fetch newest promotion dynamically from Wix CMS
+    const all = await wixClient.items
+      .query('Landingdepromociones')
+      .descending('_updatedDate')
+      .limit(10)
+      .find();
     if (all.items && all.items.length > 0) {
       return normalizePromoItem(all.items[0]);
     }
@@ -142,22 +148,27 @@ export async function getLandingPromotion(slug = null) {
   // Safe fallback if network error or collection empty
   return {
     id: 'default-alineacion',
-    title: 'Alineación y Balanceo',
+    title: 'Promoción Vigente Jasman Automotriz',
     slug: 'alineacion-y-balanceo',
-    headline: 'Alineación y Balanceo en las 4 Llantas',
-    subheadline: 'Desde $750.00 MXN (IVA Incluido) · Rin 13" al 17"',
+    headline: 'Promoción Especial Jasman',
+    subheadline: 'Cotiza y agenda en línea en cualquiera de nuestras sucursales',
     bannerImage: '/images/promo-landing-banner.jpg',
     source: 'local-fallback',
   };
 }
 
 function normalizePromoItem(item) {
+  const headline =
+    item.tituloDePromocin || item.title || 'Promoción Especial Jasman';
+  const fallbackSub =
+    item.title && item.title !== headline ? item.title : '';
+
   return {
     id: item._id,
-    title: item.title || 'Alineación y Balanceo',
+    title: item.title || headline,
     slug: item.slug || 'alineacion-y-balanceo',
-    headline: item.tituloDePromocin || item.title || 'Alineación y Balanceo en las 4 Llantas',
-    subheadline: item.secundariaDePromocin || 'Desde $750.00 MXN (IVA Incluido) · Rin 13" al 17"',
+    headline,
+    subheadline: item.secundariaDePromocin || fallbackSub,
     bannerImage: formatWixImageUrl(item.imagenDePromocin, '/images/promo-landing-banner.jpg'),
     validBranches: item.sucursalesVlidas || [],
     createdDate: item._createdDate,

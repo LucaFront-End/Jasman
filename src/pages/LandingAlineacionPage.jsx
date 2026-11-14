@@ -155,10 +155,10 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
   // Dynamic promotion state loaded from Wix CMS "Landingdepromociones"
   const [promotion, setPromotion] = useState({
     id: 'default',
-    title: 'Alineación y Balanceo',
+    title: 'Promoción Vigente Jasman',
     slug: isAdsPromo ? 'alineacion-y-balanceo-promo' : 'alineacion-y-balanceo',
-    headline: 'Alineación y Balanceo en las 4 Llantas',
-    subheadline: 'Desde $750.00 MXN (IVA Incluido) · Rin 13" al 17"',
+    headline: 'Promoción Especial Jasman',
+    subheadline: 'Cotiza y agenda en línea en sucursales participantes',
     bannerImage: '/images/promo-landing-banner.jpg',
     source: 'wix-connecting',
   });
@@ -510,12 +510,16 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
               <img
                 src={promotion.bannerImage}
                 alt={`${promotion.headline} Jasman Automotriz`}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/images/promo-landing-banner.jpg';
+                }}
                 style={{
                   width: '100%',
                   height: 'auto',
                   display: 'block',
                   maxHeight: '500px',
-                  objectFit: 'cover',
+                  objectFit: 'contain',
                   objectPosition: 'center',
                 }}
               />
@@ -611,6 +615,8 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
 
             {/* Large Banner Image with Mobile Framing */}
             <div style={{
+              width: '100%',
+              aspectRatio: '3160 / 833',
               borderRadius: 18,
               overflow: 'hidden',
               boxShadow: '0 12px 30px rgba(0,0,0,0.6)',
@@ -622,25 +628,18 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
               <img
                 src={promotion.bannerImage}
                 alt={`${promotion.headline} Jasman Automotriz`}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/images/promo-landing-banner.jpg';
+                }}
                 style={{
                   width: '100%',
-                  height: '200px',
+                  height: '100%',
                   display: 'block',
-                  objectFit: 'cover',
+                  objectFit: 'contain',
                   objectPosition: 'center',
                 }}
               />
-              <div style={{
-                position: 'absolute', bottom: 10, left: 10,
-                background: 'rgba(11,13,23,0.88)', backdropFilter: 'blur(8px)',
-                padding: '6px 12px', borderRadius: 10, border: '1px solid rgba(255,215,0,0.3)',
-                display: 'flex', alignItems: 'center', gap: 6,
-              }}>
-                <span style={{ color: '#FFD700', fontFamily: F.heading, fontWeight: 900, fontSize: 14 }}>
-                  {promotion.subheadline.includes('$') ? promotion.subheadline.split('·')[0].trim() : 'DESDE $750 MXN'}
-                </span>
-                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>· Rin 13" al 17"</span>
-              </div>
             </div>
 
             {/* Mobile Value Card */}
@@ -660,7 +659,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
                   <Wrench size={16} />
                 </div>
                 <span style={{ color: C.redLight, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Servicio en las 4 llantas
+                  Promoción Vigente Jasman
                 </span>
               </div>
 
@@ -668,15 +667,17 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
                 {promotion.headline}
               </h2>
 
-              <div style={{
-                padding: '12px 14px', borderRadius: 14,
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-                marginBottom: 16,
-              }}>
-                <div style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 18, color: '#FFD700' }}>
-                  {promotion.subheadline}
+              {promotion.subheadline && (
+                <div style={{
+                  padding: '12px 14px', borderRadius: 14,
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+                  marginBottom: 16,
+                }}>
+                  <div style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 16, color: '#FFD700' }}>
+                    {promotion.subheadline}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -2021,10 +2022,12 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
       <div className="landing-mobile-sticky-bar">
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', fontWeight: 600 }}>
-            {promotion.title || 'Alineación y Balanceo'}
+            {promotion.headline || promotion.title || 'Promoción Vigente'}
           </span>
-          <span style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 15, color: '#FBBF24', lineHeight: 1.1 }}>
-            {promotion.subheadline ? (promotion.subheadline.includes('$') ? promotion.subheadline.split('·')[0].trim() : promotion.subheadline) : 'Desde $750 MXN'}
+          <span style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 13.5, color: '#FBBF24', lineHeight: 1.15 }}>
+            {promotion.subheadline && promotion.subheadline !== promotion.headline
+              ? (promotion.subheadline.includes('·') ? promotion.subheadline.split('·')[0].trim() : promotion.subheadline)
+              : 'Cotiza y agenda en línea'}
           </span>
         </div>
 

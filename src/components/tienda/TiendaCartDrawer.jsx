@@ -5,7 +5,6 @@ import { formatMXN } from '../../data/productosMasterData';
 import { sucursales } from '../../data/sucursalesData';
 import { useTiendaState, triggerTiendaUI } from '../../hooks/useTiendaState';
 import { useFlotillasDispatch } from '../../hooks/useFlotillasDispatch';
-import IsometricWorkshopScene from '../IsometricWorkshopScene';
 import { saveContactoWeb } from '../../services/wixService';
 import {
   redirectToJasmanWixCheckout,
@@ -48,13 +47,7 @@ export default function TiendaCartDrawer() {
 
   const { pathname } = useLocation();
   const isLegacyCopyRoute = pathname.includes('copia');
-  const {
-    bayPhase: fleetBayPhase,
-    dispatchedCount: fleetDispatchedCount,
-    lastDispatch: fleetLastDispatch,
-    activeVehicle: fleetActiveVehicle,
-    notifyCartDispatched,
-  } = useFlotillasDispatch();
+  const { notifyCartDispatched } = useFlotillasDispatch();
 
   const [open, setOpen] = useState(false);
   const [manualCode, setManualCode] = useState('');
@@ -411,22 +404,6 @@ export default function TiendaCartDrawer() {
                 Tu orden quedó guardada en <strong>Mi Cuenta → Mis Pedidos</strong> con
                 entrega/instalación en <strong>{orderCompleted.branchName}</strong>.
               </p>
-              <div style={{ marginBottom: 18, textAlign: 'left' }}>
-                <IsometricWorkshopScene
-                  variant="compact"
-                  bayPhase="exiting"
-                  showCheck={true}
-                  dispatchedCount={fleetDispatchedCount}
-                  lastDispatch={
-                    fleetLastDispatch || {
-                      id: orderCompleted.id,
-                      source: 'cart',
-                      label: `Pedido ${orderCompleted.id} Despachado`,
-                    }
-                  }
-                  activeVehicle={fleetActiveVehicle}
-                />
-              </div>
               <button
                 type="button"
                 onClick={() => {
@@ -908,25 +885,6 @@ export default function TiendaCartDrawer() {
                 </span>
               </div>
             </div>
-
-            {checkoutLoading && (
-              <div style={{ marginBottom: 12 }}>
-                <IsometricWorkshopScene
-                  variant="compact"
-                  bayPhase={fleetBayPhase}
-                  showCheck={true}
-                  dispatchedCount={fleetDispatchedCount}
-                  lastDispatch={
-                    fleetLastDispatch || {
-                      id: 'CHECKOUT',
-                      source: 'cart',
-                      label: `Despachando ${totalTireUnits} ${totalTireUnits === 1 ? 'llanta' : 'llantas'}`,
-                    }
-                  }
-                  activeVehicle={fleetActiveVehicle}
-                />
-              </div>
-            )}
 
             {checkoutError && (
               <div
