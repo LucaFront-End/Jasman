@@ -1,13 +1,15 @@
 import { useParams, Link } from 'react-router-dom';
 import PageHero from '../components/PageHero';
 import { C, F } from '../hooks/useAnimations';
-import { sucursales } from '../data/sucursalesData';
+import { sucursales as staticSucursales } from '../data/sucursalesData';
+import { useWixSucursales } from '../hooks/useWixSucursales';
 import { servicios } from '../data/serviciosData';
 import Icon from '../components/Icon';
 import { MapPin, Phone, MessageCircle, Navigation, Clock, ArrowLeft, ArrowRight } from 'lucide-react';
 
 export default function SucursalDetailPage() {
   const { slug } = useParams();
+  const sucursales = useWixSucursales(staticSucursales);
   const branch = sucursales.find(s => s.id === slug);
 
   if (!branch) {

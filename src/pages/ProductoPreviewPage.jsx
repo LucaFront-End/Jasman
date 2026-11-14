@@ -8,6 +8,7 @@ import {
   findCatalogProductById,
 } from '../data/productosMasterData';
 import { useTiendaState, getVolumeDiscountTier } from '../hooks/useTiendaState';
+import { trackViewItem } from '../services/dataLayerService';
 import { useAppleTilt } from '../hooks/useAppleScrollPhysics';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
@@ -133,7 +134,7 @@ const DRIVER_REVIEWS = [
 export default function ProductoPreviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { products: catalogProducts } = useWixCatalogProducts();
+  const { products: catalogProducts, isLoading: catalogLoading } = useWixCatalogProducts();
 
   const product = useMemo(() => {
     return (
@@ -180,6 +181,15 @@ export default function ProductoPreviewPage() {
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  const lastTrackedViewProductIdRef = useRef('');
+  useEffect(() => {
+    const productKey = String(product?.id || '');
+    if (!productKey || lastTrackedViewProductIdRef.current === productKey) return;
+    if (!product?.wixId && catalogLoading) return;
+    lastTrackedViewProductIdRef.current = productKey;
+    trackViewItem(product, product.finalPriceTaxExcluded || 0);
+  }, [product, catalogLoading]);
 
   const brandMeta = BRAND_META[product.brand];
   const brandExtra = BRAND_DETAILS[product.brand] || {

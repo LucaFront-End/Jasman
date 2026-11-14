@@ -6,6 +6,7 @@ import { sucursales } from '../../data/sucursalesData';
 import { useTiendaState, triggerTiendaUI } from '../../hooks/useTiendaState';
 import { useFlotillasDispatch } from '../../hooks/useFlotillasDispatch';
 import { saveContactoWeb } from '../../services/wixService';
+import { trackBeginCheckout } from '../../services/dataLayerService';
 import {
   redirectToJasmanWixCheckout,
   syncAndEstimateWixCart,
@@ -95,7 +96,7 @@ export default function TiendaCartDrawer() {
           }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       cancelled = true;
@@ -110,6 +111,13 @@ export default function TiendaCartDrawer() {
 
   const liveSubtotal = subtotal;
   const liveVolumeDiscount = volumeDiscountAmount;
+  const maxSameUnits = volumeTier.maxSameItemUnits || 0;
+  const hasMixedVolumeTiers =
+    liveVolumeDiscount > 0 &&
+    cartItems.some((item) => (item.itemVolumeTier?.percent || 0) !== volumeTier.percent);
+  const volumeSummaryLabel = hasMixedVolumeTiers
+    ? 'Descuento automático (mismo modelo)'
+    : `${volumeTier.label} (mismo modelo)`;
   const activeWixCoupon = !isLegacyCopyRoute ? wixEstimate?.appliedCoupon : null;
   const liveCouponDiscount = activeWixCoupon
     ? Number(activeWixCoupon.amount) || 0
@@ -127,14 +135,17 @@ export default function TiendaCartDrawer() {
 
   const cartWhatsappMessage = [
     'SW- Hola, quisiera asesoría sobre mi carrito en Jasman Tienda:',
-    ...cartItems.map(
-      (i) =>
-        `• ${i.quantity}x ${i.product.cleanTitle} (SKU: ${i.product.reference}) — ${formatMXN(
-          i.unitPrice * i.quantity
-        )}`
-    ),
+    ...cartItems.map((i) => {
+      const itemFinalTotal =
+        i.lineTotalAfterVolume !== undefined ? i.lineTotalAfterVolume : i.unitPrice * i.quantity;
+      const tierNote =
+        i.itemVolumeTier?.percent > 0 ? ` (−${i.itemVolumeTier.percent}% mismo modelo)` : '';
+      return `• ${i.quantity}x ${i.product.cleanTitle} (SKU: ${i.product.reference}) — ${formatMXN(
+        itemFinalTotal
+      )}${tierNote}`;
+    }),
     liveVolumeDiscount > 0
-      ? `• ${volumeTier.label}: −${formatMXN(liveVolumeDiscount)}`
+      ? `• ${volumeSummaryLabel}: −${formatMXN(liveVolumeDiscount)}`
       : null,
     activeWixCoupon?.code
       ? `• Cupón Wix activo: ${activeWixCoupon.code}`
@@ -252,13 +263,12 @@ export default function TiendaCartDrawer() {
         asunto: `Nueva Orden Tienda ${orderRecord.id} (${cartCount} uds) — ${formatMXN(
           totalAfterDiscount
         )} Con IVA`,
-        mensaje: `Productos: ${detalleProductos} | Subtotal: ${formatMXN(subtotal)}${
-          volumeDiscountAmount > 0
+        mensaje: `Productos: ${detalleProductos} | Subtotal: ${formatMXN(subtotal)}${volumeDiscountAmount > 0
             ? ` | Descuento por Volumen (${volumeTier.percent}%): -${formatMXN(volumeDiscountAmount)}`
             : ''
-        } | Envío: GRATIS Nacional | Total Con IVA: ${formatMXN(totalAfterDiscount)}`,
+          } | Envío: GRATIS Nacional | Total Con IVA: ${formatMXN(totalAfterDiscount)}`,
         origen: 'Confirmación de Orden — Tienda de Llantas',
-      }).catch(() => {});
+      }).catch(() => { });
 
       notifyCartDispatched({
         folio: orderRecord.id,
@@ -266,6 +276,7 @@ export default function TiendaCartDrawer() {
         label: `Orden ${orderRecord.id} · ${totalTireUnits} ${totalTireUnits === 1 ? 'llanta' : 'llantas'}`,
       });
 
+      trackBeginCheckout(cartItems, totalAfterDiscount, coupon?.code || '');
       setOrderCompleted(orderRecord);
       clearCart();
       return;
@@ -274,6 +285,7 @@ export default function TiendaCartDrawer() {
     // Official Wix Managed Checkout Redirect (https://sistemas5160.wixsite.com/website-4)
     setCheckoutLoading(true);
     setCheckoutError('');
+    trackBeginCheckout(cartItems, liveTotal, activeWixCoupon?.code || coupon?.code || '');
     notifyCartDispatched({
       unitsCount: totalTireUnits,
       label: `Despacho Tienda (${totalTireUnits} ${totalTireUnits === 1 ? 'llanta' : 'llantas'})`,
@@ -291,7 +303,7 @@ export default function TiendaCartDrawer() {
       console.error('[TiendaCartDrawer] Checkout redirect error:', err);
       setCheckoutError(
         err?.message ||
-          'No se pudo iniciar el Checkout Seguro. Intenta nuevamente o escríbenos por WhatsApp.'
+        'No se pudo iniciar el Checkout Seguro. Intenta nuevamente o escríbenos por WhatsApp.'
       );
       setCheckoutLoading(false);
     }
@@ -387,7 +399,7 @@ export default function TiendaCartDrawer() {
               >
                 <Check size={28} strokeWidth={2.5} />
               </div>
-                <span
+              <span
                 style={{
                   fontFamily: F.heading,
                   fontSize: 10.5,
@@ -511,11 +523,11 @@ export default function TiendaCartDrawer() {
                     }}
                   >
                     <Truck size={13} />
-                    {totalTireUnits >= 4
-                      ? '¡5% OFF por juego completo + Envío Gratis!'
-                      : totalTireUnits >= 2
-                        ? `¡2% OFF activo! Agrega ${4 - totalTireUnits} más para 5% OFF`
-                        : 'Agrega 1 llanta más y obtén 2% OFF adicional'}
+                    {maxSameUnits >= 4
+                      ? '¡5% OFF por 4+ del mismo modelo + Envío Gratis!'
+                      : maxSameUnits >= 2
+                        ? `¡2% OFF activo! Agrega ${4 - maxSameUnits} más del mismo modelo para 5% OFF`
+                        : 'Agrega 2+ del mismo modelo para 2% OFF (4+ para 5% OFF)'}
                   </span>
                   <span
                     style={{
@@ -525,7 +537,7 @@ export default function TiendaCartDrawer() {
                       color: C.navy,
                     }}
                   >
-                    {totalTireUnits}/4 llantas
+                    {maxSameUnits}/4 iguales
                   </span>
                 </div>
                 <div
@@ -549,7 +561,7 @@ export default function TiendaCartDrawer() {
                 </div>
               </div>
 
-              {cartItems.map(({ product, quantity, lineTotal }) => (
+              {cartItems.map(({ product, quantity, lineTotal, itemVolumeTier, itemVolumeDiscountAmount, lineTotalAfterVolume }) => (
                 <div
                   key={product.id}
                   style={{
@@ -694,15 +706,57 @@ export default function TiendaCartDrawer() {
                         </button>
                       </div>
 
-                      <div
-                        style={{
-                          fontFamily: F.heading,
-                          fontSize: 14,
-                          fontWeight: 800,
-                          color: C.navy,
-                        }}
-                      >
-                        {formatMXN(lineTotal)}
+                      <div style={{ textAlign: 'right' }}>
+                        {itemVolumeDiscountAmount > 0 ? (
+                          <>
+                            <div
+                              style={{
+                                fontFamily: F.body,
+                                fontSize: 11,
+                                color: '#94A3B8',
+                                textDecoration: 'line-through',
+                              }}
+                            >
+                              {formatMXN(lineTotal)}
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: F.heading,
+                                fontSize: 14,
+                                fontWeight: 800,
+                                color: '#15803D',
+                              }}
+                            >
+                              {formatMXN(lineTotalAfterVolume)}
+                            </div>
+                            <div
+                              style={{
+                                marginTop: 2,
+                                display: 'inline-block',
+                                fontFamily: F.heading,
+                                fontSize: 9.5,
+                                fontWeight: 800,
+                                color: '#15803D',
+                                background: 'rgba(22, 163, 74, 0.12)',
+                                padding: '2px 6px',
+                                borderRadius: 6,
+                              }}
+                            >
+                              −{itemVolumeTier.percent}% (mismo modelo)
+                            </div>
+                          </>
+                        ) : (
+                          <div
+                            style={{
+                              fontFamily: F.heading,
+                              fontSize: 14,
+                              fontWeight: 800,
+                              color: C.navy,
+                            }}
+                          >
+                            {formatMXN(lineTotal)}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -826,7 +880,7 @@ export default function TiendaCartDrawer() {
               </div>
               {liveVolumeDiscount > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#15803D', fontWeight: 700 }}>
-                  <span>{volumeTier.label}</span>
+                  <span>{volumeSummaryLabel}</span>
                   <span>−{formatMXN(liveVolumeDiscount)}</span>
                 </div>
               )}

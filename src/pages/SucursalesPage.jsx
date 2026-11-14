@@ -5,7 +5,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import PageHero from '../components/PageHero';
 import { C, F, useCountUp } from '../hooks/useAnimations';
-import { sucursales, regions, states } from '../data/sucursalesData';
+import { sucursales as staticSucursales, regions, states } from '../data/sucursalesData';
+import { useWixSucursales } from '../hooks/useWixSucursales';
 import { branchCoordinates } from '../data/postalCodesData';
 import { MapPin, Phone, Clock, MessageCircle, Navigation, Search, ChevronRight, Building2, Users, Wrench, Shield } from 'lucide-react';
 
@@ -111,6 +112,7 @@ function StatBadge({ number, suffix, label, icon }) {
 }
 
 export default function SucursalesPage() {
+  const sucursales = useWixSucursales(staticSucursales);
   const [activeRegion, setActiveRegion] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLoc, setSelectedLoc] = useState(null);
@@ -134,7 +136,7 @@ export default function SucursalesPage() {
       );
     }
     return list;
-  }, [activeRegion, searchTerm]);
+  }, [sucursales, activeRegion, searchTerm]);
 
   const grouped = useMemo(() => {
     const map = {};

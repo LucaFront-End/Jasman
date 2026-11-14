@@ -4,6 +4,7 @@ import {
   loadWixCatalogProducts,
 } from '../data/productosMasterData';
 import { logoutWixMember, saveWixTiendaOrder } from '../services/wixService';
+import { trackAddToCart } from '../services/dataLayerService';
 
 const STORAGE_KEYS = {
   CART: 'jasman_tienda_cart_v1',
@@ -134,19 +135,23 @@ export function useTiendaState() {
       (item) => String(item.productId) === String(product.id)
     );
     const maxQty = Math.max(1, product.quantity);
+    const addedQty = Math.min(maxQty, Math.max(1, Number(qty) || 1));
 
     let next;
     if (existingIndex >= 0) {
       next = current.map((item, idx) =>
         idx === existingIndex
-          ? { ...item, quantity: Math.min(maxQty, item.quantity + qty) }
+          ? { ...item, quantity: Math.min(maxQty, item.quantity + addedQty) }
           : item
       );
     } else {
-      next = [...current, { productId: product.id, quantity: Math.min(maxQty, qty) }];
+      next = [...current, { productId: product.id, quantity: addedQty }];
     }
 
     writeJSON(STORAGE_KEYS.CART, next);
+    const itemTier = getVolumeDiscountTier((product.unitsPerItem || 1) * addedQty);
+    const unitPrice = (product.finalPriceTaxExcluded || 0) * (1 - itemTier.rate);
+    trackAddToCart(product, addedQty, unitPrice);
     if (openCartDrawer) {
       triggerTiendaUI({ type: 'OPEN_CART' });
     }
@@ -265,12 +270,22 @@ export function useTiendaState() {
         if (!product) return null;
         const unitPrice = product.finalPriceTaxExcluded || 0;
         const effectiveUnits = (product.unitsPerItem || 1) * item.quantity;
+        const lineTotal = unitPrice * item.quantity;
+        const itemVolumeTier = getVolumeDiscountTier(effectiveUnits);
+        const itemVolumeDiscountAmount =
+          itemVolumeTier.rate > 0 ? lineTotal * itemVolumeTier.rate : 0;
+        const lineTotalAfterVolume = Math.max(0, lineTotal - itemVolumeDiscountAmount);
         return {
           ...item,
           product,
           unitPrice,
           effectiveUnits,
-          lineTotal: unitPrice * item.quantity,
+          lineTotal,
+          itemVolumeTier,
+          itemVolumeDiscountAmount,
+          lineTotalAfterVolume,
+          effectiveUnitPrice:
+            item.quantity > 0 ? lineTotalAfterVolume / item.quantity : unitPrice,
         };
       })
       .filter(Boolean);
@@ -292,15 +307,33 @@ export function useTiendaState() {
     [cartItems]
   );
 
-  const volumeTier = useMemo(
-    () => getVolumeDiscountTier(totalTireUnits),
-    [totalTireUnits]
+  // Automatic volume discount applies strictly per identical item (2-3 same = 2%, 4+ same = 5%)
+  const maxSameItemUnits = useMemo(
+    () => cartItems.reduce((max, item) => Math.max(max, item.effectiveUnits || 0), 0),
+    [cartItems]
   );
 
-  const volumeDiscountAmount = useMemo(() => {
-    if (subtotal <= 0 || volumeTier.rate <= 0) return 0;
-    return subtotal * volumeTier.rate;
-  }, [subtotal, volumeTier]);
+  const volumeTier = useMemo(() => {
+    const baseTier = getVolumeDiscountTier(maxSameItemUnits);
+    const qualifyingItems = cartItems.filter((item) => item.itemVolumeTier?.rate > 0);
+    const bestItem = cartItems.reduce(
+      (best, item) =>
+        !best || (item.effectiveUnits || 0) > (best.effectiveUnits || 0) ? item : best,
+      null
+    );
+    return {
+      ...baseTier,
+      maxSameItemUnits,
+      qualifyingItemsCount: qualifyingItems.length,
+      bestItemUnits: bestItem?.effectiveUnits || 0,
+      bestItemName: bestItem?.product?.cleanTitle || bestItem?.product?.name || '',
+    };
+  }, [cartItems, maxSameItemUnits]);
+
+  const volumeDiscountAmount = useMemo(
+    () => cartItems.reduce((acc, item) => acc + (item.itemVolumeDiscountAmount || 0), 0),
+    [cartItems]
+  );
 
   const subtotalAfterVolume = useMemo(
     () => Math.max(0, subtotal - volumeDiscountAmount),

@@ -4,7 +4,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { locationsContent } from '../data/content';
-import { sucursales, regions } from '../data/sucursalesData';
+import { sucursales as staticSucursales, regions } from '../data/sucursalesData';
+import { useWixSucursales } from '../hooks/useWixSucursales';
 import { branchCoordinates } from '../data/postalCodesData';
 import { C, F, useReveal } from '../hooks/useAnimations';
 import { Phone, MapPin, Clock, Navigation, MessageCircle, ArrowRight } from 'lucide-react';
@@ -91,16 +92,17 @@ function MapController({ activeRegion, selectedLoc, sucursalesList, getCoords })
 }
 
 /* Show only a subset of branches on home (one per region, staggered) */
-const homeSubset = (() => {
+function buildHomeSubset(branchesList) {
   const seen = {};
-  return sucursales.filter(s => {
+  return branchesList.filter(s => {
     if (!seen[s.region]) { seen[s.region] = 0; }
     if (seen[s.region] < 3) { seen[s.region]++; return true; }
     return false;
   }).slice(0, 15);
-})();
+}
 
 export default function Locations() {
+  const sucursales = useWixSucursales(staticSucursales);
   const [activeRegion, setActiveRegion] = useState(null);
   const [selectedLoc, setSelectedLoc] = useState(null);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 900 : false);
@@ -112,15 +114,17 @@ export default function Locations() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const homeSubset = useMemo(() => buildHomeSubset(sucursales), [sucursales]);
+
   const mapLocations = useMemo(() => {
     if (!activeRegion) return sucursales;
     return sucursales.filter(s => s.region === activeRegion);
-  }, [activeRegion]);
+  }, [sucursales, activeRegion]);
 
   const filtered = useMemo(() => {
     if (!activeRegion) return homeSubset;
     return sucursales.filter(s => s.region === activeRegion).slice(0, 12);
-  }, [activeRegion]);
+  }, [sucursales, activeRegion, homeSubset]);
 
   const regionCounts = {};
   regions.forEach(r => { regionCounts[r] = sucursales.filter(s => s.region === r).length; });

@@ -225,6 +225,17 @@ export function normalizeWixBranch(b) {
     : localMatch?.phone || '55 1002 4945';
 
   const resolvedWhatsappPhone = whatsappPhone || localMatch?.whatsappPhone || '5215510024945';
+  const rawMapsCandidate = [
+    b.enlaceDeGoogleMaps,
+    b.googleMaps,
+    b.enlaceGoogleMaps,
+    b.mapsUrl,
+  ].find((v) => typeof v === 'string' && v.trim().length > 0);
+  const cmsMapsUrl = rawMapsCandidate
+    ? /^https?:\/\//i.test(rawMapsCandidate.trim())
+      ? rawMapsCandidate.trim()
+      : `https://${rawMapsCandidate.trim()}`
+    : '';
   const fullBranchLabel = title.startsWith('Jasman') ? title : `Jasman Automotriz - Suc. ${title}`;
   const unifiedWaMsg = encodeURIComponent(
     `SW - Hola quisiera más información de sus servicios automotrices en su sucursal "${fullBranchLabel}"`
@@ -247,7 +258,8 @@ export function normalizeWixBranch(b) {
     whatsappPhone: resolvedWhatsappPhone,
     cmsWhatsappUrl,
     whatsappUrl: cmsWhatsappUrl || `https://api.whatsapp.com/send/?phone=${resolvedWhatsappPhone}&text=${unifiedWaMsg}`,
-    mapsUrl: localMatch?.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${title} ${fullAddr}`)}`,
+    cmsMapsUrl,
+    mapsUrl: cmsMapsUrl || localMatch?.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${title} ${fullAddr}`)}`,
     source: 'wix-cms',
   };
 }
@@ -1729,4 +1741,90 @@ export async function getWixStoreProducts({ forceRefresh = false } = {}) {
   })();
 
   return wixProductsFetchPromise;
+}
+
+let wixBranchesMemoryCache = null;
+let wixBranchesFetchPromise = null;
+
+function normalizeBranchMatchKey(str = '') {
+  return String(str)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/jasman\s*automotriz\s*[-–—]?\s*/gi, '')
+    .replace(/\b(sucursal|suc\.?)\b/gi, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Cached wrapper around getWixBranches() so SucursalesPage, SucursalDetailPage and Home Locations
+ * reuse a single live CMS fetch across navigation.
+ */
+export async function getCachedWixBranches() {
+  if (Array.isArray(wixBranchesMemoryCache) && wixBranchesMemoryCache.length > 0) {
+    return wixBranchesMemoryCache;
+  }
+  if (wixBranchesFetchPromise) return wixBranchesFetchPromise;
+
+  wixBranchesFetchPromise = (async () => {
+    try {
+      const branches = await getWixBranches();
+      if (Array.isArray(branches) && branches.length > 0) {
+        wixBranchesMemoryCache = branches;
+      }
+      return branches || [];
+    } catch {
+      return wixBranchesMemoryCache || [];
+    } finally {
+      wixBranchesFetchPromise = null;
+    }
+  })();
+
+  return wixBranchesFetchPromise;
+}
+
+/**
+ * Enriches static sucursales catalog entries with live Wix CMS fields (enlaceDeGoogleMaps, whatsapp, etc.)
+ * while preserving static region/slug/hours metadata for routing and filters.
+ */
+export function mergeSucursalesWithWix(staticList = [], wixBranches = []) {
+  if (!Array.isArray(staticList) || staticList.length === 0) return [];
+  if (!Array.isArray(wixBranches) || wixBranches.length === 0) return staticList;
+
+  const byKey = new Map();
+  for (const wb of wixBranches) {
+    const keys = [wb?.wixId, wb?.id, wb?.name, wb?.fullName];
+    for (const raw of keys) {
+      const k = normalizeBranchMatchKey(raw);
+      if (k && !byKey.has(k)) {
+        byKey.set(k, wb);
+      }
+    }
+  }
+
+  return staticList.map((s) => {
+    const candidates = [s.wixId, s.id, s.name, s.fullName].filter(Boolean);
+    let wb = null;
+    for (const candidate of candidates) {
+      const k = normalizeBranchMatchKey(candidate);
+      if (k && byKey.has(k)) {
+        wb = byKey.get(k);
+        break;
+      }
+    }
+    if (!wb) return s;
+
+    return {
+      ...s,
+      wixId: wb.wixId || s.wixId || '',
+      phone: wb.phone || s.phone,
+      whatsappPhone: wb.whatsappPhone || s.whatsappPhone,
+      cmsWhatsappUrl: wb.cmsWhatsappUrl || s.cmsWhatsappUrl || '',
+      whatsappUrl: wb.cmsWhatsappUrl || s.whatsappUrl,
+      cmsMapsUrl: wb.cmsMapsUrl || s.cmsMapsUrl || '',
+      mapsUrl: wb.cmsMapsUrl || s.mapsUrl,
+      lat: wb.lat ?? s.lat,
+      lng: wb.lng ?? s.lng,
+    };
+  });
 }

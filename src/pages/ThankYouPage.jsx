@@ -14,6 +14,7 @@ import {
   clearWixCurrentCart,
 } from '../services/wixCheckoutService';
 import { formatWixImageUrl, saveContactoWeb } from '../services/wixService';
+import { trackPurchase } from '../services/dataLayerService';
 import TiendaNavbar from '../components/tienda/TiendaNavbar';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
 import TiendaAuthModal from '../components/tienda/TiendaAuthModal';
@@ -328,6 +329,31 @@ export default function ThankYouPage() {
       isMounted = false;
     };
   }, [orderId, clearCart, mergeSyncedOrders, notifyCartDispatched]);
+
+  // GTM / GA4 dataLayer: fire `purchase` once per unique transaction_id
+  useEffect(() => {
+    if (!orderDetails) return;
+    if (orderId && loadedOrderId !== orderId) return;
+
+    const resolvedItems = Array.isArray(orderDetails.items) ? orderDetails.items : [];
+    const cleanOrderNum = orderDetails.orderNumber
+      ? String(orderDetails.orderNumber).replace(/^#/, '').trim()
+      : '';
+    const txId =
+      cleanOrderNum && (!orderId || !String(orderId).toUpperCase().startsWith(cleanOrderNum))
+        ? cleanOrderNum
+        : String(orderId || orderDetails.orderId || cleanOrderNum || '').trim();
+
+    if (!txId) return;
+
+    trackPurchase({
+      transactionId: txId,
+      items: resolvedItems,
+      value: orderDetails.totalAmount,
+      shipping: orderDetails.shippingAmount || 0,
+      coupon: orderDetails.couponCode || '',
+    });
+  }, [orderDetails, orderId, loadedOrderId]);
 
   const displayOrderNumber =
     orderDetails?.orderNumber ||
@@ -919,7 +945,12 @@ export default function ThankYouPage() {
                       color: C.navy,
                     }}
                   >
-                    {orderDetails?.total || (isLoading ? '...' : '')}
+                    {orderDetails?.total ||
+                      (orderDetails?.totalAmount > 0
+                        ? formatMXN(orderDetails.totalAmount)
+                        : isLoading
+                          ? '...'
+                          : '')}
                   </span>
                 </div>
               </div>

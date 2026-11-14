@@ -270,7 +270,8 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
               whatsappPhone: vb.whatsappPhone || fullMatch.whatsappPhone,
               cmsWhatsappUrl: vb.cmsWhatsappUrl || fullMatch.cmsWhatsappUrl,
               whatsappUrl: vb.cmsWhatsappUrl ? vb.whatsappUrl : fullMatch.whatsappUrl,
-              mapsUrl: fullMatch.mapsUrl || vb.mapsUrl,
+              cmsMapsUrl: vb.cmsMapsUrl || fullMatch.cmsMapsUrl || '',
+              mapsUrl: vb.cmsMapsUrl || fullMatch.cmsMapsUrl || vb.mapsUrl || fullMatch.mapsUrl,
             };
           });
           setAllBranches(filtered);
@@ -497,53 +498,53 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
 
   const faqItems = isAlignmentPromo
     ? [
-        {
-          q: '¿Qué incluye el servicio de Alineación y Balanceo desde $750.00 MXN?',
-          a: 'Incluye la alineación computarizada 3D de alta precisión en las 4 llantas, el balanceo dinámico y estático de las 4 ruedas para rines desde 13" hasta 17", inspección visual de seguridad de 25 puntos en suspensión y frenos, y calibración de presión de inflado.'
-        },
-        {
-          q: '¿Cómo sé si mi auto necesita alineación y balanceo?',
-          a: 'Las señales más comunes son: vibraciones en el volante o en el asiento a velocidades mayores a 70-80 km/h, si el vehículo tira o se desvía hacia un lado al soltar suavemente el volante, desgaste irregular en los bordes de las llantas, o después de caer en un bache pronunciado.'
-        },
-        {
-          q: '¿En qué sucursales de Jasman es válida esta promoción?',
-          a: isPromoBranchFiltered
-            ? `Esta promoción aplica específicamente en las ${allBranches.length} sucursales participantes mostradas en el buscador y mapa de esta página. Ingresa tu C.P. para ubicar la más cercana.`
-            : 'Es válida en sucursales participantes de Jasman Automotriz a nivel nacional (CDMX, Estado de México, Querétaro, Guanajuato, Jalisco, Nuevo León, Michoacán, Morelos e Hidalgo). Puedes consultar la disponibilidad directa en tu sucursal más cercana ingresando tu C.P.'
-        },
-        {
-          q: '¿Es necesario agendar cita previa o puedo llegar directo?',
-          a: 'Puedes llegar directamente a cualquiera de nuestras sucursales y serás atendido por orden de llegada, o bien agendar tu visita en línea o por WhatsApp para asegurar un lugar prioritario en rampa y reducir tu tiempo de espera.'
-        },
-        {
-          q: '¿Cuáles son las formas de pago aceptadas?',
-          a: 'Aceptamos pago en efectivo, tarjeta de débito, tarjeta de crédito en una sola exhibición y transferencia bancaria directa en mostrador. Todos nuestros precios ya incluyen IVA.'
-        }
-      ]
+      {
+        q: '¿Qué incluye el servicio de Alineación y Balanceo desde $750.00 MXN?',
+        a: 'Incluye la alineación computarizada 3D de alta precisión en las 4 llantas, el balanceo dinámico y estático de las 4 ruedas para rines desde 13" hasta 17", inspección visual de seguridad de 25 puntos en suspensión y frenos, y calibración de presión de inflado.'
+      },
+      {
+        q: '¿Cómo sé si mi auto necesita alineación y balanceo?',
+        a: 'Las señales más comunes son: vibraciones en el volante o en el asiento a velocidades mayores a 70-80 km/h, si el vehículo tira o se desvía hacia un lado al soltar suavemente el volante, desgaste irregular en los bordes de las llantas, o después de caer en un bache pronunciado.'
+      },
+      {
+        q: '¿En qué sucursales de Jasman es válida esta promoción?',
+        a: isPromoBranchFiltered
+          ? `Esta promoción aplica específicamente en las ${allBranches.length} sucursales participantes mostradas en el buscador y mapa de esta página. Ingresa tu C.P. para ubicar la más cercana.`
+          : 'Es válida en sucursales participantes de Jasman Automotriz a nivel nacional (CDMX, Estado de México, Querétaro, Guanajuato, Jalisco, Nuevo León, Michoacán, Morelos e Hidalgo). Puedes consultar la disponibilidad directa en tu sucursal más cercana ingresando tu C.P.'
+      },
+      {
+        q: '¿Es necesario agendar cita previa o puedo llegar directo?',
+        a: 'Puedes llegar directamente a cualquiera de nuestras sucursales y serás atendido por orden de llegada, o bien agendar tu visita en línea o por WhatsApp para asegurar un lugar prioritario en rampa y reducir tu tiempo de espera.'
+      },
+      {
+        q: '¿Cuáles son las formas de pago aceptadas?',
+        a: 'Aceptamos pago en efectivo, tarjeta de débito, tarjeta de crédito en una sola exhibición y transferencia bancaria directa en mostrador. Todos nuestros precios ya incluyen IVA.'
+      }
+    ]
     : [
-        {
-          q: `¿En qué consiste "${promoDisplayTitle}"?`,
-          a: `${promotion.subheadline ? `${promotion.subheadline}. ` : ''}Consulta los detalles y vigencia indicados en el banner de la campaña o cotiza directamente con tu asesor de sucursal por WhatsApp para validar medidas y aplicaciones en tu vehículo.`
-        },
-        {
-          q: '¿En qué sucursales de Jasman es válida esta promoción?',
-          a: isPromoBranchFiltered
-            ? `Esta campaña es válida exclusivamente en las ${allBranches.length} sucursales participantes habilitadas en el buscador y mapa de esta página. Ingresa tu código postal para ver las más cercanas a ti.`
-            : `Válida en nuestras ${allBranches.length} sucursales de Jasman Automotriz a nivel nacional. Ingresa tu código postal arriba para encontrar la sucursal más cercana y confirmar disponibilidad.`
-        },
-        {
-          q: '¿La instalación incluye revisión de seguridad y garantía?',
-          a: 'Sí. Todos los servicios de llantas y mantenimiento en Jasman Automotriz incluyen instalación profesional con equipo calibrado, inspección visual de seguridad de 25 puntos en suspensión y garantía directa en taller.'
-        },
-        {
-          q: '¿Es necesario agendar cita previa o puedo llegar directo?',
-          a: 'Puedes llegar directamente a cualquiera de nuestras sucursales y serás atendido por orden de llegada, o bien agendar tu visita en línea o por WhatsApp para asegurar atención prioritaria y apartar tu lugar.'
-        },
-        {
-          q: '¿Cuáles son las formas de pago aceptadas?',
-          a: 'Aceptamos pago en efectivo, tarjeta de débito, tarjeta de crédito y transferencia bancaria directa en mostrador (consulta opciones de MSI vigentes en tienda). Todos nuestros precios incluyen IVA.'
-        }
-      ];
+      {
+        q: `¿En qué consiste "${promoDisplayTitle}"?`,
+        a: `${promotion.subheadline ? `${promotion.subheadline}. ` : ''}Consulta los detalles y vigencia indicados en el banner de la campaña o cotiza directamente con tu asesor de sucursal por WhatsApp para validar medidas y aplicaciones en tu vehículo.`
+      },
+      {
+        q: '¿En qué sucursales de Jasman es válida esta promoción?',
+        a: isPromoBranchFiltered
+          ? `Esta campaña es válida exclusivamente en las ${allBranches.length} sucursales participantes habilitadas en el buscador y mapa de esta página. Ingresa tu código postal para ver las más cercanas a ti.`
+          : `Válida en nuestras ${allBranches.length} sucursales de Jasman Automotriz a nivel nacional. Ingresa tu código postal arriba para encontrar la sucursal más cercana y confirmar disponibilidad.`
+      },
+      {
+        q: '¿La instalación incluye revisión de seguridad y garantía?',
+        a: 'Sí. Todos los servicios de llantas y mantenimiento en Jasman Automotriz incluyen instalación profesional con equipo calibrado, inspección visual de seguridad de 25 puntos en suspensión y garantía directa en taller.'
+      },
+      {
+        q: '¿Es necesario agendar cita previa o puedo llegar directo?',
+        a: 'Puedes llegar directamente a cualquiera de nuestras sucursales y serás atendido por orden de llegada, o bien agendar tu visita en línea o por WhatsApp para asegurar atención prioritaria y apartar tu lugar.'
+      },
+      {
+        q: '¿Cuáles son las formas de pago aceptadas?',
+        a: 'Aceptamos pago en efectivo, tarjeta de débito, tarjeta de crédito y transferencia bancaria directa en mostrador (consulta opciones de MSI vigentes en tienda). Todos nuestros precios incluyen IVA.'
+      }
+    ];
 
   return (
     <div className="landing-root" style={{ background: '#F8F9FA', color: C.charcoal, minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
@@ -1579,65 +1580,65 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
           <div className="landing-service-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 22 }}>
             {(isAlignmentPromo
               ? [
-                  {
-                    title: 'Alineación Computarizada 3D',
-                    desc: 'Ajuste milimétrico de los ángulos de las 4 ruedas (cámber, cáster y convergencia) según las especificaciones del fabricante.',
-                    icon: <Compass size={20} color={C.red} />,
-                    image: '/images/promo-alignment.png',
-                    badge: 'Tecnología 3D',
-                  },
-                  {
-                    title: 'Balanceo Dinámico en 4 Ruedas',
-                    desc: 'Compensación precisa del peso de rines y llantas del Rin 13" al Rin 17" para eliminar vibraciones en el volante a cualquier velocidad.',
-                    icon: <Wrench size={20} color={C.red} />,
-                    image: '/images/service-alignment.png',
-                    badge: '4 Ruedas',
-                  },
-                  {
-                    title: 'Revisión de Suspensión y Dirección',
-                    desc: 'Inspección de amortiguadores, rótulas, bieletas, bujes y terminales de dirección para garantizar estabilidad y seguridad.',
-                    icon: <ShieldCheck size={20} color={C.red} />,
-                    image: '/images/service-suspension.png',
-                    badge: 'Seguridad Total',
-                  },
-                  {
-                    title: 'Calibración e Inspección de Llantas',
-                    desc: 'Revisión de profundidad de dibujo, desgaste simétrico y ajuste de presión con aire o nitrógeno para optimizar el consumo de combustible.',
-                    icon: <CheckCircle size={20} color={C.red} />,
-                    image: '/images/service-tires.png',
-                    badge: 'Inspección Visual',
-                  },
-                ]
+                {
+                  title: 'Alineación Computarizada 3D',
+                  desc: 'Ajuste milimétrico de los ángulos de las 4 ruedas (cámber, cáster y convergencia) según las especificaciones del fabricante.',
+                  icon: <Compass size={20} color={C.red} />,
+                  image: '/images/promo-alignment.png',
+                  badge: 'Tecnología 3D',
+                },
+                {
+                  title: 'Balanceo Dinámico en 4 Ruedas',
+                  desc: 'Compensación precisa del peso de rines y llantas del Rin 13" al Rin 17" para eliminar vibraciones en el volante a cualquier velocidad.',
+                  icon: <Wrench size={20} color={C.red} />,
+                  image: '/images/service-alignment.png',
+                  badge: '4 Ruedas',
+                },
+                {
+                  title: 'Revisión de Suspensión y Dirección',
+                  desc: 'Inspección de amortiguadores, rótulas, bieletas, bujes y terminales de dirección para garantizar estabilidad y seguridad.',
+                  icon: <ShieldCheck size={20} color={C.red} />,
+                  image: '/images/service-suspension.png',
+                  badge: 'Seguridad Total',
+                },
+                {
+                  title: 'Calibración e Inspección de Llantas',
+                  desc: 'Revisión de profundidad de dibujo, desgaste simétrico y ajuste de presión con aire o nitrógeno para optimizar el consumo de combustible.',
+                  icon: <CheckCircle size={20} color={C.red} />,
+                  image: '/images/service-tires.png',
+                  badge: 'Inspección Visual',
+                },
+              ]
               : [
-                  {
-                    title: 'Llantas y Productos Originales',
-                    desc: 'Garantía directa de fabricante en cada llanta y refacción disponible en las sucursales participantes de esta campaña.',
-                    icon: <ShieldCheck size={20} color={C.red} />,
-                    image: '/images/service-tires.png',
-                    badge: 'Garantía Oficial',
-                  },
-                  {
-                    title: 'Instalación y Balanceo Experto',
-                    desc: 'Montaje profesional con maquinaria de precisión para cuidar tus rines y optimizar el desempeño desde el primer kilómetro.',
-                    icon: <Wrench size={20} color={C.red} />,
-                    image: '/images/service-alignment.png',
-                    badge: 'Equipo Calibrado',
-                  },
-                  {
-                    title: 'Inspección de Seguridad 25 Puntos',
-                    desc: 'Revisión integral de suspensión, dirección y presión de inflado durante tu visita para que viajes con total tranquilidad.',
-                    icon: <Compass size={20} color={C.red} />,
-                    image: '/images/service-suspension.png',
-                    badge: 'Seguridad Total',
-                  },
-                  {
-                    title: 'Atención Prioritaria por Cita',
-                    desc: 'Agenda en línea o por WhatsApp con tu sucursal Jasman más cercana y reduce tiempos de espera en mostrador y rampa.',
-                    icon: <CheckCircle size={20} color={C.red} />,
-                    image: '/images/promo-alignment.png',
-                    badge: 'Cita Prioritaria',
-                  },
-                ]
+                {
+                  title: 'Llantas y Productos Originales',
+                  desc: 'Garantía directa de fabricante en cada llanta y refacción disponible en las sucursales participantes de esta campaña.',
+                  icon: <ShieldCheck size={20} color={C.red} />,
+                  image: '/images/service-tires.png',
+                  badge: 'Garantía Oficial',
+                },
+                {
+                  title: 'Instalación y Balanceo Experto',
+                  desc: 'Montaje profesional con maquinaria de precisión para cuidar tus rines y optimizar el desempeño desde el primer kilómetro.',
+                  icon: <Wrench size={20} color={C.red} />,
+                  image: '/images/service-alignment.png',
+                  badge: 'Equipo Calibrado',
+                },
+                {
+                  title: 'Inspección de Seguridad 25 Puntos',
+                  desc: 'Revisión integral de suspensión, dirección y presión de inflado durante tu visita para que viajes con total tranquilidad.',
+                  icon: <Compass size={20} color={C.red} />,
+                  image: '/images/service-suspension.png',
+                  badge: 'Seguridad Total',
+                },
+                {
+                  title: 'Atención Prioritaria por Cita',
+                  desc: 'Agenda en línea o por WhatsApp con tu sucursal Jasman más cercana y reduce tiempos de espera en mostrador y rampa.',
+                  icon: <CheckCircle size={20} color={C.red} />,
+                  image: '/images/promo-alignment.png',
+                  badge: 'Cita Prioritaria',
+                },
+              ]
             ).map((card, idx) => (
               <div
                 key={idx}
@@ -1749,7 +1750,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
             {!confirmedBooking ? (
               <form onSubmit={handleBookVisit} style={{ width: '100%' }}>
                 <div className="landing-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18, marginBottom: 20 }}>
-                  
+
                   {/* Nombre */}
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', marginBottom: 8, textTransform: 'uppercase' }}>
