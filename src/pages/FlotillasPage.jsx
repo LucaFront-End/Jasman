@@ -5,6 +5,8 @@ import Icon from '../components/Icon';
 import { Phone, MessageCircle, Send, CheckCircle2, ArrowRight, Building2, User, Mail, Users, Truck, BarChart3 } from 'lucide-react';
 import { flotillasContent } from '../data/flotillasData';
 import { saveFlotillasContacto } from '../services/wixService';
+import { useFlotillasDispatch } from '../hooks/useFlotillasDispatch';
+import IsometricWorkshopScene from '../components/IsometricWorkshopScene';
 
 const FLOTILLAS_WHATSAPP_PHONE = '5215545990295';
 const FLOTILLAS_WHATSAPP_DISPLAY = '55 4599 0295';
@@ -40,12 +42,30 @@ export default function FlotillasPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submittedWaUrl, setSubmittedWaUrl] = useState('');
   const { ref: headerRef, style: headerStyle } = useReveal();
+  const {
+    bayPhase,
+    showCheck,
+    dispatchedCount,
+    lastDispatch,
+    activeVehicle,
+    dispatchVehicle,
+  } = useFlotillasDispatch({ autoLoop: true });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const folio = 'FL-' + Math.floor(100000 + Math.random() * 900000);
     const waUrl = buildFlotillasWaUrl(formData, folio);
     setSubmittedWaUrl(waUrl);
+
+    dispatchVehicle({
+      source: 'flotillas',
+      folio,
+      unitsCount: formData.fleetSize,
+      label: formData.company
+        ? `Solicitud Flotilla · ${formData.company}`
+        : 'Solicitud de Flotilla Registrada',
+      bay: 'Coordinación Flotillas Jasman',
+    });
 
     saveFlotillasContacto({
       folio,
@@ -74,10 +94,57 @@ export default function FlotillasPage() {
 
       {/* Stats bar */}
       <section style={{ padding: '36px 1.5rem', background: C.navy, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
+        <div className="flotillas-stats-grid" style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
           {flotillasContent.stats.map((s, i) => (
             <StatCard2 key={i} number={s.number} suffix={s.suffix} label={s.label} />
           ))}
+        </div>
+      </section>
+
+      {/* Isometric Live Fleet Workshop & Dispatch Showcase */}
+      <section style={{ padding: 'clamp(3.5rem, 6vw, 5.5rem) 1.5rem', background: '#0F152A', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 16,
+            marginBottom: 28,
+          }}>
+            <div style={{ maxWidth: 620 }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 9999,
+                background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.28)', color: '#86EFAC',
+                fontFamily: F.heading, fontWeight: 700, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14,
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
+                OPERACIÓN EN TIEMPO REAL
+              </span>
+              <h2 style={{ fontFamily: F.heading, fontWeight: 900, fontSize: 'clamp(1.7rem, 4vw, 2.5rem)', color: C.white, lineHeight: 1.12 }}>
+                Unidades listas y{' '}
+                <span style={{ color: C.redLight }}>saliendo a ruta</span>
+              </h2>
+            </div>
+            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.6)', maxWidth: 400, lineHeight: 1.6 }}>
+              Visualiza cómo tus vehículos ingresan a nuestras bahías certificadas, pasan el checklist de 72 puntos y salen despachados sin frenar tu operación.
+            </p>
+          </div>
+
+          <IsometricWorkshopScene
+            variant="full"
+            bayPhase={bayPhase}
+            showCheck={showCheck}
+            dispatchedCount={dispatchedCount}
+            lastDispatch={lastDispatch}
+            activeVehicle={activeVehicle}
+            onTriggerDispatch={() =>
+              dispatchVehicle({
+                source: 'manual',
+                label: `${activeVehicle?.label || 'Unidad Flotilla'} · Checklist 72 pts OK`,
+              })
+            }
+          />
         </div>
       </section>
 
@@ -134,8 +201,8 @@ export default function FlotillasPage() {
               backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             }}>a la medida</span>
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, position: 'relative' }}>
-            <div style={{
+          <div className="flotillas-process-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, position: 'relative' }}>
+            <div className="flotillas-process-line" style={{
               position: 'absolute', top: 30, left: 'calc(12.5% + 20px)', right: 'calc(12.5% + 20px)',
               height: 2, background: `linear-gradient(90deg, ${C.red}30, ${C.red}60, ${C.red}30)`,
             }} />
@@ -158,7 +225,7 @@ export default function FlotillasPage() {
 
       {/* Contact form + direct contact */}
       <section style={{ padding: 'clamp(4rem, 8vw, 6rem) 1.5rem', background: C.light }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+        <div className="flotillas-contact-grid" style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
           {/* Form */}
           <div style={{
             background: C.white, borderRadius: 24, padding: 36,
@@ -167,12 +234,22 @@ export default function FlotillasPage() {
             <h2 style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 22, color: C.navy, marginBottom: 8 }}>Contáctanos</h2>
             <p style={{ fontSize: 14, color: C.gray, marginBottom: 28 }}>Déjanos tus datos y un ejecutivo se pondrá en contacto contigo.</p>
             {submitted ? (
-              <div style={{ textAlign: 'center', padding: '36px 0' }}>
-                <CheckCircle2 size={48} color="#22c55e" style={{ marginBottom: 16 }} />
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <CheckCircle2 size={44} color="#22c55e" style={{ marginBottom: 12, display: 'inline-block' }} />
                 <h3 style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 20, color: C.navy, marginBottom: 8 }}>¡Mensaje Enviado!</h3>
-                <p style={{ fontSize: 14, color: C.gray, marginBottom: 22 }}>
+                <p style={{ fontSize: 14, color: C.gray, marginBottom: 18 }}>
                   Tu solicitud quedó registrada y enviada a nuestro equipo de Flotillas.
                 </p>
+                <div style={{ marginBottom: 18, textAlign: 'left' }}>
+                  <IsometricWorkshopScene
+                    variant="compact"
+                    bayPhase={bayPhase}
+                    showCheck={true}
+                    dispatchedCount={dispatchedCount}
+                    lastDispatch={lastDispatch}
+                    activeVehicle={activeVehicle}
+                  />
+                </div>
                 {submittedWaUrl && (
                   <a
                     href={submittedWaUrl}
@@ -315,6 +392,32 @@ export default function FlotillasPage() {
           </div>
         </div>
       </section>
+
+      <style>{`
+        @media (max-width: 860px) {
+          .flotillas-stats-grid,
+          .flotillas-process-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 20px !important;
+          }
+          .flotillas-process-line {
+            display: none !important;
+          }
+          .flotillas-contact-grid {
+            grid-template-columns: 1fr !important;
+            gap: 28px !important;
+          }
+        }
+        @media (max-width: 520px) {
+          .flotillas-stats-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 16px !important;
+          }
+          .flotillas-process-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </>
   );
 }
