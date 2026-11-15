@@ -264,6 +264,74 @@ export function normalizeWixBranch(b) {
   };
 }
 
+const ALIGNMENT_ROUTE_SLUGS = new Set([
+  'alineacion-y-balanceo',
+  'alineacion-y-balanceo-promo',
+  'alineacion-y-balanceo-ads',
+  'promocion-alineacion-y-balanceo',
+]);
+
+export function normalizePromoSlug(raw = '') {
+  let decoded = String(raw || '');
+  try {
+    decoded = decodeURIComponent(decoded);
+  } catch {
+    // ignore malformed URI sequences
+  }
+  return decoded
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/^https?:\/\/[^/]+/i, '')
+    .replace(/^\/?(?:promociones|promocion|llantas)\//i, '')
+    .replace(/^\/+|\/+$/g, '')
+    .replace(/[\s_]+/g, '-');
+}
+
+function mapReferencedBranchEntries(rawEntries = []) {
+  return (Array.isArray(rawEntries) ? rawEntries : [])
+    .map((entry) => {
+      if (typeof entry === 'string' && entry.trim()) {
+        const id = entry.trim();
+        return { id, wixId: id, _isIdOnlyStub: true };
+      }
+      if (entry && typeof entry === 'object') {
+        const normalized = normalizeWixBranch(entry);
+        if (normalized) return normalized;
+        const stubId = entry._id || entry.id;
+        if (stubId) {
+          return { id: String(stubId), wixId: String(stubId), _isIdOnlyStub: true };
+        }
+      }
+      return null;
+    })
+    .filter(Boolean);
+}
+
+async function fetchPromoReferencedBranches(item) {
+  let rawRefs = [];
+  if (item?._id) {
+    try {
+      const qref = await wixClient.items.queryReferenced(
+        'Landingdepromociones',
+        item._id,
+        'sucursalesVlidas',
+        { consistentRead: true }
+      );
+      if (Array.isArray(qref?.items) && qref.items.length > 0) {
+        rawRefs = qref.items;
+      }
+    } catch {
+      // Fallback to inline included field below
+    }
+  }
+  if (rawRefs.length === 0 && Array.isArray(item?.sucursalesVlidas)) {
+    rawRefs = item.sucursalesVlidas;
+  }
+  return mapReferencedBranchEntries(rawRefs);
+}
+
 /**
  * Fetches all promotions stored in Wix CMS collection "Landingdepromociones"
  * including referenced valid branches ("sucursalesVlidas").
@@ -275,8 +343,8 @@ export async function getAllLandingPromotions() {
       .include('sucursalesVlidas')
       .descending('_updatedDate')
       .limit(50)
-      .find();
-    return (res.items || []).map(normalizePromoItem);
+      .find({ consistentRead: true });
+    return (res.items || []).map((item) => normalizePromoItem(item));
   } catch (err) {
     console.warn('Wix Headless: Error listing Landingdepromociones:', err?.message || err);
     return [];
@@ -285,62 +353,106 @@ export async function getAllLandingPromotions() {
 
 /**
  * Fetches dynamic landing promotion from Wix CMS collection "Landingdepromociones".
- * Searches by exact slug first (or falls back to the newest updated promotion)
- * and includes referenced "sucursalesVlidas" branch objects.
+ * Matches exact slug or title strictly so unrelated promotions (e.g. Hankook) never overwrite
+ * dedicated campaign routes (e.g. /alineacion-y-balanceo), and hydrates multi-references via consistentRead.
  */
 export async function getLandingPromotion(slug = null) {
-  try {
-    if (slug) {
-      // Normalize slug (clean leading/trailing slashes)
-      const cleanSlug = String(slug).replace(/^\/+|\/+$/g, '').trim();
-      const bySlug = await wixClient.items
-        .query('Landingdepromociones')
-        .eq('slug', cleanSlug)
-        .include('sucursalesVlidas')
-        .limit(1)
-        .find();
-      if (bySlug.items && bySlug.items.length > 0) {
-        return normalizePromoItem(bySlug.items[0]);
-      }
-    }
+  const cleanSlug = normalizePromoSlug(slug);
 
-    // Default or fallback: fetch newest promotion dynamically from Wix CMS
-    const all = await wixClient.items
+  try {
+    const res = await wixClient.items
       .query('Landingdepromociones')
       .include('sucursalesVlidas')
       .descending('_updatedDate')
-      .limit(10)
-      .find();
-    if (all.items && all.items.length > 0) {
-      return normalizePromoItem(all.items[0]);
+      .limit(50)
+      .find({ consistentRead: true });
+    const itemsList = Array.isArray(res?.items) ? res.items : [];
+
+    if (cleanSlug && cleanSlug !== 'promociones') {
+      const exactBySlug = itemsList.find((it) => normalizePromoSlug(it.slug) === cleanSlug);
+      if (exactBySlug) {
+        const branches = await fetchPromoReferencedBranches(exactBySlug);
+        return { ...normalizePromoItem(exactBySlug, branches), matchedExactSlug: true };
+      }
+
+      const exactByTitle = itemsList.find((it) => normalizePromoSlug(it.title) === cleanSlug);
+      if (exactByTitle) {
+        const branches = await fetchPromoReferencedBranches(exactByTitle);
+        return { ...normalizePromoItem(exactByTitle, branches), matchedExactSlug: true };
+      }
+
+      if (ALIGNMENT_ROUTE_SLUGS.has(cleanSlug)) {
+        const alignmentMatch = itemsList.find((it) => {
+          const s = normalizePromoSlug(it.slug);
+          const t = normalizePromoSlug(it.title);
+          return s.startsWith('alineacion-y-balanceo') || t.startsWith('alineacion-y-balanceo');
+        });
+        if (alignmentMatch) {
+          const branches = await fetchPromoReferencedBranches(alignmentMatch);
+          return {
+            ...normalizePromoItem(alignmentMatch, branches),
+            matchedExactSlug: false,
+            matchedAlignmentAlias: true,
+          };
+        }
+
+        return {
+          id: 'default-alineacion',
+          title: 'Alineación y Balanceo',
+          slug: cleanSlug,
+          headline: 'Alineación y Balanceo en las 4 Llantas',
+          subheadline: 'Desde $750.00 MXN (IVA Incluido) · Rin 13" al 17"',
+          bannerImage: '/images/promo-landing-banner.jpg',
+          validBranches: [],
+          matchedExactSlug: false,
+          source: 'local-fallback',
+        };
+      }
+
+      return {
+        id: `unmatched-${cleanSlug}`,
+        title: 'Promoción Jasman Automotriz',
+        slug: cleanSlug,
+        headline: 'Promoción Jasman Automotriz',
+        subheadline: 'Ubica tu sucursal Jasman más cercana y cotiza por WhatsApp',
+        bannerImage: '/images/promo-landing-banner.jpg',
+        validBranches: [],
+        matchedExactSlug: false,
+        notFound: true,
+        source: 'slug-not-found',
+      };
+    }
+
+    if (itemsList.length > 0) {
+      const branches = await fetchPromoReferencedBranches(itemsList[0]);
+      return { ...normalizePromoItem(itemsList[0], branches), matchedExactSlug: false };
     }
   } catch (err) {
     console.warn('Wix Headless: Error fetching Landingdepromociones:', err?.message || err);
   }
 
-  // Safe fallback if network error or collection empty
   return {
     id: 'default-alineacion',
-    title: 'Promoción Vigente Jasman Automotriz',
-    slug: 'alineacion-y-balanceo',
-    headline: 'Promoción Especial Jasman',
-    subheadline: 'Cotiza y agenda en línea en cualquiera de nuestras sucursales',
+    title: 'Alineación y Balanceo',
+    slug: cleanSlug || 'alineacion-y-balanceo',
+    headline: 'Alineación y Balanceo en las 4 Llantas',
+    subheadline: 'Desde $750.00 MXN (IVA Incluido) · Rin 13" al 17"',
     bannerImage: '/images/promo-landing-banner.jpg',
     validBranches: [],
+    matchedExactSlug: false,
     source: 'local-fallback',
   };
 }
 
-function normalizePromoItem(item) {
+function normalizePromoItem(item, prehydratedBranches = null) {
   const headline =
     item.tituloDePromocin || item.title || 'Promoción Especial Jasman';
   const fallbackSub =
     item.title && item.title !== headline ? item.title : '';
 
-  const rawValidBranches = Array.isArray(item.sucursalesVlidas)
-    ? item.sucursalesVlidas
-    : [];
-  const validBranches = rawValidBranches.map(normalizeWixBranch).filter(Boolean);
+  const validBranches = Array.isArray(prehydratedBranches)
+    ? prehydratedBranches
+    : mapReferencedBranchEntries(item.sucursalesVlidas);
 
   return {
     id: item._id,
@@ -400,7 +512,7 @@ export async function getWixBranches() {
     let res = await wixClient.items
       .query('Sucursales')
       .limit(100)
-      .find();
+      .find({ consistentRead: true });
 
     const allItems = [...(res.items || [])];
     while (typeof res?.hasNext === 'function' && res.hasNext()) {
@@ -1743,7 +1855,9 @@ export async function getWixStoreProducts({ forceRefresh = false } = {}) {
   return wixProductsFetchPromise;
 }
 
+const BRANCH_CACHE_TTL_MS = 30_000;
 let wixBranchesMemoryCache = null;
+let wixBranchesCacheTimestamp = 0;
 let wixBranchesFetchPromise = null;
 
 function normalizeBranchMatchKey(str = '') {
@@ -1758,10 +1872,14 @@ function normalizeBranchMatchKey(str = '') {
 
 /**
  * Cached wrapper around getWixBranches() so SucursalesPage, SucursalDetailPage and Home Locations
- * reuse a single live CMS fetch across navigation.
+ * reuse a single live CMS fetch across navigation with a 30s TTL for fresh updates.
  */
 export async function getCachedWixBranches() {
-  if (Array.isArray(wixBranchesMemoryCache) && wixBranchesMemoryCache.length > 0) {
+  const isCacheFresh =
+    Array.isArray(wixBranchesMemoryCache) &&
+    wixBranchesMemoryCache.length > 0 &&
+    Date.now() - wixBranchesCacheTimestamp < BRANCH_CACHE_TTL_MS;
+  if (isCacheFresh) {
     return wixBranchesMemoryCache;
   }
   if (wixBranchesFetchPromise) return wixBranchesFetchPromise;
@@ -1771,6 +1889,7 @@ export async function getCachedWixBranches() {
       const branches = await getWixBranches();
       if (Array.isArray(branches) && branches.length > 0) {
         wixBranchesMemoryCache = branches;
+        wixBranchesCacheTimestamp = Date.now();
       }
       return branches || [];
     } catch {

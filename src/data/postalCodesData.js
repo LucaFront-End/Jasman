@@ -1451,7 +1451,8 @@ export async function resolvePostalCodeCoords(postalCode) {
  * Find closest branches to given coordinates
  */
 export function getClosestBranches(lat, lng, limit = 4, customList = null) {
-  const source = (customList && customList.length > 0) ? customList : sucursalesWithCoords;
+  const source = Array.isArray(customList) ? customList : sucursalesWithCoords;
+  if (source.length === 0) return [];
   const list = source.map(branch => {
     const dist = calculateDistanceKm(lat, lng, branch.lat, branch.lng);
     return {

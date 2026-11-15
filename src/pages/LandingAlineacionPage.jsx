@@ -15,7 +15,19 @@ import {
   getWixPostalCode,
   getWixBranches,
   saveBookingLead,
+  normalizePromoSlug,
+  mergeSucursalesWithWix,
 } from '../services/wixService';
+
+function normalizeBranchMatchKey(str = '') {
+  return String(str)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/jasman\s*automotriz\s*[-–—]?\s*/gi, '')
+    .replace(/\b(sucursal|suc\.?)\b/gi, '')
+    .replace(/[^a-z0-9]/g, '');
+}
 import {
   MapPin, Phone, MessageCircle, Navigation, Search, CheckCircle,
   ShieldCheck, Wrench, Trophy, Clock, ArrowRight, Sparkles, AlertCircle,
@@ -176,6 +188,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
   });
   const [allBranches, setAllBranches] = useState(baseBranches);
   const [isPromoBranchFiltered, setIsPromoBranchFiltered] = useState(isAdsPromo);
+  const [isSyncingCms, setIsSyncingCms] = useState(true);
   const [, setIsWixConnected] = useState(false);
 
   // Input state
@@ -193,8 +206,12 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
     isGps: false,
   });
 
-  const [nearbyBranches, setNearbyBranches] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState(null);
+  const [nearbyBranches, setNearbyBranches] = useState(() =>
+    getClosestBranches(19.4913, -99.1985, 4, baseBranches)
+  );
+  const [selectedBranch, setSelectedBranch] = useState(() =>
+    getClosestBranches(19.4913, -99.1985, 4, baseBranches)[0] || null
+  );
   const [copiedAddress, setCopiedAddress] = useState(false);
 
   // Appointment Booking State ("Agenda tu servicio desde $750")
@@ -202,7 +219,9 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
   const [bookingPhone, setBookingPhone] = useState('');
   const [bookingCar, setBookingCar] = useState('');
   const [bookingDate, setBookingDate] = useState('');
-  const [bookingBranchId, setBookingBranchId] = useState('');
+  const [bookingBranchId, setBookingBranchId] = useState(
+    () => getClosestBranches(19.4913, -99.1985, 4, baseBranches)[0]?.id || ''
+  );
   const [confirmedBooking, setConfirmedBooking] = useState(null);
   const [copiedFolio, setCopiedFolio] = useState(false);
 
@@ -213,6 +232,8 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
   // References
   const searchSectionRef = useRef(null);
   const bookingSectionRef = useRef(null);
+  const allBranchesRef = useRef(baseBranches);
+  const currentLocationRef = useRef(currentLocation);
 
   // Sync with Wix CMS "Landingdepromociones" & "Sucursales"
   useEffect(() => {
@@ -220,12 +241,10 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
 
     async function syncWixData() {
       try {
-        const cleanPathSlug = location.pathname
-          .replace(/^\/promociones\/|^\/promocion\/|^\/llantas\/|^\//, '')
-          .replace(/\/+$/, '');
+        const cleanPathSlug = normalizePromoSlug(location.pathname);
         const currentSlug = isAdsPromo
           ? 'alineacion-y-balanceo-promo'
-          : slug || cleanPathSlug || '';
+          : normalizePromoSlug(slug || cleanPathSlug || '');
 
         const [promoData, wixBranches] = await Promise.all([
           getLandingPromotion(currentSlug),
@@ -245,27 +264,33 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
           wixBranches && wixBranches.length > 0 ? wixBranches : sucursalesWithCoords;
 
         const catalogByWixId = new Map();
-        const catalogByName = new Map();
+        const catalogByKey = new Map();
         for (const b of fullCatalog) {
           if (b.wixId) catalogByWixId.set(String(b.wixId), b);
           if (b.id) catalogByWixId.set(String(b.id), b);
-          if (b.name) catalogByName.set(b.name.toLowerCase().trim(), b);
+          if (b.name) catalogByKey.set(normalizeBranchMatchKey(b.name), b);
+          if (b.fullName) catalogByKey.set(normalizeBranchMatchKey(b.fullName), b);
         }
 
-        // 2. Filter searcher by referenced "sucursalesVlidas" from the active promotion when linked in Wix CMS
+        // 2. Filter searcher strictly by referenced "sucursalesVlidas" from the active promotion when linked in Wix CMS
         const cmsValidBranches = Array.isArray(promoData?.validBranches)
           ? promoData.validBranches
           : [];
 
-        if (cmsValidBranches.length > 0) {
-          const filtered = cmsValidBranches.map((vb) => {
+        const filtered = cmsValidBranches
+          .map((vb) => {
             const fullMatch =
               catalogByWixId.get(String(vb.wixId || vb.id)) ||
-              catalogByName.get((vb.name || '').toLowerCase().trim());
+              catalogByKey.get(normalizeBranchMatchKey(vb.name || vb.fullName || ''));
+            if (vb._isIdOnlyStub) return fullMatch || null;
             if (!fullMatch) return vb;
             return {
               ...fullMatch,
               ...vb,
+              id: fullMatch.id || vb.id,
+              wixId: vb.wixId || fullMatch.wixId,
+              lat: Number.isFinite(vb.lat) ? vb.lat : fullMatch.lat,
+              lng: Number.isFinite(vb.lng) ? vb.lng : fullMatch.lng,
               phone: vb.phone || fullMatch.phone,
               whatsappPhone: vb.whatsappPhone || fullMatch.whatsappPhone,
               cmsWhatsappUrl: vb.cmsWhatsappUrl || fullMatch.cmsWhatsappUrl,
@@ -273,18 +298,35 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
               cmsMapsUrl: vb.cmsMapsUrl || fullMatch.cmsMapsUrl || '',
               mapsUrl: vb.cmsMapsUrl || fullMatch.cmsMapsUrl || vb.mapsUrl || fullMatch.mapsUrl,
             };
-          });
-          setAllBranches(filtered);
-          setIsPromoBranchFiltered(true);
+          })
+          .filter((b) => b && Number.isFinite(b.lat) && Number.isFinite(b.lng));
+
+        let resolvedBranches;
+        let isFiltered;
+        if (filtered.length > 0 && (!isAdsPromo || promoData?.matchedExactSlug)) {
+          resolvedBranches = filtered;
+          isFiltered = true;
         } else if (isAdsPromo) {
-          setAllBranches(getAdsPromoBranches(fullCatalog));
-          setIsPromoBranchFiltered(true);
+          resolvedBranches = getAdsPromoBranches(mergeSucursalesWithWix(sucursalesWithCoords, fullCatalog));
+          isFiltered = true;
         } else {
-          setAllBranches(fullCatalog);
-          setIsPromoBranchFiltered(false);
+          resolvedBranches = fullCatalog;
+          isFiltered = false;
         }
+
+        allBranchesRef.current = resolvedBranches;
+        setAllBranches(resolvedBranches);
+        setIsPromoBranchFiltered(isFiltered);
+
+        const loc = currentLocationRef.current;
+        const closestNow = getClosestBranches(loc.lat, loc.lng, 4, resolvedBranches);
+        setNearbyBranches(closestNow);
+        setSelectedBranch(closestNow[0] || null);
+        setBookingBranchId(closestNow[0]?.id || '');
+        setIsSyncingCms(false);
       } catch (err) {
         console.warn('Wix Headless sync error:', err);
+        if (isSubscribed) setIsSyncingCms(false);
       }
     }
 
@@ -292,24 +334,27 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
     return () => { isSubscribed = false; };
   }, [slug, location.pathname, isAdsPromo]);
 
-  // Initial automatic geolocation request on mount
+  // Initial automatic geolocation request on mount (reads latest allBranchesRef on async callback)
   useEffect(() => {
-    // 1. Initial fast fallback so the UI displays immediately
-    executeSearch('02710');
-
-    // 2. Immediately request user GPS location on page load
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       setGeoLoading(true);
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
-          setCurrentLocation({
+          const nextLoc = {
             cp: 'GPS',
             name: 'Tu ubicación actual detectada por GPS',
             lat: latitude,
             lng: longitude,
             isGps: true,
-          });
+          };
+          currentLocationRef.current = nextLoc;
+          setCurrentLocation(nextLoc);
+          const activeBranches = allBranchesRef.current;
+          const closest = getClosestBranches(latitude, longitude, 4, activeBranches);
+          setNearbyBranches(closest);
+          setSelectedBranch(closest[0] || null);
+          setBookingBranchId(closest[0]?.id || '');
           setGeoLoading(false);
           setGeoError(null);
         },
@@ -322,14 +367,23 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
     }
   }, []);
 
-  // Recompute closest branches & selection whenever branch catalog or user location updates (e.g. after Wix CMS filter)
+  // Recompute closest branches & selection whenever branch catalog or user location updates
   useEffect(() => {
-    if (!allBranches || allBranches.length === 0) return;
+    allBranchesRef.current = allBranches;
+    currentLocationRef.current = currentLocation;
+    if (!allBranches || allBranches.length === 0) {
+      setNearbyBranches([]);
+      setSelectedBranch(null);
+      return;
+    }
     const closest = getClosestBranches(currentLocation.lat, currentLocation.lng, 4, allBranches);
     setNearbyBranches(closest);
     setSelectedBranch((prev) => {
-      if (prev && allBranches.some((b) => b.id === prev.id || (b.wixId && b.wixId === prev.wixId))) {
-        return closest.find((b) => b.id === prev.id) || allBranches.find((b) => b.id === prev.id) || prev;
+      if (
+        prev &&
+        closest.some((b) => b.id === prev.id || (b.wixId && b.wixId === prev.wixId))
+      ) {
+        return closest.find((b) => b.id === prev.id || (b.wixId && b.wixId === prev.wixId)) || closest[0] || null;
       }
       return closest[0] || null;
     });
@@ -337,7 +391,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
       if (prevId && allBranches.some((b) => b.id === prevId)) return prevId;
       return closest[0]?.id || '';
     });
-  }, [allBranches, currentLocation.lat, currentLocation.lng]);
+  }, [allBranches, currentLocation]);
 
   // Sync booking branch id when selected branch changes
   useEffect(() => {
@@ -363,18 +417,21 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
         resolved = await resolvePostalCodeCoords(cp);
       }
 
-      setCurrentLocation({
+      const nextLoc = {
         cp: resolved.cp,
         name: resolved.name,
         lat: resolved.lat,
         lng: resolved.lng,
         isGps: false,
-      });
+      };
+      currentLocationRef.current = nextLoc;
+      setCurrentLocation(nextLoc);
 
-      const closest = getClosestBranches(resolved.lat, resolved.lng, 4, allBranches);
+      const activeBranches = allBranchesRef.current;
+      const closest = getClosestBranches(resolved.lat, resolved.lng, 4, activeBranches);
       setNearbyBranches(closest);
       setSelectedBranch(closest[0] || null);
-      if (closest[0]) setBookingBranchId(closest[0].id);
+      setBookingBranchId(closest[0]?.id || '');
     } catch (err) {
       console.error('Error al resolver código postal:', err);
       setGeoError('No pudimos localizar ese código postal. Intenta con otro o usa tu ubicación actual.');
@@ -395,18 +452,21 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        setCurrentLocation({
+        const nextLoc = {
           cp: 'GPS',
           name: 'Tu ubicación actual detectada por GPS',
           lat: latitude,
           lng: longitude,
           isGps: true,
-        });
+        };
+        currentLocationRef.current = nextLoc;
+        setCurrentLocation(nextLoc);
 
-        const closest = getClosestBranches(latitude, longitude, 4, allBranches);
+        const activeBranches = allBranchesRef.current;
+        const closest = getClosestBranches(latitude, longitude, 4, activeBranches);
         setNearbyBranches(closest);
         setSelectedBranch(closest[0] || null);
-        if (closest[0]) setBookingBranchId(closest[0].id);
+        setBookingBranchId(closest[0]?.id || '');
         setGeoLoading(false);
         setGeoError(null);
       },
@@ -849,9 +909,11 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
               fontSize: 12, fontWeight: 700, color: isPromoBranchFiltered ? C.red : C.navy,
             }}>
               <MapPin size={13} color={C.red} />{' '}
-              {isPromoBranchFiltered
-                ? `${allBranches.length} sucursales participantes en esta promoción`
-                : `${allBranches.length} sucursales disponibles`}
+              {isSyncingCms
+                ? 'Verificando sucursales participantes...'
+                : isPromoBranchFiltered
+                  ? `${allBranches.length} ${allBranches.length === 1 ? 'sucursal participante' : 'sucursales participantes'} en esta promoción`
+                  : `${allBranches.length} sucursales disponibles`}
             </span>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -1542,7 +1604,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
                 <span style={{ fontWeight: 700, color: C.navy, display: 'flex', alignItems: 'center', gap: 4 }}>
                   <MapPin size={12} color={C.red} />{' '}
                   {isPromoBranchFiltered
-                    ? `${allBranches.length} sucursales participantes (click para elegir)`
+                    ? `${allBranches.length} ${allBranches.length === 1 ? 'sucursal participante' : 'sucursales participantes'} (click para elegir)`
                     : `${allBranches.length} sucursales en México (click para elegir)`}
                 </span>
               </div>
