@@ -37,7 +37,8 @@ const timeline = [
     title: 'Era Digital',
     text: 'Incorporamos equipos de diagnóstico computarizado de última generación. La alineación láser y el balanceo electrónico nos posicionan como referentes tecnológicos del sector automotriz.',
     icon: 'monitor',
-    image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=600&q=80',
+    image: '/images/timeline-2000-era-digital.jpg',
+    objectPosition: 'center 42%',
   },
   {
     year: '2010',
@@ -291,6 +292,7 @@ export default function Timeline() {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
+                        objectPosition: item.objectPosition || 'center center',
                         transform: isActive ? 'scale(1.04)' : 'scale(1)',
                         transition: 'transform 0.6s ease',
                       }}

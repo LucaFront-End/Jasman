@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
-import { formatMXN, BRAND_META } from '../../data/productosMasterData';
+import { formatMXN, BRAND_META, getProductPath } from '../../data/productosMasterData';
 import { useTiendaState } from '../../hooks/useTiendaState';
 import { useAppleTilt } from '../../hooks/useAppleScrollPhysics';
 import { Plus, Check, ArrowUpRight } from 'lucide-react';
@@ -43,7 +43,7 @@ export default function TiendaProductCard({
   if (featured && !compact) {
     return (
       <Link
-        to={`/llantas/producto/${product.id}`}
+        to={getProductPath(product)}
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
         className="tienda-spotlight-card"
@@ -395,7 +395,7 @@ export default function TiendaProductCard({
   // STANDARD 3/4 PRODUCT CARD
   return (
     <Link
-      to={`/llantas/producto/${product.id}`}
+      to={getProductPath(product)}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
       style={{

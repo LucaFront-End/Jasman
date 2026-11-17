@@ -1,9 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { C, F } from '../hooks/useAnimations';
 import {
   BRAND_META,
   formatMXN,
+  buildProductSlug,
+  getProductPath,
   useWixCatalogProducts,
   findCatalogProductById,
 } from '../data/productosMasterData';
@@ -134,14 +136,84 @@ const DRIVER_REVIEWS = [
 export default function ProductoPreviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { products: catalogProducts, isLoading: catalogLoading } = useWixCatalogProducts();
 
-  const product = useMemo(() => {
-    return (
-      findCatalogProductById(id) ||
-      catalogProducts[0]
-    );
+  const matchedProduct = useMemo(() => {
+    return findCatalogProductById(id, { products: catalogProducts });
   }, [id, catalogProducts]);
+
+  const product = useMemo(() => {
+    return matchedProduct || catalogProducts[0];
+  }, [matchedProduct, catalogProducts]);
+
+  // Keep browser URL synchronized with canonical SKU + tire name slug & update SEO meta tags
+  useEffect(() => {
+    const activeTarget = matchedProduct || (!catalogLoading ? product : null);
+    if (!activeTarget) return undefined;
+    const basePath = location.pathname.startsWith('/landing-tienda-preview')
+      ? '/landing-tienda-preview'
+      : '/llantas';
+    const canonicalSlug = buildProductSlug(activeTarget);
+    const canonicalPath = getProductPath(activeTarget, basePath);
+    const decodedParam = (() => {
+      try {
+        return decodeURIComponent(String(id || ''));
+      } catch {
+        return String(id || '');
+      }
+    })();
+
+    if (canonicalSlug && decodedParam !== canonicalSlug) {
+      navigate(`${canonicalPath}${location.search}${location.hash}`, { replace: true });
+    }
+
+    const prevTitle = document.title;
+    const nextTitle = `${activeTarget.cleanTitle} | SKU ${activeTarget.reference || activeTarget.id} | Jasman Tires`;
+    document.title = nextTitle;
+
+    const canonicalUrl = `https://www.jasman.com.mx${canonicalPath}`;
+    const upsertMeta = (selector, createFn, content) => {
+      let el = document.head.querySelector(selector);
+      if (!el) {
+        el = createFn();
+        document.head.appendChild(el);
+      }
+      el.setAttribute(el.tagName === 'LINK' ? 'href' : 'content', content);
+    };
+
+    upsertMeta(
+      'link[rel="canonical"]',
+      () => {
+        const link = document.createElement('link');
+        link.setAttribute('rel', 'canonical');
+        return link;
+      },
+      canonicalUrl
+    );
+    upsertMeta(
+      'meta[property="og:url"]',
+      () => {
+        const meta = document.createElement('meta');
+        meta.setAttribute('property', 'og:url');
+        return meta;
+      },
+      canonicalUrl
+    );
+    upsertMeta(
+      'meta[property="og:title"]',
+      () => {
+        const meta = document.createElement('meta');
+        meta.setAttribute('property', 'og:title');
+        return meta;
+      },
+      nextTitle
+    );
+
+    return () => {
+      document.title = prevTitle;
+    };
+  }, [matchedProduct, product, catalogLoading, id, location.pathname, location.search, location.hash, navigate]);
 
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [prevProdId, setPrevProdId] = useState(product.id);
@@ -2320,7 +2392,7 @@ export default function ProductoPreviewPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        navigate(`/llantas/producto/${rel.id}`);
+                        navigate(getProductPath(rel));
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       style={{

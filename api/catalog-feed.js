@@ -321,6 +321,24 @@ function formatPriceMxn(num) {
   return `${safe.toFixed(2)} MXN`;
 }
 
+function slugifyFeedSegment(text = '') {
+  return String(text || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function buildFeedProductSlug(skuOrId, cleanTitle) {
+  const skuSlug = slugifyFeedSegment(skuOrId);
+  const titleSlug = slugifyFeedSegment(cleanTitle);
+  if (skuSlug && titleSlug) {
+    return titleSlug.startsWith(`${skuSlug}-`) ? titleSlug : `${skuSlug}-${titleSlug}`;
+  }
+  return skuSlug || titleSlug || String(skuOrId || '');
+}
+
 function mapWixProductToFeedItem(wixItem, index, baseOrigin, priceMode) {
   const id = String(wixItem._id || '').trim();
   const sku = String(wixItem.sku || '').trim();
@@ -418,6 +436,8 @@ function mapWixProductToFeedItem(wixItem, index, baseOrigin, priceMode) {
     .trim()
     .slice(0, 4800);
 
+  const routeSlug = buildFeedProductSlug(sku || routeId, cleanTitle);
+
   return {
     id,
     sku,
@@ -425,7 +445,7 @@ function mapWixProductToFeedItem(wixItem, index, baseOrigin, priceMode) {
     title: cleanTitle,
     description,
     richTextDescription,
-    link: `${baseOrigin}/llantas/producto/${encodeURIComponent(String(routeId))}`,
+    link: `${baseOrigin}/llantas/producto/${encodeURIComponent(routeSlug || String(routeId))}`,
     imageLink: primaryImageUrl,
     additionalImageLinks: extraImageUrls,
     availability,

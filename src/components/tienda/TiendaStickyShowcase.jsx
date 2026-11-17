@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
-import { PRODUCTOS_MASTER, findCatalogProductById, formatMXN } from '../../data/productosMasterData';
+import { PRODUCTOS_MASTER, findCatalogProductById, formatMXN, getProductPath } from '../../data/productosMasterData';
 import { useTiendaState } from '../../hooks/useTiendaState';
 import { useStickyScrollProgress, useAppleTilt, clamp } from '../../hooks/useAppleScrollPhysics';
 import Tire3DStudioStage from './Tire3DStudioStage';
@@ -528,7 +528,7 @@ export default function TiendaStickyShowcase() {
             </button>
 
             <Link
-              to={`/llantas/producto/${prod.id}`}
+              to={getProductPath(prod)}
               style={{
                 width: 42,
                 height: 42,

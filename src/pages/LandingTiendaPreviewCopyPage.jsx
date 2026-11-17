@@ -5,6 +5,7 @@ import {
   STATIC_PRODUCTOS_MASTER as PRODUCTOS_MASTER,
   BRAND_META,
   formatMXN,
+  getProductPath,
 } from '../data/productosMasterData';
 import { useTiendaState, triggerTiendaUI } from '../hooks/useTiendaState';
 import {
@@ -955,7 +956,7 @@ export default function LandingTiendaPreviewCopyPage() {
                 </button>
 
                 <Link
-                  to={`/landing-tienda-preview/producto/${heroProduct.id}`}
+                  to={getProductPath(heroProduct, '/landing-tienda-preview')}
                   style={{
                     padding: '11px 16px',
                     borderRadius: 9999,
@@ -1006,7 +1007,7 @@ export default function LandingTiendaPreviewCopyPage() {
                   {heroProduct.excerpt}
                 </span>
                 <Link
-                  to={`/landing-tienda-preview/producto/${heroProduct.id}`}
+                  to={getProductPath(heroProduct, '/landing-tienda-preview')}
                   style={{
                     fontFamily: F.heading,
                     fontSize: 10.5,

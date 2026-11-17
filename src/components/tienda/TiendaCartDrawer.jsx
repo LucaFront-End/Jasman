@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { C, F } from '../../hooks/useAnimations';
-import { formatMXN } from '../../data/productosMasterData';
+import { formatMXN, getProductPath } from '../../data/productosMasterData';
 import { sucursales } from '../../data/sucursalesData';
 import { useTiendaState, triggerTiendaUI } from '../../hooks/useTiendaState';
 import { useFlotillasDispatch } from '../../hooks/useFlotillasDispatch';
@@ -580,7 +580,7 @@ export default function TiendaCartDrawer() {
                   }}
                 >
                   <Link
-                    to={`/llantas/producto/${product.id}`}
+                    to={getProductPath(product)}
                     onClick={() => setOpen(false)}
                     style={{
                       width: 76,
@@ -614,7 +614,7 @@ export default function TiendaCartDrawer() {
                       }}
                     >
                       <Link
-                        to={`/llantas/producto/${product.id}`}
+                        to={getProductPath(product)}
                         onClick={() => setOpen(false)}
                         style={{
                           fontFamily: F.heading,

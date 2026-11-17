@@ -2044,23 +2044,81 @@ export async function loadWixCatalogProducts({ forceRefresh = false } = {}) {
   return wixCatalogPromise;
 }
 
-export function findCatalogProductById(idOrSlug, { forceStatic = false } = {}) {
-  const resolvedId = PACKAGE_TO_SINGLE_ID_MAP[Number(idOrSlug)] || idOrSlug;
-  const source = forceStatic ? STATIC_PRODUCTOS_MASTER : PRODUCTOS_MASTER;
+export function slugifyProductSegment(text = '') {
+  return String(text || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+export function buildProductSlug(product) {
+  if (!product) return '';
+  const skuSlug = slugifyProductSegment(product.reference || product.id || '');
+  const titleSlug = slugifyProductSegment(product.cleanTitle || product.name || '');
+  if (skuSlug && titleSlug) {
+    return titleSlug.startsWith(`${skuSlug}-`) ? titleSlug : `${skuSlug}-${titleSlug}`;
+  }
+  return skuSlug || titleSlug || String(product.id || '');
+}
+
+export function getProductPath(product, basePath = '/llantas') {
+  const cleanBase = String(basePath || '/llantas').replace(/\/+$/, '');
+  const slug = buildProductSlug(product);
+  return `${cleanBase}/producto/${slug || product?.id || ''}`;
+}
+
+function matchProductInList(list, raw, rawLower, leadingToken) {
+  if (!Array.isArray(list) || list.length === 0) return null;
+
+  const exact = list.find(
+    (p) =>
+      String(p.id) === raw ||
+      String(p.reference || '').toLowerCase() === rawLower ||
+      String(p.slug || '').toLowerCase() === rawLower ||
+      String(p.wixId || '').toLowerCase() === rawLower ||
+      buildProductSlug(p) === rawLower
+  );
+  if (exact) return exact;
+
+  if (leadingToken) {
+    const bySkuPrefix = list.find(
+      (p) =>
+        slugifyProductSegment(p.reference) === leadingToken ||
+        String(p.id).toLowerCase() === leadingToken
+    );
+    if (bySkuPrefix) return bySkuPrefix;
+  }
+
+  return list.find((p) => slugifyProductSegment(p.cleanTitle || p.name) === rawLower) || null;
+}
+
+export function findCatalogProductById(idOrSlug, { forceStatic = false, products = null } = {}) {
+  let decoded = String(idOrSlug || '').trim();
+  try {
+    decoded = decodeURIComponent(decoded).trim();
+  } catch {
+    // keep raw string when malformed URI component
+  }
+  if (!decoded) return null;
+
+  const numericCandidate = Number(decoded);
+  const resolved =
+    Number.isFinite(numericCandidate) && PACKAGE_TO_SINGLE_ID_MAP[numericCandidate]
+      ? String(PACKAGE_TO_SINGLE_ID_MAP[numericCandidate])
+      : decoded;
+  const rawLower = resolved.toLowerCase();
+  const leadingToken = rawLower.split('-')[0] || '';
+  const source = Array.isArray(products)
+    ? products
+    : forceStatic
+      ? STATIC_PRODUCTOS_MASTER
+      : PRODUCTOS_MASTER;
+
   return (
-    source.find(
-      (p) =>
-        String(p.id) === String(resolvedId) ||
-        String(p.reference) === String(resolvedId) ||
-        p.slug === resolvedId ||
-        p.wixId === resolvedId
-    ) ||
-    STATIC_PRODUCTOS_MASTER.find(
-      (p) =>
-        String(p.id) === String(resolvedId) ||
-        String(p.reference) === String(resolvedId) ||
-        p.slug === resolvedId
-    ) ||
+    matchProductInList(source, resolved, rawLower, leadingToken) ||
+    matchProductInList(STATIC_PRODUCTOS_MASTER, resolved, rawLower, leadingToken) ||
     null
   );
 }

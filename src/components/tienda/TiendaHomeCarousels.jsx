@@ -4,13 +4,14 @@ import { C, F } from '../../hooks/useAnimations';
 import {
   BRAND_META,
   formatMXN,
+  getProductPath,
   useWixCatalogProducts,
 } from '../../data/productosMasterData';
 import { useTiendaState } from '../../hooks/useTiendaState';
 import {
   Zap,
   Truck,
-  CreditCard,
+  Sparkles,
   ChevronLeft,
   ChevronRight,
   ArrowRight,
@@ -196,7 +197,7 @@ function ExpressDealCard({ product }) {
 
   return (
     <Link
-      to={`/llantas/producto/${product.id}`}
+      to={getProductPath(product)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -481,7 +482,7 @@ function FreeShippingLandscapeCard({ product }) {
 
   return (
     <Link
-      to={`/llantas/producto/${product.id}`}
+      to={getProductPath(product)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="jasman-shipping-landscape-card"
@@ -734,9 +735,9 @@ function FreeShippingLandscapeCard({ product }) {
 }
 
 /* ============================================================================
-   CARD STYLE 3: FINTECH 12-MSI SPOTLIGHT CARD (Meses sin Intereses)
+   CARD STYLE 3: SPOTLIGHT RECOMMENDED TIRE CARD (Productos Recomendados)
    ============================================================================ */
-function MsiInstallmentCard({ product }) {
+function RecommendedSpotlightCard({ product }) {
   const [hovered, setHovered] = useState(false);
   const [added, setAdded] = useState(false);
   const [imgErr, setImgErr] = useState(false);
@@ -744,7 +745,6 @@ function MsiInstallmentCard({ product }) {
 
   const basePrice = product.finalPriceTaxExcluded || 0;
   const effectivePrice = coupon ? basePrice * 0.9 : basePrice;
-  const monthlyPayment = effectivePrice / 12;
   const brandMeta = BRAND_META[product.brand];
   const imgSrc = imgErr
     ? '/images/service-tires.png'
@@ -762,7 +762,7 @@ function MsiInstallmentCard({ product }) {
 
   return (
     <Link
-      to={`/llantas/producto/${product.id}`}
+      to={getProductPath(product)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -785,7 +785,7 @@ function MsiInstallmentCard({ product }) {
         transition: 'all 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
-      {/* Top Row: Brand Logo + 12 MSI Pill */}
+      {/* Top Row: Brand Logo + Measure Pill */}
       <div
         style={{
           display: 'flex',
@@ -832,7 +832,7 @@ function MsiInstallmentCard({ product }) {
             letterSpacing: '0.06em',
           }}
         >
-          {product.measure || '12 MSI'}
+          {product.measure || 'OFICIAL'}
         </span>
       </div>
 
@@ -868,7 +868,7 @@ function MsiInstallmentCard({ product }) {
             textTransform: 'uppercase',
           }}
         >
-          Hasta 12 MSI
+          Recomendado
         </span>
 
         <img
@@ -906,7 +906,7 @@ function MsiInstallmentCard({ product }) {
         {product.cleanTitle}
       </h3>
 
-      {/* Highlighted FinTech Monthly Installment Pod */}
+      {/* Highlighted Official Price Pod */}
       <div
         style={{
           padding: '12px 13px',
@@ -930,7 +930,7 @@ function MsiInstallmentCard({ product }) {
               color: C.red,
             }}
           >
-            12 pagos sin intereses
+            Precio Oficial · Con IVA
           </div>
           <div
             style={{
@@ -943,13 +943,10 @@ function MsiInstallmentCard({ product }) {
               marginTop: 2,
             }}
           >
-            {formatMXN(monthlyPayment)}
-            <span style={{ fontSize: 10.5, fontWeight: 700, color: '#64748B' }}>
-              /mes
-            </span>
+            {formatMXN(effectivePrice)}
           </div>
           <div style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>
-            Total {formatMXN(effectivePrice)} · Con IVA
+            Envío gratis · SKU {product.reference}
           </div>
         </div>
 
@@ -1004,7 +1001,7 @@ function MsiInstallmentCard({ product }) {
 export default function TiendaHomeCarousels() {
   const { products: catalogProducts } = useWixCatalogProducts();
 
-  const { expressDeals, freeShippingItems, msiItems } = useMemo(() => {
+  const { expressDeals, freeShippingItems, recommendedItems } = useMemo(() => {
     const inStock = catalogProducts.filter(
       (p) => p.inStock && p.finalPriceTaxExcluded > 0
     );
@@ -1050,16 +1047,16 @@ export default function TiendaHomeCarousels() {
     });
     const shipping = takeUnique(shippingCandidates, 10);
 
-    // 3. Meses sin Intereses
-    const msiCandidates = [...inStock].sort(
+    // 3. Productos Recomendados
+    const recommendedCandidates = [...inStock].sort(
       (a, b) => b.finalPriceTaxExcluded - a.finalPriceTaxExcluded
     );
-    const msi = takeUnique(msiCandidates, 10);
+    const recommended = takeUnique(recommendedCandidates, 10);
 
     return {
       expressDeals: express,
       freeShippingItems: shipping,
-      msiItems: msi,
+      recommendedItems: recommended,
     };
   }, [catalogProducts]);
 
@@ -1095,7 +1092,7 @@ export default function TiendaHomeCarousels() {
     onTouchEnd: onMsiTouchEnd,
     stepBy: stepMsi,
   } = useInteractiveGlideCarousel({
-    itemCount: msiItems.length,
+    itemCount: recommendedItems.length,
     baseSpeed: 0.5,
   });
 
@@ -1537,10 +1534,10 @@ export default function TiendaHomeCarousels() {
       </section>
 
       {/* =====================================================================
-          3. MESES SIN INTERESES — DARK ARCHITECTURAL NAVY FINTECH SHOWCASE
+          3. PRODUCTOS RECOMENDADOS — DARK ARCHITECTURAL NAVY SHOWCASE
           ===================================================================== */}
       <section
-        id="carrusel-meses-sin-intereses"
+        id="carrusel-productos-recomendados"
         className="jasman-carousel-sec"
         style={{
           padding: '84px 0',
@@ -1596,7 +1593,7 @@ export default function TiendaHomeCarousels() {
                 marginBottom: 12,
               }}
             >
-              <CreditCard size={13} color="#FF6B70" />
+              <Sparkles size={13} color="#FF6B70" />
               <span
                 style={{
                   fontFamily: F.heading,
@@ -1607,7 +1604,7 @@ export default function TiendaHomeCarousels() {
                   color: '#FCA5A5',
                 }}
               >
-                Facilidades de Pago Oficiales
+                Selección Jasman Tires
               </span>
             </div>
 
@@ -1622,7 +1619,7 @@ export default function TiendaHomeCarousels() {
                 margin: '0 0 8px',
               }}
             >
-              Meses sin <span style={{ color: '#FF5A5F' }}>Intereses.</span>
+              Productos <span style={{ color: '#FF5A5F' }}>Recomendados.</span>
             </h2>
 
             <div
@@ -1634,16 +1631,16 @@ export default function TiendaHomeCarousels() {
               }}
             >
               <span style={{ fontSize: 13.5, color: 'rgba(255, 255, 255, 0.75)' }}>
-                Estrena hoy llantas SUV, 4×4 y Alto Desempeño diferidas Con IVA:
+                Selección destacada en llantas SUV, 4×4 y Alto Desempeño Con IVA:
               </span>
-              {['3 MSI', '6 MSI', '9 MSI', '12 MSI'].map((tier) => (
+              {['Garantía Oficial', 'Envío Gratis', 'Stock Inmediato'].map((tier, idx) => (
                 <span
                   key={tier}
                   style={{
                     padding: '3px 9px',
                     borderRadius: 9999,
                     background:
-                      tier === '12 MSI' ? C.red : 'rgba(255, 255, 255, 0.10)',
+                      idx === 0 ? C.red : 'rgba(255, 255, 255, 0.10)',
                     color: '#FFFFFF',
                     fontFamily: F.heading,
                     fontSize: 10,
@@ -1660,7 +1657,7 @@ export default function TiendaHomeCarousels() {
             <button
               type="button"
               onClick={() => stepMsi(-1)}
-              aria-label="Anterior en Meses sin Intereses"
+              aria-label="Anterior en Productos Recomendados"
               style={{
                 width: 42,
                 height: 42,
@@ -1679,7 +1676,7 @@ export default function TiendaHomeCarousels() {
             <button
               type="button"
               onClick={() => stepMsi(1)}
-              aria-label="Siguiente en Meses sin Intereses"
+              aria-label="Siguiente en Productos Recomendados"
               style={{
                 width: 42,
                 height: 42,
@@ -1719,7 +1716,7 @@ export default function TiendaHomeCarousels() {
           </div>
         </div>
 
-        {/* Full-Bleed FinTech Installment Carousel Track */}
+        {/* Full-Bleed Recommended Products Carousel Track */}
         <div
           ref={msiTrackRef}
           onMouseMove={onMsiMove}
@@ -1737,15 +1734,15 @@ export default function TiendaHomeCarousels() {
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          {[...msiItems, ...msiItems].map((product, idx) => (
+          {[...recommendedItems, ...recommendedItems].map((product, idx) => (
             <div
-              key={`msi-${product.id}-${idx}`}
+              key={`rec-${product.id}-${idx}`}
               style={{
                 flex: '0 0 296px',
                 display: 'flex',
               }}
             >
-              <MsiInstallmentCard product={product} />
+              <RecommendedSpotlightCard product={product} />
             </div>
           ))}
         </div>

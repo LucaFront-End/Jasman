@@ -292,6 +292,7 @@ export default function IsometricWorkshopScene({
     >
       {/* Top Telemetry Bar */}
       <div
+        className="jasman-iso-top-bar"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -334,9 +335,10 @@ export default function IsometricWorkshopScene({
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="jasman-iso-top-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {!isCompact && (
             <span
+              className="jasman-iso-count-pill"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -349,6 +351,7 @@ export default function IsometricWorkshopScene({
                 fontSize: 11,
                 fontWeight: 700,
                 color: 'rgba(255,255,255,0.86)',
+                whiteSpace: 'nowrap',
               }}
             >
               <Truck size={13} color={C.redLight} />
@@ -1020,6 +1023,23 @@ export default function IsometricWorkshopScene({
         }
 
         @media (max-width: 760px) {
+          .jasman-iso-top-bar {
+            padding: 10px 12px !important;
+            gap: 8px !important;
+          }
+          .jasman-iso-top-actions {
+            width: 100% !important;
+            justify-content: space-between !important;
+            gap: 8px !important;
+          }
+          .jasman-iso-count-pill {
+            font-size: 10.5px !important;
+            padding: 5px 10px !important;
+          }
+          .jasman-iso-top-bar button {
+            padding: 6px 11px !important;
+            font-size: 10.5px !important;
+          }
           .jasman-iso-footer-strip {
             grid-template-columns: 1fr !important;
             gap: 8px !important;

@@ -4,6 +4,7 @@ import { C, F } from '../hooks/useAnimations';
 import {
   BRAND_META,
   formatMXN,
+  getProductPath,
   useWixCatalogProducts,
 } from '../data/productosMasterData';
 import { useTiendaState, triggerTiendaUI } from '../hooks/useTiendaState';
@@ -537,7 +538,7 @@ export default function LandingTiendaPreviewPage() {
               </button>
 
               <Link
-                to={`/llantas/producto/${heroProduct.id}`}
+                to={getProductPath(heroProduct)}
                 className="jasman-hero-secondary-btn"
                 style={{
                   padding: '10px 13px',
@@ -618,7 +619,7 @@ export default function LandingTiendaPreviewPage() {
                 {heroProduct.excerpt}
               </span>
               <Link
-                to={`/llantas/producto/${heroProduct.id}`}
+                to={getProductPath(heroProduct)}
                 style={{
                   fontFamily: F.heading,
                   fontSize: 10.5,
@@ -639,7 +640,7 @@ export default function LandingTiendaPreviewPage() {
       {/* 2. SUTRA-STYLE EXPANDING 13-BRANDS PHOTO ACCORDION */}
       <TiendaCategoriesAccordion />
 
-      {/* 3. THREE SEPARATE HOME CAROUSELS: OFERTAS EXPRESS, ENVÍO GRATIS & MESES SIN INTERESES */}
+      {/* 3. THREE SEPARATE HOME CAROUSELS: OFERTAS EXPRESS, ENVÍO GRATIS & PRODUCTOS RECOMENDADOS */}
       <TiendaHomeCarousels />
 
       {/* 5. RESEÑAS DE CONDUCTORES VERIFICADOS — SINGLE INFINITE MARQUEE WITH LATERAL BLUR */}

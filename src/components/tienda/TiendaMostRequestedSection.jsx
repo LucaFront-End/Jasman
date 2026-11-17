@@ -10,6 +10,7 @@ import {
   POPULAR_CAR_MODELS,
   useWixCatalogProducts,
   formatMXN,
+  getProductPath,
 } from '../../data/productosMasterData';
 import { triggerTiendaUI } from '../../hooks/useTiendaState';
 import TiendaVehicleSvg from './TiendaVehicleTypeIcons';
@@ -596,7 +597,7 @@ export default function TiendaMostRequestedSection({
             {topTires.map((tire) => (
               <Link
                 key={tire.id}
-                to={`${basePath}/producto/${tire.id}`}
+                to={getProductPath(tire, basePath)}
                 onClick={() => {
                   if (onAfterSelect) onAfterSelect();
                 }}

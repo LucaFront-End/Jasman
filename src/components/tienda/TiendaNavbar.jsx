@@ -8,6 +8,8 @@ import {
   VEHICLE_TYPE_OPTIONS,
   POPULAR_CAR_MODELS,
   BRAND_META,
+  JASMAN_STORE_LOGOS,
+  getProductPath,
   useWixCatalogProducts,
   formatMXN,
 } from '../../data/productosMasterData';
@@ -622,99 +624,58 @@ export default function TiendaNavbar({ legacyMode = false }) {
             transition: 'all 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          {/* Left: Official Jasman Logo (-> Main Home) + Store Badge (-> /llantas) */}
+          {/* Left: Official Jasman Tires Logo */}
           {legacyMode ? (
             <Link
               to="/landing-tienda-preview-copia"
+              aria-label="Jasman Tires"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 10,
                 textDecoration: 'none',
                 flexShrink: 0,
                 whiteSpace: 'nowrap',
               }}
             >
               <img
-                src="/images/logo/logo-01.png"
-                alt="Jasman Automotriz"
+                src={JASMAN_STORE_LOGOS.light}
+                alt="Jasman Tires"
                 className="tienda-apple-logo-img"
                 style={{
-                  height: 30,
+                  height: 34,
                   width: 'auto',
                   objectFit: 'contain',
                   flexShrink: 0,
+                  display: 'block',
                 }}
               />
-              <span
-                className="tienda-apple-logo-badge"
-                style={{
-                  fontFamily: F.heading,
-                  fontSize: 9.5,
-                  fontWeight: 800,
-                  letterSpacing: '0.22em',
-                  textTransform: 'uppercase',
-                  color: C.red,
-                  borderLeft: '1px solid rgba(26, 31, 54, 0.12)',
-                  paddingLeft: 10,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Tienda
-              </span>
             </Link>
           ) : (
-            <div
+            <Link
+              to="/llantas"
+              title="Inicio Jasman Tires"
+              aria-label="Jasman Tires — Inicio"
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: 10,
+                textDecoration: 'none',
                 flexShrink: 0,
                 whiteSpace: 'nowrap',
               }}
             >
-              <Link
-                to="/"
-                title="Volver al Home Principal Jasman"
+              <img
+                src={JASMAN_STORE_LOGOS.light}
+                alt="Jasman Tires"
+                className="tienda-apple-logo-img"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  textDecoration: 'none',
+                  height: 34,
+                  width: 'auto',
+                  objectFit: 'contain',
                   flexShrink: 0,
+                  display: 'block',
                 }}
-              >
-                <img
-                  src="/images/logo/logo-01.png"
-                  alt="Jasman Automotriz — Volver al Home"
-                  className="tienda-apple-logo-img"
-                  style={{
-                    height: 30,
-                    width: 'auto',
-                    objectFit: 'contain',
-                    flexShrink: 0,
-                  }}
-                />
-              </Link>
-              <Link
-                to="/llantas"
-                title="Inicio Tienda de Llantas"
-                className="tienda-apple-logo-badge"
-                style={{
-                  fontFamily: F.heading,
-                  fontSize: 9.5,
-                  fontWeight: 800,
-                  letterSpacing: '0.22em',
-                  textTransform: 'uppercase',
-                  color: C.red,
-                  borderLeft: '1px solid rgba(26, 31, 54, 0.12)',
-                  paddingLeft: 10,
-                  whiteSpace: 'nowrap',
-                  textDecoration: 'none',
-                }}
-              >
-                Tienda
-              </Link>
-            </div>
+              />
+            </Link>
           )}
 
           {/* Center: Minimalist Apple-style navigation (strictly single-line nowrap) */}
@@ -1180,7 +1141,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
                       {searchMatches.slice(0, 6).map((tire) => (
                         <Link
                           key={tire.id}
-                          to={`${storeBasePath}/producto/${tire.id}`}
+                          to={getProductPath(tire, storeBasePath)}
                           onClick={() => {
                             setSearchOpen(false);
                             setSearchQuery('');
@@ -2118,7 +2079,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
             height: 34px !important;
             padding: 0 12px !important;
           }
-          .tienda-apple-logo-img { height: 24px !important; }
+          .tienda-apple-logo-img { height: 27px !important; }
           .tienda-apple-logo-badge { padding-left: 7px !important; font-size: 8.5px !important; letter-spacing: 0.16em !important; }
           .tienda-apple-actions { gap: 6px !important; }
           .tienda-spotlight-results-grid { grid-template-columns: 1fr !important; }

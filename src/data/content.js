@@ -83,7 +83,7 @@ export const aboutContent = {
     { icon: 'flag', title: '100% Mexicanos', text: 'Orgullosamente mexicanos, con presencia en las principales ciudades del país.' },
     { icon: 'zap', title: 'Tecnología Avanzada', text: 'Equipos de última generación para diagnósticos precisos y reparaciones efectivas.' },
   ],
-  image: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=800&q=80',
+  image: '/images/home-about-jasman.jpg',
 };
 
 export const promosContent = {
