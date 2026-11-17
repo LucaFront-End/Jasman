@@ -18,6 +18,12 @@ function hasTokenPair(parsed) {
   return Boolean(parsed?.accessToken?.value && parsed?.refreshToken?.value);
 }
 
+function isStoredAccessTokenExpired(parsed) {
+  const exp = Number(parsed?.accessToken?.expiresAt);
+  if (!Number.isFinite(exp) || exp <= 0) return false;
+  return exp <= Math.floor(Date.now() / 1000) + 30;
+}
+
 function createSharedWixTokenStorage() {
   return {
     getTokens() {
@@ -55,7 +61,11 @@ function createSharedWixTokenStorage() {
             window.localStorage.setItem(WIX_TOKENS_STORAGE_KEY, JSON.stringify(tokens));
             return;
           }
-          if (hasTokenPair(currentMember)) return;
+          // Only preserve member tokens if still valid; evict expired ones so anonymous visitor fallback persists
+          if (hasTokenPair(currentMember) && !isStoredAccessTokenExpired(currentMember)) {
+            return;
+          }
+          window.localStorage.removeItem(WIX_TOKENS_STORAGE_KEY);
         }
         window.localStorage.setItem(WIX_VISITOR_TOKENS_KEY, JSON.stringify(tokens));
       } catch {
@@ -99,6 +109,27 @@ export const wixClient = createClient({
   }),
 });
 
+// Stateless client for public CMS reads so stale/expired member tokens never poison CMS queries
+function createStatelessPublicWixClient() {
+  return createClient({
+    modules: { items },
+    auth: OAuthStrategy({
+      clientId: WIX_CLIENT_ID,
+    }),
+  });
+}
+
+export let publicWixClient = createStatelessPublicWixClient();
+
+async function withPublicWixClient(operation) {
+  try {
+    return await operation(publicWixClient);
+  } catch {
+    publicWixClient = createStatelessPublicWixClient();
+    return operation(publicWixClient);
+  }
+}
+
 /**
  * Converts Wix media URI (e.g. wix:image://v1/45119e_...~mv2.jpg/EDITABLE.jpg#...)
  * to a high-speed CDN static URL.
@@ -129,10 +160,17 @@ function normalizeBranchKey(raw) {
 }
 
 const LOCAL_BRANCH_BY_KEY = new Map();
+const LOCAL_BRANCH_BY_CP = new Map();
 for (const b of sucursalesWithCoords) {
   const byName = normalizeBranchKey(b.name);
-  if (byName) LOCAL_BRANCH_BY_KEY.set(byName, b);
+  if (byName && !LOCAL_BRANCH_BY_KEY.has(byName)) {
+    LOCAL_BRANCH_BY_KEY.set(byName, b);
+  }
   if (b.id) LOCAL_BRANCH_BY_KEY.set(b.id.toLowerCase(), b);
+  const cleanCp = String(b.cp || '').replace(/\D/g, '').slice(0, 5);
+  if (cleanCp && !LOCAL_BRANCH_BY_CP.has(cleanCp)) {
+    LOCAL_BRANCH_BY_CP.set(cleanCp, b);
+  }
 }
 
 function resolveCoordsFromPostalCodeSync(cpRaw) {
@@ -168,11 +206,19 @@ export function normalizeWixBranch(b) {
     .replace(/^Jasman\s+Automotriz\s*-?\s*(?:Suc\.?)?\s*/i, '')
     .trim();
   const key = normalizeBranchKey(cleanName || title);
-  const localMatch = LOCAL_BRANCH_BY_KEY.get(key) || LOCAL_BRANCH_BY_KEY.get(normalizeBranchKey(title));
-
   const cmsCp = /^\d{5}$/.test(String(b.regin || '').trim())
     ? String(b.regin).trim()
     : (b.address?.postalCode ? String(b.address.postalCode).replace(/\D/g, '').slice(0, 5) : '');
+  const cpCandidate = cmsCp ? LOCAL_BRANCH_BY_CP.get(cmsCp) : null;
+  const cpCandidateKey = cpCandidate ? normalizeBranchKey(cpCandidate.name) : '';
+  const localMatch =
+    (cpCandidate && key && (cpCandidateKey.includes(key) || key.includes(cpCandidateKey))
+      ? cpCandidate
+      : null) ||
+    LOCAL_BRANCH_BY_KEY.get(key) ||
+    LOCAL_BRANCH_BY_KEY.get(normalizeBranchKey(title)) ||
+    cpCandidate ||
+    null;
 
   const rawLat = b.latitud ?? b.address?.location?.latitude;
   const rawLng = b.longitud ?? b.address?.location?.longitude;
@@ -313,14 +359,26 @@ async function fetchPromoReferencedBranches(item) {
   let rawRefs = [];
   if (item?._id) {
     try {
-      const qref = await wixClient.items.queryReferenced(
-        'Landingdepromociones',
-        item._id,
-        'sucursalesVlidas',
-        { consistentRead: true }
-      );
-      if (Array.isArray(qref?.items) && qref.items.length > 0) {
-        rawRefs = qref.items;
+      const collected = await withPublicWixClient(async (client) => {
+        let qref = await client.items.queryReferenced(
+          'Landingdepromociones',
+          item._id,
+          'sucursalesVlidas',
+          { consistentRead: true, limit: 100 }
+        );
+        const rows = [...(qref?.items || [])];
+        while (typeof qref?.hasNext === 'function' && qref.hasNext()) {
+          qref = await qref.next();
+          if (qref?.items?.length) {
+            rows.push(...qref.items);
+          } else {
+            break;
+          }
+        }
+        return rows;
+      });
+      if (Array.isArray(collected) && collected.length > 0) {
+        rawRefs = collected;
       }
     } catch {
       // Fallback to inline included field below
@@ -338,12 +396,14 @@ async function fetchPromoReferencedBranches(item) {
  */
 export async function getAllLandingPromotions() {
   try {
-    const res = await wixClient.items
-      .query('Landingdepromociones')
-      .include('sucursalesVlidas')
-      .descending('_updatedDate')
-      .limit(50)
-      .find({ consistentRead: true });
+    const res = await withPublicWixClient((client) =>
+      client.items
+        .query('Landingdepromociones')
+        .include('sucursalesVlidas')
+        .descending('_updatedDate')
+        .limit(50)
+        .find({ consistentRead: true })
+    );
     return (res.items || []).map((item) => normalizePromoItem(item));
   } catch (err) {
     console.warn('Wix Headless: Error listing Landingdepromociones:', err?.message || err);
@@ -360,12 +420,14 @@ export async function getLandingPromotion(slug = null) {
   const cleanSlug = normalizePromoSlug(slug);
 
   try {
-    const res = await wixClient.items
-      .query('Landingdepromociones')
-      .include('sucursalesVlidas')
-      .descending('_updatedDate')
-      .limit(50)
-      .find({ consistentRead: true });
+    const res = await withPublicWixClient((client) =>
+      client.items
+        .query('Landingdepromociones')
+        .include('sucursalesVlidas')
+        .descending('_updatedDate')
+        .limit(50)
+        .find({ consistentRead: true })
+    );
     const itemsList = Array.isArray(res?.items) ? res.items : [];
 
     if (cleanSlug && cleanSlug !== 'promociones') {
@@ -478,11 +540,13 @@ export async function getWixPostalCode(cp) {
   const cleanCp = String(cp).trim().padStart(5, '0');
 
   try {
-    const res = await wixClient.items
-      .query('Codigospostales')
-      .eq('title', cleanCp)
-      .limit(1)
-      .find();
+    const res = await withPublicWixClient((client) =>
+      client.items
+        .query('Codigospostales')
+        .eq('title', cleanCp)
+        .limit(1)
+        .find()
+    );
 
     if (res.items && res.items.length > 0) {
       const item = res.items[0];
@@ -509,20 +573,23 @@ export async function getWixPostalCode(cp) {
  */
 export async function getWixBranches() {
   try {
-    let res = await wixClient.items
-      .query('Sucursales')
-      .limit(100)
-      .find({ consistentRead: true });
+    const allItems = await withPublicWixClient(async (client) => {
+      let res = await client.items
+        .query('Sucursales')
+        .limit(100)
+        .find({ consistentRead: true });
 
-    const allItems = [...(res.items || [])];
-    while (typeof res?.hasNext === 'function' && res.hasNext()) {
-      res = await res.next();
-      if (res?.items?.length) {
-        allItems.push(...res.items);
-      } else {
-        break;
+      const collected = [...(res.items || [])];
+      while (typeof res?.hasNext === 'function' && res.hasNext()) {
+        res = await res.next();
+        if (res?.items?.length) {
+          collected.push(...res.items);
+        } else {
+          break;
+        }
       }
-    }
+      return collected;
+    });
 
     if (allItems.length > 0) {
       return allItems
@@ -624,7 +691,7 @@ function dispatchFormToWixInbox({
       pagina: window.location?.pathname || '/',
       campos,
     }),
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /**

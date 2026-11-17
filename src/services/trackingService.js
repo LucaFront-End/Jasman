@@ -1,5 +1,6 @@
 import {
   wixClient,
+  publicWixClient,
   persistWixTokens,
   getStoredWixMemberAccessToken,
   logoutWixMember,
@@ -121,7 +122,7 @@ export async function fetchPublicTrackingConfig() {
   }
 
   try {
-    const queryRes = await wixClient.items
+    const queryRes = await publicWixClient.items
       .query('ConfiguracionMeta')
       .eq('slug', 'global-meta-config')
       .limit(1)
