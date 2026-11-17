@@ -103,7 +103,7 @@ let cartMutex = Promise.resolve();
 
 function runExclusiveCartOp(fn) {
   const next = cartMutex.then(fn, fn);
-  cartMutex = next.catch(() => {});
+  cartMutex = next.catch(() => { });
   return next;
 }
 
@@ -277,8 +277,8 @@ function parseWixCartEstimate(estimate, couponError = '') {
   const taxAmount = Number(payNow.tax?.amount ?? 0);
   const totalAmount = Number(
     payNow.total?.amount ??
-      cartObj.subtotalAfterDiscounts?.amount ??
-      Math.max(0, subtotalAmount - discountAmount + shippingAmount + taxAmount)
+    cartObj.subtotalAfterDiscounts?.amount ??
+    Math.max(0, subtotalAmount - discountAmount + shippingAmount + taxAmount)
   );
 
   const shippingTitle =
@@ -308,9 +308,9 @@ function parseWixCartEstimate(estimate, couponError = '') {
       const ruleAmt =
         Number(
           d.discountRule?.amount?.amount ??
-            d.merchantDiscount?.amount?.amount ??
-            d.discount?.amount?.amount ??
-            0
+          d.merchantDiscount?.amount?.amount ??
+          d.discount?.amount?.amount ??
+          0
         ) || 0;
       if (ruleAmt > 0) {
         automaticDiscounts.push({ label: ruleName, amount: ruleAmt });
@@ -337,8 +337,8 @@ function parseWixCartEstimate(estimate, couponError = '') {
 function formatWixCouponError(err) {
   const rawCode = String(
     err?.details?.applicationError?.code ||
-      err?.details?.validationError?.fieldViolations?.[0]?.violatedRule ||
-      ''
+    err?.details?.validationError?.fieldViolations?.[0]?.violatedRule ||
+    ''
   ).toUpperCase();
   const rawDesc = String(err?.details?.applicationError?.description || '').trim();
   const rawMsg = String(rawDesc || err?.message || '').toUpperCase();
@@ -385,7 +385,7 @@ export async function syncAndEstimateWixCart({
 
     // Only recreate Wix currentCart lineItems when items or quantities actually changed
     if (signature !== lastSyncedItemsSignature) {
-      await wixCheckoutClient.currentCart.deleteCurrentCart().catch(() => {});
+      await wixCheckoutClient.currentCart.deleteCurrentCart().catch(() => { });
       const addRes = await wixCheckoutClient.currentCart.addToCurrentCart({
         lineItems: resolvedEntries.map((e) => e.lineItem),
       });
@@ -423,7 +423,7 @@ export async function syncAndEstimateWixCart({
 export async function removeCouponFromWixCart() {
   return runExclusiveCartOp(async () => {
     await ensureWixCheckoutSession();
-    await wixCheckoutClient.currentCart.removeCouponFromCurrentCart().catch(() => {});
+    await wixCheckoutClient.currentCart.removeCouponFromCurrentCart().catch(() => { });
     const estimate =
       await wixCheckoutClient.currentCart.estimateCurrentCartTotals();
     if (estimate?.cart) {
@@ -477,19 +477,74 @@ export async function redirectToJasmanWixCheckout({
       );
     }
 
-    const signature = computeItemsSignature(resolvedEntries);
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : 'https://www.jasman.com.mx';
+
+    let checkoutId = '';
+    let serverCheckoutUrl = '';
+    let serverLineItems = null;
+
+    // Preferred server-validated checkout creation: enforces strict per-identical-SKU
+    // volume pricing directly against Wix Stores Products and prevents automatic
+    // cross-SKU rule leakage in Wix Checkout.
+    if (typeof window !== 'undefined') {
+      try {
+        const apiRes = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: resolvedEntries.map(({ lineItem, localItem, resolvedProduct }) => ({
+              catalogItemId: lineItem.catalogReference.catalogItemId,
+              variantId: lineItem.catalogReference.options?.variantId || null,
+              quantity: lineItem.quantity,
+              unitsPerItem:
+                resolvedProduct?.unitsPerItem || localItem?.product?.unitsPerItem || 1,
+            })),
+            couponCode: couponCode ? String(couponCode).trim() : null,
+            origin,
+          }),
+        });
+        if (apiRes.ok) {
+          const apiData = await apiRes.json();
+          if (apiData?.ok && apiData?.checkoutId) {
+            checkoutId = apiData.checkoutId;
+            serverCheckoutUrl = apiData.checkoutUrl || '';
+            serverLineItems = Array.isArray(apiData.lineItems) ? apiData.lineItems : null;
+          }
+        }
+      } catch (serverCheckoutErr) {
+        console.warn('[Jasman Checkout] Server /api/checkout fallback:', serverCheckoutErr?.message || serverCheckoutErr);
+      }
+    }
+
     let syncedCart = lastSyncedCartCache;
 
-    if (signature !== lastSyncedItemsSignature || !syncedCart) {
-      await wixCheckoutClient.currentCart.deleteCurrentCart().catch(() => {});
-      const addResponse = await wixCheckoutClient.currentCart.addToCurrentCart({
-        lineItems: resolvedEntries.map((entry) => entry.lineItem),
-      });
-      syncedCart = addResponse?.cart || null;
-      lastSyncedItemsSignature = signature;
-      lastSyncedCartCache = syncedCart;
+    if (!checkoutId) {
+      const signature = computeItemsSignature(resolvedEntries);
 
-      if (couponCode) {
+      if (signature !== lastSyncedItemsSignature || !syncedCart) {
+        await wixCheckoutClient.currentCart.deleteCurrentCart().catch(() => { });
+        const addResponse = await wixCheckoutClient.currentCart.addToCurrentCart({
+          lineItems: resolvedEntries.map((entry) => entry.lineItem),
+        });
+        syncedCart = addResponse?.cart || null;
+        lastSyncedItemsSignature = signature;
+        lastSyncedCartCache = syncedCart;
+
+        if (couponCode) {
+          try {
+            const updated = await wixCheckoutClient.currentCart.updateCurrentCart({
+              couponCode: String(couponCode).trim(),
+            });
+            if (updated?.cart) {
+              syncedCart = updated.cart;
+              lastSyncedCartCache = syncedCart;
+            }
+          } catch {
+            // ignore invalid/inactive coupon during checkout redirect
+          }
+        }
+      } else if (couponCode && !liveEstimate?.appliedCoupon) {
         try {
           const updated = await wixCheckoutClient.currentCart.updateCurrentCart({
             couponCode: String(couponCode).trim(),
@@ -502,57 +557,60 @@ export async function redirectToJasmanWixCheckout({
           // ignore invalid/inactive coupon during checkout redirect
         }
       }
-    } else if (couponCode && !liveEstimate?.appliedCoupon) {
-      try {
-        const updated = await wixCheckoutClient.currentCart.updateCurrentCart({
-          couponCode: String(couponCode).trim(),
-        });
-        if (updated?.cart) {
-          syncedCart = updated.cart;
-          lastSyncedCartCache = syncedCart;
-        }
-      } catch {
-        // ignore invalid/inactive coupon during checkout redirect
-      }
+
+      const checkout = await wixCheckoutClient.currentCart.createCheckoutFromCurrentCart({
+        channelType: 'WEB',
+      });
+      checkoutId = checkout?.checkoutId || '';
     }
 
-    const checkout = await wixCheckoutClient.currentCart.createCheckoutFromCurrentCart({
-      channelType: 'WEB',
-    });
-
-    if (!checkout?.checkoutId) {
+    if (!checkoutId) {
       throw new Error('No se pudo inicializar la sesión de pago en Wix.');
     }
 
-    const origin =
-      typeof window !== 'undefined' ? window.location.origin : 'https://www.jasman.com.mx';
+    let rawRedirectUrl = '';
+    try {
+      const { redirectSession } = await wixCheckoutClient.redirects.createRedirectSession({
+        ecomCheckout: { checkoutId },
+        callbacks: {
+          postFlowUrl: `${origin}/llantas`,
+          cartPageUrl: `${origin}/llantas`,
+          thankYouPageUrl: `${origin}/thank-you`,
+        },
+      });
+      rawRedirectUrl = redirectSession?.fullUrl || '';
+    } catch {
+      rawRedirectUrl = '';
+    }
 
-    const { redirectSession } = await wixCheckoutClient.redirects.createRedirectSession({
-      ecomCheckout: { checkoutId: checkout.checkoutId },
-      callbacks: {
-        postFlowUrl: `${origin}/llantas`,
-        thankYouPageUrl: `${origin}/thank-you`,
-      },
-    });
+    if (!rawRedirectUrl) {
+      rawRedirectUrl = serverCheckoutUrl;
+    }
 
-    if (!redirectSession?.fullUrl) {
+    if (!rawRedirectUrl) {
       throw new Error('No se pudo obtener la URL de redirección al checkout de Wix.');
     }
 
-    const checkoutUrl = normalizeJasmanWixCheckoutUrl(redirectSession.fullUrl);
+    const checkoutUrl = normalizeJasmanWixCheckoutUrl(rawRedirectUrl);
 
     // Cache checkout snapshot in sessionStorage for instant display on /thank-you
     if (typeof window !== 'undefined') {
       try {
-        const wixLineItems = syncedCart?.lineItems || [];
+        const wixLineItems = serverLineItems || syncedCart?.lineItems || [];
         const snapshotItems = resolvedEntries.map(({ localItem, resolvedProduct }, idx) => {
-          const wixItem = wixLineItems[idx] || {};
+          const wixItem =
+            wixLineItems.find(
+              (li) => li?.catalogReference?.catalogItemId === resolvedProduct.wixId
+            ) ||
+            wixLineItems[idx] ||
+            {};
           const qty = Math.max(1, Number(localItem.quantity) || 1);
           const unitNum = Number(
-            wixItem.price?.amount ||
-              localItem.unitPrice ||
-              resolvedProduct.finalPriceTaxExcluded ||
-              0
+            wixItem.price?.amount ??
+            localItem.effectiveUnitPrice ??
+            localItem.unitPrice ??
+            resolvedProduct.finalPriceTaxExcluded ??
+            0
           );
           const rawWixImg = wixItem.image?.url || wixItem.image || '';
           const localCutout = resolvedProduct.cutoutImage || resolvedProduct.primaryImage || '';
@@ -592,7 +650,7 @@ export async function redirectToJasmanWixCheckout({
         const computedDiscountNum = Math.max(
           0,
           computedSubtotalNum -
-            (Number(totalAfterDiscount) || computedSubtotalNum)
+          (Number(totalAfterDiscount) || computedSubtotalNum)
         );
         const computedTotalNum =
           Number(totalAfterDiscount) ||
@@ -604,7 +662,7 @@ export async function redirectToJasmanWixCheckout({
         window.sessionStorage.setItem(
           LAST_CHECKOUT_STORAGE_KEY,
           JSON.stringify({
-            checkoutId: checkout.checkoutId,
+            checkoutId,
             items: snapshotItems,
             totalQuantity:
               totalTireUnits ||
@@ -633,7 +691,7 @@ export async function redirectToJasmanWixCheckout({
     }
 
     return {
-      checkoutId: checkout.checkoutId,
+      checkoutId,
       checkoutUrl,
     };
   });

@@ -119,8 +119,13 @@ export default function TiendaCartDrawer() {
     ? 'Descuento automático (mismo modelo)'
     : `${volumeTier.label} (mismo modelo)`;
   const activeWixCoupon = !isLegacyCopyRoute ? wixEstimate?.appliedCoupon : null;
+  const rawCouponAmt = activeWixCoupon ? Number(activeWixCoupon.amount) || 0 : 0;
   const liveCouponDiscount = activeWixCoupon
-    ? Number(activeWixCoupon.amount) || 0
+    ? liveSubtotal > 0 && liveVolumeDiscount > 0
+      ? Number(
+          (rawCouponAmt * (Math.max(0, liveSubtotal - liveVolumeDiscount) / liveSubtotal)).toFixed(2)
+        )
+      : rawCouponAmt
     : isLegacyCopyRoute
       ? discountAmount
       : 0;
