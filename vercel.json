@@ -1,5 +1,9 @@
 {
   "rewrites": [
+    { "source": "/merchant.tsv", "destination": "/api/catalog-feed?format=tsv" },
+    { "source": "/feed.tsv", "destination": "/api/catalog-feed?format=tsv" },
+    { "source": "/meta-catalog.xml", "destination": "/api/catalog-feed?format=xml" },
+    { "source": "/catalog-feed.xml", "destination": "/api/catalog-feed?format=xml" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]

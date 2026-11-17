@@ -147,24 +147,83 @@ export function pushEcommerceDataLayer(eventName, ecommercePayload, extraTopLeve
   return true;
 }
 
+function fireNativeMetaPixelEvent(eventName, params) {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.fbq !== 'function' ||
+    !window._jasmanMetaInitializedIds ||
+    window._jasmanMetaInitializedIds.size === 0
+  ) {
+    return false;
+  }
+
+  try {
+    window.fbq('track', eventName, params);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function trackViewItem(product, unitPrice) {
   if (!product) return false;
   const item = buildDataLayerItem(product, 1, unitPrice);
-  return pushEcommerceDataLayer('view_item', {
-    currency: 'MXN',
+  const contentIds = [item.item_id];
+
+  fireNativeMetaPixelEvent('ViewContent', {
+    content_ids: contentIds,
+    contents: [{ id: item.item_id, quantity: 1, item_price: item.price }],
+    content_name: item.item_name,
+    content_type: 'product',
     value: item.price,
-    items: [item],
+    currency: 'MXN',
   });
+
+  return pushEcommerceDataLayer(
+    'view_item',
+    {
+      currency: 'MXN',
+      value: item.price,
+      content_ids: contentIds,
+      content_type: 'product',
+      items: [item],
+    },
+    {
+      content_ids: contentIds,
+      content_type: 'product',
+    }
+  );
 }
 
 export function trackAddToCart(product, quantity = 1, unitPrice) {
   if (!product) return false;
   const item = buildDataLayerItem(product, quantity, unitPrice);
-  return pushEcommerceDataLayer('add_to_cart', {
+  const contentIds = [item.item_id];
+  const value = roundPrice(item.price * item.quantity);
+
+  fireNativeMetaPixelEvent('AddToCart', {
+    content_ids: contentIds,
+    contents: [{ id: item.item_id, quantity: item.quantity, item_price: item.price }],
+    content_name: item.item_name,
+    content_type: 'product',
+    value,
     currency: 'MXN',
-    value: roundPrice(item.price * item.quantity),
-    items: [item],
   });
+
+  return pushEcommerceDataLayer(
+    'add_to_cart',
+    {
+      currency: 'MXN',
+      value,
+      content_ids: contentIds,
+      content_type: 'product',
+      items: [item],
+    },
+    {
+      content_ids: contentIds,
+      content_type: 'product',
+    }
+  );
 }
 
 export function trackBeginCheckout(cartItems = [], totalValue, couponCode = '') {
@@ -183,13 +242,32 @@ export function trackBeginCheckout(cartItems = [], totalValue, couponCode = '') 
 
   const fallbackValue = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
   const value = totalValue !== undefined ? parsePriceValue(totalValue) : roundPrice(fallbackValue);
+  const contentIds = items.map((i) => i.item_id);
 
-  return pushEcommerceDataLayer('begin_checkout', {
-    currency: 'MXN',
+  fireNativeMetaPixelEvent('InitiateCheckout', {
+    content_ids: contentIds,
+    contents: items.map((i) => ({ id: i.item_id, quantity: i.quantity, item_price: i.price })),
+    num_items: items.reduce((sum, i) => sum + i.quantity, 0),
+    content_type: 'product',
     value,
-    ...(couponCode ? { coupon: String(couponCode).trim() } : {}),
-    items,
+    currency: 'MXN',
   });
+
+  return pushEcommerceDataLayer(
+    'begin_checkout',
+    {
+      currency: 'MXN',
+      value,
+      content_ids: contentIds,
+      content_type: 'product',
+      ...(couponCode ? { coupon: String(couponCode).trim() } : {}),
+      items,
+    },
+    {
+      content_ids: contentIds,
+      content_type: 'product',
+    }
+  );
 }
 
 export function trackPurchase({
@@ -216,6 +294,21 @@ export function trackPurchase({
 
   markPurchaseTracked(cleanTxId);
 
+  const contentIds = normalizedItems.map((i) => i.item_id);
+
+  fireNativeMetaPixelEvent('Purchase', {
+    content_ids: contentIds,
+    contents: normalizedItems.map((i) => ({
+      id: i.item_id,
+      quantity: i.quantity,
+      item_price: i.price,
+    })),
+    num_items: normalizedItems.reduce((sum, i) => sum + i.quantity, 0),
+    content_type: 'product',
+    value: resolvedValue,
+    currency: 'MXN',
+  });
+
   return pushEcommerceDataLayer(
     'purchase',
     {
@@ -223,11 +316,15 @@ export function trackPurchase({
       currency: 'MXN',
       value: resolvedValue,
       shipping: parsePriceValue(shipping),
+      content_ids: contentIds,
+      content_type: 'product',
       ...(coupon ? { coupon: String(coupon).trim() } : {}),
       items: normalizedItems,
     },
     {
       transaction_id: cleanTxId,
+      content_ids: contentIds,
+      content_type: 'product',
     }
   );
 }

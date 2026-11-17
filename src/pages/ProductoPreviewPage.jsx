@@ -184,12 +184,14 @@ export default function ProductoPreviewPage() {
 
   const lastTrackedViewProductIdRef = useRef('');
   useEffect(() => {
-    const productKey = String(product?.id || '');
+    const matched = id ? findCatalogProductById(id) : product;
+    if ((!matched || !matched.wixId) && catalogLoading) return;
+    const target = matched || product;
+    const productKey = String(target?.wixId || target?.id || '');
     if (!productKey || lastTrackedViewProductIdRef.current === productKey) return;
-    if (!product?.wixId && catalogLoading) return;
     lastTrackedViewProductIdRef.current = productKey;
-    trackViewItem(product, product.finalPriceTaxExcluded || 0);
-  }, [product, catalogLoading]);
+    trackViewItem(target, target.finalPriceTaxExcluded || 0);
+  }, [id, product, catalogLoading]);
 
   const brandMeta = BRAND_META[product.brand];
   const brandExtra = BRAND_DETAILS[product.brand] || {

@@ -4,11 +4,15 @@ import {
   Activity,
   AlertTriangle,
   ArrowLeft,
+  Check,
   CheckCircle2,
   Code2,
+  Copy,
+  ExternalLink,
   Eye,
   EyeOff,
   KeyRound,
+  Link2,
   Lock,
   LogOut,
   RefreshCw,
@@ -153,6 +157,17 @@ export default function MetaAdminPage() {
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState(null);
+  const [copiedFeedKey, setCopiedFeedKey] = useState('');
+
+  const handleCopyFeedUrl = async (key, url) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedFeedKey(key);
+      setTimeout(() => setCopiedFeedKey((prev) => (prev === key ? '' : prev)), 2200);
+    } catch {
+      // ignore clipboard errors
+    }
+  };
 
   const loadConfig = useCallback(async () => {
     setLoadingConfig(true);
@@ -1295,6 +1310,149 @@ export default function MetaAdminPage() {
                   }}
                 />
               </div>
+            </section>
+
+            {/* Section 4: Dynamic Catalog Feeds (Meta XML & Google Merchant / Wix TSV) */}
+            <section
+              style={{
+                background: '#FFFFFF',
+                borderRadius: 20,
+                padding: '24px 24px',
+                border: `1px solid ${C.border}`,
+                boxShadow: '0 8px 24px rgba(15, 23, 42, 0.04)',
+                display: 'grid',
+                gap: 16,
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    fontFamily: F.heading,
+                    fontSize: 18,
+                    fontWeight: 800,
+                    margin: 0,
+                    color: C.navy,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <Link2 size={18} color={C.red} />
+                  4. Feeds de Catálogo Dinámicos (Meta Commerce XML y Google Merchant TSV)
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: 13, color: C.gray }}>
+                  Sincronizados en tiempo real con Wix <code>Stores/Products</code>. El campo{' '}
+                  <code>id</code> / <code>g:id</code> coincide 1:1 con <code>item_id</code> en{' '}
+                  <code>window.dataLayer</code> y <code>content_ids</code> en Meta Pixel.
+                </p>
+              </div>
+
+              {[
+                {
+                  key: 'xml',
+                  label: 'Meta Commerce Manager (Feed XML)',
+                  url: `${
+                    typeof window !== 'undefined' ? window.location.origin : 'https://www.jasman.com.mx'
+                  }/meta-catalog.xml`,
+                },
+                {
+                  key: 'tsv',
+                  label: 'Google Merchant Center / Wix Feed (merchant.tsv)',
+                  url: `${
+                    typeof window !== 'undefined' ? window.location.origin : 'https://www.jasman.com.mx'
+                  }/merchant.tsv`,
+                },
+              ].map((feed) => (
+                <div
+                  key={feed.key}
+                  style={{
+                    padding: '14px 16px',
+                    borderRadius: 12,
+                    border: `1px solid ${C.border}`,
+                    background: '#F8FAFC',
+                    display: 'grid',
+                    gap: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      color: C.navy,
+                      fontFamily: F.heading,
+                    }}
+                  >
+                    {feed.label}
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <input
+                      type="text"
+                      readOnly
+                      value={feed.url}
+                      onFocus={(e) => e.target.select()}
+                      style={{
+                        flex: '1 1 280px',
+                        padding: '9px 12px',
+                        borderRadius: 8,
+                        border: `1px solid ${C.border}`,
+                        background: '#FFFFFF',
+                        fontFamily:
+                          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                        fontSize: 12,
+                        color: C.navy,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleCopyFeedUrl(feed.key, feed.url)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '9px 12px',
+                        borderRadius: 8,
+                        border: `1px solid ${C.border}`,
+                        background: copiedFeedKey === feed.key ? '#ECFDF5' : '#FFFFFF',
+                        color: copiedFeedKey === feed.key ? '#059669' : C.navy,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {copiedFeedKey === feed.key ? <Check size={14} /> : <Copy size={14} />}
+                      {copiedFeedKey === feed.key ? 'Copiado' : 'Copiar URL'}
+                    </button>
+                    <a
+                      href={feed.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '9px 12px',
+                        borderRadius: 8,
+                        border: `1px solid ${C.border}`,
+                        background: '#FFFFFF',
+                        color: C.navy,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <ExternalLink size={14} />
+                      Abrir
+                    </a>
+                  </div>
+                </div>
+              ))}
             </section>
 
             {/* Footer Action Buttons */}

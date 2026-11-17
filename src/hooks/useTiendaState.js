@@ -151,7 +151,20 @@ export function useTiendaState() {
     writeJSON(STORAGE_KEYS.CART, next);
     const itemTier = getVolumeDiscountTier((product.unitsPerItem || 1) * addedQty);
     const unitPrice = (product.finalPriceTaxExcluded || 0) * (1 - itemTier.rate);
-    trackAddToCart(product, addedQty, unitPrice);
+    if (product.wixId) {
+      trackAddToCart(product, addedQty, unitPrice);
+    } else {
+      loadWixCatalogProducts()
+        .then(() => {
+          const hydrated = findCatalogProductById(productId) || product;
+          const hydratedTier = getVolumeDiscountTier((hydrated.unitsPerItem || 1) * addedQty);
+          const hydratedUnit = (hydrated.finalPriceTaxExcluded || 0) * (1 - hydratedTier.rate);
+          trackAddToCart(hydrated, addedQty, hydratedUnit);
+        })
+        .catch(() => {
+          trackAddToCart(product, addedQty, unitPrice);
+        });
+    }
     if (openCartDrawer) {
       triggerTiendaUI({ type: 'OPEN_CART' });
     }
