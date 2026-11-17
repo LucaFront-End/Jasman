@@ -845,6 +845,7 @@ export async function saveFlotillasContacto(flotillaData) {
   const unidades = flotillaData.unidades || flotillaData.fleetSize || '';
   const nombre = flotillaData.nombre || flotillaData.name || '';
   const empresa = flotillaData.empresa || flotillaData.company || '';
+  const ciudad = (flotillaData.ciudad || flotillaData.city || '').trim();
   const telefono = flotillaData.telefono || flotillaData.phone || '';
   const email = flotillaData.email || flotillaData.correo || '';
   const mensaje = flotillaData.mensaje || flotillaData.message || '';
@@ -853,9 +854,10 @@ export async function saveFlotillasContacto(flotillaData) {
   const cmsRecord = {
     firstName: nombre,
     empresa,
+    ciudad,
     email,
     phone: telefono,
-    message: `[Folio: ${folio}]${unidades ? ` [Flotilla: ${unidades} unidades]` : ''}\n${mensaje || 'Sin mensaje adicional'}`,
+    message: `[Folio: ${folio}]${ciudad ? ` [Ciudad: ${ciudad}]` : ''}${unidades ? ` [Flotilla: ${unidades} unidades]` : ''}\n${mensaje || 'Sin mensaje adicional'}`,
     submissionTime: fecha,
   };
 
@@ -863,6 +865,7 @@ export async function saveFlotillasContacto(flotillaData) {
     'Folio de Registro': folio,
     'Nombre Completo': nombre,
     'Empresa': empresa,
+    'Ciudad': ciudad || 'No especificada',
     'Tamaño de Flotilla (unidades)': unidades,
     'Teléfono / WhatsApp': telefono,
     'Correo Electrónico': email,
@@ -872,7 +875,7 @@ export async function saveFlotillasContacto(flotillaData) {
   // 1. Send Spanish email notification via FormSubmit.co (white template) exclusively to Flotillas inboxes
   sendFormSubmitEmail({
     seccion: 'Formulario Flotillas Corporativas',
-    asuntoCorreo: `Jasman Flotillas — Solicitud de ${empresa || nombre || folio} (${unidades || 'N/A'} unidades)`,
+    asuntoCorreo: `Jasman Flotillas — Solicitud de ${empresa || nombre || folio} (${ciudad || 'N/A'} · ${unidades || 'N/A'} unidades)`,
     correoRespuesta: email,
     destinatarios: FLOTILLAS_EMAIL_RECIPIENTS,
     campos: emailFields,
@@ -885,14 +888,14 @@ export async function saveFlotillasContacto(flotillaData) {
     nombre,
     telefono,
     correo: email,
-    asunto: `Flotillas: ${empresa || nombre || folio} (${unidades || 'N/A'} uds)`,
+    asunto: `Flotillas: ${empresa || nombre || folio} (${ciudad || 'N/A'} · ${unidades || 'N/A'} uds)`,
     campos: emailFields,
   });
 
   // 2. Local cache backup
   try {
     const existing = JSON.parse(localStorage.getItem('jasman_cms_flotillas') || '[]');
-    existing.unshift({ ...cmsRecord, folio, unidades });
+    existing.unshift({ ...cmsRecord, folio, unidades, ciudad });
     localStorage.setItem('jasman_cms_flotillas', JSON.stringify(existing.slice(0, 100)));
   } catch (e) {
     console.warn('Local storage flotillas save error:', e);

@@ -1,32 +1,102 @@
 /* ═══ Flotillas B2B content ═══ */
 
 export const flotillasContent = {
+  pageTitle: 'Flotilla | Jasman Automotriz',
+  contact: {
+    executiveLabel: 'Atención Ejecutiva a Flotillas · Néstor',
+    whatsappPhone: '5215545990295',
+    whatsappDisplay: '55 4599 0295',
+    landlineDisplay: '55 5001 8370 ext. 1071',
+    landlineHref: 'tel:5550018370,1071',
+    email: 'flotillas@jasman.com.mx',
+  },
   hero: {
-    tag: 'SERVICIO CORPORATIVO',
+    tag: 'FLOTILLA CORPORATIVA JASMAN',
+    badge: 'Bajo una única administración',
     title: 'Atención Personalizada a',
     titleHighlight: 'Flotillas',
-    subtitle: 'En Jasman, diseñamos un plan a la medida para garantizar el mantenimiento oportuno de todas tus unidades.',
-    phone: '55 7961 8285',
+    subtitle:
+      'Creamos un proceso de atención a tu flotilla homologado en todos los centros de servicio, concentrando el mantenimiento preventivo y correctivo de tus unidades bajo una única administración.',
+    phone: '55 5001 8370 ext. 1071',
   },
-  benefits: [
-    { icon: 'clipboard-list', title: 'Plan a la Medida', text: 'Diseñamos un programa de mantenimiento adaptado al tamaño y necesidades específicas de tu flotilla.' },
-    { icon: 'bar-chart-3', title: 'Reportes Mensuales', text: 'Informes detallados del estado, costos y mantenimientos realizados a cada unidad de tu flotilla.' },
-    { icon: 'user-check', title: 'Gestor Dedicado', text: 'Un ejecutivo exclusivo para tu cuenta, disponible para coordinar servicios y resolver cualquier necesidad.' },
-    { icon: 'map-pin', title: 'Cobertura Nacional', text: 'Con más de 80 sucursales, atendemos tu flotilla en las principales ciudades de México sin importar la ruta.' },
-    { icon: 'shield-check', title: 'Garantía Corporativa', text: 'Todos los servicios cuentan con garantía extendida por escrito para empresas y corporativos.' },
-    { icon: 'wallet', title: 'Costos Controlados', text: 'Precios preferenciales y condiciones comerciales especiales para clientes corporativos.' },
-  ],
-  process: [
-    { step: '01', title: 'Diagnóstico Inicial', text: 'Evaluamos las necesidades de tu flotilla: cantidad de unidades, tipos de vehículos y frecuencia de uso.' },
-    { step: '02', title: 'Plan Personalizado', text: 'Creamos un calendario de mantenimiento preventivo y correctivo adaptado a cada unidad.' },
-    { step: '03', title: 'Ejecución Profesional', text: 'Nuestros técnicos certificados realizan los servicios con los más altos estándares de calidad.' },
-    { step: '04', title: 'Seguimiento y Reportes', text: 'Monitoreo continuo, reportes de estado y optimización permanente del plan de mantenimiento.' },
-  ],
   stats: [
-    { number: 500, suffix: '+', label: 'Flotillas Atendidas' },
-    { number: 15000, suffix: '+', label: 'Unidades en Servicio' },
-    { number: 80, suffix: '+', label: 'Sucursales Disponibles' },
-    { number: 98, suffix: '%', label: 'Satisfacción Corporativa' },
+    { prefix: '+', number: 100, suffix: '', label: 'Flotillas', formatThousands: false },
+    { prefix: '+', number: 2000, suffix: '', label: 'Servicios mensuales a flotillas', formatThousands: true },
+    { prefix: '+', number: 70, suffix: '', label: 'Sucursales', formatThousands: false },
+  ],
+  benefits: [
+    {
+      icon: 'shield-check',
+      title: 'Bajo una única administración',
+      text: 'Centraliza facturación, autorizaciones, historial por unidad y control presupuestal de toda tu flota en una sola cuenta maestra.',
+      featured: true,
+    },
+    {
+      icon: 'wallet',
+      title: 'Estandarización de Precios',
+      text: 'Precios preferenciales homologados en servicios de mantenimiento automotriz y llantas en todos nuestros centros de servicio.',
+    },
+    {
+      icon: 'zap',
+      title: 'Asignación de Rampa Inmediata',
+      text: 'Prioridad de ingreso en bahía y servicio de valet con recolección y entrega en tu domicilio u oficina para no detener tu operación.',
+    },
+    {
+      icon: 'clipboard-list',
+      title: 'Formato de Inspección e Historial',
+      text: 'Diagnósticos visuales a domicilio, colocación de sticker recordatorio e historial de mantenimiento por unidad.',
+    },
+    {
+      icon: 'map-pin',
+      title: 'Cobertura en +70 Sucursales',
+      text: 'Presencia estratégica en CDMX, Área Metropolitana, Guadalajara, Monterrey, Bajío, Querétaro, Michoacán e Hidalgo.',
+    },
+    {
+      icon: 'bar-chart-3',
+      title: 'Línea de Crédito Corporativa',
+      text: 'Línea de crédito con base a sus necesidades de servicio y cantidad de flota vehicular.',
+    },
+  ],
+  processSection: {
+    title: 'Creamos plan',
+    titleHighlight: 'a la medida',
+    subtitle: 'Creamos un proceso de atención a tu flotilla homologado en todos los centros de servicio.',
+  },
+  process: [
+    {
+      step: '01',
+      title: 'Diagnóstico Inicial',
+      text: 'Evaluamos la cantidad de unidades, tipos de vehículos, rutas operativas y frecuencia de uso.',
+    },
+    {
+      step: '02',
+      title: 'Proceso de servicio personalizado',
+      text: 'Creamos un proceso de atención a tu flotilla homologado en todos los centros de servicio.',
+    },
+    {
+      step: '03',
+      title: 'Ejecución bajo una única administración',
+      text: 'Ingreso con asignación de rampa inmediata, técnicos certificados y control centralizado en cualquier sucursal.',
+    },
+    {
+      step: '04',
+      title: 'Evaluación de línea de crédito',
+      text: 'Línea de crédito con base a sus necesidades de servicio y cantidad de flota vehicular.',
+    },
+  ],
+  clients: [
+    {
+      id: 'ayvens',
+      name: 'Ayvens',
+      subtitle: 'Arrendamiento y Movilidad Corporativa',
+      logo: '/images/clients/ayvens.png',
+    },
+    {
+      id: 'edenred',
+      name: 'Edenred',
+      subtitle: 'Soluciones Corporativas de Flotillas',
+      logo: '/images/clients/edenred.svg',
+    },
   ],
 };
 

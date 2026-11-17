@@ -18,6 +18,25 @@ import {
   normalizePromoSlug,
   mergeSucursalesWithWix,
 } from '../services/wixService';
+import { BRAND_META } from '../data/productosMasterData';
+
+const LANDING_BRAND_LOGOS = [
+  'Hankook',
+  'Laufenn',
+  'Michelin',
+  'Bridgestone',
+  'Continental',
+  'Goodyear',
+  'Pirelli',
+  'Firestone',
+  'BFGoodrich',
+  'Euzkadi',
+  'General Tire',
+  'Barum',
+  'Kelly',
+]
+  .map((name) => BRAND_META[name])
+  .filter(Boolean);
 
 function normalizeBranchMatchKey(str = '') {
   return String(str)
@@ -2074,17 +2093,83 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
       <section className="landing-section-padding" style={{ padding: '60px 16px', background: C.white, width: '100%', boxSizing: 'border-box' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
 
-          {/* Brand logos showcase */}
-          <div style={{ textAlign: 'center', marginBottom: 44, padding: '0 10px' }}>
-            <span style={{ fontSize: 11, fontWeight: 800, color: C.red, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 14 }}>
+          {/* Brand logos carousel */}
+          <div style={{ textAlign: 'center', marginBottom: 46 }}>
+            <style>{`
+              .landing-brands-marquee-track {
+                display: flex;
+                align-items: center;
+                width: max-content;
+                animation: marquee 34s linear infinite;
+              }
+              .landing-brands-marquee-track:hover {
+                animation-play-state: paused;
+              }
+            `}</style>
+            <span style={{ fontSize: 11, fontWeight: 800, color: C.red, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 18 }}>
               DISTRIBUIDORES AUTORIZADOS DE LAS MEJORES MARCAS
             </span>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <img
-                src="/images/brands-trust.png"
-                alt="Marcas autorizadas Jasman: Michelin, Bridgestone, Continental, Pirelli, Goodyear"
-                style={{ maxWidth: '100%', height: 'auto', maxHeight: 52, objectFit: 'contain' }}
+            <div style={{ position: 'relative', overflow: 'hidden', padding: '6px 0', maxWidth: 1140, margin: '0 auto' }}>
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 'clamp(36px, 7vw, 96px)',
+                  background: `linear-gradient(to right, ${C.white}, rgba(255,255,255,0))`,
+                  pointerEvents: 'none',
+                  zIndex: 2,
+                }}
               />
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 'clamp(36px, 7vw, 96px)',
+                  background: `linear-gradient(to left, ${C.white}, rgba(255,255,255,0))`,
+                  pointerEvents: 'none',
+                  zIndex: 2,
+                }}
+              />
+              <div className="landing-brands-marquee-track">
+                {[...LANDING_BRAND_LOGOS, ...LANDING_BRAND_LOGOS].map((b, idx) => (
+                  <div
+                    key={`${b.name}-${idx}`}
+                    style={{
+                      height: 60,
+                      minWidth: 148,
+                      padding: '10px 22px',
+                      marginRight: 18,
+                      borderRadius: 14,
+                      background: '#F8FAFC',
+                      border: '1px solid rgba(26,31,54,0.08)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <img
+                      src={b.logo}
+                      alt={b.name}
+                      style={{
+                        maxHeight: 30,
+                        maxWidth: 116,
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        display: 'block',
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
