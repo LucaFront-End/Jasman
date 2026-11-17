@@ -130,6 +130,9 @@ export default function Locations() {
   regions.forEach(r => { regionCounts[r] = sucursales.filter(s => s.region === r).length; });
 
   const getCoords = (b) => {
+    if (Number.isFinite(b?.lat) && Number.isFinite(b?.lng)) {
+      return [b.lat, b.lng];
+    }
     if (b.id && branchCoordinates[b.id]) {
       return [branchCoordinates[b.id].lat, branchCoordinates[b.id].lng];
     }

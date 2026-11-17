@@ -145,6 +145,7 @@ export default function SucursalesPage() {
   }, [filtered]);
 
   const getCoords = (b) => {
+    if (Number.isFinite(b?.lat) && Number.isFinite(b?.lng)) return [b.lat, b.lng];
     if (b.id && branchCoordinates[b.id]) return [branchCoordinates[b.id].lat, branchCoordinates[b.id].lng];
     if (branchCoordinates[b.name]) return [branchCoordinates[b.name].lat, branchCoordinates[b.name].lng];
     const geo = cityGeo[b.city];

@@ -44,28 +44,28 @@ export const branchCoordinates = {
     "lng": -99.2135
   },
   "vallejo": {
-    "lat": 19.4715,
-    "lng": -99.147
+    "lat": 19.474411,
+    "lng": -99.14608
   },
   "santa-fe": {
-    "lat": 19.378,
-    "lng": -99.2515
+    "lat": 19.369603,
+    "lng": -99.266578
   },
   "mariano-escobedo": {
-    "lat": 19.4525,
-    "lng": -99.1795
+    "lat": 19.455409,
+    "lng": -99.180924
   },
   "interlomas": {
     "lat": 19.4015,
     "lng": -99.2785
   },
   "yucatan": {
-    "lat": 19.4165,
-    "lng": -99.1635
+    "lat": 19.41525,
+    "lng": -99.16489
   },
   "polanco": {
-    "lat": 19.431,
-    "lng": -99.1835
+    "lat": 19.429903,
+    "lng": -99.180676
   },
   "toluca-1": {
     "lat": 19.309,
@@ -76,8 +76,8 @@ export const branchCoordinates = {
     "lng": -99.654
   },
   "chabacano": {
-    "lat": 19.4075,
-    "lng": -99.1345
+    "lat": 19.40855,
+    "lng": -99.130204
   },
   "revolucion": {
     "lat": 19.3515,
@@ -88,16 +88,16 @@ export const branchCoordinates = {
     "lng": -99.217
   },
   "vertiz": {
-    "lat": 19.384,
-    "lng": -99.1535
+    "lat": 19.378084,
+    "lng": -99.153779
   },
   "san-jeronimo": {
-    "lat": 19.3295,
-    "lng": -99.2105
+    "lat": 19.327209,
+    "lng": -99.210523
   },
   "portales": {
-    "lat": 19.371,
-    "lng": -99.1455
+    "lat": 19.369999,
+    "lng": -99.149645
   },
   "miramontes": {
     "lat": 19.314,
@@ -112,8 +112,8 @@ export const branchCoordinates = {
     "lng": -98.956
   },
   "aeropuerto": {
-    "lat": 19.432,
-    "lng": -99.091
+    "lat": 19.432948,
+    "lng": -99.105206
   },
   "texcoco-allende": {
     "lat": 19.514,

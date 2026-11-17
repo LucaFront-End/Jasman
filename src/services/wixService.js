@@ -192,6 +192,25 @@ function resolveCoordsFromPostalCodeSync(cpRaw) {
   return null;
 }
 
+function haversineDistanceKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function toFiniteNonZeroCoord(v) {
+  if (v === undefined || v === null || v === '') return NaN;
+  const num = Number(v);
+  return Number.isFinite(num) && num !== 0 ? num : NaN;
+}
+
 /**
  * Normalizes a Wix CMS "Sucursales" item (standalone or expanded via .include('sucursalesVlidas'))
  * enriching missing coordinates or schedule from local directory while preserving CMS WhatsApp links.
@@ -220,27 +239,56 @@ export function normalizeWixBranch(b) {
     cpCandidate ||
     null;
 
-  const rawLat = b.latitud ?? b.address?.location?.latitude;
-  const rawLng = b.longitud ?? b.address?.location?.longitude;
-  let lat = rawLat !== undefined && rawLat !== null && rawLat !== '' ? Number(rawLat) : NaN;
-  let lng = rawLng !== undefined && rawLng !== null && rawLng !== '' ? Number(rawLng) : NaN;
+  // Prefer Google-geocoded Wix Address location (`address.location`) over legacy manual latitud/longitud
+  // columns (which contain stale/erroneous values in several CMS rows, e.g. Polanco in Chapultepec).
+  const addrLat = toFiniteNonZeroCoord(b.address?.location?.latitude);
+  const addrLng = toFiniteNonZeroCoord(b.address?.location?.longitude);
+  const manualLat = toFiniteNonZeroCoord(b.latitud);
+  const manualLng = toFiniteNonZeroCoord(b.longitud);
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0 || lng === 0) {
-    if (localMatch && Number.isFinite(localMatch.lat) && Number.isFinite(localMatch.lng)) {
-      lat = localMatch.lat;
-      lng = localMatch.lng;
-    } else {
-      const cpCoords = resolveCoordsFromPostalCodeSync(cmsCp || localMatch?.cp);
-      lat = cpCoords ? cpCoords.lat : 19.4326;
-      lng = cpCoords ? cpCoords.lng : -99.1332;
+  const localRefLat = Number.isFinite(localMatch?.lat) ? localMatch.lat : NaN;
+  const localRefLng = Number.isFinite(localMatch?.lng) ? localMatch.lng : NaN;
+  const cpCoords = resolveCoordsFromPostalCodeSync(cmsCp || localMatch?.cp);
+  const refLat = Number.isFinite(localRefLat) ? localRefLat : (cpCoords?.lat ?? NaN);
+  const refLng = Number.isFinite(localRefLng) ? localRefLng : (cpCoords?.lng ?? NaN);
+
+  let lat = NaN;
+  let lng = NaN;
+  if (Number.isFinite(addrLat) && Number.isFinite(addrLng)) {
+    lat = addrLat;
+    lng = addrLng;
+  } else if (Number.isFinite(manualLat) && Number.isFinite(manualLng)) {
+    // Reject out-of-region manual coordinates (e.g., Nuevo León / Guanajuato rows with CDMX coords)
+    const isConsistentWithRegion =
+      !Number.isFinite(refLat) ||
+      !Number.isFinite(refLng) ||
+      haversineDistanceKm(manualLat, manualLng, refLat, refLng) <= 25;
+    if (isConsistentWithRegion) {
+      lat = manualLat;
+      lng = manualLng;
     }
   }
 
-  const fullAddr =
-    b.address?.formatted ||
-    b.address?.streetAddress?.name ||
-    localMatch?.address ||
-    '';
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    if (Number.isFinite(localRefLat) && Number.isFinite(localRefLng)) {
+      lat = localRefLat;
+      lng = localRefLng;
+    } else if (cpCoords) {
+      lat = cpCoords.lat;
+      lng = cpCoords.lng;
+    } else {
+      lat = 19.4326;
+      lng = -99.1332;
+    }
+  }
+
+  const hasStreetAddress = Boolean(
+    b.address?.streetAddress?.name && String(b.address.streetAddress.name).trim()
+  );
+  const wixFormattedAddr = b.address?.formatted || b.address?.streetAddress?.name || '';
+  const fullAddr = hasStreetAddress
+    ? wixFormattedAddr
+    : (localMatch?.address || wixFormattedAddr || '');
   const city =
     b.address?.city ||
     b.municipio ||
@@ -294,6 +342,7 @@ export function normalizeWixBranch(b) {
     name: cleanName || localMatch?.name || title,
     fullName: fullBranchLabel,
     address: fullAddr,
+    hasStreetAddress,
     city,
     state,
     cp: cmsCp || localMatch?.cp || '',
@@ -1978,24 +2027,41 @@ export function mergeSucursalesWithWix(staticList = [], wixBranches = []) {
   if (!Array.isArray(wixBranches) || wixBranches.length === 0) return staticList;
 
   const byKey = new Map();
+  const byCpAndKey = new Map();
   for (const wb of wixBranches) {
     const keys = [wb?.wixId, wb?.id, wb?.name, wb?.fullName];
+    const cleanCp = String(wb?.cp || '').replace(/\D/g, '').slice(0, 5);
     for (const raw of keys) {
       const k = normalizeBranchMatchKey(raw);
       if (k && !byKey.has(k)) {
         byKey.set(k, wb);
+      }
+      if (k && cleanCp && !byCpAndKey.has(`${cleanCp}:${k}`)) {
+        byCpAndKey.set(`${cleanCp}:${k}`, wb);
       }
     }
   }
 
   return staticList.map((s) => {
     const candidates = [s.wixId, s.id, s.name, s.fullName].filter(Boolean);
+    const sCp = String(s.cp || '').replace(/\D/g, '').slice(0, 5);
     let wb = null;
-    for (const candidate of candidates) {
-      const k = normalizeBranchMatchKey(candidate);
-      if (k && byKey.has(k)) {
-        wb = byKey.get(k);
-        break;
+    if (sCp) {
+      for (const candidate of candidates) {
+        const k = normalizeBranchMatchKey(candidate);
+        if (k && byCpAndKey.has(`${sCp}:${k}`)) {
+          wb = byCpAndKey.get(`${sCp}:${k}`);
+          break;
+        }
+      }
+    }
+    if (!wb) {
+      for (const candidate of candidates) {
+        const k = normalizeBranchMatchKey(candidate);
+        if (k && byKey.has(k)) {
+          wb = byKey.get(k);
+          break;
+        }
       }
     }
     if (!wb) return s;
@@ -2003,6 +2069,7 @@ export function mergeSucursalesWithWix(staticList = [], wixBranches = []) {
     return {
       ...s,
       wixId: wb.wixId || s.wixId || '',
+      address: wb.hasStreetAddress && wb.address ? wb.address : s.address,
       phone: wb.phone || s.phone,
       whatsappPhone: wb.whatsappPhone || s.whatsappPhone,
       cmsWhatsappUrl: wb.cmsWhatsappUrl || s.cmsWhatsappUrl || '',
