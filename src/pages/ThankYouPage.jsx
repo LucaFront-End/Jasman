@@ -23,6 +23,7 @@ import {
   Check,
   ShieldCheck,
   Truck,
+  Clock,
   Package,
   MapPin,
   Mail,
@@ -468,13 +469,35 @@ export default function ThankYouPage() {
                 fontSize: 15.5,
                 color: C.gray,
                 maxWidth: 560,
-                margin: '0 auto',
+                margin: '0 auto 16px',
                 lineHeight: 1.6,
               }}
             >
               Hemos recibido tu pedido exitosamente. En breve recibirás la confirmación
               y guía de seguimiento en tu correo electrónico.
             </p>
+
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 16px',
+                borderRadius: 9999,
+                background: C.white,
+                border: `1px solid ${C.border}`,
+                boxShadow: '0 6px 20px rgba(15, 23, 42, 0.04)',
+                fontFamily: F.heading,
+                fontSize: 12.5,
+                fontWeight: 700,
+                color: C.navy,
+              }}
+            >
+              <Clock size={14} color={C.red} />
+              <span>
+                Tiempo de envío: <strong>3 a 5 días hábiles</strong>
+              </span>
+            </div>
           </div>
 
           {/* Comprehensive Order Summary Card */}
@@ -571,7 +594,7 @@ export default function ThankYouPage() {
                       color: C.gray,
                     }}
                   >
-                    <Truck size={14} color={C.red} /> Envío Nacional Asegurado
+                    <Truck size={14} color={C.red} /> Envío Nacional Asegurado · 3 a 5 días hábiles
                   </span>
                 </div>
 
@@ -868,6 +891,20 @@ export default function ThankYouPage() {
                     {orderDetails?.isFreeShipping === false && orderDetails?.shipping
                       ? orderDetails.shipping
                       : 'GRATIS'}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: 13.5,
+                    color: C.gray,
+                  }}
+                >
+                  <span>Tiempo de envío estimado</span>
+                  <span style={{ fontWeight: 700, color: C.navy }}>
+                    3 a 5 días hábiles
                   </span>
                 </div>
 
