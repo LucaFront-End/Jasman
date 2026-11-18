@@ -7,8 +7,8 @@ import PageHero from '../components/PageHero';
 import { C, F, useCountUp } from '../hooks/useAnimations';
 import { sucursales as staticSucursales, regions, states } from '../data/sucursalesData';
 import { useWixSucursales } from '../hooks/useWixSucursales';
-import { branchCoordinates } from '../data/postalCodesData';
-import { MapPin, Phone, Clock, MessageCircle, Navigation, Search, ChevronRight, Building2, Users, Wrench, Shield } from 'lucide-react';
+import { getBranchCoords, useSmartBranchSearch } from '../utils/branchSearch';
+import { MapPin, Phone, Clock, MessageCircle, Navigation, Search, ChevronRight, Building2, Users, Wrench, Shield, X } from 'lucide-react';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -29,31 +29,6 @@ const createIcon = (isActive) => new L.DivIcon({
   popupAnchor: [0, isActive ? -18 : -14],
 });
 
-const cityGeo = {
-  'Atizapán de Zaragoza': [19.5567, -99.2456], 'Azcapotzalco': [19.4913, -99.1823],
-  'Cuautitlán Izcalli': [19.6486, -99.2104], 'Naucalpan de Juárez': [19.4784, -99.2400],
-  'Pachuca de Soto': [20.0911, -98.7624], 'Tlalnepantla De Baz': [19.5381, -99.1996],
-  'Gustavo A. Madero': [19.4917, -99.1168], 'Álvaro Obregón': [19.3588, -99.2122],
-  'Miguel Hidalgo': [19.4326, -99.1920], 'Cuauhtémoc': [19.4285, -99.1550],
-  'Tlalpan': [19.2843, -99.1682], 'Benito Juárez': [19.3718, -99.1571],
-  'Coyoacán': [19.3437, -99.1562], 'Venustiano Carranza': [19.4395, -99.1068],
-  'Iztapalapa': [19.3548, -99.0728], 'Iztacalco': [19.3961, -99.1004],
-  'Nezahualcóyotl': [19.4006, -98.9884], 'Los Reyes La Paz': [19.3629, -98.9671],
-  'Chalco': [19.2649, -98.8968], 'Texcoco': [19.5117, -98.8817],
-  'Cuautla': [18.8107, -98.9543], 'Toluca': [19.2826, -99.6557],
-  'Salamanca': [20.5740, -101.1950], 'Guanajuato': [21.0190, -101.2574],
-  'León de los Aldama': [21.1221, -101.6837], 'Irapuato': [20.6736, -101.3497],
-  'Guadalajara': [20.6720, -103.3525], 'Zapopan': [20.7214, -103.3919],
-  'Tepic': [21.5049, -104.8946], 'Huixquilucan': [19.3591, -99.3485],
-  'San Pedro Garza García': [25.6577, -100.4031], 'Guadalupe': [25.6768, -100.2560],
-  'Monterrey': [25.6866, -100.3161], 'San Nicolás de los Garza': [25.7456, -100.2833],
-  'Cdad. Apodaca': [25.78555, -100.26701], 'Apodaca': [25.78555, -100.26701],
-  'Nuevo Laredo': [27.4763, -99.5066],
-  'Santiago de Querétaro': [20.5888, -100.3899], 'San Juan del Río': [20.3893, -99.9961],
-  'Celaya': [20.5233, -100.8157],
-  'Morelia': [19.7060, -101.1950], 'Los Reyes': [19.5849, -102.4762], 'Zamora': [19.9862, -102.2833],
-};
-
 const regionCoords = {
   'Norte': [19.52, -99.20, 11], 'Sur': [19.35, -99.15, 11],
   'Oriente': [19.40, -98.99, 10], 'Poniente': [19.41, -99.25, 11],
@@ -62,7 +37,7 @@ const regionCoords = {
   'Michoacan': [19.75, -101.80, 8],
 };
 
-function MapController({ activeRegion, selectedLoc, sucursalesList, getCoords }) {
+function MapController({ activeRegion, selectedLoc, sucursalesList, centerCoords, searchZoom }) {
   const map = useMap();
   useEffect(() => {
     map.invalidateSize();
@@ -72,9 +47,11 @@ function MapController({ activeRegion, selectedLoc, sucursalesList, getCoords })
     if (selectedLoc) {
       const branch = sucursalesList.find(s => s.id === selectedLoc);
       if (branch) {
-        const coords = getCoords(branch);
+        const coords = getBranchCoords(branch);
         map.flyTo(coords, 14, { duration: 1.0 });
       }
+    } else if (centerCoords && Number.isFinite(centerCoords[0]) && Number.isFinite(centerCoords[1])) {
+      map.flyTo(centerCoords, searchZoom || 12, { duration: 1.0 });
     } else if (activeRegion && regionCoords[activeRegion]) {
       const [lat, lng, zoom] = regionCoords[activeRegion];
       map.flyTo([lat, lng], zoom, { duration: 1.2 });
@@ -86,7 +63,7 @@ function MapController({ activeRegion, selectedLoc, sucursalesList, getCoords })
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [activeRegion, selectedLoc, map]);
+  }, [activeRegion, selectedLoc, sucursalesList, centerCoords, searchZoom, map]);
   return null;
 }
 
@@ -124,34 +101,25 @@ export default function SucursalesPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const filtered = useMemo(() => {
-    let list = sucursales;
-    if (activeRegion) list = list.filter(s => s.region === activeRegion);
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      list = list.filter(s =>
-        s.name.toLowerCase().includes(term) || s.city.toLowerCase().includes(term) ||
-        s.state.toLowerCase().includes(term) || s.address.toLowerCase().includes(term) ||
-        (s.cp && s.cp.includes(term))
-      );
-    }
-    return list;
-  }, [sucursales, activeRegion, searchTerm]);
+  const {
+    filtered,
+    mode: searchMode,
+    centerCoords,
+    zoom: searchZoom,
+    contextLabel,
+    isResolving,
+    gpsLocation,
+    gpsLoading,
+    gpsError,
+    locateByGps,
+    clearGps,
+  } = useSmartBranchSearch(sucursales, searchTerm, activeRegion);
 
   const grouped = useMemo(() => {
     const map = {};
     filtered.forEach(s => { if (!map[s.state]) map[s.state] = []; map[s.state].push(s); });
     return Object.entries(map).sort((a, b) => b[1].length - a[1].length);
   }, [filtered]);
-
-  const getCoords = (b) => {
-    if (Number.isFinite(b?.lat) && Number.isFinite(b?.lng)) return [b.lat, b.lng];
-    if (b.id && branchCoordinates[b.id]) return [branchCoordinates[b.id].lat, branchCoordinates[b.id].lng];
-    if (branchCoordinates[b.name]) return [branchCoordinates[b.name].lat, branchCoordinates[b.name].lng];
-    const geo = cityGeo[b.city];
-    if (geo) return [geo[0], geo[1]];
-    return [19.43, -99.13];
-  };
 
   return (
     <>
@@ -179,23 +147,87 @@ export default function SucursalesPage() {
         <div style={{ maxWidth: 1400, margin: '0 auto' }}>
           {/* Search + Region filters */}
           <div style={{
-            display: 'flex', gap: 12, marginBottom: 28, flexWrap: 'wrap', alignItems: 'center',
+            display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center',
           }}>
             <div style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
-              borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
+              borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
               width: isMobile ? '100%' : 'auto',
-              minWidth: isMobile ? '100%' : 260,
+              flex: isMobile ? '1 1 100%' : '1 1 340px',
+              maxWidth: isMobile ? '100%' : 480,
               boxSizing: 'border-box',
             }}>
-              <Search size={16} color="rgba(255,255,255,0.3)" />
-              <input type="text" placeholder="Buscar sucursal, ciudad o estado..."
-                value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                style={{ border: 'none', background: 'none', outline: 'none', flex: 1, fontSize: 14, color: C.white }}
+              <Search size={16} color="rgba(255,255,255,0.45)" style={{ flexShrink: 0 }} />
+              <input
+                type="text"
+                aria-label="Buscar sucursal por código postal, nombre, dirección, ciudad o estado"
+                placeholder="Buscar por C.P. (ej. 11320), sucursal, dirección, ciudad o estado..."
+                value={searchTerm}
+                onChange={e => {
+                  setSearchTerm(e.target.value);
+                  setSelectedLoc(null);
+                  if (gpsLocation) clearGps();
+                }}
+                style={{ border: 'none', background: 'none', outline: 'none', flex: 1, minWidth: 0, fontSize: 14, color: C.white }}
               />
+              {(searchTerm || gpsLocation) && (
+                <button
+                  type="button"
+                  aria-label="Limpiar búsqueda"
+                  onClick={() => {
+                    setSearchTerm('');
+                    clearGps();
+                    setSelectedLoc(null);
+                  }}
+                  style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    border: 'none',
+                    borderRadius: 9999,
+                    width: 24,
+                    height: 24,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'rgba(255,255,255,0.75)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <X size={13} />
+                </button>
+              )}
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm('');
+                setActiveRegion(null);
+                setSelectedLoc(null);
+                locateByGps();
+              }}
+              disabled={gpsLoading}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 12,
+                border: `1px solid ${gpsLocation ? 'rgba(59,130,246,0.55)' : 'rgba(255,255,255,0.12)'}`,
+                background: gpsLocation ? 'rgba(37,99,235,0.22)' : 'rgba(255,255,255,0.04)',
+                color: gpsLocation ? '#93C5FD' : C.white,
+                fontFamily: F.heading,
+                fontWeight: 600,
+                fontSize: 12,
+                cursor: gpsLoading ? 'wait' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Navigation size={13} />
+              {gpsLoading ? 'Ubicando...' : 'Cerca de mí'}
+            </button>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
-              <button onClick={() => { setActiveRegion(null); setSelectedLoc(null); }} style={{
+              <button onClick={() => { setActiveRegion(null); setSelectedLoc(null); clearGps(); }} style={{
                 padding: '9px 18px', borderRadius: 12,
                 border: `1px solid ${!activeRegion ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
                 background: !activeRegion ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
@@ -203,7 +235,7 @@ export default function SucursalesPage() {
                 fontFamily: F.heading, fontWeight: 600, fontSize: 12, cursor: 'pointer',
               }}>Todas</button>
               {regions.map(r => (
-                <button key={r} onClick={() => { setActiveRegion(prev => prev === r ? null : r); setSelectedLoc(null); }} style={{
+                <button key={r} onClick={() => { setActiveRegion(prev => prev === r ? null : r); setSelectedLoc(null); clearGps(); }} style={{
                   padding: '9px 18px', borderRadius: 12,
                   border: `1px solid ${activeRegion === r ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
                   background: activeRegion === r ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
@@ -213,6 +245,20 @@ export default function SucursalesPage() {
               ))}
             </div>
           </div>
+
+          {gpsError && (
+            <div style={{
+              marginBottom: 16,
+              padding: '10px 14px',
+              borderRadius: 12,
+              background: 'rgba(196,30,36,0.12)',
+              border: '1px solid rgba(196,30,36,0.3)',
+              color: '#FCA5A5',
+              fontSize: 12,
+            }}>
+              {gpsError}
+            </div>
+          )}
 
           {/* Full-width map + sidebar */}
           <div style={{
@@ -242,9 +288,15 @@ export default function SucursalesPage() {
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                <MapController activeRegion={activeRegion} selectedLoc={selectedLoc} sucursalesList={filtered} getCoords={getCoords} />
+                <MapController
+                  activeRegion={activeRegion}
+                  selectedLoc={selectedLoc}
+                  sucursalesList={filtered}
+                  centerCoords={centerCoords}
+                  searchZoom={searchZoom}
+                />
                 {filtered.map((loc) => {
-                  const coords = getCoords(loc);
+                  const coords = getBranchCoords(loc);
                   return (
                     <Marker key={loc.id} position={coords}
                       icon={createIcon(selectedLoc === loc.id)}
@@ -252,9 +304,14 @@ export default function SucursalesPage() {
                     >
                       <Popup>
                         <div style={{ fontFamily: F.heading, padding: '4px 2px', minWidth: 200 }}>
-                          <div style={{ fontWeight: 700, fontSize: 15, color: C.navy, marginBottom: 6 }}>
+                          <div style={{ fontWeight: 700, fontSize: 15, color: C.navy, marginBottom: 4 }}>
                             Suc. {loc.name}
                           </div>
+                          {loc.distanceFormatted && (
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#15803D', marginBottom: 4 }}>
+                              📏 a {loc.distanceFormatted}
+                            </div>
+                          )}
                           <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>📍 {loc.address.slice(0, 80)}...</div>
                           <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>📞 {loc.phone || 'No disponible'}</div>
                           <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>🏷️ Región: {loc.region}</div>
@@ -285,18 +342,18 @@ export default function SucursalesPage() {
                 padding: '12px 18px', borderRadius: 14,
                 background: 'rgba(26,31,54,0.9)', backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255,255,255,0.08)',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
               }}>
-                <div>
-                  <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 14, color: C.white }}>
-                    {activeRegion ? `Región ${activeRegion}` : 'Todo México'}
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 13.5, color: C.white, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {contextLabel || (searchTerm.trim() ? `Búsqueda: "${searchTerm.trim()}"` : activeRegion ? `Región ${activeRegion}` : 'Todo México')}
                   </div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
                     {filtered.length} sucursales • Mapa interactivo
                   </div>
                 </div>
                 <div style={{
-                  padding: '6px 14px', borderRadius: 10,
+                  padding: '6px 14px', borderRadius: 10, flexShrink: 0,
                   background: 'rgba(196,30,36,0.12)', border: '1px solid rgba(196,30,36,0.2)',
                   fontFamily: F.heading, fontWeight: 700, fontSize: 12, color: C.redLight,
                   display: 'flex', alignItems: 'center', gap: 5,
@@ -315,15 +372,42 @@ export default function SucursalesPage() {
                 padding: '14px 18px', borderRadius: 14,
                 background: 'rgba(196,30,36,0.06)', border: '1px solid rgba(196,30,36,0.12)',
                 fontFamily: F.heading, fontWeight: 700, fontSize: 14, color: C.white,
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
                 position: 'sticky', top: 0, zIndex: 10,
                 backdropFilter: 'blur(12px)',
               }}>
                 <span>{filtered.length} sucursales</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
-                  Click para detalles
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 500, textAlign: 'right' }}>
+                  {searchMode === 'cp-proximity' || searchMode === 'place-proximity' || searchMode === 'gps'
+                    ? 'Ordenadas por cercanía'
+                    : 'Click para detalles'}
                 </span>
               </div>
+              {contextLabel && (
+                <div style={{
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  background: 'rgba(34,197,94,0.1)',
+                  border: '1px solid rgba(34,197,94,0.24)',
+                  color: '#86EFAC',
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}>
+                  📍 {contextLabel}
+                </div>
+              )}
+              {isResolving && filtered.length === 0 && (
+                <div style={{
+                  padding: '18px',
+                  borderRadius: 14,
+                  background: 'rgba(255,255,255,0.03)',
+                  color: 'rgba(255,255,255,0.7)',
+                  fontSize: 13,
+                  textAlign: 'center',
+                }}>
+                  Buscando sucursales cercanas...
+                </div>
+              )}
               {filtered.map(b => {
                 const isSelected = selectedLoc === b.id;
                 return (
@@ -350,11 +434,20 @@ export default function SucursalesPage() {
                         <div style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 13, color: C.white }}>Suc. {b.name}</div>
                         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{b.city}, {b.state} {b.cp ? `· C.P. ${b.cp}` : ''}</div>
                       </div>
-                      <span style={{
-                        padding: '3px 8px', borderRadius: 6,
-                        background: 'rgba(255,255,255,0.04)', fontSize: 9, fontWeight: 600,
-                        color: 'rgba(255,255,255,0.3)', fontFamily: F.heading,
-                      }}>{b.region}</span>
+                      {b.distanceFormatted ? (
+                        <span style={{
+                          padding: '4px 8px', borderRadius: 6, flexShrink: 0,
+                          background: 'rgba(34,197,94,0.14)', border: '1px solid rgba(34,197,94,0.28)',
+                          fontSize: 10, fontWeight: 700, color: '#4ADE80', fontFamily: F.heading,
+                          whiteSpace: 'nowrap',
+                        }}>a {b.distanceFormatted}</span>
+                      ) : (
+                        <span style={{
+                          padding: '3px 8px', borderRadius: 6, flexShrink: 0,
+                          background: 'rgba(255,255,255,0.04)', fontSize: 9, fontWeight: 600,
+                          color: 'rgba(255,255,255,0.3)', fontFamily: F.heading,
+                        }}>{b.region}</span>
+                      )}
                     </div>
 
                     {isSelected && (
@@ -432,7 +525,7 @@ export default function SucursalesPage() {
                   fontSize: 11, fontWeight: 700,
                 }}>{branches.length}</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 330px), 1fr))', gap: 12 }}>
                 {branches.map(b => (
                   <div key={b.id} style={{
                     padding: '18px 20px', borderRadius: 16,
@@ -444,11 +537,11 @@ export default function SucursalesPage() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                       <div style={{
-                        width: 36, height: 36, borderRadius: 10,
+                        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
                         background: 'rgba(196,30,36,0.06)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}><MapPin size={16} color={C.red} /></div>
-                      <div>
+                      <div style={{ minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <span style={{ fontFamily: F.heading, fontWeight: 700, fontSize: 14, color: C.navy }}>Suc. {b.name}</span>
                           {b.cp && (
@@ -457,6 +550,14 @@ export default function SucursalesPage() {
                               background: 'rgba(196,30,36,0.08)', color: C.red, fontFamily: F.heading,
                             }}>
                               C.P. {b.cp}
+                            </span>
+                          )}
+                          {b.distanceFormatted && (
+                            <span style={{
+                              fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6,
+                              background: 'rgba(22,163,74,0.1)', color: '#15803D', fontFamily: F.heading,
+                            }}>
+                              a {b.distanceFormatted}
                             </span>
                           )}
                         </div>

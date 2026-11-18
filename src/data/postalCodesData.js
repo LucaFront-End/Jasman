@@ -779,10 +779,55 @@ export const postalCodeCentroids = {
 
 // Specific exact postal codes for all 71 Jasman branches + high-density colonies
 export const specificPostalCodes = {
+  "03020": {
+    "name": "Col. Narvarte Poniente, Benito Juárez, CDMX",
+    "lat": 19.3965,
+    "lng": -99.1565
+  },
+  "06140": {
+    "name": "Col. Hipódromo Condesa, Cuauhtémoc, CDMX",
+    "lat": 19.4105,
+    "lng": -99.1705
+  },
   "11000": {
     "name": "Col. Lomas de Chapultepec, Miguel Hidalgo, CDMX",
     "lat": 19.421,
     "lng": -99.213
+  },
+  "11300": {
+    "name": "Col. Verónica Anzures, Miguel Hidalgo, CDMX",
+    "lat": 19.4395,
+    "lng": -99.1715
+  },
+  "11310": {
+    "name": "Col. Mariano Escobedo / Anáhuac, Miguel Hidalgo, CDMX",
+    "lat": 19.4475,
+    "lng": -99.1795
+  },
+  "11320": {
+    "name": "Col. Anáhuac I Sección, Miguel Hidalgo, CDMX",
+    "lat": 19.4426,
+    "lng": -99.1748
+  },
+  "11510": {
+    "name": "Col. Polanco I Sección, Miguel Hidalgo, CDMX",
+    "lat": 19.4368,
+    "lng": -99.2035
+  },
+  "11520": {
+    "name": "Col. Granada / Polanco, Miguel Hidalgo, CDMX",
+    "lat": 19.4408,
+    "lng": -99.1975
+  },
+  "11550": {
+    "name": "Col. Polanco IV Sección, Miguel Hidalgo, CDMX",
+    "lat": 19.4335,
+    "lng": -99.1935
+  },
+  "11560": {
+    "name": "Col. Polanco V Sección, Miguel Hidalgo, CDMX",
+    "lat": 19.4315,
+    "lng": -99.1885
   },
   "11400": {
     "name": "Col. Popotla Miguel Hidalgo, Miguel Hidalgo, CDMX",
@@ -1380,16 +1425,17 @@ export function formatDistance(distanceKm) {
   return `${distanceKm.toFixed(1)} km`;
 }
 
-/**
- * Resolve coordinates for a Mexican postal code
- * 1. Checks specific exact table (all 71 Jasman branch CPs + high density colonies)
- * 2. Checks 2-digit prefix centroid (covers all 16 CDMX alcaldías + 32 states nationwide)
- * 3. Asynchronously attempts OpenStreetMap Nominatim for nationwide coverage
- */
-export async function resolvePostalCodeCoords(postalCode) {
-  const clean = String(postalCode || '').trim().padStart(5, '0');
+const cpGeocodeCache = new Map();
 
-  // 1. Direct specific hit (exact branch location or colony)
+/**
+ * Resolve coordinates synchronously for a Mexican postal code
+ * 1. Exact colony / branch lookup
+ * 2. 2-digit SEPOMEX prefix centroid with subtle micro-differentiation
+ * 3. CDMX Center fallback
+ */
+export function resolvePostalCodeCoordsSync(postalCode) {
+  const clean = String(postalCode || '').replace(/\D/g, '').padStart(5, '0').slice(0, 5);
+
   if (specificPostalCodes[clean]) {
     return {
       cp: clean,
@@ -1398,11 +1444,13 @@ export async function resolvePostalCodeCoords(postalCode) {
     };
   }
 
-  // 2. Centroid prefix hit (SEPOMEX state / alcaldía range)
+  if (cpGeocodeCache.has(clean)) {
+    return cpGeocodeCache.get(clean);
+  }
+
   const prefix2 = clean.slice(0, 2);
   if (postalCodeCentroids[prefix2]) {
     const centroid = postalCodeCentroids[prefix2];
-    // Slightly interpolate by 3rd and 4th digits for micro-differentiation
     const subDigit = (parseInt(clean.slice(2, 5), 10) || 500) / 1000 - 0.5;
     const latOffset = subDigit * 0.04;
     const lngOffset = subDigit * 0.04;
@@ -1416,28 +1464,6 @@ export async function resolvePostalCodeCoords(postalCode) {
     };
   }
 
-  // 3. Fallback online geocoding for any nationwide Mexican CP
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${clean}&country=Mexico&format=json&limit=1`, {
-      headers: { 'Accept-Language': 'es' }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return {
-          cp: clean,
-          name: data[0].display_name.split(',').slice(0, 2).join(','),
-          lat: parseFloat(data[0].lat),
-          lng: parseFloat(data[0].lon),
-          isExact: true,
-        };
-      }
-    }
-  } catch (err) {
-    console.warn('Nominatim lookup error:', err);
-  }
-
-  // Default to CDMX Center if unrecognized
   return {
     cp: clean,
     name: `C.P. ${clean} (México)`,
@@ -1445,6 +1471,62 @@ export async function resolvePostalCodeCoords(postalCode) {
     lng: -99.1332,
     isExact: false,
   };
+}
+
+/**
+ * Resolve coordinates for a Mexican postal code
+ * 1. Checks specific exact table (all Jasman branch CPs + high density colonies)
+ * 2. Asynchronously attempts OpenStreetMap Nominatim for exact nationwide coverage (2.5s timeout)
+ * 3. Falls back to 2-digit SEPOMEX prefix centroid (all 16 CDMX alcaldías + 32 states)
+ */
+export async function resolvePostalCodeCoords(postalCode) {
+  const clean = String(postalCode || '').replace(/\D/g, '').padStart(5, '0').slice(0, 5);
+
+  if (specificPostalCodes[clean]) {
+    return {
+      cp: clean,
+      ...specificPostalCodes[clean],
+      isExact: true,
+    };
+  }
+
+  if (cpGeocodeCache.has(clean)) {
+    return cpGeocodeCache.get(clean);
+  }
+
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timerId = controller ? setTimeout(() => controller.abort(), 2500) : null;
+
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${clean}&country=Mexico&format=json&limit=1`, {
+      headers: { 'Accept-Language': 'es' },
+      signal: controller ? controller.signal : undefined,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const parsed = {
+          cp: clean,
+          name: data[0].display_name.split(',').slice(0, 2).join(',').trim(),
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon),
+          isExact: true,
+        };
+        if (Number.isFinite(parsed.lat) && Number.isFinite(parsed.lng)) {
+          cpGeocodeCache.set(clean, parsed);
+          return parsed;
+        }
+      }
+    }
+  } catch (err) {
+    if (err?.name !== 'AbortError') {
+      console.warn('Nominatim lookup error:', err);
+    }
+  } finally {
+    if (timerId) clearTimeout(timerId);
+  }
+
+  return resolvePostalCodeCoordsSync(clean);
 }
 
 /**

@@ -204,17 +204,9 @@ export default function FlotillasPage() {
             <span style={{ color: C.white, fontWeight: 700 }}>Flotillas</span>
           </nav>
 
-          <div
-            className="flotillas-hero-split"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '0.94fr 1.06fr',
-              gap: 'clamp(24px, 4vw, 44px)',
-              alignItems: 'center',
-            }}
-          >
+          <div className="flotillas-hero-split">
             {/* Left column: Value prop + Badge + CTAs + 3 KPIs */}
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <span
                   style={{
@@ -356,14 +348,7 @@ export default function FlotillasPage() {
               </div>
 
               {/* 3 KPIs Grid */}
-              <div
-                className="flotillas-stats-grid"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                  gap: 12,
-                }}
-              >
+              <div className="flotillas-stats-grid">
                 {STATS_DATA.map((s) => (
                   <HeroStatCard
                     key={s.label}
@@ -378,7 +363,7 @@ export default function FlotillasPage() {
             </div>
 
             {/* Right column: Isometric Live Fleet Workshop immediately visible above the fold */}
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div
                 style={{
                   display: 'flex',
@@ -476,10 +461,7 @@ export default function FlotillasPage() {
             </p>
           </div>
 
-          <div
-            className="flotillas-benefits-grid"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 20 }}
-          >
+          <div className="flotillas-benefits-grid">
             {BENEFITS_DATA.map((b) => (
               <div
                 key={b.title}
@@ -561,10 +543,7 @@ export default function FlotillasPage() {
             </p>
           </div>
 
-          <div
-            className="flotillas-process-grid"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 18, position: 'relative' }}
-          >
+          <div className="flotillas-process-grid">
             <div
               className="flotillas-process-line"
               style={{
@@ -643,17 +622,40 @@ export default function FlotillasPage() {
           </div>
 
           <div
+            className="flotillas-clients-marquee-viewport"
             style={{
               position: 'relative',
               width: '100%',
               overflow: 'hidden',
               padding: '8px 0',
-              WebkitMaskImage:
-                'linear-gradient(90deg, transparent 0%, #000000 10%, #000000 90%, transparent 100%)',
-              maskImage:
-                'linear-gradient(90deg, transparent 0%, #000000 10%, #000000 90%, transparent 100%)',
             }}
           >
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: 'clamp(20px, 5vw, 72px)',
+                background: 'linear-gradient(90deg, #F8FAFC 0%, rgba(248, 250, 252, 0) 100%)',
+                zIndex: 2,
+                pointerEvents: 'none',
+              }}
+            />
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                right: 0,
+                width: 'clamp(20px, 5vw, 72px)',
+                background: 'linear-gradient(270deg, #F8FAFC 0%, rgba(248, 250, 252, 0) 100%)',
+                zIndex: 2,
+                pointerEvents: 'none',
+              }}
+            />
             <div className="flotillas-clients-marquee-track">
               {MARQUEE_TRACK_LOGOS.map((client, idx) => (
                 <div
@@ -676,14 +678,20 @@ export default function FlotillasPage() {
                   <img
                     src={client.logo}
                     alt={client.name}
+                    className={client.badge ? 'flotillas-client-logo-img is-badge' : 'flotillas-client-logo-img'}
+                    loading="eager"
+                    decoding="sync"
+                    width={client.maxWidth || 168}
+                    height={client.maxHeight || 48}
                     style={{
+                      width: client.maxWidth || 168,
+                      height: client.maxHeight || 48,
+                      maxWidth: '100%',
                       maxHeight: client.maxHeight || 50,
-                      maxWidth: client.maxWidth || 174,
-                      width: 'auto',
-                      height: 'auto',
                       objectFit: 'contain',
                       borderRadius: client.badge ? 14 : 0,
                       display: 'block',
+                      flexShrink: 0,
                     }}
                   />
                 </div>
@@ -698,14 +706,12 @@ export default function FlotillasPage() {
 
       {/* ═══════ 6. CONTACT FORM (+ CIUDAD) & NESTOR DIRECT CONTACT ═══════ */}
       <section id="contacto-flotillas" className="flotillas-contact-sec" style={{ padding: 'clamp(4rem, 7vw, 6rem) 1.5rem', background: C.light }}>
-        <div
-          className="flotillas-contact-grid"
-          style={{ maxWidth: 1080, margin: '0 auto', display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 36 }}
-        >
+        <div className="flotillas-contact-grid">
           {/* Form */}
           <div
             className="flotillas-form-card"
             style={{
+              minWidth: 0,
               background: C.white,
               borderRadius: 24,
               padding: 'clamp(24px, 4vw, 36px)',
@@ -847,7 +853,7 @@ export default function FlotillasPage() {
           </div>
 
           {/* Direct contact card */}
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div className="flotillas-exec-card" style={{ background: C.navy, borderRadius: 24, padding: 'clamp(24px, 4vw, 36px)' }}>
               <span
                 style={{
@@ -1003,16 +1009,44 @@ export default function FlotillasPage() {
       </section>
 
       <style>{`
+        .flotillas-hero-split {
+          display: grid;
+          grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+          gap: clamp(24px, 4vw, 44px);
+          align-items: center;
+        }
+        .flotillas-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
+        }
+        .flotillas-benefits-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 20px;
+        }
+        .flotillas-process-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 18px;
+          position: relative;
+        }
+        .flotillas-contact-grid {
+          max-width: 1080px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+          gap: 36px;
+        }
         @keyframes flotillasClientsMarquee {
-          0% { transform: translate3d(0, 0, 0); }
-          100% { transform: translate3d(-50%, 0, 0); }
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
         .flotillas-clients-marquee-track {
           display: flex;
           gap: 20px;
           width: max-content;
           animation: flotillasClientsMarquee 38s linear infinite;
-          will-change: transform;
         }
         .flotillas-clients-marquee-track:hover {
           animation-play-state: paused;
@@ -1020,7 +1054,7 @@ export default function FlotillasPage() {
         @media (max-width: 980px) {
           .flotillas-hero-split,
           .flotillas-contact-grid {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: minmax(0, 1fr) !important;
             gap: 26px !important;
           }
           .flotillas-benefits-grid {
@@ -1029,9 +1063,9 @@ export default function FlotillasPage() {
           }
         }
         @media (max-width: 860px) {
-          .flotillas-process-grid {
+          section .flotillas-process-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 20px !important;
+            gap: 18px !important;
           }
           .flotillas-process-line {
             display: none !important;
@@ -1081,15 +1115,15 @@ export default function FlotillasPage() {
             padding: 48px 14px !important;
           }
           .flotillas-benefits-grid {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: minmax(0, 1fr) !important;
             gap: 12px !important;
           }
           .flotillas-benefit-card {
             padding: 20px 18px !important;
             border-radius: 18px !important;
           }
-          .flotillas-process-grid {
-            grid-template-columns: 1fr !important;
+          section .flotillas-process-grid {
+            grid-template-columns: minmax(0, 1fr) !important;
             gap: 12px !important;
           }
           .flotillas-process-step {
@@ -1101,6 +1135,13 @@ export default function FlotillasPage() {
             border-radius: 18px !important;
             background: rgba(255, 255, 255, 0.04) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+          }
+          .flotillas-process-copy {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
           }
           .flotillas-process-badge {
             margin: 0 !important;
@@ -1110,15 +1151,26 @@ export default function FlotillasPage() {
             font-size: 16px !important;
             flex-shrink: 0 !important;
           }
+          .flotillas-clients-marquee-track {
+            gap: 14px !important;
+          }
           .flotillas-client-logo-card {
-            width: 184px !important;
-            height: 96px !important;
+            width: 176px !important;
+            height: 92px !important;
             padding: 14px 16px !important;
             border-radius: 16px !important;
           }
-          .flotillas-client-logo-card img {
+          .flotillas-client-logo-card img.flotillas-client-logo-img {
+            width: 136px !important;
+            height: 44px !important;
+            max-width: 140px !important;
             max-height: 44px !important;
-            max-width: 142px !important;
+          }
+          .flotillas-client-logo-card img.flotillas-client-logo-img.is-badge {
+            width: 50px !important;
+            height: 50px !important;
+            max-width: 50px !important;
+            max-height: 50px !important;
           }
           .flotillas-form-card,
           .flotillas-exec-card {

@@ -8,7 +8,15 @@ import {
   sucursalesWithCoords,
   resolvePostalCodeCoords,
   getClosestBranches,
+  calculateDistanceKm,
+  formatDistance,
 } from '../data/postalCodesData';
+import {
+  searchBranchesSmart,
+  geocodeMexicoPlaceAsync,
+  normalizeSearchText,
+  getBranchCoords,
+} from '../utils/branchSearch';
 import { getAdsPromoBranches } from '../data/adsPromoBranches';
 import {
   getLandingPromotion,
@@ -46,6 +54,31 @@ function normalizeBranchMatchKey(str = '') {
     .replace(/jasman\s*automotriz\s*[-–—]?\s*/gi, '')
     .replace(/\b(sucursal|suc\.?)\b/gi, '')
     .replace(/[^a-z0-9]/g, '');
+}
+
+function computeBranchesForLocation(loc, branchesList) {
+  if (!Array.isArray(branchesList) || branchesList.length === 0) return [];
+  if (loc?.searchQuery) {
+    const smart = searchBranchesSmart(branchesList, loc.searchQuery, {
+      resolvedPlace: loc.resolvedPlace || null,
+      maxRadiusKm: 120,
+      minResults: 4,
+    });
+    if (smart.results.length > 0) {
+      return smart.results.slice(0, 6).map((b) => {
+        const [bLat, bLng] = getBranchCoords(b);
+        const dist = calculateDistanceKm(loc.lat, loc.lng, bLat, bLng);
+        return {
+          ...b,
+          lat: bLat,
+          lng: bLng,
+          distanceKm: dist,
+          distanceFormatted: formatDistance(dist),
+        };
+      });
+    }
+  }
+  return getClosestBranches(loc.lat, loc.lng, 4, branchesList);
 }
 import {
   MapPin, Phone, MessageCircle, Navigation, Search, CheckCircle,
@@ -333,7 +366,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
         setIsPromoBranchFiltered(isFiltered);
 
         const loc = currentLocationRef.current;
-        const closestNow = getClosestBranches(loc.lat, loc.lng, 4, resolvedBranches);
+        const closestNow = computeBranchesForLocation(loc, resolvedBranches);
         setNearbyBranches(closestNow);
         setSelectedBranch(closestNow[0] || null);
         setBookingBranchId(closestNow[0]?.id || '');
@@ -349,7 +382,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
             setAllBranches(fallbackBranches);
             setIsPromoBranchFiltered(isAdsPromo);
             const loc = currentLocationRef.current;
-            const closestFallback = getClosestBranches(loc.lat, loc.lng, 4, fallbackBranches);
+            const closestFallback = computeBranchesForLocation(loc, fallbackBranches);
             setNearbyBranches(closestFallback);
             setSelectedBranch(closestFallback[0] || null);
             setBookingBranchId(closestFallback[0]?.id || '');
@@ -376,6 +409,8 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
             lat: latitude,
             lng: longitude,
             isGps: true,
+            searchQuery: null,
+            resolvedPlace: null,
           };
           currentLocationRef.current = nextLoc;
           setCurrentLocation(nextLoc);
@@ -405,7 +440,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
       setSelectedBranch(null);
       return;
     }
-    const closest = getClosestBranches(currentLocation.lat, currentLocation.lng, 4, allBranches);
+    const closest = computeBranchesForLocation(currentLocation, allBranches);
     setNearbyBranches(closest);
     setSelectedBranch((prev) => {
       if (
@@ -429,41 +464,89 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
     }
   }, [selectedBranch, bookingBranchId]);
 
-  const executeSearch = async (cpToSearch) => {
-    const cp = String(cpToSearch || postalCode).trim();
-    if (!cp) return;
+  const executeSearch = async (rawInput) => {
+    const query = String(rawInput ?? postalCode).trim();
+    if (!query) return;
     setLoading(true);
     setGeoError(null);
 
     try {
-      // 1. Check Wix CMS "Codigospostales" first
-      const wixCp = await getWixPostalCode(cp);
-      let resolved;
-      if (wixCp) {
-        resolved = wixCp;
-      } else {
-        // 2. Fallback to comprehensive local database
-        resolved = await resolvePostalCodeCoords(cp);
+      const activeBranches = allBranchesRef.current;
+      const cpMatch = query.match(/^(?:c\.?\s*p\.?\s*)?(\d{5})$/i) || query.match(/\b(\d{5})\b/);
+
+      if (cpMatch) {
+        const cp = cpMatch[1];
+        // 1. Check Wix CMS "Codigospostales" first
+        const wixCp = await getWixPostalCode(cp);
+        let resolved;
+        if (wixCp) {
+          resolved = wixCp;
+        } else {
+          // 2. Fallback to comprehensive local database + Nominatim
+          resolved = await resolvePostalCodeCoords(cp);
+        }
+
+        const nextLoc = {
+          cp: resolved.cp,
+          name: resolved.name,
+          lat: resolved.lat,
+          lng: resolved.lng,
+          isGps: false,
+          searchQuery: null,
+          resolvedPlace: null,
+        };
+        currentLocationRef.current = nextLoc;
+        setCurrentLocation(nextLoc);
+
+        const closest = getClosestBranches(resolved.lat, resolved.lng, 4, activeBranches);
+        setNearbyBranches(closest);
+        setSelectedBranch(closest[0] || null);
+        setBookingBranchId(closest[0]?.id || '');
+        return;
       }
 
-      const nextLoc = {
-        cp: resolved.cp,
-        name: resolved.name,
-        lat: resolved.lat,
-        lng: resolved.lng,
-        isGps: false,
-      };
-      currentLocationRef.current = nextLoc;
-      setCurrentLocation(nextLoc);
+      // Text search (branch name, street/colonia address, city, state, or proximity fallback)
+      let smart = searchBranchesSmart(activeBranches, query, { maxRadiusKm: 120, minResults: 4 });
+      let resolvedPlaceObj = null;
+      if (smart.mode === 'empty') {
+        const geo = await geocodeMexicoPlaceAsync(query);
+        if (geo) {
+          resolvedPlaceObj = { query: normalizeSearchText(query), ...geo };
+          smart = searchBranchesSmart(activeBranches, query, {
+            resolvedPlace: resolvedPlaceObj,
+            maxRadiusKm: 120,
+            minResults: 4,
+          });
+        }
+      }
 
-      const activeBranches = allBranchesRef.current;
-      const closest = getClosestBranches(resolved.lat, resolved.lng, 4, activeBranches);
-      setNearbyBranches(closest);
-      setSelectedBranch(closest[0] || null);
-      setBookingBranchId(closest[0]?.id || '');
+      if (smart.results.length > 0) {
+        const [lat, lng] =
+          smart.mode === 'text'
+            ? getBranchCoords(smart.results[0])
+            : smart.centerCoords || getBranchCoords(smart.results[0]);
+        const nextLoc = {
+          cp: query,
+          name: smart.contextLabel || `Búsqueda: "${query}"`,
+          lat,
+          lng,
+          isGps: false,
+          searchQuery: query,
+          resolvedPlace: resolvedPlaceObj,
+        };
+        currentLocationRef.current = nextLoc;
+        setCurrentLocation(nextLoc);
+
+        const matches = computeBranchesForLocation(nextLoc, activeBranches);
+        setNearbyBranches(matches);
+        setSelectedBranch(matches[0] || null);
+        setBookingBranchId(matches[0]?.id || '');
+      } else {
+        setGeoError('No pudimos localizar esa búsqueda. Intenta con un código postal de 5 dígitos, ciudad, dirección o usa tu GPS.');
+      }
     } catch (err) {
-      console.error('Error al resolver código postal:', err);
-      setGeoError('No pudimos localizar ese código postal. Intenta con otro o usa tu ubicación actual.');
+      console.error('Error al resolver búsqueda de sucursal:', err);
+      setGeoError('No pudimos localizar esa ubicación. Intenta con otro término o usa tu GPS actual.');
     } finally {
       setLoading(false);
     }
@@ -471,7 +554,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
-      setGeoError('Tu navegador no soporta geolocalización. Ingresa tu código postal manualmente.');
+      setGeoError('Tu navegador no soporta geolocalización. Ingresa tu código postal o ciudad manualmente.');
       return;
     }
 
@@ -487,6 +570,8 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
           lat: latitude,
           lng: longitude,
           isGps: true,
+          searchQuery: null,
+          resolvedPlace: null,
         };
         currentLocationRef.current = nextLoc;
         setCurrentLocation(nextLoc);
@@ -924,7 +1009,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
             Encuentra tu sucursal Jasman
           </h1>
           <p style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, maxWidth: 640, margin: '0 auto' }}>
-            Ingresa tu código postal y te mostramos la sucursal más cercana con su ubicación exacta,
+            Ingresa tu código postal, sucursal, dirección, ciudad o estado y te mostramos la sucursal más cercana con su ubicación exacta,
             distancia en tiempo real y datos de contacto directo.
           </p>
 
@@ -991,7 +1076,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
                   textTransform: 'uppercase', letterSpacing: '0.05em',
                   color: C.gray,
                 }}>
-                  Ingresa tu código postal (5 dígitos):
+                  Ingresa tu C.P., sucursal, dirección, ciudad o estado:
                 </label>
                 {currentLocation.isGps && (
                   <span style={{
@@ -1008,14 +1093,14 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
                 <MapPin size={18} color={C.red} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} />
                 <input
                   type="text"
-                  maxLength={5}
+                  maxLength={80}
                   value={postalCode}
                   onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '');
+                    const val = e.target.value;
                     setPostalCode(val);
-                    if (val.length === 5) executeSearch(val);
+                    if (/^\d{5}$/.test(val.trim())) executeSearch(val.trim());
                   }}
-                  placeholder="Ej. 02710 o 03100"
+                  placeholder="Ej. 11320, Polanco, Ciudad de México o Monterrey"
                   style={{
                     width: '100%',
                     padding: '13px 16px 13px 44px',

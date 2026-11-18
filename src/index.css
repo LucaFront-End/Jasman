@@ -638,7 +638,7 @@ select {
 }
 
 @media (max-width: 640px) {
-  section div[style*="repeat(4, 1fr)"] {
+  section div[style*="repeat(4, 1fr)"]:not(.flotillas-process-grid) {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }
@@ -937,6 +937,11 @@ main {
   .landing-search-form {
     flex-direction: column !important;
     align-items: stretch !important;
+  }
+
+  .landing-search-form > div {
+    flex: 0 0 auto !important;
+    width: 100% !important;
   }
 
   .landing-search-buttons {
