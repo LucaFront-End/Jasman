@@ -615,7 +615,7 @@ export default function FlotillasPage() {
       </section>
 
       {/* ═══════ 4. CORPORATE CLIENT LOGOS CAROUSEL (NO TESTIMONIALS) ═══════ */}
-      <section className="flotillas-clients-sec" style={{ padding: 'clamp(3.5rem, 6vw, 5rem) 1.5rem', background: C.white, borderBottom: `1px solid ${C.border}`, overflow: 'hidden' }}>
+      <section className="flotillas-clients-sec" style={{ padding: 'clamp(3.5rem, 6vw, 5rem) 1.5rem', background: '#F8FAFC', borderBottom: `1px solid ${C.border}`, overflow: 'hidden' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 36px' }}>
             <span
@@ -663,25 +663,26 @@ export default function FlotillasPage() {
                     width: 240,
                     height: 116,
                     flexShrink: 0,
-                    background: '#F8FAFC',
+                    background: '#FFFFFF',
                     borderRadius: 20,
-                    padding: '22px 24px',
-                    border: `1px solid ${C.border}`,
+                    padding: '20px 24px',
+                    border: '1px solid rgba(26, 31, 54, 0.08)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 8px 24px rgba(26, 31, 54, 0.04)',
+                    boxShadow: '0 8px 24px rgba(26, 31, 54, 0.045)',
                   }}
                 >
                   <img
                     src={client.logo}
                     alt={client.name}
                     style={{
-                      maxHeight: 46,
-                      maxWidth: 168,
+                      maxHeight: client.maxHeight || 50,
+                      maxWidth: client.maxWidth || 174,
                       width: 'auto',
                       height: 'auto',
                       objectFit: 'contain',
+                      borderRadius: client.badge ? 14 : 0,
                       display: 'block',
                     }}
                   />
@@ -1010,7 +1011,7 @@ export default function FlotillasPage() {
           display: flex;
           gap: 20px;
           width: max-content;
-          animation: flotillasClientsMarquee 32s linear infinite;
+          animation: flotillasClientsMarquee 38s linear infinite;
           will-change: transform;
         }
         .flotillas-clients-marquee-track:hover {
@@ -1112,8 +1113,12 @@ export default function FlotillasPage() {
           .flotillas-client-logo-card {
             width: 184px !important;
             height: 96px !important;
-            padding: 16px 14px !important;
+            padding: 14px 16px !important;
             border-radius: 16px !important;
+          }
+          .flotillas-client-logo-card img {
+            max-height: 44px !important;
+            max-width: 142px !important;
           }
           .flotillas-form-card,
           .flotillas-exec-card {
