@@ -82,6 +82,10 @@ function UserAccountWorkspace() {
     correo: user?.correo || '',
     password: '',
     telefono: user?.telefono || '',
+    direccion: user?.direccion || '',
+    ciudad: user?.ciudad || '',
+    estado: user?.estado || '',
+    cp: user?.cp || '',
     sucursalPreferida: user?.sucursalPreferida || selectedBranchSlug || 'jasman-satelite',
   });
   const [loading, setLoading] = useState(false);
@@ -104,6 +108,10 @@ function UserAccountWorkspace() {
           correo: result.member.correo || '',
           password: '',
           telefono: result.member.telefono || '',
+          direccion: result.member.direccion || '',
+          ciudad: result.member.ciudad || '',
+          estado: result.member.estado || '',
+          cp: result.member.cp || '',
           sucursalPreferida: result.member.sucursalPreferida || 'jasman-satelite',
         });
         setFeedback({
@@ -113,6 +121,23 @@ function UserAccountWorkspace() {
       }
     });
   }, [saveUser, mergeSyncedOrders]);
+
+  // Sync profile fields when user hydrates asynchronously
+  useEffect(() => {
+    if (!user) return;
+    setForm((prev) => ({
+      ...prev,
+      nombre: prev.nombre || user.nombre || '',
+      correo: prev.correo || user.correo || '',
+      telefono: prev.telefono || user.telefono || '',
+      direccion: prev.direccion || user.direccion || '',
+      ciudad: prev.ciudad || user.ciudad || '',
+      estado: prev.estado || user.estado || '',
+      cp: prev.cp || user.cp || '',
+      sucursalPreferida:
+        prev.sucursalPreferida || user.sucursalPreferida || 'jasman-satelite',
+    }));
+  }, [user]);
 
   // Auto-sync live Wix eCommerce & cloud orders whenever a logged-in member opens Mi Cuenta
   useEffect(() => {
@@ -176,6 +201,10 @@ function UserAccountWorkspace() {
         correo: res.member.correo || '',
         password: '',
         telefono: res.member.telefono || '',
+        direccion: res.member.direccion || '',
+        ciudad: res.member.ciudad || '',
+        estado: res.member.estado || '',
+        cp: res.member.cp || '',
         sucursalPreferida: res.member.sucursalPreferida || 'jasman-satelite',
       });
       if (res.orders && res.orders.length > 0) {
@@ -224,6 +253,10 @@ function UserAccountWorkspace() {
           correo: res.member.correo || '',
           password: '',
           telefono: res.member.telefono || '',
+          direccion: res.member.direccion || '',
+          ciudad: res.member.ciudad || '',
+          estado: res.member.estado || '',
+          cp: res.member.cp || '',
           sucursalPreferida: res.member.sucursalPreferida || 'jasman-satelite',
         });
         if (res.member.sucursalPreferida) {
@@ -249,6 +282,10 @@ function UserAccountWorkspace() {
           correo: form.correo,
           password: form.password,
           telefono: form.telefono,
+          direccion: form.direccion,
+          ciudad: form.ciudad,
+          estado: form.estado,
+          cp: form.cp,
           sucursalPreferida: form.sucursalPreferida,
           isUpdate: Boolean(user),
         });
@@ -269,6 +306,10 @@ function UserAccountWorkspace() {
           correo: res.member.correo || prev.correo,
           password: '',
           telefono: res.member.telefono || prev.telefono,
+          direccion: res.member.direccion || prev.direccion,
+          ciudad: res.member.ciudad || prev.ciudad,
+          estado: res.member.estado || prev.estado,
+          cp: res.member.cp || prev.cp,
           sucursalPreferida: res.member.sucursalPreferida || prev.sucursalPreferida,
         }));
         setSelectedBranch(form.sucursalPreferida);
@@ -542,6 +583,10 @@ function UserAccountWorkspace() {
                     correo: '',
                     password: '',
                     telefono: '',
+                    direccion: '',
+                    ciudad: '',
+                    estado: '',
+                    cp: '',
                     sucursalPreferida: selectedBranchSlug || 'jasman-satelite',
                   });
                   setFeedback({
@@ -1021,6 +1066,181 @@ function UserAccountWorkspace() {
                       </option>
                     ))}
                   </select>
+                </div>
+              )}
+
+              {user && (
+                <div
+                  style={{
+                    padding: '16px 18px',
+                    borderRadius: 16,
+                    background: '#F8FAFC',
+                    border: `1px solid ${C.border}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: F.heading,
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: C.navy,
+                    }}
+                  >
+                    Dirección de Envío Predeterminada (Opcional — para agilizar tu Checkout)
+                  </div>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: 12,
+                    }}
+                    className="tienda-user-form-row"
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontFamily: F.heading,
+                          fontSize: 10,
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: C.navy,
+                          marginBottom: 5,
+                        }}
+                      >
+                        Dirección (Calle y número)
+                      </label>
+                      <input
+                        type="text"
+                        value={form.direccion}
+                        onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+                        placeholder="Av. Insurgentes Sur 1234"
+                        style={{
+                          width: '100%',
+                          padding: '11px 14px',
+                          borderRadius: 12,
+                          border: `1px solid ${C.border}`,
+                          background: C.white,
+                          fontFamily: F.body,
+                          fontSize: 13.5,
+                          color: C.navy,
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontFamily: F.heading,
+                          fontSize: 10,
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: C.navy,
+                          marginBottom: 5,
+                        }}
+                      >
+                        Ciudad / Alcaldía
+                      </label>
+                      <input
+                        type="text"
+                        value={form.ciudad}
+                        onChange={(e) => setForm({ ...form, ciudad: e.target.value })}
+                        placeholder="Ciudad de México"
+                        style={{
+                          width: '100%',
+                          padding: '11px 14px',
+                          borderRadius: 12,
+                          border: `1px solid ${C.border}`,
+                          background: C.white,
+                          fontFamily: F.body,
+                          fontSize: 13.5,
+                          color: C.navy,
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontFamily: F.heading,
+                          fontSize: 10,
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: C.navy,
+                          marginBottom: 5,
+                        }}
+                      >
+                        Estado
+                      </label>
+                      <input
+                        type="text"
+                        value={form.estado}
+                        onChange={(e) => setForm({ ...form, estado: e.target.value })}
+                        placeholder="CDMX"
+                        style={{
+                          width: '100%',
+                          padding: '11px 14px',
+                          borderRadius: 12,
+                          border: `1px solid ${C.border}`,
+                          background: C.white,
+                          fontFamily: F.body,
+                          fontSize: 13.5,
+                          color: C.navy,
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontFamily: F.heading,
+                          fontSize: 10,
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: C.navy,
+                          marginBottom: 5,
+                        }}
+                      >
+                        Código Postal
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={5}
+                        value={form.cp}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            cp: e.target.value.replace(/\D/g, '').slice(0, 5),
+                          })
+                        }
+                        placeholder="03100"
+                        style={{
+                          width: '100%',
+                          padding: '11px 14px',
+                          borderRadius: 12,
+                          border: `1px solid ${C.border}`,
+                          background: C.white,
+                          fontFamily: F.body,
+                          fontSize: 13.5,
+                          color: C.navy,
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 

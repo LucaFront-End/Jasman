@@ -1033,6 +1033,75 @@ export async function saveBolsaTrabajo(applicationData) {
  * ============================================================================ */
 
 /**
+ * Hydrates active Wix Member profile and orders from stored OAuth member tokens
+ * if `jasman_tienda_user_v1` is absent in localStorage.
+ */
+export async function hydrateWixMemberFromStoredTokens() {
+  const accessToken = getStoredWixMemberAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    const meRes = await fetch('https://www.wixapis.com/members/v1/members/my?fieldsets=FULL', {
+      headers: {
+        Authorization: accessToken,
+      },
+    });
+    if (!meRes.ok) return null;
+    const meData = await meRes.json();
+    const m = meData?.member;
+    if (!m) return null;
+
+    const cleanEmail = String(
+      m.loginEmail || m.contact?.emails?.[0] || ''
+    )
+      .trim()
+      .toLowerCase();
+    const fullContactName = [m.contact?.firstName, m.contact?.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    const realName = fullContactName || m.profile?.nickname || '';
+    const realPhone = m.contact?.phones?.[0] || '';
+    const rawAddr = m.contact?.addresses?.[0] || {};
+    const streetFromObj = [rawAddr.streetAddress?.name, rawAddr.streetAddress?.number]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    let cloudProfile = null;
+    let cloudOrders = [];
+    if (cleanEmail) {
+      const cloudRes = await fetchWixMemberProfileAndOrders(cleanEmail);
+      cloudProfile = cloudRes?.profile || null;
+      cloudOrders = Array.isArray(cloudRes?.orders) ? cloudRes.orders : [];
+    }
+
+    const member = {
+      nombre: cloudProfile?.nombre || realName || (cleanEmail ? cleanEmail.split('@')[0] : 'Cliente Jasman'),
+      correo: cleanEmail || cloudProfile?.correo || '',
+      telefono: cloudProfile?.telefono || realPhone || '',
+      direccion:
+        cloudProfile?.direccion ||
+        String(rawAddr.addressLine || rawAddr.addressLine1 || streetFromObj || '').trim(),
+      colonia: cloudProfile?.colonia || String(rawAddr.addressLine2 || '').trim(),
+      ciudad: cloudProfile?.ciudad || String(rawAddr.city || '').trim(),
+      estado: cloudProfile?.estado || String(rawAddr.subdivision || '').trim(),
+      cp: cloudProfile?.cp || String(rawAddr.postalCode || '').replace(/\D/g, '').slice(0, 5),
+      sucursalPreferida: cloudProfile?.sucursalPreferida || 'jasman-satelite',
+      wixMemberId: m.id || cloudProfile?.wixMemberId || `wix-${Date.now()}`,
+      hasMemberTokens: true,
+      authProvider: cloudProfile?.authProvider || 'wix-member',
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (!member.correo && !member.nombre) return null;
+    return { member, orders: cloudOrders };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Checks if the current Wix OAuthStrategy session has an active Member token.
  */
 export function isWixMemberLoggedIn() {
@@ -1091,12 +1160,28 @@ export async function fetchWixMemberProfileAndOrders(email) {
         sorted.find((item) => item.tipo === 'CUENTA_TIENDA') || sorted[0];
 
       if (accountRecord) {
+        let parsedMsg = {};
+        if (
+          typeof accountRecord.mensaje === 'string' &&
+          accountRecord.mensaje.trim().startsWith('{')
+        ) {
+          try {
+            parsedMsg = JSON.parse(accountRecord.mensaje);
+          } catch {
+            parsedMsg = {};
+          }
+        }
         profile = {
           wixId: accountRecord._id,
-          nombre: accountRecord.nombre || cleanEmail.split('@')[0],
+          nombre: parsedMsg.nombre || accountRecord.nombre || cleanEmail.split('@')[0],
           correo: accountRecord.email || cleanEmail,
-          telefono: accountRecord.telefono || '',
-          sucursalPreferida: accountRecord.sucursal || 'jasman-satelite',
+          telefono: parsedMsg.telefono || accountRecord.telefono || '',
+          direccion: parsedMsg.direccion || '',
+          colonia: parsedMsg.colonia || '',
+          ciudad: parsedMsg.ciudad || '',
+          estado: parsedMsg.estado || '',
+          cp: parsedMsg.cp || '',
+          sucursalPreferida: accountRecord.sucursal || parsedMsg.sucursalPreferida || 'jasman-satelite',
           wixMemberId: accountRecord._id,
           authProvider: 'jasman-cloud',
         };
@@ -1190,11 +1275,21 @@ export async function registerWixMember({
   password,
   telefono,
   sucursalPreferida = 'jasman-satelite',
+  direccion = '',
+  colonia = '',
+  ciudad = '',
+  estado = '',
+  cp = '',
   isUpdate = false,
 }) {
   const cleanEmail = String(correo || '').trim().toLowerCase();
   const cleanName = String(nombre || '').trim();
   const cleanPhone = String(telefono || '').trim();
+  const cleanDireccion = String(direccion || '').trim();
+  const cleanColonia = String(colonia || '').trim();
+  const cleanCiudad = String(ciudad || '').trim();
+  const cleanEstado = String(estado || '').trim();
+  const cleanCp = String(cp || '').replace(/\D/g, '').slice(0, 5);
 
   if (!cleanEmail) {
     return {
@@ -1288,6 +1383,11 @@ export async function registerWixMember({
         correo: cleanEmail,
         telefono: cleanPhone,
         sucursalPreferida,
+        ...(cleanDireccion ? { direccion: cleanDireccion } : {}),
+        ...(cleanColonia ? { colonia: cleanColonia } : {}),
+        ...(cleanCiudad ? { ciudad: cleanCiudad } : {}),
+        ...(cleanEstado ? { estado: cleanEstado } : {}),
+        ...(cleanCp ? { cp: cleanCp } : {}),
         updatedAt: new Date().toISOString(),
       }),
       origen: 'Clientes Tienda Online',
@@ -1318,6 +1418,11 @@ export async function registerWixMember({
     correo: cleanEmail,
     telefono: cleanPhone,
     sucursalPreferida,
+    direccion: cleanDireccion || existingData.profile?.direccion || '',
+    colonia: cleanColonia || existingData.profile?.colonia || '',
+    ciudad: cleanCiudad || existingData.profile?.ciudad || '',
+    estado: cleanEstado || existingData.profile?.estado || '',
+    cp: cleanCp || existingData.profile?.cp || '',
     wixMemberId: cloudId || `usr-${Date.now()}`,
     wixAuthState: wixAuthState || 'ACTIVE_ACCOUNT',
     hasMemberTokens: Boolean(memberTokens),
@@ -1423,6 +1528,11 @@ export async function loginWixMember({ correo, password }) {
     correo: cleanEmail,
     telefono: profile?.telefono || '',
     sucursalPreferida: profile?.sucursalPreferida || 'jasman-satelite',
+    direccion: profile?.direccion || '',
+    colonia: profile?.colonia || '',
+    ciudad: profile?.ciudad || '',
+    estado: profile?.estado || '',
+    cp: profile?.cp || '',
     wixMemberId: profile?.wixMemberId || `usr-${Date.now()}`,
     wixAuthState: wixAuthState || 'ACTIVE_SESSION',
     hasMemberTokens: Boolean(memberTokens) || isWixMemberLoggedIn(),

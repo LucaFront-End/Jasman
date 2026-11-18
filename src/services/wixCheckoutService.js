@@ -23,6 +23,35 @@ function hasValidTokenPair(parsed) {
   return Boolean(parsed?.accessToken?.value && parsed?.refreshToken?.value);
 }
 
+const TIENDA_USER_STORAGE_KEY = 'jasman_tienda_user_v1';
+
+function readStoredMemberTokens() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(MEMBER_TOKENS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return hasValidTokenPair(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function readStoredTiendaUser() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(TIENDA_USER_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && (parsed.correo || parsed.email || parsed.nombre)) {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Token storage modeled on Kamibi's WixContext:
  * - Prefers active Wix Member tokens if the customer logged into Mi Cuenta
@@ -119,12 +148,18 @@ function computeItemsSignature(resolvedEntries) {
 export async function ensureWixCheckoutSession() {
   if (typeof window === 'undefined') return wixCheckoutClient;
 
-  const existingMember = window.localStorage.getItem(MEMBER_TOKENS_KEY);
+  const existingMember = readStoredMemberTokens();
+  if (existingMember) {
+    wixCheckoutClient.auth.setTokens(existingMember);
+    return wixCheckoutClient;
+  }
+
   const existingVisitor = window.localStorage.getItem(TOKEN_KEY);
-  if (existingMember || existingVisitor) {
+  if (existingVisitor) {
     try {
-      const parsed = JSON.parse(existingMember || existingVisitor);
-      if (hasValidTokenPair(parsed)) {
+      const parsedVisitor = JSON.parse(existingVisitor);
+      if (hasValidTokenPair(parsedVisitor)) {
+        wixCheckoutClient.auth.setTokens(parsedVisitor);
         return wixCheckoutClient;
       }
     } catch {
@@ -462,6 +497,7 @@ export async function redirectToJasmanWixCheckout({
   totalAfterDiscount = 0,
   totalTireUnits = 0,
   liveEstimate = null,
+  customer = null,
 } = {}) {
   return runExclusiveCartOp(async () => {
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
@@ -479,6 +515,8 @@ export async function redirectToJasmanWixCheckout({
 
     const origin =
       typeof window !== 'undefined' ? window.location.origin : 'https://www.jasman.com.mx';
+    const activeCustomer = customer || readStoredTiendaUser();
+    const storedMemberTokens = readStoredMemberTokens();
 
     let checkoutId = '';
     let serverCheckoutUrl = '';
@@ -502,6 +540,8 @@ export async function redirectToJasmanWixCheckout({
             })),
             couponCode: couponCode ? String(couponCode).trim() : null,
             origin,
+            customer: activeCustomer ? { ...activeCustomer, isRegistered: true } : null,
+            memberTokens: storedMemberTokens,
           }),
         });
         if (apiRes.ok) {
@@ -510,6 +550,17 @@ export async function redirectToJasmanWixCheckout({
             checkoutId = apiData.checkoutId;
             serverCheckoutUrl = apiData.checkoutUrl || '';
             serverLineItems = Array.isArray(apiData.lineItems) ? apiData.lineItems : null;
+            if (hasValidTokenPair(apiData.memberTokens)) {
+              try {
+                window.localStorage.setItem(
+                  MEMBER_TOKENS_KEY,
+                  JSON.stringify(apiData.memberTokens)
+                );
+              } catch {
+                // ignore storage errors
+              }
+              wixCheckoutClient.auth.setTokens(apiData.memberTokens);
+            }
           }
         }
       } catch (serverCheckoutErr) {
@@ -568,23 +619,36 @@ export async function redirectToJasmanWixCheckout({
       throw new Error('No se pudo inicializar la sesión de pago en Wix.');
     }
 
-    let rawRedirectUrl = '';
-    try {
-      const { redirectSession } = await wixCheckoutClient.redirects.createRedirectSession({
-        ecomCheckout: { checkoutId },
-        callbacks: {
-          postFlowUrl: `${origin}/llantas`,
-          cartPageUrl: `${origin}/llantas`,
-          thankYouPageUrl: `${origin}/thank-you`,
-        },
-      });
-      rawRedirectUrl = redirectSession?.fullUrl || '';
-    } catch {
-      rawRedirectUrl = '';
-    }
-
+    let rawRedirectUrl = serverCheckoutUrl || '';
     if (!rawRedirectUrl) {
-      rawRedirectUrl = serverCheckoutUrl;
+      const fallbackCallbacks = {
+        postFlowUrl: `${origin}/llantas`,
+        cartPageUrl: `${origin}/llantas`,
+        thankYouPageUrl: `${origin}/thank-you`,
+      };
+      try {
+        const { redirectSession } = await wixCheckoutClient.redirects.createRedirectSession({
+          ecomCheckout: { checkoutId },
+          callbacks: fallbackCallbacks,
+        });
+        rawRedirectUrl = redirectSession?.fullUrl || '';
+      } catch {
+        try {
+          const fallbackVisitorClient = createClient({
+            modules: { redirects },
+            auth: OAuthStrategy({ clientId: WIX_CLIENT_ID }),
+          });
+          const vt = await fallbackVisitorClient.auth.generateVisitorTokens();
+          fallbackVisitorClient.auth.setTokens(vt);
+          const { redirectSession } = await fallbackVisitorClient.redirects.createRedirectSession({
+            ecomCheckout: { checkoutId },
+            callbacks: fallbackCallbacks,
+          });
+          rawRedirectUrl = redirectSession?.fullUrl || '';
+        } catch {
+          rawRedirectUrl = '';
+        }
+      }
     }
 
     if (!rawRedirectUrl) {

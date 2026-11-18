@@ -25,6 +25,8 @@ import {
   Truck,
   Loader2,
   Lock,
+  User,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function TiendaCartDrawer() {
@@ -303,6 +305,7 @@ export default function TiendaCartDrawer() {
         totalAfterDiscount: liveTotal,
         totalTireUnits,
         liveEstimate: wixEstimate,
+        customer: user,
       });
     } catch (err) {
       console.error('[TiendaCartDrawer] Checkout redirect error:', err);
@@ -494,6 +497,133 @@ export default function TiendaCartDrawer() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Active Customer Recognition / Quick Sign-In Bar */}
+              {user ? (
+                <div
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: 12,
+                    background: '#F8FAFC',
+                    border: '1px solid rgba(22, 163, 74, 0.24)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                    <div
+                      style={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: '50%',
+                        background: 'rgba(22, 163, 74, 0.12)',
+                        color: '#15803D',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ShieldCheck size={15} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontFamily: F.heading,
+                          fontSize: 11.5,
+                          fontWeight: 800,
+                          color: C.navy,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        Comprando como {user.nombre || 'Cliente Jasman'}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 10.5,
+                          color: '#64748B',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {user.correo
+                          ? `${user.correo} · Tus datos se enviarán al pago`
+                          : 'Tus datos se enviarán al pago'}
+                      </div>
+                    </div>
+                  </div>
+                  <Link
+                    to="/llantas/cuenta"
+                    onClick={() => setOpen(false)}
+                    style={{
+                      fontFamily: F.heading,
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      color: C.red,
+                      textDecoration: 'none',
+                      flexShrink: 0,
+                    }}
+                  >
+                    Mi cuenta
+                  </Link>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: 12,
+                    background: '#F8FAFC',
+                    border: '1px solid rgba(26, 31, 54, 0.08)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                    <User size={14} color={C.navy} style={{ flexShrink: 0 }} />
+                    <span
+                      style={{
+                        fontFamily: F.heading,
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        color: C.navy,
+                      }}
+                    >
+                      ¿Ya tienes cuenta en Jasman?
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      triggerTiendaUI({
+                        type: 'OPEN_AUTH',
+                        mode: 'login',
+                        redirectToAccount: false,
+                      })
+                    }
+                    style={{
+                      border: '1px solid rgba(196, 30, 36, 0.25)',
+                      background: C.white,
+                      color: C.red,
+                      borderRadius: 9999,
+                      padding: '5px 11px',
+                      fontFamily: F.heading,
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  >
+                    Iniciar sesión
+                  </button>
+                </div>
+              )}
+
               {/* Volume Discount Progress Banner inside Cart */}
               <div
                 style={{

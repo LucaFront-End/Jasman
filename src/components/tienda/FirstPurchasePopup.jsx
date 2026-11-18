@@ -107,6 +107,12 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
         correo: correo.trim(),
         createdAt: new Date().toISOString(),
       });
+    } else if (!user.telefono || !user.nombre) {
+      saveUser({
+        ...user,
+        nombre: user.nombre || nombre.trim(),
+        telefono: user.telefono || cleanPhone,
+      });
     }
 
     saveContactoWeb({

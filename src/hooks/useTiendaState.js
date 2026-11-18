@@ -3,7 +3,11 @@ import {
   findCatalogProductById,
   loadWixCatalogProducts,
 } from '../data/productosMasterData';
-import { logoutWixMember, saveWixTiendaOrder } from '../services/wixService';
+import {
+  logoutWixMember,
+  saveWixTiendaOrder,
+  hydrateWixMemberFromStoredTokens,
+} from '../services/wixService';
 import { trackAddToCart } from '../services/dataLayerService';
 
 const STORAGE_KEYS = {
@@ -109,6 +113,28 @@ export function useTiendaState() {
 
   useEffect(() => {
     loadWixCatalogProducts().catch(() => {});
+    if (!readJSON(STORAGE_KEYS.USER, null)) {
+      hydrateWixMemberFromStoredTokens()
+        .then((res) => {
+          if (!res?.member) return;
+          if (!readJSON(STORAGE_KEYS.USER, null)) {
+            writeJSON(STORAGE_KEYS.USER, res.member);
+          }
+          if (Array.isArray(res.orders) && res.orders.length > 0) {
+            const currentOrders = readJSON(STORAGE_KEYS.ORDERS, []);
+            const seenIds = new Set(
+              currentOrders.filter((o) => o && o.id).map((o) => String(o.id))
+            );
+            const additions = res.orders.filter(
+              (o) => o && o.id && !seenIds.has(String(o.id))
+            );
+            if (additions.length > 0) {
+              writeJSON(STORAGE_KEYS.ORDERS, [...additions, ...currentOrders]);
+            }
+          }
+        })
+        .catch(() => {});
+    }
     const syncAll = () => {
       setCartState(readJSON(STORAGE_KEYS.CART, []));
       setCouponState(readJSON(STORAGE_KEYS.COUPON, null));
