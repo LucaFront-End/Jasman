@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import PageHero from '../components/PageHero';
-import { C, F, useReveal, useCountUp, useStaggerReveal } from '../hooks/useAnimations';
+import { C, F, useCountUp } from '../hooks/useAnimations';
 import Icon from '../components/Icon';
 import { MapPin, Trophy, Settings, Flag, Heart, Eye, Shield, Star, Gem, Users, ArrowRight, Target, Lightbulb, CheckCircle2, ChevronDown, Building2, Calendar, Wrench, Award, TrendingUp, Handshake, Quote, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 /* ═══ DATA ═══ */
 const historia = [
-  { year: '1960', title: 'Los Primeros Pasos', text: 'Nace como una pequeña venta de refacciones en el Estado de México, fundada con valores de honestidad y servicio al cliente.', icon: Building2, color: '#f59e0b', image: '/images/timeline-1960.png' },
-  { year: '1987', title: 'Nueva Generación', text: 'La segunda generación toma las riendas del negocio con el sueño de crecer a cinco sucursales y profesionalizar la operación.', icon: Users, color: '#3b82f6', image: '/images/timeline-1987.png' },
+  { year: '1960', title: 'Los Primeros Pasos', text: 'Nace como una pequeña venta de refacciones en el Estado de México, fundada con valores de honestidad y servicio al cliente.', icon: Building2, color: '#f59e0b', image: '/images/timeline-1960-primeros-pasos.jpg', objectPosition: 'center 38%' },
+  { year: '1987', title: 'Nueva Generación', text: 'La segunda generación toma las riendas del negocio con el sueño de crecer a cinco sucursales y profesionalizar la operación.', icon: Users, color: '#3b82f6', image: '/images/timeline-2024-lider-nacional.jpg', objectPosition: 'center 20%' },
   { year: '1990', title: 'Expansión Oriente', text: 'Primera gran expansión con 8 sucursales en la Zona Oriente: Texcoco, Iztacalco, Aeropuerto, Los Reyes, Iztapalapa, Zumpango, Chalco y La Villa.', icon: TrendingUp, color: '#22c55e', image: '/images/timeline-1990.png' },
   { year: '1995', title: 'Adquisición JUJOMA', text: 'Jasma adquiere el Grupo JUJOMA con 16 Centros de Servicio distribuidos estratégicamente en el Distrito Federal y Estado de México.', icon: Handshake, color: '#8b5cf6', image: '/images/timeline-1995.png' },
   { year: '2005', title: 'Expansión Nacional', text: 'Se adquiere Comercial Jiménez de Jalisco (17 patios en Jalisco y Michoacán) y Neumatik de Nuevo León (18 patios con 65+ años en el mercado).', icon: MapPin, color: '#ef4444', image: '/images/timeline-2005.png' },
@@ -434,6 +434,7 @@ export default function NosotrosPage() {
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
+                    objectPosition: historia[activeTimeline].objectPosition || 'center center',
                     animation: 'fadeIn 0.35s ease-out',
                   }}
                 />
@@ -563,7 +564,10 @@ export default function NosotrosPage() {
                     src={historia[activeTimeline].image}
                     alt={historia[activeTimeline].title}
                     style={{
-                      width: '100%', height: '100%', objectFit: 'cover',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: historia[activeTimeline].objectPosition || 'center center',
                       animation: 'fadeIn 0.5s ease-out',
                     }}
                   />

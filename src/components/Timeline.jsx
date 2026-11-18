@@ -9,7 +9,8 @@ const timeline = [
     title: 'Los Primeros Pasos',
     text: 'Don José Manuel Aburto funda una pequeña refaccionaria en el corazón de la Ciudad de México. Lo que empezó como un modesto negocio familiar se convertiría en el inicio de una gran historia automotriz mexicana.',
     icon: 'store',
-    image: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600&q=80',
+    image: '/images/timeline-1960-primeros-pasos.jpg',
+    objectPosition: 'center 32%',
   },
   {
     year: '1975',
@@ -48,7 +49,8 @@ const timeline = [
     title: 'Capacitación Continua',
     text: 'Se establece el Centro de Capacitación Jasman, donde se forman técnicos certificados en las últimas tecnologías automotrices. Más de 500 profesionales capacitados cada año.',
     icon: 'graduation-cap',
-    image: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=600&q=80',
+    image: '/images/timeline-2010-capacitacion-continua.jpg',
+    objectPosition: 'center 24%',
   },
   {
     year: '2015',
