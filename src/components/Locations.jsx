@@ -187,31 +187,38 @@ export default function Locations() {
         </div>
 
         {/* Smart Branch Search (C.P., name, address, city, state + GPS) */}
-        <div style={{
-          maxWidth: 680,
-          margin: '0 auto 16px',
-          display: 'flex',
-          gap: 8,
-          flexWrap: 'wrap',
-          alignItems: 'center',
-        }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSelectedLoc(filtered[0]?.id || null);
+          }}
+          style={{
+            maxWidth: 740,
+            margin: '0 auto 18px',
+            display: 'flex',
+            gap: 10,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+          }}
+        >
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
+            gap: 10,
             padding: '10px 14px',
             borderRadius: 14,
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            flex: '1 1 260px',
+            background: '#FFFFFF',
+            border: '2px solid rgba(196,30,36,0.35)',
+            boxShadow: '0 10px 28px rgba(0,0,0,0.25)',
+            flex: '1 1 280px',
             minWidth: 0,
             boxSizing: 'border-box',
           }}>
-            <Search size={16} color="rgba(255,255,255,0.5)" style={{ flexShrink: 0 }} />
+            <Search size={18} color={C.red} style={{ flexShrink: 0 }} />
             <input
               type="text"
               aria-label="Buscar sucursal por C.P., nombre, dirección, ciudad o estado"
-              placeholder="Buscar por C.P. (ej. 11320), sucursal, dirección, ciudad o estado..."
+              placeholder="Buscar sucursal por C.P. (ej. 11320), dirección, ciudad o estado..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -225,7 +232,8 @@ export default function Locations() {
                 flex: 1,
                 minWidth: 0,
                 fontSize: 14,
-                color: C.white,
+                fontWeight: 600,
+                color: C.navy,
               }}
             />
             {(searchTerm || gpsLocation) && (
@@ -238,7 +246,7 @@ export default function Locations() {
                   setSelectedLoc(null);
                 }}
                 style={{
-                  background: 'rgba(255,255,255,0.12)',
+                  background: 'rgba(26,31,54,0.08)',
                   border: 'none',
                   borderRadius: 9999,
                   width: 24,
@@ -247,7 +255,7 @@ export default function Locations() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  color: 'rgba(255,255,255,0.8)',
+                  color: C.navy,
                   flexShrink: 0,
                 }}
               >
@@ -255,6 +263,27 @@ export default function Locations() {
               </button>
             )}
           </div>
+          <button
+            type="submit"
+            style={{
+              padding: isMobile ? '11px 16px' : '12px 18px',
+              borderRadius: 14,
+              border: 'none',
+              background: C.red,
+              color: C.white,
+              fontFamily: F.heading,
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Search size={14} /> Buscar
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -265,13 +294,13 @@ export default function Locations() {
             }}
             disabled={gpsLoading}
             style={{
-              padding: isMobile ? '10px 14px' : '11px 16px',
+              padding: isMobile ? '11px 14px' : '12px 16px',
               borderRadius: 14,
-              border: `1px solid ${gpsLocation ? 'rgba(59,130,246,0.55)' : 'rgba(255,255,255,0.14)'}`,
-              background: gpsLocation ? 'rgba(37,99,235,0.22)' : 'rgba(255,255,255,0.05)',
-              color: gpsLocation ? '#93C5FD' : C.white,
+              border: `1px solid ${gpsLocation ? '#60A5FA' : 'rgba(255,255,255,0.22)'}`,
+              background: gpsLocation ? '#2563EB' : 'rgba(255,255,255,0.1)',
+              color: C.white,
               fontFamily: F.heading,
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: 12.5,
               cursor: gpsLoading ? 'wait' : 'pointer',
               display: 'inline-flex',
@@ -284,7 +313,7 @@ export default function Locations() {
             <Navigation size={13} />
             {gpsLoading ? 'Ubicando...' : 'Cerca de mí'}
           </button>
-        </div>
+        </form>
 
         {gpsError && (
           <div style={{
@@ -350,6 +379,8 @@ export default function Locations() {
             width: '100%',
             border: '1px solid rgba(255,255,255,0.06)',
             boxShadow: '0 24px 64px rgba(0,0,0,0.3)', position: 'relative',
+            isolation: 'isolate',
+            zIndex: 1,
           }}>
             <MapContainer
               center={[23.5, -102.5]} zoom={5}
@@ -408,7 +439,7 @@ export default function Locations() {
               })}
             </MapContainer>
             <div style={{
-              position: 'absolute', bottom: 20, left: 20, right: 20, zIndex: 1000,
+              position: 'absolute', bottom: 20, left: 20, right: 20, zIndex: 800,
               padding: '14px 20px', borderRadius: 16,
               background: 'rgba(26,31,54,0.85)', backdropFilter: 'blur(20px)',
               border: '1px solid rgba(255,255,255,0.08)',

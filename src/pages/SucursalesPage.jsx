@@ -133,7 +133,7 @@ export default function SucursalesPage() {
       />
 
       {/* Stats strip */}
-      <section style={{ padding: '28px 1.5rem', background: C.navy, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+      <section style={{ padding: '18px 1.5rem', background: C.navy, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 16 }}>
           <StatBadge number={sucursales.length} suffix="" label="Sucursales en México" icon={<Building2 size={20} color={C.redLight} />} />
           <StatBadge number={regions.length} suffix="" label="Regiones Cubiertas" icon={<MapPin size={20} color={C.redLight} />} />
@@ -143,32 +143,61 @@ export default function SucursalesPage() {
       </section>
 
       {/* Interactive map section */}
-      <section style={{ padding: isMobile ? '2rem 1rem 3rem' : 'clamp(2rem, 4vw, 3rem) 1.5rem', background: C.navy }}>
+      <section style={{ padding: isMobile ? '1.5rem 1rem 2.75rem' : 'clamp(1.25rem, 2.5vw, 1.75rem) 1.5rem 2.75rem', background: C.navy }}>
         <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-          {/* Search + Region filters */}
-          <div style={{
-            display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center',
-          }}>
+          {/* High-Contrast Search Toolbar */}
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              setSelectedLoc(filtered[0]?.id || null);
+            }}
+            style={{
+              position: 'relative',
+              display: 'flex',
+              gap: 10,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              marginBottom: 14,
+              padding: isMobile ? '10px' : '12px 14px',
+              borderRadius: 16,
+              background: 'rgba(26, 31, 54, 0.96)',
+              border: '1px solid rgba(255,255,255,0.14)',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.28)',
+            }}
+          >
             <div style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
-              borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-              width: isMobile ? '100%' : 'auto',
-              flex: isMobile ? '1 1 100%' : '1 1 340px',
-              maxWidth: isMobile ? '100%' : 480,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 14px',
+              borderRadius: 12,
+              background: '#FFFFFF',
+              border: '2px solid rgba(196,30,36,0.35)',
+              flex: isMobile ? '1 1 100%' : '1 1 380px',
+              minWidth: 0,
               boxSizing: 'border-box',
             }}>
-              <Search size={16} color="rgba(255,255,255,0.45)" style={{ flexShrink: 0 }} />
+              <Search size={18} color={C.red} style={{ flexShrink: 0 }} />
               <input
                 type="text"
                 aria-label="Buscar sucursal por código postal, nombre, dirección, ciudad o estado"
-                placeholder="Buscar por C.P. (ej. 11320), sucursal, dirección, ciudad o estado..."
+                placeholder="Buscar sucursal por C.P. (ej. 11320), dirección, colonia, ciudad o estado..."
                 value={searchTerm}
                 onChange={e => {
                   setSearchTerm(e.target.value);
                   setSelectedLoc(null);
                   if (gpsLocation) clearGps();
                 }}
-                style={{ border: 'none', background: 'none', outline: 'none', flex: 1, minWidth: 0, fontSize: 14, color: C.white }}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  outline: 'none',
+                  flex: 1,
+                  minWidth: 0,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: C.navy,
+                }}
               />
               {(searchTerm || gpsLocation) && (
                 <button
@@ -180,7 +209,7 @@ export default function SucursalesPage() {
                     setSelectedLoc(null);
                   }}
                   style={{
-                    background: 'rgba(255,255,255,0.1)',
+                    background: 'rgba(26,31,54,0.08)',
                     border: 'none',
                     borderRadius: 9999,
                     width: 24,
@@ -189,7 +218,7 @@ export default function SucursalesPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    color: 'rgba(255,255,255,0.75)',
+                    color: C.navy,
                     flexShrink: 0,
                   }}
                 >
@@ -197,6 +226,27 @@ export default function SucursalesPage() {
                 </button>
               )}
             </div>
+            <button
+              type="submit"
+              style={{
+                padding: '11px 18px',
+                borderRadius: 12,
+                border: 'none',
+                background: C.red,
+                color: C.white,
+                fontFamily: F.heading,
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Search size={14} /> Buscar
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -207,14 +257,14 @@ export default function SucursalesPage() {
               }}
               disabled={gpsLoading}
               style={{
-                padding: '10px 16px',
+                padding: '11px 16px',
                 borderRadius: 12,
-                border: `1px solid ${gpsLocation ? 'rgba(59,130,246,0.55)' : 'rgba(255,255,255,0.12)'}`,
-                background: gpsLocation ? 'rgba(37,99,235,0.22)' : 'rgba(255,255,255,0.04)',
-                color: gpsLocation ? '#93C5FD' : C.white,
+                border: `1px solid ${gpsLocation ? '#60A5FA' : 'rgba(255,255,255,0.22)'}`,
+                background: gpsLocation ? '#2563EB' : 'rgba(255,255,255,0.1)',
+                color: C.white,
                 fontFamily: F.heading,
-                fontWeight: 600,
-                fontSize: 12,
+                fontWeight: 700,
+                fontSize: 12.5,
                 cursor: gpsLoading ? 'wait' : 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -226,24 +276,29 @@ export default function SucursalesPage() {
               <Navigation size={13} />
               {gpsLoading ? 'Ubicando...' : 'Cerca de mí'}
             </button>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
-              <button onClick={() => { setActiveRegion(null); setSelectedLoc(null); clearGps(); }} style={{
+          </form>
+
+          {/* Region filters */}
+          <div style={{
+            display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap',
+            justifyContent: isMobile ? 'center' : 'flex-start', alignItems: 'center',
+          }}>
+            <button onClick={() => { setActiveRegion(null); setSelectedLoc(null); clearGps(); }} style={{
+              padding: '9px 18px', borderRadius: 12,
+              border: `1px solid ${!activeRegion ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
+              background: !activeRegion ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
+              color: !activeRegion ? C.white : 'rgba(255,255,255,0.5)',
+              fontFamily: F.heading, fontWeight: 600, fontSize: 12, cursor: 'pointer',
+            }}>Todas</button>
+            {regions.map(r => (
+              <button key={r} onClick={() => { setActiveRegion(prev => prev === r ? null : r); setSelectedLoc(null); clearGps(); }} style={{
                 padding: '9px 18px', borderRadius: 12,
-                border: `1px solid ${!activeRegion ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
-                background: !activeRegion ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
-                color: !activeRegion ? C.white : 'rgba(255,255,255,0.5)',
+                border: `1px solid ${activeRegion === r ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                background: activeRegion === r ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
+                color: activeRegion === r ? C.white : 'rgba(255,255,255,0.5)',
                 fontFamily: F.heading, fontWeight: 600, fontSize: 12, cursor: 'pointer',
-              }}>Todas</button>
-              {regions.map(r => (
-                <button key={r} onClick={() => { setActiveRegion(prev => prev === r ? null : r); setSelectedLoc(null); clearGps(); }} style={{
-                  padding: '9px 18px', borderRadius: 12,
-                  border: `1px solid ${activeRegion === r ? 'rgba(196,30,36,0.5)' : 'rgba(255,255,255,0.08)'}`,
-                  background: activeRegion === r ? 'rgba(196,30,36,0.12)' : 'rgba(255,255,255,0.03)',
-                  color: activeRegion === r ? C.white : 'rgba(255,255,255,0.5)',
-                  fontFamily: F.heading, fontWeight: 600, fontSize: 12, cursor: 'pointer',
-                }}>{r}</button>
-              ))}
-            </div>
+              }}>{r}</button>
+            ))}
           </div>
 
           {gpsError && (
@@ -271,15 +326,17 @@ export default function SucursalesPage() {
             <div style={{
               borderRadius: isMobile ? 20 : 28,
               overflow: 'hidden',
-              height: isMobile ? 380 : 640,
+              height: isMobile ? 380 : 500,
               width: '100%',
               border: '1px solid rgba(255,255,255,0.06)',
               boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
               position: 'relative',
+              isolation: 'isolate',
+              zIndex: 1,
             }}>
               <MapContainer
                 center={[23.5, -102.5]} zoom={5}
-                style={{ width: '100%', height: '100%', minHeight: isMobile ? 380 : 640 }}
+                style={{ width: '100%', height: '100%', minHeight: isMobile ? 380 : 500 }}
                 zoomControl={true} dragging={true} touchZoom={true}
                 doubleClickZoom={true} scrollWheelZoom={false}
                 attributionControl={false}
@@ -338,7 +395,7 @@ export default function SucursalesPage() {
 
               {/* Bottom badge */}
               <div style={{
-                position: 'absolute', bottom: 16, left: 16, right: 16, zIndex: 1000,
+                position: 'absolute', bottom: 16, left: 16, right: 16, zIndex: 800,
                 padding: '12px 18px', borderRadius: 14,
                 background: 'rgba(26,31,54,0.9)', backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255,255,255,0.08)',
@@ -366,7 +423,7 @@ export default function SucursalesPage() {
             {/* Sidebar - scrollable branch list */}
             <div style={{
               display: 'flex', flexDirection: 'column', gap: 8,
-              maxHeight: 640, overflowY: 'auto', paddingRight: 4,
+              maxHeight: 500, overflowY: 'auto', paddingRight: 4,
             }} className="timeline-scroll">
               <div style={{
                 padding: '14px 18px', borderRadius: 14,
@@ -507,9 +564,79 @@ export default function SucursalesPage() {
       {/* Branch cards by state */}
       <section style={{ padding: 'clamp(3rem, 6vw, 5rem) 1.5rem', background: C.light }}>
         <div style={{ maxWidth: 1300, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', color: C.navy, marginBottom: 32 }}>
-            Directorio de Sucursales
-          </h2>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 16,
+            marginBottom: 28,
+          }}>
+            <h2 style={{ fontFamily: F.heading, fontWeight: 800, fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', color: C.navy, margin: 0 }}>
+              Directorio de Sucursales
+            </h2>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 14px',
+              borderRadius: 12,
+              background: C.white,
+              border: `2px solid ${C.border}`,
+              flex: '1 1 320px',
+              maxWidth: 460,
+              boxSizing: 'border-box',
+            }}>
+              <Search size={17} color={C.red} style={{ flexShrink: 0 }} />
+              <input
+                type="text"
+                aria-label="Filtrar directorio de sucursales"
+                placeholder="Filtrar directorio por C.P., dirección, ciudad o estado..."
+                value={searchTerm}
+                onChange={e => {
+                  setSearchTerm(e.target.value);
+                  setSelectedLoc(null);
+                  if (gpsLocation) clearGps();
+                }}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  outline: 'none',
+                  flex: 1,
+                  minWidth: 0,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: C.navy,
+                }}
+              />
+              {(searchTerm || gpsLocation) && (
+                <button
+                  type="button"
+                  aria-label="Limpiar filtro de directorio"
+                  onClick={() => {
+                    setSearchTerm('');
+                    clearGps();
+                    setSelectedLoc(null);
+                  }}
+                  style={{
+                    background: 'rgba(26,31,54,0.08)',
+                    border: 'none',
+                    borderRadius: 9999,
+                    width: 24,
+                    height: 24,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: C.navy,
+                    flexShrink: 0,
+                  }}
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          </div>
           {grouped.map(([state, branches]) => (
             <div key={state} style={{ marginBottom: 32 }}>
               <div style={{
