@@ -169,7 +169,10 @@ export default function ProductoPreviewPage() {
     }
 
     const prevTitle = document.title;
-    const nextTitle = `${activeTarget.cleanTitle} | SKU ${activeTarget.reference || activeTarget.id} | Jasman Tires`;
+    const nextTitle = `${activeTarget.cleanTitle} | Jasman Tires la Tienda de llantas #1 en México.`;
+    const nextDescription =
+      activeTarget.excerpt ||
+      `${activeTarget.cleanTitle} disponible en Jasman Tires la Tienda de llantas #1 en México. Envío a domicilio e instalación en sucursal.`;
     document.title = nextTitle;
 
     const canonicalUrl = `https://www.jasman.com.mx${canonicalPath}`;
@@ -182,6 +185,15 @@ export default function ProductoPreviewPage() {
       el.setAttribute(el.tagName === 'LINK' ? 'href' : 'content', content);
     };
 
+    upsertMeta(
+      'meta[name="description"]',
+      () => {
+        const meta = document.createElement('meta');
+        meta.setAttribute('name', 'description');
+        return meta;
+      },
+      nextDescription
+    );
     upsertMeta(
       'link[rel="canonical"]',
       () => {
@@ -208,6 +220,15 @@ export default function ProductoPreviewPage() {
         return meta;
       },
       nextTitle
+    );
+    upsertMeta(
+      'meta[property="og:description"]',
+      () => {
+        const meta = document.createElement('meta');
+        meta.setAttribute('property', 'og:description');
+        return meta;
+      },
+      nextDescription
     );
 
     return () => {

@@ -25,6 +25,7 @@ import HomeTiendaPreviewPage from './pages/HomeTiendaPreviewPage';
 import CuentaPreviewPage from './pages/CuentaPreviewPage';
 import ThankYouPage from './pages/ThankYouPage';
 import MetaAdminPage from './pages/MetaAdminPage';
+import SeoManager from './components/SeoManager';
 import TrackingScriptsManager from './components/TrackingScriptsManager';
 
 function ScrollToTop() {
@@ -75,6 +76,7 @@ export default function App() {
   return (
     <>
       <ScrollToTop />
+      <SeoManager />
       <TrackingScriptsManager />
       {!isDedicatedStoreLanding && !isMetaAdminRoute && <Navbar />}
       <ScrollProgress />

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin-meta
+Disallow: /meta-pixel
+Disallow: /configuracion-meta
+
+Sitemap: https://www.jasman.com.mx/sitemap.xml

@@ -1,7 +1,7 @@
 /* ═══ Flotillas B2B content ═══ */
 
 export const flotillasContent = {
-  pageTitle: 'Flotilla | Jasman Automotriz',
+  pageTitle: 'Mantenimiento de Flotillas | JASMAN Automotriz',
   contact: {
     executiveLabel: 'Atención Ejecutiva a Flotillas · Néstor',
     whatsappPhone: '5215545990295',

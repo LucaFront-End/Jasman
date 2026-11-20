@@ -241,7 +241,7 @@ export default function TiendaCatalogSection({
 
   // Helper to navigate to the dedicated Catalog page (/landing-tienda-preview/catalogo) with active filters
   const navigateToStoreCatalog = useCallback(
-    (overrides = {}) => {
+    (overrides = {}, { replace = false } = {}) => {
       const nextBrand = overrides.brand !== undefined ? overrides.brand : brand;
       const nextMeasure = overrides.measure !== undefined ? overrides.measure : searchQuery;
       const nextVehicle = overrides.vehicle !== undefined ? overrides.vehicle : vehicleType;
@@ -261,7 +261,7 @@ export default function TiendaCatalogSection({
 
       const queryString = params.toString();
       const targetUrl = `/llantas/catalogo${queryString ? `?${queryString}` : ''}`;
-      navigate(targetUrl);
+      navigate(targetUrl, { replace });
     },
     [brand, searchQuery, vehicleType, carModel, rim, width, profile, navigate]
   );
@@ -491,7 +491,13 @@ export default function TiendaCatalogSection({
                   <button
                     key={vtId}
                     type="button"
-                    onClick={() => setVehicleType(isSelected ? 'Todos' : vtId)}
+                    onClick={() => {
+                      const nextVehicle = isSelected ? 'Todos' : vtId;
+                      setVehicleType(nextVehicle);
+                      if (isFullCatalogPage) {
+                        navigateToStoreCatalog({ vehicle: nextVehicle }, { replace: true });
+                      }
+                    }}
                     aria-label={vtId}
                     title={`${vtId} (${count} modelos)`}
                     style={{
@@ -687,12 +693,14 @@ export default function TiendaCatalogSection({
                       isSelected ? ' is-selected' : ''
                     }`}
                     onClick={() => {
-                      if (isSelected) {
-                        setVehicleType('Todos');
-                        setCarModel('');
-                      } else {
-                        setVehicleType(vt.id);
-                        setCarModel('');
+                      const nextVehicle = isSelected ? 'Todos' : vt.id;
+                      setVehicleType(nextVehicle);
+                      setCarModel('');
+                      if (isFullCatalogPage) {
+                        navigateToStoreCatalog(
+                          { vehicle: nextVehicle, carModel: '' },
+                          { replace: true }
+                        );
                       }
                     }}
                     title={`${vt.label}: ${vt.modelsText} (${count} llantas)`}
@@ -819,9 +827,13 @@ export default function TiendaCatalogSection({
                       <button
                         key={cm.id}
                         type="button"
-                        onClick={() =>
-                          setCarModel(isModelActive ? '' : cm.id)
-                        }
+                        onClick={() => {
+                          const nextModel = isModelActive ? '' : cm.id;
+                          setCarModel(nextModel);
+                          if (isFullCatalogPage) {
+                            navigateToStoreCatalog({ carModel: nextModel }, { replace: true });
+                          }
+                        }}
                         style={{
                           padding: '4px 11px',
                           borderRadius: 9999,
@@ -848,6 +860,12 @@ export default function TiendaCatalogSection({
                   onClick={() => {
                     setVehicleType('Todos');
                     setCarModel('');
+                    if (isFullCatalogPage) {
+                      navigateToStoreCatalog(
+                        { vehicle: 'Todos', carModel: '' },
+                        { replace: true }
+                      );
+                    }
                   }}
                   style={{
                     padding: '5px 11px',
@@ -948,7 +966,12 @@ export default function TiendaCatalogSection({
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => setSearchQuery('')}
+                    onClick={() => {
+                      setSearchQuery('');
+                      if (isFullCatalogPage) {
+                        navigateToStoreCatalog({ measure: '' }, { replace: true });
+                      }
+                    }}
                     style={{
                       border: 'none',
                       background: 'transparent',
@@ -987,7 +1010,9 @@ export default function TiendaCatalogSection({
                           navigateToStoreCatalog({ measure: m.raw });
                           return;
                         }
-                        setSearchQuery(isSelected ? '' : m.raw);
+                        const nextMeasure = isSelected ? '' : m.raw;
+                        setSearchQuery(nextMeasure);
+                        navigateToStoreCatalog({ measure: nextMeasure }, { replace: true });
                       }}
                       style={{
                         padding: '10px 8px',
@@ -1063,7 +1088,12 @@ export default function TiendaCatalogSection({
                 {brand !== 'Todas' && (
                   <button
                     type="button"
-                    onClick={() => setBrand('Todas')}
+                    onClick={() => {
+                      setBrand('Todas');
+                      if (isFullCatalogPage) {
+                        navigateToStoreCatalog({ brand: 'Todas' }, { replace: true });
+                      }
+                    }}
                     style={{
                       border: 'none',
                       background: 'transparent',
@@ -1103,7 +1133,9 @@ export default function TiendaCatalogSection({
                           navigateToStoreCatalog({ brand: brandName });
                           return;
                         }
-                        setBrand(active ? 'Todas' : brandName);
+                        const nextBrand = active ? 'Todas' : brandName;
+                        setBrand(nextBrand);
+                        navigateToStoreCatalog({ brand: nextBrand }, { replace: true });
                       }}
                       title={brandName}
                       style={{

@@ -4,6 +4,7 @@
     { "source": "/feed.tsv", "destination": "/api/catalog-feed?format=tsv" },
     { "source": "/meta-catalog.xml", "destination": "/api/catalog-feed?format=xml" },
     { "source": "/catalog-feed.xml", "destination": "/api/catalog-feed?format=xml" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]

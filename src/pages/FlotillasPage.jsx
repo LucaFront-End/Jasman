@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { C, F, useCountUp } from '../hooks/useAnimations';
 import Icon from '../components/Icon';
@@ -119,13 +119,7 @@ export default function FlotillasPage() {
     dispatchVehicle,
   } = useFlotillasDispatch({ autoLoop: true });
 
-  useEffect(() => {
-    const prevTitle = document.title;
-    document.title = flotillasContent.pageTitle;
-    return () => {
-      document.title = prevTitle;
-    };
-  }, []);
+  // Title and meta description managed centrally by SeoManager
 
   const handleSubmit = (e) => {
     e.preventDefault();
