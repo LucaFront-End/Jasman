@@ -5,6 +5,12 @@
     { "source": "/meta-catalog.xml", "destination": "/api/catalog-feed?format=xml" },
     { "source": "/catalog-feed.xml", "destination": "/api/catalog-feed?format=xml" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/sitemap-paginas.xml", "destination": "/api/sitemap?type=paginas" },
+    { "source": "/sitemap-servicios.xml", "destination": "/api/sitemap?type=servicios" },
+    { "source": "/sitemap-sucursales.xml", "destination": "/api/sitemap?type=sucursales" },
+    { "source": "/sitemap-promocion.xml", "destination": "/api/sitemap?type=promocion" },
+    { "source": "/sitemap-tienda-categorias.xml", "destination": "/api/sitemap?type=tienda-categorias" },
+    { "source": "/sitemap-productos.xml", "destination": "/api/sitemap?type=productos" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
