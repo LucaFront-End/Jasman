@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
 import { C, F } from '../../hooks/useAnimations';
-import { saveContactoWeb } from '../../services/wixService';
 import { useTiendaState } from '../../hooks/useTiendaState';
-import { X, Tag, Check, ArrowRight, AlertCircle, Sparkles, Mail } from 'lucide-react';
+import {
+  X,
+  Tag,
+  Check,
+  ArrowRight,
+  AlertCircle,
+  Sparkles,
+  Mail,
+  Copy,
+  Loader2,
+} from 'lucide-react';
 
 const EMAIL_REG_STORAGE_KEY = 'jasman_tienda_first_purchase_email_v1';
 
@@ -17,7 +26,7 @@ function readRegisteredEmail() {
 }
 
 export default function FirstPurchasePopup({ autoOpen = true }) {
-  const { coupon, removeCoupon, user, saveUser } = useTiendaState();
+  const { coupon, removeCoupon, applyFirstPurchaseCoupon, user, saveUser } = useTiendaState();
   const [open, setOpen] = useState(false);
   const [registeredRecord, setRegisteredRecord] = useState(() => readRegisteredEmail());
 
@@ -25,6 +34,9 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
   const [telefono, setTelefono] = useState(user?.telefono || '');
   const [correo, setCorreo] = useState(user?.correo || '');
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   // Clear any legacy auto-generated JASMAN10-* code from older preview sessions
   useEffect(() => {
@@ -81,15 +93,52 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
     return Object.keys(nextErrs).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (submitting || !validate()) return;
 
     const cleanPhone = telefono.replace(/\D/g, '');
+    const cleanName = nombre.trim();
+    const cleanEmail = correo.trim().toLowerCase();
+
+    setSubmitting(true);
+    setSubmitError('');
+
+    let generatedCouponCode = '';
+    try {
+      const apiRes = await fetch('/api/coupon-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: cleanName,
+          telefono: cleanPhone,
+          correo: cleanEmail,
+          origen: 'Popup 10% Primera Compra — Tienda de Llantas',
+        }),
+      });
+      const apiData = await apiRes.json().catch(() => null);
+      if (apiRes.ok && apiData?.ok && apiData?.couponCode) {
+        generatedCouponCode = String(apiData.couponCode).trim();
+      } else {
+        setSubmitError(
+          'No se pudo generar tu cupón en este momento. Intenta de nuevo en unos segundos.'
+        );
+        setSubmitting(false);
+        return;
+      }
+    } catch {
+      setSubmitError(
+        'Error de conexión al registrar tu cupón. Verifica tu internet e intenta nuevamente.'
+      );
+      setSubmitting(false);
+      return;
+    }
+
     const record = {
-      nombre: nombre.trim(),
+      nombre: cleanName,
       telefono: cleanPhone,
-      correo: correo.trim(),
+      correo: cleanEmail,
+      couponCode: generatedCouponCode,
       createdAt: new Date().toISOString(),
     };
 
@@ -100,31 +149,42 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
       // ignore storage errors
     }
 
+    if (generatedCouponCode) {
+      applyFirstPurchaseCoupon({
+        code: generatedCouponCode,
+        percent: 10,
+        source: 'wix-dynamic',
+        createdAt: record.createdAt,
+      });
+    }
+
     if (!user) {
       saveUser({
-        nombre: nombre.trim(),
+        nombre: cleanName,
         telefono: cleanPhone,
-        correo: correo.trim(),
-        createdAt: new Date().toISOString(),
+        correo: cleanEmail,
+        createdAt: record.createdAt,
       });
     } else if (!user.telefono || !user.nombre) {
       saveUser({
         ...user,
-        nombre: user.nombre || nombre.trim(),
+        nombre: user.nombre || cleanName,
         telefono: user.telefono || cleanPhone,
       });
     }
 
-    saveContactoWeb({
-      nombre: nombre.trim(),
-      telefono: cleanPhone,
-      email: correo.trim(),
-      cupon: 'Pendiente de envío por correo (10% Primera Compra Tienda)',
-      asunto: 'Solicitud de Cupón 10% Primera Compra — Tienda de Llantas',
-      mensaje:
-        'Cliente registrado en Tienda Online para recibir su cupón del 10% de descuento por correo electrónico.',
-      origen: 'Popup 10% Primera Compra — Tienda de Llantas',
-    }).catch(() => {});
+    setSubmitting(false);
+  };
+
+  const handleCopyCoupon = async () => {
+    if (!registeredRecord?.couponCode) return;
+    try {
+      await navigator.clipboard.writeText(registeredRecord.couponCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      setCopied(false);
+    }
   };
 
   if (!open) {
@@ -177,10 +237,18 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
             }}
           />
           <span className="jasman-coupon-full-txt">
-            {registeredRecord ? '✓ Cupón 10% por correo' : '−10% Primera Compra'}
+            {registeredRecord?.couponCode
+              ? `✓ Cupón: ${registeredRecord.couponCode}`
+              : registeredRecord
+                ? '✓ Cupón 10% por correo'
+                : '−10% Primera Compra'}
           </span>
           <span className="jasman-coupon-short-txt" style={{ display: 'none' }}>
-            {registeredRecord ? '✓ 10% Correo' : '−10% Cupón'}
+            {registeredRecord?.couponCode
+              ? '✓ 10% Activo'
+              : registeredRecord
+                ? '✓ 10% Correo'
+                : '−10% Cupón'}
           </span>
         </button>
         <style>{`
@@ -586,22 +654,45 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                 )}
               </div>
 
+              {submitError && (
+                <div
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    background: '#FEF2F2',
+                    border: '1px solid rgba(196, 30, 36, 0.25)',
+                    color: C.red,
+                    fontSize: 12,
+                    lineHeight: 1.45,
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                  <span>{submitError}</span>
+                </div>
+              )}
+
               <button
                 type="submit"
+                disabled={submitting}
                 style={{
                   marginTop: 6,
                   width: '100%',
                   padding: '15px 20px',
                   borderRadius: 12,
                   border: 'none',
-                  background: C.red,
+                  background: submitting ? '#991B1B' : C.red,
                   color: C.white,
                   fontFamily: F.heading,
                   fontSize: 13,
                   fontWeight: 800,
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  cursor: 'pointer',
+                  cursor: submitting ? 'wait' : 'pointer',
+                  opacity: submitting ? 0.88 : 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -610,7 +701,15 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                   transition: 'all 0.25s',
                 }}
               >
-                <Tag size={15} /> Recibir cupón en mi correo <ArrowRight size={15} />
+                {submitting ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" /> Generando tu cupón...
+                  </>
+                ) : (
+                  <>
+                    <Tag size={15} /> Recibir cupón en mi correo <ArrowRight size={15} />
+                  </>
+                )}
               </button>
 
               <p
@@ -674,13 +773,89 @@ export default function FirstPurchasePopup({ autoOpen = true }) {
                     margin: '0 0 8px',
                   }}
                 >
-                  ¡Te llegará por correo!
+                  {registeredRecord.couponCode
+                    ? '¡Tu cupón del 10% está listo!'
+                    : '¡Te llegará por correo!'}
                 </h4>
                 <p style={{ fontSize: 13.5, color: C.gray, margin: 0, lineHeight: 1.55 }}>
-                  Hemos registrado tu beneficio del{' '}
-                  <strong>10% de descuento en tu primera compra</strong>. Recibirás tu cupón directamente en tu correo electrónico.
+                  {registeredRecord.couponCode ? (
+                    <>
+                      Hemos registrado tu beneficio del{' '}
+                      <strong>10% de descuento en tu primera compra</strong>. Ya quedó activo para tu carrito y también te lo enviaremos a tu correo.
+                    </>
+                  ) : (
+                    <>
+                      Hemos registrado tu beneficio del{' '}
+                      <strong>10% de descuento en tu primera compra</strong>. Recibirás tu cupón directamente en tu correo electrónico.
+                    </>
+                  )}
                 </p>
               </div>
+
+              {registeredRecord.couponCode && (
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: 14,
+                    background: '#FFF5F5',
+                    border: '1.5px dashed rgba(196, 30, 36, 0.42)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: 9.5,
+                        fontFamily: F.heading,
+                        fontWeight: 800,
+                        color: C.red,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      Tu cupón personal (10% OFF)
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 15.5,
+                        fontFamily: F.heading,
+                        fontWeight: 900,
+                        color: C.navy,
+                        letterSpacing: '0.04em',
+                        whiteSpace: 'nowrap',
+                        marginTop: 3,
+                      }}
+                    >
+                      {registeredRecord.couponCode}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyCoupon}
+                    style={{
+                      padding: '8px 11px',
+                      borderRadius: 9,
+                      border: `1px solid ${copied ? 'rgba(22, 163, 74, 0.35)' : 'rgba(196, 30, 36, 0.28)'}`,
+                      background: copied ? 'rgba(22, 163, 74, 0.1)' : C.white,
+                      color: copied ? '#15803D' : C.navy,
+                      fontFamily: F.heading,
+                      fontSize: 11,
+                      fontWeight: 800,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {copied ? <Check size={13} color="#16A34A" /> : <Copy size={13} color={C.red} />}
+                    <span>{copied ? 'Copiado' : 'Copiar'}</span>
+                  </button>
+                </div>
+              )}
 
               <div
                 style={{

@@ -45,6 +45,7 @@ export default function TiendaCartDrawer() {
     updateCartQuantity,
     removeFromCart,
     clearCart,
+    removeCoupon,
     createOrderRecord,
   } = useTiendaState();
 
@@ -87,7 +88,9 @@ export default function TiendaCartDrawer() {
     if (!open) return undefined;
 
     let cancelled = false;
-    const preserveCoupon = wixEstimate?.appliedCoupon?.code || null;
+    const preserveCoupon =
+      wixEstimate?.appliedCoupon?.code ||
+      (coupon?.source === 'wix-dynamic' && coupon?.code ? coupon.code : null);
 
     syncAndEstimateWixCart({ cartItems, couponCode: preserveCoupon })
       .then((est) => {
@@ -216,6 +219,7 @@ export default function TiendaCartDrawer() {
     try {
       const est = await removeCouponFromWixCart();
       setWixEstimate(est);
+      removeCoupon();
       setCouponFeedback('');
     } finally {
       setCouponLoading(false);
