@@ -36,16 +36,16 @@ const BRAND_TILE_STYLES = {
 
 export default function TiendaMostRequestedSection({
   isCompactDropdown = false,
-  mode = 'all', // 'all' | 'measures' | 'brands' | 'vehicles'
+  mode = 'all', // 'all' | 'measures' | 'brands' | 'vehicles' | 'categories'
   onAfterSelect,
 }) {
   const navigate = useNavigate();
   const { products: catalogProducts } = useWixCatalogProducts();
   const [hoveredVehicleId, setHoveredVehicleId] = useState(null);
 
-  const showMeasures = mode === 'all' || mode === 'measures';
+  const showMeasures = mode === 'all' || mode === 'measures' || mode === 'categories';
   const showBrands = mode === 'all' || mode === 'brands';
-  const showVehicleTypes = mode === 'vehicles';
+  const showVehicleTypes = mode === 'vehicles' || mode === 'categories';
   const showTires = mode === 'all' || mode === 'measures';
   const brandsList =
     mode === 'brands' ? ALL_OFFICIAL_MENU_BRANDS : FEATURED_BRAND_KEYS;

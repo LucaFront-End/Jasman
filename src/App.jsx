@@ -137,6 +137,7 @@ export default function App() {
           <Route path="/servicios/:slug" element={<ServicioDetailPage />} />
           <Route path="/sucursales" element={<SucursalesPage />} />
           <Route path="/sucursales/:slug" element={<SucursalDetailPage />} />
+          <Route path="/sucursales/:branchSlug/:slug" element={<ServicioDetailPage />} />
           <Route path="/flotillas" element={<FlotillasPage />} />
           <Route path="/bolsa-de-trabajo" element={<BolsaTrabajoPage />} />
           <Route path="/bolsa-de-trabajo/:id" element={<VacanteDetailPage />} />

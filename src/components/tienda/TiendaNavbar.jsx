@@ -27,7 +27,9 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  MessageCircle,
 } from 'lucide-react';
+import { buildStoreQuoteWhatsAppUrl } from '../../utils/whatsappLinks';
 
 const SHIPPING_TICKER_ITEMS = [
   'ENVÍO GRATIS EN TODA LA REPÚBLICA MEXICANA',
@@ -51,7 +53,7 @@ function normalizeMeasureToken(raw) {
 export default function TiendaNavbar({ legacyMode = false }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [mobileAccordion, setMobileAccordion] = useState(null); // 'brands' | 'measures' | null
+  const [mobileAccordion, setMobileAccordion] = useState(null); // 'categories' | 'brands' | null
   const [megaOpen, setMegaOpen] = useState(false);
   const [megaMode, setMegaMode] = useState('all');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -62,7 +64,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
 
   const { cartCount, user, coupon } = useTiendaState();
   const { products: catalogProducts } = useWixCatalogProducts();
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const navigate = useNavigate();
 
   const openMegaMenu = (nextMode) => {
@@ -151,7 +153,13 @@ export default function TiendaNavbar({ legacyMode = false }) {
         { label: 'Cuenta', href: '/landing-tienda-preview/cuenta', isAccount: true },
       ]
     : [
-        { label: 'Catálogo', href: '/llantas/catalogo' },
+        { label: 'Tienda', href: '/llantas/catalogo' },
+        {
+          label: 'Categorías',
+          href: '/llantas/catalogo',
+          hasMega: true,
+          megaMode: 'categories',
+        },
         {
           label: 'Marcas',
           href: '/llantas/catalogo',
@@ -159,17 +167,11 @@ export default function TiendaNavbar({ legacyMode = false }) {
           megaMode: 'brands',
         },
         {
-          label: 'Medidas',
-          href: '/llantas/catalogo',
-          hasMega: true,
-          megaMode: 'measures',
+          label: 'Comunidad',
+          href: '/llantas#resenas-tienda',
+          isCommunity: true,
         },
-        {
-          label: 'Vehículos',
-          href: '/llantas/catalogo',
-          hasMega: true,
-          megaMode: 'vehicles',
-        },
+        { label: 'Contacto', href: '/contacto' },
       ];
 
   // Live instant search matches (measures, brands, vehicle types, and compatible car models)
@@ -285,6 +287,22 @@ export default function TiendaNavbar({ legacyMode = false }) {
       triggerTiendaUI({ type: 'OPEN_AUTH', redirectToAccount: true });
     }
   };
+
+  const handleCommunityAction = (e) => {
+    setMegaOpen(false);
+    setMobileMenu(false);
+    setSearchOpen(false);
+    if (pathname === '/llantas' || pathname === '/landing-tienda-preview') {
+      e.preventDefault();
+      const target = document.getElementById('resenas-tienda');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.replaceState(null, '', `${pathname}#resenas-tienda`);
+      }
+    }
+  };
+
+  const storeWhatsAppQuoteUrl = buildStoreQuoteWhatsAppUrl();
 
   return (
     <header
@@ -437,7 +455,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
           className="tienda-eyebrow-bar"
           style={{
             width: '100%',
-            height: scrolled ? 0 : 32,
+            height: scrolled ? 0 : 34,
             opacity: scrolled ? 0 : 1,
             background: '#111627',
             color: '#FFFFFF',
@@ -451,137 +469,253 @@ export default function TiendaNavbar({ legacyMode = false }) {
             transition: 'height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
           }}
         >
+          {/* Fixed left shortcut back to Main Jasman site (desktop) */}
           <div
-            className="tienda-eyebrow-inner"
+            className="tienda-eyebrow-home-wrap"
             style={{
-              maxWidth: 1180,
-              width: '100%',
-              margin: '0 auto',
-              padding: '0 22px',
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              zIndex: 4,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
+              padding: '0 28px 0 16px',
+              background: 'linear-gradient(90deg, #111627 78%, rgba(17, 22, 39, 0) 100%)',
+              pointerEvents: 'auto',
             }}
           >
-            {/* Left: Jasman Automotriz Corporate Ecosystem Navigation */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                minWidth: 0,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <Link
-                to="/"
-                className="tienda-eyebrow-home-pill"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '2.5px 10px',
-                  borderRadius: 9999,
-                  background: 'rgba(255, 255, 255, 0.10)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#FFFFFF',
-                  fontFamily: F.heading,
-                  fontSize: 10.5,
-                  fontWeight: 700,
-                  letterSpacing: '0.01em',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <ArrowLeft size={11} />
-                <span>Home Jasman</span>
-              </Link>
-
-              <div
-                className="tienda-eyebrow-corp-links"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 16,
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    width: 1,
-                    height: 12,
-                    background: 'rgba(255, 255, 255, 0.16)',
-                    display: 'inline-block',
-                  }}
-                />
-                {[
-                  { label: 'Nosotros', href: '/#nosotros' },
-                  { label: 'Servicios', href: '/servicios' },
-                  { label: 'Sucursales', href: '/sucursales' },
-                  { label: 'Flotillas', href: '/flotillas' },
-                  { label: 'Contacto', href: '/contacto' },
-                ].map((corp) => (
-                  <Link
-                    key={corp.label}
-                    to={corp.href}
-                    className="tienda-eyebrow-link"
-                    style={{
-                      fontFamily: F.heading,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: 'rgba(255, 255, 255, 0.76)',
-                      textDecoration: 'none',
-                      transition: 'color 0.2s ease',
-                    }}
-                  >
-                    {corp.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Right: Store Official Shipping & Volume Benefit */}
-            <div
-              className="tienda-eyebrow-promo"
+            <Link
+              to="/"
+              className="tienda-eyebrow-home-pill"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 5,
+                padding: '2.5px 10px',
+                borderRadius: 9999,
+                background: 'rgba(255, 255, 255, 0.10)',
+                border: '1px solid rgba(255, 255, 255, 0.16)',
+                color: '#FFFFFF',
+                fontFamily: F.heading,
+                fontSize: 10.5,
+                fontWeight: 700,
+                letterSpacing: '0.01em',
+                textDecoration: 'none',
                 whiteSpace: 'nowrap',
-                flexShrink: 0,
+                transition: 'all 0.2s ease',
               }}
             >
-              <span
+              <ArrowLeft size={11} />
+              <span>Home Jasman</span>
+            </Link>
+          </div>
+
+          <div
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 48,
+              background: 'linear-gradient(270deg, #111627 0%, rgba(17, 22, 39, 0) 100%)',
+              zIndex: 3,
+              pointerEvents: 'none',
+            }}
+          />
+
+          <div className="tienda-shipping-marquee-track">
+            {[...Array(3)].map((_, loopIdx) => (
+              <div
+                key={loopIdx}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 4,
-                  padding: '2px 8px',
-                  borderRadius: 9999,
-                  background: C.red,
-                  color: '#FFFFFF',
-                  fontFamily: F.heading,
-                  fontSize: 8.5,
-                  fontWeight: 800,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
+                  gap: 28,
+                  paddingRight: 28,
+                  whiteSpace: 'nowrap',
                 }}
               >
-                <Truck size={10} /> Envío Gratis
-              </span>
-              <span
-                className="tienda-eyebrow-promo-detail"
-                style={{
-                  fontFamily: F.heading,
-                  fontSize: 10.5,
-                  fontWeight: 600,
-                  color: 'rgba(255, 255, 255, 0.82)',
-                }}
-              >
-                Toda la República · −5% en juego de 4 llantas
-              </span>
-            </div>
+                <a
+                  href={storeWhatsAppQuoteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tienda-marquee-wa-link"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontFamily: F.heading,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: '0.13em',
+                    textTransform: 'uppercase',
+                    color: '#FFFFFF',
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '2px 8px',
+                      borderRadius: 9999,
+                      background: '#25D366',
+                      color: '#FFFFFF',
+                      fontSize: 8.5,
+                      fontWeight: 900,
+                      letterSpacing: '0.11em',
+                    }}
+                  >
+                    <MessageCircle size={10} /> WhatsApp
+                  </span>
+                  <span style={{ textDecoration: 'underline', textUnderlineOffset: '3px' }}>
+                    Obtenga una cotización por WhatsApp
+                  </span>
+                </a>
+
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    background: C.red,
+                    display: 'inline-block',
+                  }}
+                />
+
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontFamily: F.heading,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: '0.13em',
+                    textTransform: 'uppercase',
+                    color: '#FFFFFF',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '2px 8px',
+                      borderRadius: 9999,
+                      background: C.red,
+                      color: '#FFFFFF',
+                      fontSize: 8.5,
+                      fontWeight: 900,
+                      letterSpacing: '0.11em',
+                    }}
+                  >
+                    <Truck size={10} /> Envío Gratis
+                  </span>
+                  <span>ENVÍOS GRATIS A TODO MÉXICO</span>
+                </span>
+
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    background: C.red,
+                    display: 'inline-block',
+                  }}
+                />
+
+                <span
+                  style={{
+                    fontFamily: F.heading,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(255, 255, 255, 0.85)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  −2% EN PAR · −5% EN JUEGO DE 4 LLANTAS · INSTALACIÓN EN +70 SUCURSALES JASMAN
+                </span>
+
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    background: C.red,
+                    display: 'inline-block',
+                  }}
+                />
+
+                <a
+                  href={storeWhatsAppQuoteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tienda-marquee-wa-link"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontFamily: F.heading,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: '0.13em',
+                    textTransform: 'uppercase',
+                    color: '#FFFFFF',
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '3px',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Obtenga una cotización por WhatsApp
+                </a>
+
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    background: C.red,
+                    display: 'inline-block',
+                  }}
+                />
+
+                <span
+                  style={{
+                    fontFamily: F.heading,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: '0.13em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  ENVÍOS GRATIS A TODO MÉXICO
+                </span>
+
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    background: C.red,
+                    display: 'inline-block',
+                  }}
+                />
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -599,7 +733,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
         <div
           className="tienda-apple-pill-inner"
           style={{
-            maxWidth: legacyMode ? (scrolled ? 1160 : 1260) : scrolled ? 980 : 1080,
+            maxWidth: legacyMode ? (scrolled ? 1160 : 1260) : scrolled ? 1060 : 1160,
             margin: '0 auto',
             padding: legacyMode
               ? scrolled
@@ -685,7 +819,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: legacyMode ? 4 : 8,
+              gap: legacyMode ? 4 : 4,
               flex: 1,
               minWidth: 0,
             }}
@@ -696,22 +830,23 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 pathname === '/landing-tienda-preview';
               const isMegaActive =
                 megaOpen && item.hasMega && !legacyMode && megaMode === item.megaMode;
-              const isCatalogActive =
+              const isLinkActive =
                 !legacyMode &&
                 !item.hasMega &&
                 !megaOpen &&
-                pathname.endsWith('/catalogo') &&
-                item.href.endsWith('/catalogo');
+                ((item.isCommunity && hash === '#resenas-tienda') ||
+                  (item.href === '/llantas/catalogo' && pathname.endsWith('/catalogo')) ||
+                  (item.href === '/contacto' && pathname === '/contacto'));
               const linkStyle = {
-                padding: legacyMode ? '7px 13px' : '8px 16px',
+                padding: legacyMode ? '7px 13px' : '8px 13px',
                 borderRadius: 9999,
                 fontFamily: F.heading,
-                fontSize: legacyMode ? 12 : 13,
-                fontWeight: isCatalogActive ? 700 : 600,
+                fontSize: legacyMode ? 12 : 12.5,
+                fontWeight: isLinkActive ? 700 : 600,
                 letterSpacing: '-0.01em',
                 background: isMegaActive
                   ? C.red
-                  : isCatalogActive
+                  : isLinkActive
                     ? 'rgba(26, 31, 54, 0.05)'
                     : 'transparent',
                 color: isMegaActive ? C.white : C.navy,
@@ -738,7 +873,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
 
               const handleLeave = (e) => {
                 if (!isMegaActive) {
-                  e.currentTarget.style.background = isCatalogActive
+                  e.currentTarget.style.background = isLinkActive
                     ? 'rgba(26, 31, 54, 0.05)'
                     : 'transparent';
                   e.currentTarget.style.color = C.navy;
@@ -768,7 +903,11 @@ export default function TiendaNavbar({ legacyMode = false }) {
                   onMouseEnter={handleEnter}
                   onMouseLeave={handleLeave}
                   onClick={
-                    item.isAccount ? handleAccountAction : () => setMegaOpen(false)
+                    item.isAccount
+                      ? handleAccountAction
+                      : item.isCommunity
+                        ? handleCommunityAction
+                        : () => setMegaOpen(false)
                   }
                 >
                   <span>{item.label}</span>
@@ -1645,9 +1784,159 @@ export default function TiendaNavbar({ legacyMode = false }) {
                   justifyContent: 'space-between',
                 }}
               >
-                <span>Catálogo Completo</span>
+                <span>Tienda (Catálogo Completo)</span>
                 <ArrowRight size={14} color={C.red} />
               </Link>
+
+              {/* Expandable Mobile Accordion: Categorías (Tipos de Vehículo + Modelos + Top Medidas) */}
+              <div style={{ borderBottom: '1px solid rgba(26, 31, 54, 0.06)' }}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMobileAccordion((prev) =>
+                      prev === 'categories' ? null : 'categories'
+                    )
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '10px 6px',
+                    border: 'none',
+                    background: 'transparent',
+                    fontFamily: F.heading,
+                    fontSize: 13.5,
+                    fontWeight: 800,
+                    color: mobileAccordion === 'categories' ? C.red : C.navy,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span>Categorías (Vehículos & Medidas)</span>
+                  <ChevronDown
+                    size={16}
+                    style={{
+                      transform:
+                        mobileAccordion === 'categories'
+                          ? 'rotate(180deg)'
+                          : 'rotate(0deg)',
+                      transition: 'transform 0.25s ease',
+                    }}
+                  />
+                </button>
+                {mobileAccordion === 'categories' && (
+                  <div style={{ padding: '4px 4px 12px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                        gap: 8,
+                      }}
+                    >
+                      {VEHICLE_TYPE_OPTIONS.map((vt) => (
+                        <button
+                          key={vt.id}
+                          type="button"
+                          onClick={() => handleQuickVehicle(vt.id)}
+                          style={{
+                            padding: '8px 10px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(26, 31, 54, 0.10)',
+                            background: '#F8FAFC',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            gap: 4,
+                            textAlign: 'left',
+                          }}
+                        >
+                          <TiendaVehicleSvg type={vt.id} width={68} height={25} />
+                          <span
+                            style={{
+                              fontFamily: F.heading,
+                              fontSize: 11.5,
+                              fontWeight: 900,
+                              color: C.navy,
+                            }}
+                          >
+                            {vt.label}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: F.body,
+                              fontSize: 9.5,
+                              color: '#64748B',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              width: '100%',
+                            }}
+                          >
+                            {vt.modelsText}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {POPULAR_CAR_MODELS.slice(0, 10).map((cm) => (
+                        <button
+                          key={cm.id}
+                          type="button"
+                          onClick={() => handleQuickCarModel(cm)}
+                          style={{
+                            padding: '5px 10px',
+                            borderRadius: 9999,
+                            border: '1px solid rgba(26, 31, 54, 0.12)',
+                            background: '#FFFFFF',
+                            cursor: 'pointer',
+                            fontFamily: F.heading,
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            color: C.navy,
+                          }}
+                        >
+                          {cm.id}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                        gap: 8,
+                      }}
+                    >
+                      {MOST_REQUESTED_MEASURES.slice(0, 8).map((m) => (
+                        <button
+                          key={m.raw}
+                          type="button"
+                          onClick={() => handleQuickMeasure(m.raw)}
+                          style={{
+                            padding: '8px 10px',
+                            borderRadius: 9999,
+                            border: '1px solid rgba(26, 31, 54, 0.14)',
+                            background: '#FFFFFF',
+                            cursor: 'pointer',
+                            fontFamily: F.heading,
+                            fontSize: 11.5,
+                            fontWeight: 800,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 4,
+                          }}
+                        >
+                          <span style={{ color: C.navy }}>{m.prefix}</span>
+                          <span style={{ color: C.red }}>{m.rim}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Expandable Mobile Accordion: All 13 Brands */}
               <div style={{ borderBottom: '1px solid rgba(26, 31, 54, 0.06)' }}>
@@ -1741,195 +2030,45 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 )}
               </div>
 
-              {/* Expandable Mobile Accordion: Tipo de Vehículo & Modelos */}
-              <div style={{ borderBottom: '1px solid rgba(26, 31, 54, 0.06)' }}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setMobileAccordion((prev) =>
-                      prev === 'vehicles' ? null : 'vehicles'
-                    )
-                  }
-                  style={{
-                    width: '100%',
-                    padding: '10px 6px',
-                    border: 'none',
-                    background: 'transparent',
-                    fontFamily: F.heading,
-                    fontSize: 13.5,
-                    fontWeight: 800,
-                    color: mobileAccordion === 'vehicles' ? C.red : C.navy,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span>Tipo de Vehículo & Modelos (8)</span>
-                  <ChevronDown
-                    size={16}
-                    style={{
-                      transform:
-                        mobileAccordion === 'vehicles'
-                          ? 'rotate(180deg)'
-                          : 'rotate(0deg)',
-                      transition: 'transform 0.25s ease',
-                    }}
-                  />
-                </button>
-                {mobileAccordion === 'vehicles' && (
-                  <div style={{ padding: '4px 4px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                        gap: 8,
-                      }}
-                    >
-                      {VEHICLE_TYPE_OPTIONS.map((vt) => (
-                        <button
-                          key={vt.id}
-                          type="button"
-                          onClick={() => handleQuickVehicle(vt.id)}
-                          style={{
-                            padding: '8px 10px',
-                            borderRadius: 12,
-                            border: '1px solid rgba(26, 31, 54, 0.10)',
-                            background: '#F8FAFC',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-start',
-                            gap: 4,
-                            textAlign: 'left',
-                          }}
-                        >
-                          <TiendaVehicleSvg type={vt.id} width={68} height={25} />
-                          <span
-                            style={{
-                              fontFamily: F.heading,
-                              fontSize: 11.5,
-                              fontWeight: 900,
-                              color: C.navy,
-                            }}
-                          >
-                            {vt.label}
-                          </span>
-                          <span
-                            style={{
-                              fontFamily: F.body,
-                              fontSize: 9.5,
-                              color: '#64748B',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              width: '100%',
-                            }}
-                          >
-                            {vt.modelsText}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
+              <Link
+                to="/llantas#resenas-tienda"
+                onClick={handleCommunityAction}
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 13.5,
+                  fontWeight: 800,
+                  color: C.navy,
+                  textDecoration: 'none',
+                  padding: '10px 6px',
+                  borderBottom: '1px solid rgba(26, 31, 54, 0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span>Comunidad (Reseñas y Eventos)</span>
+                <ArrowRight size={14} color={C.red} />
+              </Link>
 
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {POPULAR_CAR_MODELS.slice(0, 10).map((cm) => (
-                        <button
-                          key={cm.id}
-                          type="button"
-                          onClick={() => handleQuickCarModel(cm)}
-                          style={{
-                            padding: '5px 10px',
-                            borderRadius: 9999,
-                            border: '1px solid rgba(26, 31, 54, 0.12)',
-                            background: '#FFFFFF',
-                            cursor: 'pointer',
-                            fontFamily: F.heading,
-                            fontSize: 10.5,
-                            fontWeight: 700,
-                            color: C.navy,
-                          }}
-                        >
-                          {cm.id}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Expandable Mobile Accordion: Top Medidas */}
-              <div style={{ borderBottom: '1px solid rgba(26, 31, 54, 0.06)' }}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setMobileAccordion((prev) =>
-                      prev === 'measures' ? null : 'measures'
-                    )
-                  }
-                  style={{
-                    width: '100%',
-                    padding: '10px 6px',
-                    border: 'none',
-                    background: 'transparent',
-                    fontFamily: F.heading,
-                    fontSize: 13.5,
-                    fontWeight: 800,
-                    color: mobileAccordion === 'measures' ? C.red : C.navy,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span>Top Medidas</span>
-                  <ChevronDown
-                    size={16}
-                    style={{
-                      transform:
-                        mobileAccordion === 'measures'
-                          ? 'rotate(180deg)'
-                          : 'rotate(0deg)',
-                      transition: 'transform 0.25s ease',
-                    }}
-                  />
-                </button>
-                {mobileAccordion === 'measures' && (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                      gap: 8,
-                      padding: '4px 4px 12px',
-                    }}
-                  >
-                    {MOST_REQUESTED_MEASURES.map((m) => (
-                      <button
-                        key={m.raw}
-                        type="button"
-                        onClick={() => handleQuickMeasure(m.raw)}
-                        style={{
-                          padding: '9px 10px',
-                          borderRadius: 9999,
-                          border: '1px solid rgba(26, 31, 54, 0.14)',
-                          background: '#FFFFFF',
-                          cursor: 'pointer',
-                          fontFamily: F.heading,
-                          fontSize: 12,
-                          fontWeight: 800,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 4,
-                        }}
-                      >
-                        <span style={{ color: C.navy }}>{m.prefix}</span>
-                        <span style={{ color: C.red }}>{m.rim}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <Link
+                to="/contacto"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  fontFamily: F.heading,
+                  fontSize: 13.5,
+                  fontWeight: 800,
+                  color: C.navy,
+                  textDecoration: 'none',
+                  padding: '10px 6px',
+                  borderBottom: '1px solid rgba(26, 31, 54, 0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span>Contacto</span>
+                <ArrowRight size={14} color={C.red} />
+              </Link>
 
               <Link
                 to="/llantas/cuenta"
@@ -1950,6 +2089,32 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 <User size={15} color={user ? '#16A34A' : C.red} />
                 <span>{user ? `Mi Cuenta (${user.nombre.split(' ')[0]})` : 'Cuenta / Iniciar sesión'}</span>
               </Link>
+
+              <a
+                href={storeWhatsAppQuoteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  marginTop: 4,
+                  padding: '11px 14px',
+                  borderRadius: 14,
+                  background: '#25D366',
+                  color: '#FFFFFF',
+                  fontFamily: F.heading,
+                  fontSize: 12.5,
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  boxShadow: '0 6px 18px rgba(37, 211, 102, 0.25)',
+                }}
+              >
+                <MessageCircle size={15} />
+                <span>Obtenga una cotización por WhatsApp</span>
+              </a>
 
               {/* Main Corporate Site Navigation Links */}
               <div style={{ paddingTop: 10 }}>
@@ -1975,7 +2140,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 >
                   {[
                     { label: 'Servicios', to: '/servicios' },
-                    { label: 'Sucursales (+80)', to: '/sucursales' },
+                    { label: 'Sucursales (+70)', to: '/sucursales' },
                     { label: 'Flotillas', to: '/flotillas' },
                     { label: 'Contacto', to: '/contacto' },
                   ].map((siteLink) => (
@@ -2027,8 +2192,9 @@ export default function TiendaNavbar({ legacyMode = false }) {
           border-color: #C41E24 !important;
           color: #FFFFFF !important;
         }
-        .tienda-eyebrow-link:hover {
-          color: #FFFFFF !important;
+        .tienda-eyebrow-link:hover,
+        .tienda-marquee-wa-link:hover {
+          color: #25D366 !important;
         }
         .tienda-apple-search-btn:hover,
         .tienda-apple-account-btn:hover {
@@ -2054,14 +2220,15 @@ export default function TiendaNavbar({ legacyMode = false }) {
           background: #FFFFFF !important;
           box-shadow: 0 10px 24px rgba(26, 31, 54, 0.06);
         }
-        @media (max-width: 980px) {
+        @media (max-width: 960px) {
           .tienda-eyebrow-promo-detail { display: none !important; }
-        }
-        @media (max-width: 880px) {
-          .tienda-eyebrow-corp-links { display: none !important; }
-          .tienda-eyebrow-inner { padding: 0 14px !important; }
           .tienda-apple-nav { display: none !important; }
           .tienda-apple-burger { display: inline-flex !important; }
+        }
+        @media (max-width: 880px) {
+          .tienda-eyebrow-home-wrap { display: none !important; }
+          .tienda-eyebrow-corp-links { display: none !important; }
+          .tienda-eyebrow-inner { padding: 0 14px !important; }
           .tienda-apple-pill-outer { padding: 8px 12px 0 !important; }
           .tienda-apple-pill-inner { padding: 8px 10px 8px 16px !important; gap: 8px !important; }
         }

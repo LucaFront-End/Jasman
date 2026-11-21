@@ -1,5 +1,5 @@
-import { servicios, paquetes } from './serviciosData';
-import { sucursales } from './sucursalesData';
+import { servicios, paquetes } from './serviciosData.js';
+import { sucursales } from './sucursalesData.js';
 
 export const CANONICAL_ORIGIN = 'https://www.jasman.com.mx';
 
@@ -57,6 +57,260 @@ export const TIENDA_CATALOGO_SEO = {
   description:
     'Explora el catálogo de JASMAN TIRES, Tienda de Llantas #1 en México. Encuentra llantas por marca, medida o vehículo y elige la opción ideal.',
 };
+
+export const SERVICIOS_SEO_BY_SLUG = {
+  'servicio-mayor-con-bujias': {
+    title: 'Servicio Mayor con Bujías en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Servicio Mayor con Bujías en México con JASMAN, el Taller Mecánico #1 de México. Cuida el motor y mejora el desempeño de tu auto. Agenda tu servicio automotriz.',
+  },
+  'servicio-mayor-sin-bujias': {
+    title: 'Servicio Mayor sin Bujías en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Servicio Mayor sin Bujías en México con JASMAN, el Taller Mecánico #1 de México. Mantén tu vehículo en óptimas condiciones. Agenda tu servicio automotriz.',
+  },
+  afinacion: {
+    title: 'Servicio de Afinación en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Servicio de Afinación en México con JASMAN, el Taller Mecánico #1 de México. Mejora el rendimiento y funcionamiento del motor. Agenda tu servicio automotriz.',
+  },
+  'alineacion-y-balanceo': {
+    title: 'Servicio de Alineación y Balanceo en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Servicio de Alineación y Balanceo en México con JASMAN, el Taller Mecánico #1 de México. Mejora la estabilidad y reduce el desgaste de las llantas. Agenda tu servicio automotriz.',
+  },
+  'amortiguadores-delanteros': {
+    title: 'Cambio de Amortiguadores Delanteros en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Amortiguadores Delanteros en México con JASMAN, el Taller Mecánico #1 de México. Recupera estabilidad, control y confort al conducir. Agenda tu servicio automotriz.',
+  },
+  'amortiguadores-traseros': {
+    title: 'Cambio de Amortiguadores Traseros en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Amortiguadores Traseros en México con JASMAN, el Taller Mecánico #1 de México. Mejora la estabilidad y seguridad de tu vehículo. Agenda tu servicio automotriz.',
+  },
+  anticongelante: {
+    title: 'Cambio de Anticongelante en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Anticongelante en México con JASMAN, el Taller Mecánico #1 de México. Protege el motor y su sistema de enfriamiento. Agenda tu servicio automotriz.',
+  },
+  'balero-de-rueda': {
+    title: 'Cambio de Balero de Rueda en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Balero de Rueda en México con JASMAN, el Taller Mecánico #1 de México. Evita ruidos y mejora la seguridad al conducir. Agenda tu servicio automotriz.',
+  },
+  'balero-doble': {
+    title: 'Cambio de Balero Doble en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Balero Doble en México con JASMAN, el Taller Mecánico #1 de México. Recupera el funcionamiento adecuado de las ruedas. Agenda tu servicio automotriz.',
+  },
+  'banda-del-alternador': {
+    title: 'Cambio de Banda del Alternador en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Banda del Alternador en México con JASMAN, el Taller Mecánico #1 de México. Previene fallas en los accesorios del motor. Agenda tu servicio automotriz.',
+  },
+  'base-de-amortiguadores': {
+    title: 'Cambio de Base de Amortiguadores en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Base de Amortiguadores en México con JASMAN, el Taller Mecánico #1 de México. Reduce vibraciones y mejora la suspensión. Agenda tu servicio automotriz.',
+  },
+  'cambio-de-bateria': {
+    title: 'Cambio de Batería en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Batería en México con JASMAN, el Taller Mecánico #1 de México. Asegura el arranque y el suministro eléctrico de tu auto. Agenda tu servicio automotriz.',
+  },
+  'bomba-de-agua': {
+    title: 'Cambio de Bomba de Agua en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Bomba de Agua en México con JASMAN, el Taller Mecánico #1 de México. Protege el motor contra el sobrecalentamiento. Agenda tu servicio automotriz.',
+  },
+  'bujes-de-horquilla': {
+    title: 'Cambio de Bujes de Horquilla en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Bujes de Horquilla en México con JASMAN, el Taller Mecánico #1 de México. Mejora el control y la respuesta de la suspensión. Agenda tu servicio automotriz.',
+  },
+  'cambio-de-aceite': {
+    title: 'Cambio de Aceite en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Aceite en México con JASMAN, el Taller Mecánico #1 de México. Protege tu motor con mantenimiento oportuno. Agenda tu servicio automotriz.',
+  },
+  'carga-de-gas-refrigerante': {
+    title: 'Servicio de Carga de Gas Refrigerante en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Servicio de Carga de Gas Refrigerante en México con JASMAN, el Taller Mecánico #1 de México. Recupera el enfriamiento del aire acondicionado. Agenda tu servicio automotriz.',
+  },
+  'disco-de-frenos': {
+    title: 'Cambio de Discos de Frenos en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Discos de Frenos en México con JASMAN, el Taller Mecánico #1 de México. Mejora la respuesta y seguridad del frenado. Agenda tu servicio automotriz.',
+  },
+  'filtro-de-aire': {
+    title: 'Cambio de Filtro de Aire en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Filtro de Aire en México con JASMAN, el Taller Mecánico #1 de México. Favorece el desempeño y la entrada de aire al motor. Agenda tu servicio automotriz.',
+  },
+  'filtro-de-polen-ac': {
+    title: 'Cambio de Filtro de Polen A/C en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Filtro de Polen A/C en México con JASMAN, el Taller Mecánico #1 de México. Mejora la calidad del aire dentro del vehículo. Agenda tu servicio automotriz.',
+  },
+  'gomas-barra-estabilizadora': {
+    title: 'Cambio de Gomas de Barra Estabilizadora en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Gomas de Barra Estabilizadora en México con JASMAN, el Taller Mecánico #1 de México. Reduce ruidos y mejora la estabilidad del auto. Agenda tu servicio automotriz.',
+  },
+  'horquilla-inferior': {
+    title: 'Cambio de Horquilla Inferior en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Horquilla Inferior en México con JASMAN, el Taller Mecánico #1 de México. Recupera el control y estabilidad de la suspensión. Agenda tu servicio automotriz.',
+  },
+  'kit-de-clutch': {
+    title: 'Cambio de Kit de Clutch en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Kit de Clutch en México con JASMAN, el Taller Mecánico #1 de México. Mejora el acoplamiento y la respuesta de la transmisión. Agenda tu servicio automotriz.',
+  },
+  'kit-de-distribucion': {
+    title: 'Cambio de Kit de Distribución en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Kit de Distribución en México con JASMAN, el Taller Mecánico #1 de México. Ayuda a prevenir daños graves en el motor. Agenda tu servicio automotriz.',
+  },
+  'limpieza-cuerpo-aceleracion': {
+    title: 'Servicio de Limpieza del Cuerpo de Aceleración en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Servicio de Limpieza del Cuerpo de Aceleración en México con JASMAN, el Taller Mecánico #1 de México. Favorece una aceleración y marcha más uniformes. Agenda tu servicio automotriz.',
+  },
+  'limpieza-ajuste-frenos': {
+    title: 'Servicio de Limpieza y Ajuste de Frenos en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Servicio de Limpieza y Ajuste de Frenos en México con JASMAN, el Taller Mecánico #1 de México. Mantén una respuesta de frenado confiable. Agenda tu servicio automotriz.',
+  },
+  'liquido-de-frenos': {
+    title: 'Cambio de Líquido de Frenos en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Líquido de Frenos en México con JASMAN, el Taller Mecánico #1 de México. Mantén el sistema hidráulico de frenos en buen estado. Agenda tu servicio automotriz.',
+  },
+  'montaje-de-llanta': {
+    title: 'Servicio de Montaje de Llanta en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Servicio de Montaje de Llanta en México con JASMAN, el Taller Mecánico #1 de México. Instala tus llantas con atención profesional. Agenda tu servicio automotriz.',
+  },
+  'pastillas-frenos-delanteras': {
+    title: 'Cambio de Pastillas de Frenos Delanteras en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Pastillas de Frenos Delanteras en México con JASMAN, el Taller Mecánico #1 de México. Recupera una frenada segura y efectiva. Agenda tu servicio automotriz.',
+  },
+  'pastillas-frenos-traseras': {
+    title: 'Cambio de Pastillas de Frenos Traseras en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Pastillas de Frenos Traseras en México con JASMAN, el Taller Mecánico #1 de México. Mejora la respuesta y seguridad del frenado. Agenda tu servicio automotriz.',
+  },
+  'rectificado-discos-tambores': {
+    title: 'Servicio de Rectificado de Discos y Tambores en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Servicio de Rectificado de Discos y Tambores en México con JASMAN, el Taller Mecánico #1 de México. Mejora el contacto y funcionamiento de los frenos. Agenda tu servicio automotriz.',
+  },
+  'servicio-sistema-aire': {
+    title: 'Servicio al Sistema de Aire en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Servicio al Sistema de Aire en México con JASMAN, el Taller Mecánico #1 de México. Revisa el funcionamiento del aire acondicionado. Agenda tu servicio automotriz.',
+  },
+  'terminales-de-direccion': {
+    title: 'Cambio de Terminales de Dirección en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Terminales de Dirección en México con JASMAN, el Taller Mecánico #1 de México. Recupera precisión y seguridad en la dirección. Agenda tu servicio automotriz.',
+  },
+  'tornillos-estabilizadores': {
+    title: 'Cambio de Tornillos Estabilizadores en México | JASMAN, el Taller Mecánico #1 de México',
+    description:
+      'Cambio de Tornillos Estabilizadores en México con JASMAN, el Taller Mecánico #1 de México. Reduce ruidos y mejora la respuesta de la suspensión. Agenda tu servicio automotriz.',
+  },
+};
+
+// [branchId, displayBranch, city] from SEO_Sucursales_JASMAN_2026_Titulos_Actualizados.xlsx
+const SUCURSALES_SEO_ENTRIES = [
+  ['alamedas-2', 'Alamedas 2', 'Atizapán de Zaragoza'],
+  ['cuautla', 'Cuautla', 'Cuautla'],
+  ['azcapotzalco', 'Azcapotzalco', 'Azcapotzalco'],
+  ['santa-fe', 'Santa Fe', 'Álvaro Obregón'],
+  ['camelinas', 'Camelinas', 'Morelia'],
+  ['huertas', 'Huertas', 'Morelia'],
+  ['chabacano', 'Chabacano', 'Cuauhtémoc'],
+  ['aeropuerto', 'Aeropuerto', 'Venustiano Carranza'],
+  ['mariano-escobedo', 'Mariano Escobedo', 'Miguel Hidalgo'],
+  ['revolucion', 'Revolución', 'Álvaro Obregón'],
+  ['texcoco-allende', 'Texcoco Allende', 'Texcoco'],
+  ['salamanca', 'Salamanca', 'Salamanca'],
+  ['nuevo-laredo', 'Nuevo Laredo', 'Nuevo Laredo'],
+  ['texcoco', 'Texcoco', 'Texcoco'],
+  ['toluca-1', 'Toluca 1', 'Toluca'],
+  ['queretaro', 'Querétaro', 'Santiago de Querétaro'],
+  ['central-de-abastos', 'Central De Abastos', 'Iztapalapa'],
+  ['vertiz', 'Vertiz', 'Benito Juárez'],
+  ['interlomas', 'Interlomas', 'Huixquilucan'],
+  ['ajusco', 'Ajusco', 'Tlalpan'],
+  ['guanajuato', 'Guanajuato', 'Guanajuato'],
+  ['cuautitlan', 'Cuautitlán', 'Cuautitlán Izcalli'],
+  ['vallejo', 'Vallejo', 'Gustavo A. Madero'],
+  ['country-guadalajara', 'Country Guadalajara', 'Guadalajara'],
+  ['iztapalapa', 'Iztapalapa', 'Iztapalapa'],
+  ['tepic', 'Tepic', 'Tepic'],
+  ['torres-landa', 'Torres Landa', 'León de los Aldama'],
+  ['morelos', 'Morelos', 'León de los Aldama'],
+  ['hidalgo', 'Hidalgo', 'León de los Aldama'],
+  ['irapuato', 'Irapuato', 'Irapuato'],
+  ['alamedas', 'Alamedas', 'Atizapán de Zaragoza'],
+  ['yucatan', 'Yucatán', 'Cuauhtémoc'],
+  ['valle', 'Valle', 'San Pedro Garza García'],
+  ['iztacalco', 'Iztacalco', 'Iztacalco'],
+  ['nezahualcoyotl', 'Nezahualcóyotl', 'Nezahualcóyotl'],
+  ['los-reyes-michoacan', 'Los Reyes Michoacán', 'Los Reyes'],
+  ['san-jeronimo', 'San Jerónimo', 'Álvaro Obregón'],
+  ['los-reyes', 'Los Reyes', 'Los Reyes La Paz'],
+  ['revolucion-guadalajara', 'Revolución Guadalajara', 'Guadalajara'],
+  ['primavera', 'Primavera', 'Guadalupe'],
+  ['toluca-centro', 'Toluca Centro', 'Toluca'],
+  ['patria', 'Patria', 'Zapopan'],
+  ['linda-vista', 'Linda Vista', 'Guadalupe'],
+  ['polanco', 'Polanco', 'Miguel Hidalgo'],
+  ['abastos', 'Abastos', 'Monterrey'],
+  ['gonzalez-gallo', 'Gonzalez Gallo', 'Guadalajara'],
+  ['lomas-verdes', 'Lomas Verdes', 'Naucalpan de Juárez'],
+  ['zamora-juarez', 'Zamora Juárez', 'Zamora'],
+  ['javier-mina', 'Javier Mina', 'Guadalajara'],
+  ['san-nicolas', 'San Nicolás', 'San Nicolás de los Garza'],
+  ['chalco', 'Chalco', 'Chalco'],
+  ['chapultepec', 'Chapultepec', 'Monterrey'],
+  ['aragon', 'Aragón', 'Nezahualcóyotl'],
+  ['portales', 'Portales', 'Benito Juárez'],
+  ['americas', 'Américas', 'Guadalajara'],
+  ['pachuca', 'Pachuca', 'Pachuca de Soto'],
+  ['universidad', 'Universidad', 'Monterrey'],
+  ['lincoln', 'Lincoln', 'Monterrey'],
+  ['miramontes', 'Miramontes', 'Coyoacán'],
+  ['azcapotzalco-2', 'Azcapotzalco 2', 'Azcapotzalco'],
+  ['naucalpan', 'Naucalpan', 'Naucalpan de Juárez'],
+  ['tlalnepantla', 'Tlalnepantla', 'Tlalnepantla de Baz'],
+  ['la-paz', 'La Paz', 'Guadalajara'],
+  ['providencia', 'Providencia', 'Guadalajara'],
+  ['constituyentes', 'Constituyentes', 'Santiago de Querétaro'],
+  ['americas-qro', 'Américas', 'Santiago de Querétaro'],
+  ['mega-estadio', 'Mega Estadio', 'Santiago de Querétaro'],
+  ['juriquilla', 'Juriquilla', 'Santiago de Querétaro'],
+  ['san-juan-del-rio', 'San Juan del Rio', 'San Juan del Río'],
+  ['celaya', 'Celaya', 'Celaya'],
+  ['av-toluca', 'Av Toluca', 'Álvaro Obregón'],
+  ['concordia', 'Concordia', 'Apodaca'],
+];
+
+export const SUCURSALES_SEO_BY_ID = Object.fromEntries(
+  SUCURSALES_SEO_ENTRIES.map(([id, displayBranch, city]) => [
+    id,
+    {
+      title: `Taller Mecánico Automotriz en ${city} JASMAN Suc. ${displayBranch} | Alineación y Balanceo, Cambio de Aceite`,
+      description: `JASMAN ${displayBranch}: taller mecánico automotriz en ${city}. Servicio de alineación y balanceo, cambio de aceite y mantenimiento para tu auto. ¡Agenda tu visita!`,
+    },
+  ])
+);
 
 const BRAND_ENTRIES = [
   'Michelin',
@@ -352,6 +606,19 @@ export function resolveSeoForLocation({
   if (cleanPath.startsWith('/servicios/')) {
     const slug = cleanPath.replace('/servicios/', '').trim();
     const match = [...servicios, ...paquetes].find((s) => s.slug === slug);
+    const exactServiceSeo = SERVICIOS_SEO_BY_SLUG[slug];
+    if (exactServiceSeo && match) {
+      return {
+        ...exactServiceSeo,
+        canonicalUrl: `${CANONICAL_ORIGIN}/servicios/${match.slug}`,
+      };
+    }
+    if (exactServiceSeo) {
+      return {
+        ...exactServiceSeo,
+        canonicalUrl: `${CANONICAL_ORIGIN}/servicios/${slug}`,
+      };
+    }
     if (match) {
       return {
         title: `${match.title} | Servicios JASMAN`,
@@ -361,16 +628,39 @@ export function resolveSeoForLocation({
     }
   }
 
-  // Branch detail route (/sucursales/:slug)
+  // Branch service detail route (/sucursales/:branchSlug/:serviceSlug) & branch detail (/sucursales/:slug)
   if (cleanPath.startsWith('/sucursales/')) {
-    const slug = cleanPath.replace('/sucursales/', '').trim();
-    const branch = sucursales.find((s) => s.id === slug);
-    if (branch) {
-      return {
-        title: `Sucursal ${branch.name} | JASMAN Taller Automotriz`,
-        description: `Visita JASMAN Sucursal ${branch.name} en ${branch.city}, ${branch.state}. Llantas, alineación, balanceo y mantenimiento automotriz.`,
-        canonicalUrl: `${CANONICAL_ORIGIN}/sucursales/${branch.id}`,
-      };
+    const parts = cleanPath.replace('/sucursales/', '').split('/').filter(Boolean);
+    if (parts.length === 2) {
+      const [branchSlug, serviceSlug] = parts;
+      const branch = sucursales.find((s) => s.id === branchSlug);
+      const service = [...servicios, ...paquetes].find((s) => s.slug === serviceSlug);
+      if (branch && service) {
+        return {
+          title: `${service.title} en Taller Mecánico Automotriz JASMAN Suc. ${branch.name} | ${branch.city}`,
+          description: `${service.description} Agenda ${service.title} en Taller Mecánico Automotriz JASMAN Suc. ${branch.name} en ${branch.city}, ${branch.state}. Escaneo de 72 puntos y garantía.`,
+          canonicalUrl: `${CANONICAL_ORIGIN}/sucursales/${branch.id}/${service.slug}`,
+        };
+      }
+    }
+
+    if (parts.length === 1) {
+      const slug = parts[0];
+      const branch = sucursales.find((s) => s.id === slug);
+      const exactBranchSeo = SUCURSALES_SEO_BY_ID[slug];
+      if (exactBranchSeo && branch) {
+        return {
+          ...exactBranchSeo,
+          canonicalUrl: `${CANONICAL_ORIGIN}/sucursales/${branch.id}`,
+        };
+      }
+      if (branch) {
+        return {
+          title: `Sucursal ${branch.name} | JASMAN Taller Automotriz`,
+          description: `Visita JASMAN Sucursal ${branch.name} en ${branch.city}, ${branch.state}. Llantas, alineación, balanceo y mantenimiento automotriz.`,
+          canonicalUrl: `${CANONICAL_ORIGIN}/sucursales/${branch.id}`,
+        };
+      }
     }
   }
 

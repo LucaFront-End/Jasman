@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { C, F } from '../hooks/useAnimations';
 import {
   BRAND_META,
@@ -52,6 +52,7 @@ const HERO_SPOTLIGHTS = [
 ];
 
 export default function LandingTiendaPreviewPage() {
+  const { pathname, hash } = useLocation();
   const { addToCart, coupon } = useTiendaState();
   const { products: catalogProducts } = useWixCatalogProducts();
   const { tilt: heroTilt, onMouseMove: onHeroMove, onMouseLeave: onHeroLeave } = useAppleTilt(7);
@@ -59,6 +60,16 @@ export default function LandingTiendaPreviewPage() {
   const [selectedHeroId, setSelectedHeroId] = useState(HERO_SPOTLIGHTS[0].id);
   const [heroPaused, setHeroPaused] = useState(false);
   const [heroAdded, setHeroAdded] = useState(false);
+
+  // Scroll smoothly when navigating directly to a section hash (e.g. #resenas-tienda)
+  useEffect(() => {
+    if (!hash) return undefined;
+    const targetId = hash.replace(/^#/, '');
+    const timer = setTimeout(() => {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [pathname, hash]);
 
   // Auto-rotate hero spotlight tires & promotions every 4.2s
   useEffect(() => {
@@ -652,6 +663,7 @@ export default function LandingTiendaPreviewPage() {
           borderTop: '1px solid rgba(26, 31, 54, 0.06)',
           overflow: 'hidden',
           position: 'relative',
+          scrollMarginTop: 96,
         }}
       >
         <div style={{ maxWidth: 1260, margin: '0 auto', padding: '0 24px' }}>

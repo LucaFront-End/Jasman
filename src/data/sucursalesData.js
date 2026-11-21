@@ -19,7 +19,7 @@ const raw = [
   { region:'Norte', name:'Vallejo', state:'CDMX', city:'Gustavo A. Madero', address:'Calz. Vallejo #497, Col. Defensores De La Republica, Gustavo A. Madero, CDMX 02600', cp:'02600', phone:'55 4822 1319' },
   { region:'Poniente', name:'Santa Fe', state:'CDMX', city:'Álvaro Obregón', address:'Prolongación Paseo De La Reforma #71, Col. Paseo De Las Lomas, Álvaro Obregón, CDMX 01330', cp:'01330', phone:'5580226602' },
   { region:'Poniente', name:'Mariano Escobedo', state:'CDMX', city:'Miguel Hidalgo', address:'Mariano Escobedo #18, Col. Popotla, Miguel Hidalgo, CDMX 11400', cp:'11400', phone:'5543931885' },
-  { region:'Poniente', name:'Interlomas', state:'Edo. Méx.', city:'Naucalpan de Juárez', address:'Circuito Empresarial #4, Col. Centro Urbano San Fernando, Huixquilucan, Edo. Méx. 52760', cp:'52760', phone:'5580401611' },
+  { region:'Poniente', name:'Interlomas', state:'Edo. Méx.', city:'Huixquilucan', address:'Circuito Empresarial #4, Col. Centro Urbano San Fernando, Huixquilucan, Edo. Méx. 52760', cp:'52760', phone:'5580401611' },
   { region:'Poniente', name:'Yucatán', state:'CDMX', city:'Cuauhtémoc', address:'Av. Yucatán #42, Col. Roma Norte, Cuauhtémoc, CDMX 06720', cp:'06720', phone:'5539612500' },
   { region:'Poniente', name:'Polanco', state:'CDMX', city:'Miguel Hidalgo', address:'Av. Mariano Escobedo #551, Col. Rincón Del Bosque, Miguel Hidalgo, CDMX 11580', cp:'11580', phone:'5548006110' },
   { region:'Poniente', name:'Toluca 1', state:'Edo. Méx.', city:'Toluca', address:'Filiberto Gómez #601, Col. Guadalupe Club Jardín, Toluca, Edo. Méx. 50010', cp:'50010', phone:'5560918271' },
