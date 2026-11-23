@@ -114,10 +114,94 @@ async function findExistingCouponLead(cleanEmail, creds) {
     couponCode: String(item.data.cupon).trim(),
     couponId: String(item.data.cuponWixId || '').trim(),
     contactId: String(item.data.contactoId || '').trim(),
+    rawData: item.data || {},
   };
 }
 
-async function createDynamicCouponFromTemplate(creds) {
+async function verifyWixCouponActive(couponId, couponCode, creds) {
+  const cleanId = String(couponId || '').trim();
+  const cleanCode = String(couponCode || '').trim().toUpperCase();
+
+  if (cleanId) {
+    try {
+      const byIdRes = await wixRequest(`/stores/v2/coupons/${cleanId}`, creds);
+      const coupon = byIdRes.data?.coupon;
+      if (byIdRes.ok && coupon?.id && coupon?.specification?.active !== false && !coupon?.expired) {
+        return {
+          exists: true,
+          couponId: coupon.id,
+          couponCode: String(coupon.specification?.code || couponCode).trim(),
+        };
+      }
+    } catch {
+      // fall through to query by code
+    }
+  }
+
+  if (cleanCode) {
+    try {
+      const qRes = await wixRequest('/stores/v2/coupons/query', {
+        ...creds,
+        method: 'POST',
+        body: { query: { paging: { limit: 100 } } },
+      });
+      const list = Array.isArray(qRes.data?.coupons) ? qRes.data.coupons : [];
+      const match = list.find(
+        (c) =>
+          String(c?.specification?.code || '').trim().toUpperCase() === cleanCode &&
+          c?.specification?.active !== false &&
+          !c?.expired
+      );
+      if (match?.id) {
+        return {
+          exists: true,
+          couponId: match.id,
+          couponCode: String(match.specification?.code || couponCode).trim(),
+        };
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  return { exists: false, couponId: '', couponCode: '' };
+}
+
+async function tryCreateCouponViaVelo({ code, name, percentOffRate, limitPerCustomer, scope }) {
+  const veloUrl = (process.env.WIX_VELO_COUPON_URL || '').trim();
+  const veloSecret = (process.env.WIX_VELO_COUPON_SECRET || '').trim();
+  if (!veloUrl) return null;
+
+  try {
+    const resp = await fetch(veloUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: veloSecret,
+        code,
+        name,
+        percentOffRate,
+        usageLimit: 1,
+        limitPerCustomer,
+        scope,
+      }),
+      signal: AbortSignal.timeout(7000),
+    });
+    const data = await resp.json().catch(() => null);
+    if (resp.ok && data?.ok && data?.couponId) {
+      return {
+        couponId: String(data.couponId).trim(),
+        couponCode: String(data.couponCode || code).trim(),
+        createdVia: 'wix-velo',
+      };
+    }
+  } catch (err) {
+    console.warn('[api/coupon-lead] Velo coupon bridge fallback:', err?.message || err);
+  }
+  return null;
+}
+
+async function createDynamicCouponFromTemplate(creds, preferredCode = '') {
   let templateSpec = {
     code: 'PCJT-DDMX-000',
     percentOffRate: 10,
@@ -143,15 +227,31 @@ async function createDynamicCouponFromTemplate(creds) {
   let lastErrMsg = '';
 
   for (let attempt = 0; attempt < 3; attempt++) {
-    const generatedCode = generateRandomCode(prefix, 6);
+    const generatedCode =
+      attempt === 0 && preferredCode ? String(preferredCode).trim() : generateRandomCode(prefix, 6);
+    const percentOffRate = templateSpec.percentOffRate ?? 10;
+    const scope = templateSpec.scope || { namespace: 'stores' };
+    const limitPerCustomer = templateSpec.limitPerCustomer ?? 1;
+
+    const veloResult = await tryCreateCouponViaVelo({
+      code: generatedCode,
+      name: generatedCode,
+      percentOffRate,
+      limitPerCustomer,
+      scope,
+    });
+    if (veloResult) {
+      return veloResult;
+    }
+
     const payload = {
       specification: {
         name: generatedCode,
         code: generatedCode,
         startTime: Date.now(),
-        percentOffRate: templateSpec.percentOffRate ?? 10,
-        scope: templateSpec.scope || { namespace: 'stores' },
-        limitPerCustomer: templateSpec.limitPerCustomer ?? 1,
+        percentOffRate,
+        scope,
+        limitPerCustomer,
         usageLimit: 1,
         limitedToOneItem: Boolean(templateSpec.limitedToOneItem),
         appliesToSubscriptions: Boolean(templateSpec.appliesToSubscriptions),
@@ -171,7 +271,7 @@ async function createDynamicCouponFromTemplate(creds) {
       const couponId = createRes.data?.id || createRes.data?.coupon?.id || '';
       const couponCode =
         createRes.data?.coupon?.specification?.code || generatedCode;
-      return { couponId, couponCode };
+      return { couponId, couponCode, createdVia: 'wix-rest-api' };
     }
 
     lastErrMsg =
@@ -374,28 +474,70 @@ export default async function handler(req, res) {
     const existing = await findExistingCouponLead(cleanEmail, creds);
 
     if (existing) {
-      const { contactId, labelKey } = await resolveOrCreateLabeledContact(
-        {
-          cleanName,
-          cleanEmail,
-          cleanPhone,
-          preferredContactId: existing.contactId || '',
-        },
-        creds
-      );
+      const [{ contactId, labelKey }, couponCheck] = await Promise.all([
+        resolveOrCreateLabeledContact(
+          {
+            cleanName,
+            cleanEmail,
+            cleanPhone,
+            preferredContactId: existing.contactId || '',
+          },
+          creds
+        ),
+        verifyWixCouponActive(existing.couponId, existing.couponCode, creds),
+      ]);
+
+      let finalCouponCode = couponCheck.couponCode || existing.couponCode;
+      let finalCouponId = couponCheck.couponId || existing.couponId;
+      let createdVia = 'existing';
+
+      if (!couponCheck.exists) {
+        const recreated = await createDynamicCouponFromTemplate(creds, existing.couponCode);
+        finalCouponCode = recreated.couponCode;
+        finalCouponId = recreated.couponId;
+        createdVia = recreated.createdVia;
+
+        if (existing.cmsItemId) {
+          const cleanRaw = Object.fromEntries(
+            Object.entries(existing.rawData || {}).filter(([k]) => !k.startsWith('_'))
+          );
+          await wixRequest(`/wix-data/v2/items/${existing.cmsItemId}`, {
+            ...creds,
+            method: 'PUT',
+            body: {
+              dataCollectionId: COUPON_COLLECTION_ID,
+              dataItem: {
+                id: existing.cmsItemId,
+                data: {
+                  ...cleanRaw,
+                  nombre: cleanRaw.nombre || cleanName,
+                  correo: cleanRaw.correo || cleanEmail,
+                  telefono: cleanRaw.telefono || cleanPhone,
+                  title: `${cleanRaw.nombre || cleanName} — ${finalCouponCode}`,
+                  cupon: finalCouponCode,
+                  cuponWixId: finalCouponId,
+                  contactoId: contactId || existing.contactId || '',
+                },
+              },
+            },
+          }).catch(() => {});
+        }
+      }
 
       return res.status(200).json({
         ok: true,
-        couponCode: existing.couponCode,
-        couponId: existing.couponId,
+        couponCode: finalCouponCode,
+        couponId: finalCouponId,
         cmsItemId: existing.cmsItemId,
         contactId: contactId || existing.contactId,
         labelKey,
         alreadyRegistered: true,
+        verifiedInWix: true,
+        createdVia,
       });
     }
 
-    const [{ couponId, couponCode }, { contactId, labelKey }] = await Promise.all([
+    const [{ couponId, couponCode, createdVia }, { contactId, labelKey }] = await Promise.all([
       createDynamicCouponFromTemplate(creds),
       resolveOrCreateLabeledContact({ cleanName, cleanEmail, cleanPhone }, creds),
     ]);
@@ -443,6 +585,8 @@ export default async function handler(req, res) {
       contactId,
       labelKey,
       alreadyRegistered: false,
+      verifiedInWix: true,
+      createdVia,
     });
   } catch (err) {
     console.error('[api/coupon-lead] Error:', err?.message || err);

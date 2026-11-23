@@ -631,37 +631,29 @@ export default async function handler(req, res) {
       });
     const { fullCheckoutInfo, minimalCheckoutInfo } = buildCheckoutInfo(enriched);
 
-    let createdCheckout;
-    try {
-      createdCheckout = await adminClient.checkout.createCheckout({
-        channelType: 'WEB',
-        lineItems,
-        checkoutInfo: fullCheckoutInfo,
-        ...(cleanCoupon ? { couponCode: cleanCoupon } : {}),
-      });
-    } catch {
+    const checkoutAttempts = [
+      ...(cleanCoupon
+        ? [
+            { channelType: 'WEB', lineItems, checkoutInfo: fullCheckoutInfo, couponCode: cleanCoupon },
+            { channelType: 'WEB', lineItems, checkoutInfo: minimalCheckoutInfo, couponCode: cleanCoupon },
+            { channelType: 'WEB', lineItems, couponCode: cleanCoupon },
+          ]
+        : []),
+      { channelType: 'WEB', lineItems, checkoutInfo: fullCheckoutInfo },
+      { channelType: 'WEB', lineItems, checkoutInfo: minimalCheckoutInfo },
+      { channelType: 'WEB', lineItems },
+    ];
+
+    let createdCheckout = null;
+    for (const attemptPayload of checkoutAttempts) {
       try {
-        // Retry without coupon (if coupon validation failed) while keeping full checkoutInfo
-        createdCheckout = await adminClient.checkout.createCheckout({
-          channelType: 'WEB',
-          lineItems,
-          checkoutInfo: fullCheckoutInfo,
-        });
-      } catch {
-        try {
-          // Retry with minimal MX checkoutInfo if optional address/phone fields triggered validation error
-          createdCheckout = await adminClient.checkout.createCheckout({
-            channelType: 'WEB',
-            lineItems,
-            checkoutInfo: minimalCheckoutInfo,
-          });
-        } catch {
-          // Ultimate safety net: create bare checkout so buyer is never blocked
-          createdCheckout = await adminClient.checkout.createCheckout({
-            channelType: 'WEB',
-            lineItems,
-          });
+        const resCheckout = await adminClient.checkout.createCheckout(attemptPayload);
+        if (resCheckout?._id) {
+          createdCheckout = resCheckout;
+          break;
         }
+      } catch {
+        // try next fallback attempt preserving couponCode before dropping it
       }
     }
 
@@ -724,6 +716,9 @@ export default async function handler(req, res) {
       }
     }
 
+    const appliedCoupon =
+      createdCheckout?.appliedDiscounts?.find((d) => d?.coupon?.code)?.coupon || null;
+
     return res.status(200).json({
       ok: true,
       checkoutId,
@@ -731,6 +726,14 @@ export default async function handler(req, res) {
       memberTokens: hasValidTokenPair(activeMemberTokens) ? activeMemberTokens : null,
       payNow: createdCheckout?.payNow || null,
       lineItems: createdCheckout?.lineItems || [],
+      appliedCoupon: appliedCoupon
+        ? {
+            id: appliedCoupon._id || appliedCoupon.id || '',
+            code: appliedCoupon.code,
+            name: appliedCoupon.name || appliedCoupon.code,
+            amount: appliedCoupon.amount?.amount || null,
+          }
+        : null,
     });
   } catch (err) {
     console.error('[api/checkout] Error:', err?.message || err);

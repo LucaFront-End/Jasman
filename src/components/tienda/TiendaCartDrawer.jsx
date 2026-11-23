@@ -45,6 +45,7 @@ export default function TiendaCartDrawer() {
     updateCartQuantity,
     removeFromCart,
     clearCart,
+    applyFirstPurchaseCoupon,
     removeCoupon,
     createOrderRecord,
   } = useTiendaState();
@@ -57,6 +58,7 @@ export default function TiendaCartDrawer() {
   const [manualCode, setManualCode] = useState('');
   const [couponFeedback, setCouponFeedback] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
+  const [cartSyncing, setCartSyncing] = useState(false);
   const [wixEstimate, setWixEstimate] = useState(null);
   const [orderCompleted, setOrderCompleted] = useState(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -79,35 +81,45 @@ export default function TiendaCartDrawer() {
     .map((i) => `${i.product.id}:${i.quantity}`)
     .join('|');
 
+  const savedCouponCode =
+    coupon?.code && !String(coupon.code).toUpperCase().startsWith('JASMAN10')
+      ? String(coupon.code).trim()
+      : null;
+
   useEffect(() => {
     if (isLegacyCopyRoute) return undefined;
     if (!cartSyncKey) {
       setWixEstimate(null);
+      setCartSyncing(false);
       return undefined;
     }
     if (!open) return undefined;
 
     let cancelled = false;
-    const preserveCoupon =
-      wixEstimate?.appliedCoupon?.code ||
-      (coupon?.source === 'wix-dynamic' && coupon?.code ? coupon.code : null);
+    const preserveCoupon = wixEstimate?.appliedCoupon?.code || savedCouponCode || null;
 
+    setCartSyncing(true);
     syncAndEstimateWixCart({ cartItems, couponCode: preserveCoupon })
       .then((est) => {
         if (!cancelled && est) {
           setWixEstimate(est);
-          if (preserveCoupon && !est.appliedCoupon && est.couponError) {
+          if (est.appliedCoupon?.code) {
+            setCouponFeedback('');
+          } else if (preserveCoupon && est.couponError) {
             setCouponFeedback(est.couponError);
           }
         }
       })
-      .catch(() => { });
+      .catch(() => { })
+      .finally(() => {
+        if (!cancelled) setCartSyncing(false);
+      });
 
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isLegacyCopyRoute, cartSyncKey]);
+  }, [open, isLegacyCopyRoute, cartSyncKey, coupon?.code]);
 
   if (!open) return null;
 
@@ -194,6 +206,12 @@ export default function TiendaCartDrawer() {
       if (est) {
         setWixEstimate(est);
         if (est.appliedCoupon?.code) {
+          applyFirstPurchaseCoupon({
+            code: est.appliedCoupon.code,
+            percent: 10,
+            source: 'wix-dynamic',
+            createdAt: new Date().toISOString(),
+          });
           setCouponFeedback('');
           setManualCode('');
         } else if (est.couponError) {
@@ -920,7 +938,7 @@ export default function TiendaCartDrawer() {
                           {activeWixCoupon.code} (Cupón Oficial Aplicado)
                         </div>
                         <div style={{ fontSize: 11, color: '#15803D', fontWeight: 700 }}>
-                          Ahorras {formatMXN(activeWixCoupon.amount)}
+                          Ahorras {formatMXN(liveCouponDiscount > 0 ? liveCouponDiscount : activeWixCoupon.amount)}
                         </div>
                       </div>
                     </div>
@@ -942,6 +960,11 @@ export default function TiendaCartDrawer() {
                     >
                       Quitar
                     </button>
+                  </div>
+                ) : !isLegacyCopyRoute && cartSyncing && savedCouponCode ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: C.navy, fontWeight: 600 }}>
+                    <Tag size={14} color={C.red} />
+                    <span>Validando cupón {savedCouponCode} en Wix...</span>
                   </div>
                 ) : isLegacyCopyRoute && coupon ? (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

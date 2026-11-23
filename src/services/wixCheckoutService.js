@@ -369,6 +369,26 @@ function parseWixCartEstimate(estimate, couponError = '') {
   };
 }
 
+function isMissingCartOrAuthError(err) {
+  const code = String(err?.details?.applicationError?.code || '').toUpperCase();
+  const msg = String(err?.message || err?.details?.applicationError?.description || '').toUpperCase();
+  return (
+    code.includes('OWNED_CART_NOT_FOUND') ||
+    code.includes('CART_NOT_FOUND') ||
+    msg.includes('OWNED_CART_NOT_FOUND') ||
+    msg.includes('CART_NOT_FOUND') ||
+    msg.includes('404') ||
+    msg.includes('401') ||
+    msg.includes('403') ||
+    msg.includes('UNAUTHENTICATED')
+  );
+}
+
+function isAuthError(err) {
+  const msg = String(err?.message || err?.details?.applicationError?.description || '').toUpperCase();
+  return msg.includes('401') || msg.includes('403') || msg.includes('UNAUTHENTICATED');
+}
+
 function formatWixCouponError(err) {
   const rawCode = String(
     err?.details?.applicationError?.code ||
@@ -378,6 +398,23 @@ function formatWixCouponError(err) {
   const rawDesc = String(err?.details?.applicationError?.description || '').trim();
   const rawMsg = String(rawDesc || err?.message || '').toUpperCase();
 
+  if (
+    rawCode.includes('OWNED_CART_NOT_FOUND') ||
+    rawCode.includes('CART_NOT_FOUND') ||
+    rawMsg.includes('OWNED_CART_NOT_FOUND') ||
+    rawMsg.includes('CART_NOT_FOUND')
+  ) {
+    return 'Tu sesión de carrito se renovó. Intenta aplicar el cupón nuevamente.';
+  }
+  if (
+    rawCode.includes('NOT_FOUND') ||
+    rawCode.includes('COUPON_NOT_FOUND') ||
+    rawCode.includes('INVALID_COUPON') ||
+    rawMsg.includes('COUPON_NOT_FOUND') ||
+    rawMsg.includes('INVALID_COUPON')
+  ) {
+    return 'Este código de cupón no existe o no está activo en Wix.';
+  }
   if (
     rawCode.includes('SUBTOTAL') ||
     rawMsg.includes('MINIMUM') ||
@@ -394,6 +431,16 @@ function formatWixCouponError(err) {
     return 'Este cupón ya alcanzó su límite de uso.';
   }
   return 'Este código no está activo actualmente. Si te registraste al 10%, recibirás tu cupón oficial por correo.';
+}
+
+async function rebuildWixCart(resolvedEntries, signature) {
+  await wixCheckoutClient.currentCart.deleteCurrentCart().catch(() => { });
+  const addRes = await wixCheckoutClient.currentCart.addToCurrentCart({
+    lineItems: resolvedEntries.map((e) => e.lineItem),
+  });
+  lastSyncedItemsSignature = signature;
+  lastSyncedCartCache = addRes?.cart || null;
+  return lastSyncedCartCache;
 }
 
 /**
@@ -417,33 +464,64 @@ export async function syncAndEstimateWixCart({
     if (resolvedEntries.length === 0) return null;
 
     const signature = computeItemsSignature(resolvedEntries);
+    const cleanCoupon = couponCode ? String(couponCode).trim() : '';
 
-    // Only recreate Wix currentCart lineItems when items or quantities actually changed
-    if (signature !== lastSyncedItemsSignature) {
-      await wixCheckoutClient.currentCart.deleteCurrentCart().catch(() => { });
-      const addRes = await wixCheckoutClient.currentCart.addToCurrentCart({
-        lineItems: resolvedEntries.map((e) => e.lineItem),
-      });
-      lastSyncedItemsSignature = signature;
-      lastSyncedCartCache = addRes?.cart || null;
+    // Recreate Wix currentCart if items changed OR if cart cache was lost/cleared
+    if (signature !== lastSyncedItemsSignature || !lastSyncedCartCache) {
+      await rebuildWixCart(resolvedEntries, signature);
     }
 
     let couponError = '';
-    if (couponCode) {
+    if (cleanCoupon) {
       try {
         const updated = await wixCheckoutClient.currentCart.updateCurrentCart({
-          couponCode: String(couponCode).trim(),
+          couponCode: cleanCoupon,
         });
         if (updated?.cart) {
           lastSyncedCartCache = updated.cart;
         }
       } catch (err) {
-        couponError = formatWixCouponError(err);
+        if (isMissingCartOrAuthError(err)) {
+          try {
+            if (isAuthError(err) && !readStoredMemberTokens()) {
+              const vt = await wixCheckoutClient.auth.generateVisitorTokens();
+              wixCheckoutClient.auth.setTokens(vt);
+            }
+            await rebuildWixCart(resolvedEntries, signature);
+            const retried = await wixCheckoutClient.currentCart.updateCurrentCart({
+              couponCode: cleanCoupon,
+            });
+            if (retried?.cart) {
+              lastSyncedCartCache = retried.cart;
+            }
+          } catch (retryErr) {
+            couponError = formatWixCouponError(retryErr);
+          }
+        } else {
+          couponError = formatWixCouponError(err);
+        }
       }
     }
 
-    const estimate =
-      await wixCheckoutClient.currentCart.estimateCurrentCartTotals();
+    let estimate;
+    try {
+      estimate = await wixCheckoutClient.currentCart.estimateCurrentCartTotals();
+    } catch (estErr) {
+      if (isMissingCartOrAuthError(estErr)) {
+        await rebuildWixCart(resolvedEntries, signature);
+        if (cleanCoupon && !couponError) {
+          await wixCheckoutClient.currentCart
+            .updateCurrentCart({ couponCode: cleanCoupon })
+            .catch((cErr) => {
+              couponError = formatWixCouponError(cErr);
+            });
+        }
+        estimate = await wixCheckoutClient.currentCart.estimateCurrentCartTotals();
+      } else {
+        throw estErr;
+      }
+    }
+
     if (estimate?.cart) {
       lastSyncedCartCache = estimate.cart;
     }
