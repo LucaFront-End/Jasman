@@ -140,9 +140,6 @@ export default function Locations() {
     return sucursales.filter(s => s.region === activeRegion).slice(0, 12);
   }, [isSearching, smartFiltered, sucursales, activeRegion, homeSubset]);
 
-  const regionCounts = {};
-  regions.forEach(r => { regionCounts[r] = sucursales.filter(s => s.region === r).length; });
-
   return (
     <section id="locations" style={{
       padding: isMobile ? '4.5rem 1rem 3.5rem' : 'clamp(4rem, 8vw, 7rem) 0',
@@ -350,7 +347,7 @@ export default function Locations() {
           }}
             onMouseEnter={e => { if (activeRegion) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = C.white; }}}
             onMouseLeave={e => { if (activeRegion) { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}}
-          >Todas ({sucursales.length})</button>
+          >Todas</button>
           {regions.map(r => (
             <button key={r} onClick={() => { setActiveRegion(prev => prev === r ? null : r); setSelectedLoc(null); clearGps(); }} style={{
               padding: isMobile ? '8px 16px' : '10px 20px', borderRadius: 12,
@@ -362,7 +359,7 @@ export default function Locations() {
             }}
               onMouseEnter={e => { if (activeRegion !== r) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = C.white; }}}
               onMouseLeave={e => { if (activeRegion !== r) { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}}
-            >{r} ({regionCounts[r]})</button>
+            >{r}</button>
           ))}
         </div>
 
