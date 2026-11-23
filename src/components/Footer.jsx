@@ -4,9 +4,9 @@ import { C, F } from '../hooks/useAnimations';
 import { Phone, Mail, MessageCircle } from 'lucide-react';
 
 const socialIcons = [
-  <svg key="fb" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>,
-  <svg key="ig" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>,
-  <svg key="tt" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>,
+  <svg key="fb" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>,
+  <svg key="ig" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>,
+  <svg key="tt" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>,
 ];
 
 const isExternal = (href) => href.startsWith('http');
@@ -126,21 +126,6 @@ export default function Footer() {
       <div className="site-footer-bottom">
         <div className="site-footer-bottom-inner">
           <span>© {year} Jasman Automotriz. Todos los derechos reservados.</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 14 }}>
-            <span>Centro de Soluciones Automotrices</span>
-            <Link
-              to="/admin-meta"
-              style={{
-                fontSize: 11,
-                color: 'inherit',
-                opacity: 0.45,
-                textDecoration: 'none',
-              }}
-              title="Acceso exclusivo Wix Partner"
-            >
-              Admin Meta
-            </Link>
-          </span>
         </div>
       </div>
     </footer>

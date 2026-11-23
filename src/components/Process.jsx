@@ -44,7 +44,7 @@ const steps = [
 export default function Process() {
   const [activeStep, setActiveStep] = useState(null);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
-  const header = useReveal();
+  const { ref: headerRef, style: headerStyle } = useReveal();
   const cards = useStaggerReveal(steps.length);
 
   useEffect(() => {
@@ -73,7 +73,7 @@ export default function Process() {
 
       <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         {/* Header */}
-        <div ref={header.ref} style={{ textAlign: 'center', maxWidth: 600, margin: isMobile ? '0 auto 36px' : '0 auto 64px', ...header.style }}>
+        <div ref={headerRef} style={{ textAlign: 'center', maxWidth: 600, margin: isMobile ? '0 auto 36px' : '0 auto 64px', ...headerStyle }}>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
             background: 'rgba(196,30,36,0.06)', color: C.red,
@@ -165,7 +165,7 @@ export default function Process() {
                   }}>
                     <IconComp
                       size={isMobile ? 28 : 34}
-                      color={C.white}
+                      color={(isActive || isMobile) ? C.white : step.color}
                       strokeWidth={1.8}
                     />
                     {/* Step number badge */}
