@@ -189,6 +189,7 @@ export default function TiendaProductCard({
 
             {/* 4-Pill Real Telemetry Strip */}
             <div
+              className="tienda-spotlight-telemetry"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
@@ -203,6 +204,7 @@ export default function TiendaProductCard({
               ].map((cell) => (
                 <div
                   key={cell.k}
+                  className="tienda-spotlight-telemetry-cell"
                   style={{
                     padding: '8px 10px',
                     borderRadius: 12,
@@ -329,6 +331,7 @@ export default function TiendaProductCard({
 
         {/* Right 3/4 Tire Canvas */}
         <div
+          className="tienda-spotlight-canvas"
           style={{
             position: 'relative',
             zIndex: 2,
@@ -383,8 +386,33 @@ export default function TiendaProductCard({
             .tienda-spotlight-card {
               grid-column: span 1 !important;
               grid-template-columns: 1fr !important;
-              padding: 22px 20px !important;
-              gap: 18px !important;
+              padding: 18px 16px !important;
+              gap: 14px !important;
+            }
+            .tienda-spotlight-canvas {
+              order: -1 !important;
+              height: 190px !important;
+              padding: 14px !important;
+            }
+            .tienda-spotlight-telemetry {
+              grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+              gap: 6px !important;
+            }
+            .tienda-spotlight-telemetry-cell {
+              padding: 6px 4px !important;
+              text-align: center !important;
+              border-radius: 10px !important;
+              min-width: 0 !important;
+            }
+            .tienda-spotlight-telemetry-cell > div:first-child {
+              font-size: 8px !important;
+              letter-spacing: 0.06em !important;
+            }
+            .tienda-spotlight-telemetry-cell > div:last-child {
+              font-size: 11.5px !important;
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: ellipsis !important;
             }
           }
         `}</style>

@@ -638,7 +638,7 @@ select {
 }
 
 @media (max-width: 640px) {
-  section div[style*="repeat(4, 1fr)"]:not(.flotillas-process-grid) {
+  section div[style*="repeat(4, 1fr)"]:not(.flotillas-process-grid):not(.tienda-spotlight-telemetry) {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }
