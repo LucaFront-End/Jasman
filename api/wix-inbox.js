@@ -57,10 +57,11 @@ function splitFullName(fullName = '') {
   };
 }
 
-async function submitVisitorCrmContact({ nombre, correo, telefono }) {
+async function submitVisitorCrmContact({ nombre, correo, telefono, cp }) {
   try {
     const cleanEmail = String(correo || '').trim().toLowerCase();
     const cleanPhone = String(telefono || '').replace(/\D/g, '');
+    const cleanCp = String(cp || '').replace(/\D/g, '').slice(0, 5);
     const { first, last } = splitFullName(nombre);
     const visitorClient = await createVisitorDataClient();
     const res = await visitorClient.submittedContact.appendOrCreateContact({
@@ -80,6 +81,13 @@ async function submitVisitorCrmContact({ nombre, correo, telefono }) {
           ? {
               phones: {
                 items: [{ tag: 'MOBILE', countryCode: 'MX', phone: cleanPhone }],
+              },
+            }
+          : {}),
+        ...(cleanCp.length === 5
+          ? {
+              addresses: {
+                items: [{ tag: 'HOME', address: { postalCode: cleanCp, country: 'MX' } }],
               },
             }
           : {}),
@@ -104,7 +112,7 @@ async function sendParticipantInboxMessage(inboxClient, conversationId, messageP
   }
 }
 
-async function resolveOrCreateWixContact(apiKey, { nombre, correo, telefono }) {
+async function resolveOrCreateWixContact(apiKey, { nombre, correo, telefono, cp }) {
   const headers = {
     Authorization: apiKey,
     'wix-site-id': WIX_SITE_ID,
@@ -113,6 +121,7 @@ async function resolveOrCreateWixContact(apiKey, { nombre, correo, telefono }) {
 
   const cleanEmail = String(correo || '').trim().toLowerCase();
   const cleanPhone = String(telefono || '').replace(/\D/g, '');
+  const cleanCp = String(cp || '').replace(/\D/g, '').slice(0, 5);
   const { first, last } = splitFullName(nombre);
 
   // 1. Try finding existing contact by email first
@@ -169,6 +178,13 @@ async function resolveOrCreateWixContact(apiKey, { nombre, correo, telefono }) {
                   phone: cleanPhone,
                 },
               ],
+            },
+          }
+        : {}),
+      ...(cleanCp.length === 5
+        ? {
+            addresses: {
+              items: [{ tag: 'HOME', address: { postalCode: cleanCp, country: 'MX' } }],
             },
           }
         : {}),
@@ -229,6 +245,7 @@ async function syncCmsLeadThread({
   contactId,
   nombre,
   telefono,
+  cp,
   correo,
   latestMessage,
   pagina,
@@ -236,6 +253,7 @@ async function syncCmsLeadThread({
   try {
     const dataClient = await createVisitorDataClient();
     const nowIso = new Date().toISOString();
+    const cleanCp = String(cp || '').replace(/\D/g, '').slice(0, 5);
 
     if (cmsThreadId) {
       try {
@@ -259,6 +277,7 @@ async function syncCmsLeadThread({
           const updated = await dataClient.items.update(CONTACTO_COLLECTION, {
             ...existing,
             _id: cmsThreadId,
+            ...(cleanCp ? { cp: cleanCp, codigoPostal: cleanCp } : {}),
             mensaje: latestMessage || existing.mensaje || 'Inicio de chat en línea',
             historialChat: nextHistory,
             wixConversationId: conversationId || existing.wixConversationId || '',
@@ -285,6 +304,7 @@ async function syncCmsLeadThread({
     const inserted = await dataClient.items.insert(CONTACTO_COLLECTION, {
       nombre: String(nombre || '').trim(),
       telefono: String(telefono || '').replace(/\D/g, ''),
+      ...(cleanCp ? { cp: cleanCp, codigoPostal: cleanCp } : {}),
       email: String(correo || '').trim(),
       asunto: 'Chat en Vivo · Tienda Jasman',
       mensaje: latestMessage || 'Cliente inició sesión de chat en Tienda Online',
@@ -430,6 +450,7 @@ export default async function handler(req, res) {
   if (action === 'start') {
     const nombre = String(body.nombre || '').trim();
     const telefono = String(body.telefono || '').replace(/\D/g, '');
+    const cp = String(body.cp || '').replace(/\D/g, '').slice(0, 5);
     const correo = String(body.correo || '').trim();
     const initialMessage = String(body.initialMessage || '').trim();
     const pagina = String(body.pagina || '/llantas').trim();
@@ -442,7 +463,7 @@ export default async function handler(req, res) {
     }
 
     // Always reconcile/create the customer in Wix Contacts (works even without WIX_API_KEY)
-    let contactId = await submitVisitorCrmContact({ nombre, correo, telefono });
+    let contactId = await submitVisitorCrmContact({ nombre, correo, telefono, cp });
     let conversationId = '';
     let mode = 'wix_cms_cloud';
     let inboxMessages = [];
@@ -455,6 +476,7 @@ export default async function handler(req, res) {
             nombre,
             correo,
             telefono,
+            cp,
           });
         }
 
@@ -477,13 +499,14 @@ export default async function handler(req, res) {
               direction: 'PARTICIPANT_TO_BUSINESS',
               visibility: 'BUSINESS_AND_PARTICIPANT',
               content: {
-                previewText: `Datos de chat: ${nombre} · ${telefono}`,
+                previewText: `Datos de chat: ${nombre} · ${telefono}${cp ? ` · C.P. ${cp}` : ''}`,
                 form: {
                   title: leadFormTitle,
                   description: `Origen: ${pagina}`,
                   fields: [
                     { name: 'Nombre', value: nombre },
                     { name: 'WhatsApp / Teléfono', value: telefono },
+                    ...(cp ? [{ name: 'Código Postal (C.P.)', value: cp }] : []),
                     { name: 'Correo electrónico', value: correo },
                   ],
                 },
@@ -523,6 +546,7 @@ export default async function handler(req, res) {
       contactId,
       nombre,
       telefono,
+      cp,
       correo,
       latestMessage: initialMessage,
       pagina,
@@ -667,6 +691,7 @@ export default async function handler(req, res) {
     const text = String(body.text || '').trim();
     const nombre = String(body.nombre || 'Cliente Tienda').trim();
     const telefono = String(body.telefono || '').replace(/\D/g, '');
+    const cp = String(body.cp || '').replace(/\D/g, '').slice(0, 5);
     const correo = String(body.correo || '').trim();
     const pagina = String(body.pagina || '/llantas').trim();
 
@@ -690,8 +715,8 @@ export default async function handler(req, res) {
         ) {
           if (!contactId) {
             contactId =
-              (await submitVisitorCrmContact({ nombre, correo, telefono })) ||
-              (await resolveOrCreateWixContact(apiKey, { nombre, correo, telefono }));
+              (await submitVisitorCrmContact({ nombre, correo, telefono, cp })) ||
+              (await resolveOrCreateWixContact(apiKey, { nombre, correo, telefono, cp }));
           }
           if (contactId) {
             const convRes = await inboxClient.conversations.getOrCreateConversation({
@@ -747,6 +772,7 @@ export default async function handler(req, res) {
       contactId,
       nombre,
       telefono,
+      cp,
       correo,
       latestMessage: text,
       pagina,

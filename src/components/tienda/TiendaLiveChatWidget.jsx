@@ -13,6 +13,7 @@ import {
   User,
   Phone,
   Mail,
+  MapPin,
   AlertCircle,
   ArrowRight,
   RefreshCw,
@@ -84,6 +85,9 @@ export default function TiendaLiveChatWidget({
   const [nombre, setNombre] = useState(() => loadSavedSession()?.nombre || user?.nombre || '');
   const [telefono, setTelefono] = useState(
     () => loadSavedSession()?.telefono || user?.telefono || ''
+  );
+  const [cp, setCp] = useState(
+    () => loadSavedSession()?.cp || user?.cp || user?.codigoPostal || ''
   );
   const [correo, setCorreo] = useState(() => loadSavedSession()?.correo || user?.correo || '');
   const [formErrors, setFormErrors] = useState({});
@@ -187,6 +191,7 @@ export default function TiendaLiveChatWidget({
             contactId: activeSession.contactId || '',
             nombre: activeSession.nombre,
             telefono: activeSession.telefono,
+            cp: activeSession.cp || '',
             correo: activeSession.correo,
             pagina:
               typeof window !== 'undefined'
@@ -236,6 +241,7 @@ export default function TiendaLiveChatWidget({
               campos: {
                 'Nombre Completo': activeSession.nombre,
                 'Teléfono / WhatsApp': activeSession.telefono,
+                'Código Postal (C.P.)': activeSession.cp || 'No proporcionado',
                 'Correo Electrónico': activeSession.correo,
                 'Mensaje del Cliente': clean,
               },
@@ -247,6 +253,8 @@ export default function TiendaLiveChatWidget({
             _skipWixInbox: true,
             nombre: activeSession.nombre,
             telefono: activeSession.telefono,
+            cp: activeSession.cp || '',
+            codigoPostal: activeSession.cp || '',
             email: activeSession.correo,
             asunto: 'Mensaje Chat Tienda Jasman',
             mensaje: clean,
@@ -261,6 +269,8 @@ export default function TiendaLiveChatWidget({
           _skipWixInbox: true,
           nombre: activeSession.nombre,
           telefono: activeSession.telefono,
+          cp: activeSession.cp || '',
+          codigoPostal: activeSession.cp || '',
           email: activeSession.correo,
           asunto: 'Mensaje Chat Tienda Jasman',
           mensaje: clean,
@@ -346,6 +356,11 @@ export default function TiendaLiveChatWidget({
       errs.telefono = 'Ingresa un teléfono válido.';
     }
 
+    const cleanCp = cp.replace(/\D/g, '');
+    if (cleanCp.length !== 5) {
+      errs.cp = 'Ingresa un C.P. válido de 5 dígitos.';
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(correo.trim())) {
       errs.correo = 'Ingresa un correo electrónico válido.';
@@ -362,6 +377,7 @@ export default function TiendaLiveChatWidget({
     setStartingSession(true);
     const cleanName = nombre.trim();
     const cleanPhone = telefono.replace(/\D/g, '');
+    const cleanCp = cp.replace(/\D/g, '').slice(0, 5);
     const cleanEmail = correo.trim();
     const firstMsg = pendingInitialMessage.trim();
 
@@ -372,6 +388,7 @@ export default function TiendaLiveChatWidget({
       campos: {
         'Nombre Completo': cleanName,
         'Teléfono / WhatsApp': cleanPhone,
+        'Código Postal (C.P.)': cleanCp,
         'Correo Electrónico': cleanEmail,
         'Mensaje Inicial': firstMsg || 'Cliente registró sus datos para atención en el chat de la tienda',
       },
@@ -385,6 +402,7 @@ export default function TiendaLiveChatWidget({
           action: 'start',
           nombre: cleanName,
           telefono: cleanPhone,
+          cp: cleanCp,
           correo: cleanEmail,
           initialMessage: firstMsg,
           pagina:
@@ -398,6 +416,7 @@ export default function TiendaLiveChatWidget({
       const newSession = {
         nombre: cleanName,
         telefono: cleanPhone,
+        cp: cleanCp,
         correo: cleanEmail,
         conversationId: data?.conversationId || `local:${Date.now()}`,
         contactId: data?.contactId || '',
@@ -435,6 +454,8 @@ export default function TiendaLiveChatWidget({
         _skipWixInbox: true,
         nombre: cleanName,
         telefono: cleanPhone,
+        cp: cleanCp,
+        codigoPostal: cleanCp,
         email: cleanEmail,
         asunto: 'Inicio Chat en Línea Tienda',
         mensaje: firstMsg || 'Cliente registró sus datos para iniciar chat',
@@ -444,6 +465,7 @@ export default function TiendaLiveChatWidget({
       const fallbackSession = {
         nombre: cleanName,
         telefono: cleanPhone,
+        cp: cleanCp,
         correo: cleanEmail,
         conversationId: `local:${Date.now()}`,
         contactId: '',
@@ -736,74 +758,153 @@ export default function TiendaLiveChatWidget({
                 )}
               </div>
 
-              {/* Teléfono / WhatsApp */}
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontFamily: F.heading,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: '#64748B',
-                    marginBottom: 5,
-                  }}
-                >
-                  WhatsApp / Teléfono (10 dígitos) *
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <Phone
-                    size={14}
-                    color="#94A3B8"
+              {/* Teléfono / WhatsApp + C.P. */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(0, 1.35fr) minmax(0, 0.85fr)',
+                  gap: 10,
+                  alignItems: 'start',
+                }}
+              >
+                <div>
+                  <label
                     style={{
-                      position: 'absolute',
-                      left: 12,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                    }}
-                  />
-                  <input
-                    type="tel"
-                    maxLength={10}
-                    value={telefono}
-                    onChange={(e) => {
-                      setTelefono(e.target.value.replace(/\D/g, ''));
-                      if (formErrors.telefono) {
-                        setFormErrors((p) => ({ ...p, telefono: null }));
-                      }
-                    }}
-                    placeholder="55 1234 5678"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px 10px 34px',
-                      borderRadius: 12,
-                      border: `1px solid ${
-                        formErrors.telefono ? C.red : 'rgba(26, 31, 54, 0.14)'
-                      }`,
-                      background: '#F8FAFC',
-                      fontFamily: F.body,
-                      fontSize: 13,
-                      color: C.navy,
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-                {formErrors.telefono && (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      fontSize: 11,
-                      color: C.red,
-                      marginTop: 4,
+                      display: 'block',
+                      fontFamily: F.heading,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: '#64748B',
+                      marginBottom: 5,
                     }}
                   >
-                    <AlertCircle size={11} /> {formErrors.telefono}
-                  </span>
-                )}
+                    WhatsApp / Tel. (10 dígitos) *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Phone
+                      size={14}
+                      color="#94A3B8"
+                      style={{
+                        position: 'absolute',
+                        left: 12,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                      }}
+                    />
+                    <input
+                      type="tel"
+                      value={telefono}
+                      maxLength={10}
+                      onChange={(e) => {
+                        setTelefono(e.target.value.replace(/\D/g, ''));
+                        if (formErrors.telefono) {
+                          setFormErrors((p) => ({ ...p, telefono: null }));
+                        }
+                      }}
+                      placeholder="55 1234 5678"
+                      style={{
+                        width: '100%',
+                        padding: '10px 10px 10px 34px',
+                        borderRadius: 12,
+                        border: `1px solid ${
+                          formErrors.telefono ? C.red : 'rgba(26, 31, 54, 0.14)'
+                        }`,
+                        background: '#F8FAFC',
+                        fontFamily: F.body,
+                        fontSize: 13,
+                        color: C.navy,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                  {formErrors.telefono && (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        fontSize: 11,
+                        color: C.red,
+                        marginTop: 4,
+                      }}
+                    >
+                      <AlertCircle size={11} /> {formErrors.telefono}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontFamily: F.heading,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: '#64748B',
+                      marginBottom: 5,
+                    }}
+                  >
+                    C.P. (5 dígitos) *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <MapPin
+                      size={14}
+                      color="#94A3B8"
+                      style={{
+                        position: 'absolute',
+                        left: 11,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                      }}
+                    />
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      maxLength={5}
+                      value={cp}
+                      onChange={(e) => {
+                        setCp(e.target.value.replace(/\D/g, '').slice(0, 5));
+                        if (formErrors.cp) {
+                          setFormErrors((p) => ({ ...p, cp: null }));
+                        }
+                      }}
+                      placeholder="11320"
+                      style={{
+                        width: '100%',
+                        padding: '10px 10px 10px 32px',
+                        borderRadius: 12,
+                        border: `1px solid ${
+                          formErrors.cp ? C.red : 'rgba(26, 31, 54, 0.14)'
+                        }`,
+                        background: '#F8FAFC',
+                        fontFamily: F.body,
+                        fontSize: 13,
+                        color: C.navy,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                  {formErrors.cp && (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        fontSize: 11,
+                        color: C.red,
+                        marginTop: 4,
+                      }}
+                    >
+                      <AlertCircle size={11} /> {formErrors.cp}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Correo */}
@@ -937,6 +1038,7 @@ export default function TiendaLiveChatWidget({
                 >
                   <strong style={{ color: C.navy }}>{leadSession.nombre}</strong> ·{' '}
                   {leadSession.telefono}
+                  {leadSession.cp ? ` · C.P. ${leadSession.cp}` : ''}
                 </span>
                 <button
                   type="button"
