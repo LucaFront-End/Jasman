@@ -46,7 +46,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section style={{
+    <section className="jasman-hero-section" style={{
       position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       overflow: 'hidden', background: '#0a0c14',
       padding: isMobile ? '80px 12px 60px' : '0',
@@ -98,7 +98,7 @@ export default function Hero() {
       </div>
 
       {/* Heavy overlay for legibility — layered gradients */}
-      <div style={{
+      <div className="jasman-hero-overlay" style={{
         position: 'absolute', inset: 0, zIndex: 1,
         background: `
           radial-gradient(ellipse 80% 60% at 50% 40%, rgba(10,12,20,0.45) 0%, rgba(10,12,20,0.8) 100%),

@@ -11,7 +11,7 @@ const perks = [
 ];
 
 export default function CTA() {
-  const content = useReveal();
+  const { ref: contentRef, style: contentStyle } = useReveal();
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 900 : false);
 
   useEffect(() => {
@@ -21,14 +21,14 @@ export default function CTA() {
   }, []);
 
   return (
-    <section id="cta" style={{
+    <section id="cta" className="home-cta-section" style={{
       position: 'relative', overflow: 'hidden',
       background: '#FAFBFC',
     }}>
-      <div ref={content.ref} style={{
+      <div ref={contentRef} style={{
         maxWidth: 1300, margin: '0 auto',
         padding: isMobile ? '3.5rem 1rem' : 'clamp(4rem, 8vw, 6rem) 1.5rem',
-        ...content.style,
+        ...contentStyle,
       }}>
         <div style={{
           borderRadius: isMobile ? 26 : 36,

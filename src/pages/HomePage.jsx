@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Hero from '../components/Hero';
 import BrandsMarquee from '../components/BrandsMarquee';
 import Services from '../components/Services';
@@ -11,10 +13,21 @@ import CTA from '../components/CTA';
 import TiendaCatalogSection from '../components/tienda/TiendaCatalogSection';
 import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
 import TiendaAuthModal from '../components/tienda/TiendaAuthModal';
+import '../styles/darkLandingThemes.css';
 
-export default function HomePage() {
+export default function HomePage({ darkTheme = null }) {
+  useEffect(() => {
+    if (!darkTheme || typeof document === 'undefined') {
+      return undefined;
+    }
+    document.documentElement.setAttribute('data-jasman-theme', darkTheme);
+    return () => {
+      document.documentElement.removeAttribute('data-jasman-theme');
+    };
+  }, [darkTheme]);
+
   return (
-    <>
+    <div className={darkTheme ? `jasman-dark-landing jasman-theme-${darkTheme}` : undefined}>
       <TiendaCartDrawer />
       <TiendaAuthModal />
       <Hero />
@@ -30,6 +43,18 @@ export default function HomePage() {
       </div>
       <Promotions />
       <CTA />
-    </>
+
+      {darkTheme && (
+        <nav className="jasman-theme-switcher-pill" aria-label="Versión de diseño">
+          <Link to="/">Actual</Link>
+          <Link to="/landing-negro" className={darkTheme === 'obsidian' ? 'is-active' : ''}>
+            Negro
+          </Link>
+          <Link to="/landing-negro-suave" className={darkTheme === 'charcoal' ? 'is-active' : ''}>
+            Negro Suave
+          </Link>
+        </nav>
+      )}
+    </div>
   );
 }

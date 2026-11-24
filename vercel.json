@@ -8,6 +8,7 @@
     { "source": "/sitemap-paginas.xml", "destination": "/api/sitemap?type=paginas" },
     { "source": "/sitemap-servicios.xml", "destination": "/api/sitemap?type=servicios" },
     { "source": "/sitemap-sucursales.xml", "destination": "/api/sitemap?type=sucursales" },
+    { "source": "/sitemap-sucursal-servicios.xml", "destination": "/api/sitemap?type=sucursal-servicios" },
     { "source": "/sitemap-promocion.xml", "destination": "/api/sitemap?type=promocion" },
     { "source": "/sitemap-tienda-categorias.xml", "destination": "/api/sitemap?type=tienda-categorias" },
     { "source": "/sitemap-productos.xml", "destination": "/api/sitemap?type=productos" },

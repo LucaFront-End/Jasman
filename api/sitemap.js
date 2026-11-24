@@ -6,6 +6,7 @@
  *  - /sitemap-paginas.xml            -> Core Taller Automotriz corporate pages
  *  - /sitemap-servicios.xml          -> All /servicios/:slug service & package pages
  *  - /sitemap-sucursales.xml         -> All /sucursales/:slug branch pages
+ *  - /sitemap-sucursal-servicios.xml -> All /sucursales/:branch/:service branch-service pages
  *  - /sitemap-promocion.xml          -> Promo campaign routes + live Wix CMS "Landingdepromociones"
  *  - /sitemap-tienda-categorias.xml  -> /llantas store + /llantas/catalogo + brands, models, vehicle types, measures
  *  - /sitemap-productos.xml          -> Live visible Wix Stores products (/llantas/producto/:slug)
@@ -23,6 +24,7 @@ const CHILD_SITEMAPS = [
   '/sitemap-paginas.xml',
   '/sitemap-servicios.xml',
   '/sitemap-sucursales.xml',
+  '/sitemap-sucursal-servicios.xml',
   '/sitemap-promocion.xml',
   '/sitemap-tienda-categorias.xml',
   '/sitemap-productos.xml',
@@ -270,6 +272,23 @@ const SITEMAP_BUILDERS = {
         changefreq: 'monthly',
         priority: '0.7',
       });
+    }
+    return renderUrlsetXml(entries);
+  },
+
+  'sucursal-servicios': async ({ origin, todayIso }) => {
+    const { entries, push } = makeEntryBuilder(origin, todayIso);
+    const allServices = [...(servicios || []), ...(paquetes || [])];
+    for (const branch of sucursales || []) {
+      if (!branch?.id) continue;
+      const branchSeg = encodeURIComponent(branch.id);
+      for (const srv of allServices) {
+        if (!srv?.slug) continue;
+        push(`/sucursales/${branchSeg}/${encodeURIComponent(srv.slug)}`, {
+          changefreq: 'monthly',
+          priority: '0.6',
+        });
+      }
     }
     return renderUrlsetXml(entries);
   },

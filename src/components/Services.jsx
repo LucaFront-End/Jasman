@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { servicesContent } from '../data/content';
 import { C, F } from '../hooks/useAnimations';
@@ -21,6 +21,8 @@ export default function Services() {
   const [active, setActive] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 900 : false);
+  const touchStartRef = useRef({ x: 0, y: 0 });
+  const tabsBarRef = useRef(null);
   const services = servicesContent.services;
   const s = services[active];
   const detail = serviceDetails[s.title];
@@ -40,14 +42,47 @@ export default function Services() {
     }, 280);
   }, [active, transitioning]);
 
-  const next = () => goTo((active + 1) % services.length);
-  const prev = () => goTo((active - 1 + services.length) % services.length);
+  const next = useCallback(() => {
+    goTo((active + 1) % services.length);
+  }, [active, goTo, services.length]);
+
+  const prev = useCallback(() => {
+    goTo((active - 1 + services.length) % services.length);
+  }, [active, goTo, services.length]);
 
   // Auto-advance every 7 seconds
   useEffect(() => {
     const timer = setInterval(next, 7000);
     return () => clearInterval(timer);
-  }, [active, transitioning]);
+  }, [next, active]);
+
+  // Center active service pill horizontally inside the mobile carousel strip
+  useEffect(() => {
+    if (!isMobile || !tabsBarRef.current) return;
+    const container = tabsBarRef.current;
+    const activeBtn = container.children[active];
+    if (!activeBtn) return;
+    const targetLeft =
+      activeBtn.offsetLeft - container.clientWidth / 2 + activeBtn.offsetWidth / 2;
+    container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+  }, [active, isMobile]);
+
+  const handleTouchStart = (e) => {
+    const t = e.touches?.[0];
+    if (!t) return;
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+  };
+
+  const handleTouchEnd = (e) => {
+    const t = e.changedTouches?.[0];
+    if (!t) return;
+    const deltaX = t.clientX - touchStartRef.current.x;
+    const deltaY = t.clientY - touchStartRef.current.y;
+    if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (deltaX < 0) next();
+      else prev();
+    }
+  };
 
   return (
     <section id="services" style={{
@@ -75,7 +110,7 @@ export default function Services() {
       ))}
 
       {/* Overlay gradient */}
-      <div style={{
+      <div className="services-bg-overlay" style={{
         position: 'absolute', inset: 0, zIndex: 1,
         background: `linear-gradient(
           135deg,
@@ -102,8 +137,12 @@ export default function Services() {
           </span>
         </div>
 
-        {/* Main responsive grid: 2 columns on desktop, 1 column on mobile */}
-        <div className="services-grid">
+        {/* Main responsive grid: 2 columns on desktop, swipeable slide on mobile */}
+        <div
+          className="services-grid"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {/* Left: Service info */}
           <div key={active} style={{
             animation: transitioning ? 'none' : 'spotlightIn 0.5s cubic-bezier(0.16,1,0.3,1)',
@@ -291,89 +330,158 @@ export default function Services() {
           </div>
         </div>
 
-        {/* Service category pills: 2-col grid on mobile, centered flex on desktop */}
-        <div className="services-tabs-bar" style={{
-          display: isMobile ? 'grid' : 'flex',
-          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : undefined,
-          gap: 8,
-          marginTop: isMobile ? 24 : 48,
-          justifyContent: isMobile ? undefined : 'center',
-          padding: '6px 2px',
-        }}>
+        {/* Service category pills: horizontal scrollable carousel on mobile, centered flex on desktop */}
+        <div
+          ref={tabsBarRef}
+          className="services-tabs-bar"
+          style={{
+            display: 'flex',
+            flexWrap: isMobile ? 'nowrap' : 'wrap',
+            overflowX: isMobile ? 'auto' : 'visible',
+            scrollSnapType: isMobile ? 'x mandatory' : undefined,
+            gap: 8,
+            marginTop: isMobile ? 22 : 48,
+            justifyContent: isMobile ? 'flex-start' : 'center',
+            padding: isMobile ? '4px 2px 8px' : '6px 2px',
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
           {services.map((srv, i) => (
-            <button key={i} onClick={() => goTo(i)} style={{
-              width: isMobile ? '100%' : 'auto',
-              padding: isMobile ? '10px 12px' : '12px 20px',
-              borderRadius: 14,
-              border: `1.5px solid ${active === i ? C.red : 'rgba(255,255,255,0.08)'}`,
-              background: active === i ? `${C.red}25` : 'rgba(255,255,255,0.04)',
+            <button key={i} type="button" onClick={() => goTo(i)} style={{
+              width: 'auto',
+              padding: isMobile ? '9px 14px' : '12px 20px',
+              borderRadius: isMobile ? 9999 : 14,
+              border: `1.5px solid ${active === i ? C.red : 'rgba(255,255,255,0.10)'}`,
+              background: active === i ? `${C.red}28` : 'rgba(255,255,255,0.04)',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              justifyContent: isMobile ? 'center' : 'flex-start',
-              gap: 8,
+              justifyContent: 'center',
+              gap: 7,
+              flex: '0 0 auto',
               flexShrink: 0,
+              scrollSnapAlign: isMobile ? 'center' : undefined,
               transition: 'all 0.3s ease',
               backdropFilter: 'blur(8px)',
               boxSizing: 'border-box',
             }}>
-              <Icon name={srv.icon} size={16} color={active === i ? C.redLight : 'rgba(255,255,255,0.45)'} />
+              <Icon name={srv.icon} size={15} color={active === i ? C.redLight : 'rgba(255,255,255,0.5)'} />
               <span style={{
                 fontFamily: F.heading, fontWeight: 700, fontSize: isMobile ? 12 : 13,
-                color: active === i ? C.white : 'rgba(255,255,255,0.5)',
+                color: active === i ? C.white : 'rgba(255,255,255,0.58)',
                 whiteSpace: 'nowrap',
               }}>{srv.title}</span>
             </button>
           ))}
         </div>
 
-        {/* Mobile Nav arrows: sleek bottom bar on mobile */}
+        {/* Mobile Carousel Controls: centered arrows + dot indicators clear of floating Chat/WA */}
         {isMobile && (
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 8 }}>
-            <button
-              onClick={prev}
-              aria-label="Servicio anterior"
-              style={{
-                padding: '8px 18px',
-                borderRadius: 12,
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: C.white,
-                display: 'flex', alignItems: 'center', gap: 6,
-                fontSize: 12, fontWeight: 600, fontFamily: F.heading,
-                cursor: 'pointer',
-              }}
-            >
-              <ChevronLeft size={16} /> Anterior
-            </button>
-            <button
-              onClick={next}
-              aria-label="Siguiente servicio"
-              style={{
-                padding: '8px 18px',
-                borderRadius: 12,
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: C.white,
-                display: 'flex', alignItems: 'center', gap: 6,
-                fontSize: 12, fontWeight: 600, fontFamily: F.heading,
-                cursor: 'pointer',
-              }}
-            >
-              Siguiente <ChevronRight size={16} />
-            </button>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 10,
+            marginTop: 10,
+            paddingBottom: 16,
+          }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 12,
+              padding: '6px 10px',
+              borderRadius: 9999,
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.10)',
+            }}>
+              <button
+                type="button"
+                onClick={prev}
+                aria-label="Servicio anterior"
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  color: C.white,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                {services.map((srv, i) => (
+                  <button
+                    key={srv.title}
+                    type="button"
+                    onClick={() => goTo(i)}
+                    aria-label={`Ver ${srv.title}`}
+                    style={{
+                      width: active === i ? 22 : 7,
+                      height: 7,
+                      borderRadius: 9999,
+                      border: 'none',
+                      padding: 0,
+                      background: active === i ? C.redLight : 'rgba(255,255,255,0.28)',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                    }}
+                  />
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={next}
+                aria-label="Siguiente servicio"
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  color: C.white,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            <span style={{
+              fontFamily: F.heading,
+              fontSize: 10.5,
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.45)',
+            }}>
+              Desliza para explorar · 0{active + 1} / 0{services.length}
+            </span>
           </div>
         )}
 
-        {/* Progress bar */}
-        <div style={{ maxWidth: 260, margin: '14px auto 0', height: 3, borderRadius: 3, background: 'rgba(255,255,255,0.08)' }}>
-          <div style={{
-            height: '100%', borderRadius: 3,
-            background: `linear-gradient(90deg, ${C.red}, ${C.redLight})`,
-            width: `${((active + 1) / services.length) * 100}%`,
-            transition: 'width 0.4s ease',
-          }} />
-        </div>
+        {/* Progress bar (desktop) */}
+        {!isMobile && (
+          <div style={{ maxWidth: 260, margin: '14px auto 0', height: 3, borderRadius: 3, background: 'rgba(255,255,255,0.08)' }}>
+            <div style={{
+              height: '100%', borderRadius: 3,
+              background: `linear-gradient(90deg, ${C.red}, ${C.redLight})`,
+              width: `${((active + 1) / services.length) * 100}%`,
+              transition: 'width 0.4s ease',
+            }} />
+          </div>
+        )}
 
         {/* Desktop nav arrows */}
         {!isMobile && (

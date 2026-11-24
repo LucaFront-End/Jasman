@@ -175,6 +175,10 @@ export default function App() {
           <Route path="/meta-pixel" element={<MetaAdminPage />} />
           <Route path="/configuracion-meta" element={<MetaAdminPage />} />
 
+          {/* Dark Home Landing theme previews (separate URLs, "/" remains intact) */}
+          <Route path="/landing-negro" element={<HomePage darkTheme="obsidian" />} />
+          <Route path="/landing-negro-suave" element={<HomePage darkTheme="charcoal" />} />
+
           {/* Catch-all dynamic CMS promotional slug route (matches any slug created in Wix CMS Landingdepromociones) */}
           <Route path="/:slug" element={<LandingAlineacionPage key={pathname} />} />
         </Routes>

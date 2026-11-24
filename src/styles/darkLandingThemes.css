@@ -1,0 +1,411 @@
+/* ═══════════════════════════════════════════════════════════════════
+   DARK LANDING PREVIEW THEMES (SCOPED TO /landing-negro & /landing-negro-suave)
+   Strictly scoped via html[data-jasman-theme] so "/" remains 100% untouched.
+   - "obsidian": Negro directo (#000000 / #08080A / #111116)
+   - "charcoal": Negro menos negroso (#14171D / #1B1F28 / #242936)
+   ═══════════════════════════════════════════════════════════════════ */
+
+html[data-jasman-theme="obsidian"] {
+  --dl-bg-primary: #000000;
+  --dl-bg-alt: #08080b;
+  --dl-bg-card: #111116;
+  --dl-bg-card-elevated: #181820;
+  --dl-nav-scrolled: rgba(0, 0, 0, 0.90);
+  --dl-hero-overlay:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.88) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.72) 55%, rgba(0, 0, 0, 0.96) 100%);
+  --dl-services-overlay: linear-gradient(135deg, rgba(0, 0, 0, 0.96) 0%, rgba(8, 8, 12, 0.90) 50%, rgba(0, 0, 0, 0.95) 100%);
+  --dl-border: rgba(255, 255, 255, 0.11);
+  --dl-border-strong: rgba(255, 255, 255, 0.20);
+  --dl-text-primary: #ffffff;
+  --dl-text-secondary: #b4b9c5;
+  --dl-text-muted: #848b99;
+  --dl-glass: rgba(14, 14, 18, 0.86);
+}
+
+html[data-jasman-theme="charcoal"] {
+  --dl-bg-primary: #14171d;
+  --dl-bg-alt: #1b1f28;
+  --dl-bg-card: #232835;
+  --dl-bg-card-elevated: #2b3140;
+  --dl-nav-scrolled: rgba(20, 23, 29, 0.92);
+  --dl-hero-overlay:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(20, 23, 29, 0.42) 0%, rgba(20, 23, 29, 0.84) 100%),
+    linear-gradient(180deg, rgba(20, 23, 29, 0.32) 0%, rgba(20, 23, 29, 0.68) 55%, rgba(20, 23, 29, 0.94) 100%);
+  --dl-services-overlay: linear-gradient(135deg, rgba(20, 23, 29, 0.95) 0%, rgba(27, 31, 40, 0.88) 50%, rgba(20, 23, 29, 0.94) 100%);
+  --dl-border: rgba(255, 255, 255, 0.13);
+  --dl-border-strong: rgba(255, 255, 255, 0.22);
+  --dl-text-primary: #f3f5f9;
+  --dl-text-secondary: #c1c8d6;
+  --dl-text-muted: #949eb0;
+  --dl-glass: rgba(31, 36, 48, 0.88);
+}
+
+html[data-jasman-theme] body,
+html[data-jasman-theme] main {
+  background: var(--dl-bg-primary) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+/* Navbar scrolled bar */
+html[data-jasman-theme] nav.nav-scrolled {
+  background: var(--dl-nav-scrolled) !important;
+  border-bottom: 1px solid var(--dl-border) !important;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.52) !important;
+}
+
+/* Hero */
+html[data-jasman-theme] .jasman-hero-section {
+  background: var(--dl-bg-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-hero-overlay {
+  background: var(--dl-hero-overlay) !important;
+}
+
+/* Brands Marquee */
+html[data-jasman-theme] .brands-marquee-section {
+  background: var(--dl-bg-alt) !important;
+  border-top-color: var(--dl-border) !important;
+  border-bottom: 1px solid var(--dl-border) !important;
+}
+
+html[data-jasman-theme] .brands-marquee-fade-left {
+  background: linear-gradient(to right, var(--dl-bg-alt), transparent) !important;
+}
+
+html[data-jasman-theme] .brands-marquee-fade-right {
+  background: linear-gradient(to left, var(--dl-bg-alt), transparent) !important;
+}
+
+/* About Section (#about) */
+html[data-jasman-theme] #about {
+  background: var(--dl-bg-primary) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] #about h2,
+html[data-jasman-theme] #about h4 {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] #about p,
+html[data-jasman-theme] #about div[style*="rgb(107, 114, 128)"] {
+  color: var(--dl-text-secondary) !important;
+}
+
+html[data-jasman-theme] #about button[style*="background: rgb(255, 255, 255)"] {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] #about button[style*="background: rgb(255, 255, 255)"] span {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] #about div[style*="background: rgb(248, 249, 250)"],
+html[data-jasman-theme] #about div[style*="background: rgb(255, 255, 255)"] {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] #about div[style*="rgba(255, 255, 255, 0.96)"] {
+  background: var(--dl-glass) !important;
+  border: 1px solid var(--dl-border-strong) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45) !important;
+}
+
+html[data-jasman-theme] #about div[style*="rgba(255, 255, 255, 0.96)"] div[style*="rgb(26, 31, 54)"] {
+  color: var(--dl-text-primary) !important;
+}
+
+/* Timeline Section (#historia) */
+html[data-jasman-theme] #historia,
+html[data-jasman-theme] #historia > div:first-child {
+  background: var(--dl-bg-alt) !important;
+}
+
+html[data-jasman-theme] #historia h2,
+html[data-jasman-theme] #historia h3 {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] #historia p,
+html[data-jasman-theme] #historia span[style*="color: rgb(107, 114, 128)"] {
+  color: var(--dl-text-secondary) !important;
+}
+
+html[data-jasman-theme] #historia div[style*="background: rgb(255, 255, 255)"] {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] #historia button[style*="background: rgb(255, 255, 255)"] {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border-strong) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+/* Services Section (#services) */
+html[data-jasman-theme] #services {
+  background: var(--dl-bg-primary) !important;
+}
+
+html[data-jasman-theme] #services .services-bg-overlay {
+  background: var(--dl-services-overlay) !important;
+}
+
+/* Process Section (#proceso) */
+html[data-jasman-theme] #proceso {
+  background: var(--dl-bg-alt) !important;
+}
+
+html[data-jasman-theme] #proceso h2,
+html[data-jasman-theme] #proceso h4 {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] #proceso p {
+  color: var(--dl-text-secondary) !important;
+}
+
+html[data-jasman-theme] #proceso div[style*="background: rgb(255, 255, 255)"] {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border-strong) !important;
+}
+
+/* Locations Section (#locations) */
+html[data-jasman-theme] #locations {
+  background: var(--dl-bg-primary) !important;
+}
+
+html[data-jasman-theme] #locations input {
+  color: #111827 !important;
+}
+
+/* Testimonials Section */
+html[data-jasman-theme] .testimonials-section {
+  background: var(--dl-bg-alt) !important;
+}
+
+html[data-jasman-theme] .testimonials-section h2,
+html[data-jasman-theme] .testimonials-section p,
+html[data-jasman-theme] .testimonials-section div[style*="color: rgb(26, 31, 54)"] {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .testimonials-section div[style*="color: rgb(107, 114, 128)"] {
+  color: var(--dl-text-secondary) !important;
+}
+
+html[data-jasman-theme] .testimonials-section div[style*="background: rgb(248, 249, 250)"] {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.36) !important;
+}
+
+html[data-jasman-theme] .testimonials-section button[style*="rgba(255, 255, 255"] {
+  background: var(--dl-bg-card-elevated) !important;
+  border-color: var(--dl-border-strong) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .testimonials-section button[style*="rgba(26, 31, 54, 0.15)"] {
+  background: rgba(255, 255, 255, 0.24) !important;
+}
+
+/* Tienda Catalog Preview Section (#tienda-home-section) */
+html[data-jasman-theme] #tienda-home-section .jasman-catalog-main-section {
+  background: var(--dl-bg-primary) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section .jasman-catalog-header-row h2 {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card:not(.is-selected) {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card.is-selected {
+  background: rgba(196, 30, 36, 0.16) !important;
+  border-color: #c41e24 !important;
+}
+
+html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card:not(.is-selected) div[style*="color: rgb(26, 31, 54)"] {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card div[style*="color: rgb(100, 116, 139)"] {
+  color: var(--dl-text-secondary) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card:not(.is-selected) svg path,
+html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card:not(.is-selected) svg circle,
+html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card:not(.is-selected) svg rect {
+  stroke: #e2e8f0;
+}
+
+html[data-jasman-theme] #tienda-home-section #medidas-pedidas {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border-strong) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section #medidas-pedidas span[style*="color: rgb(26, 31, 54)"] {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section #medidas-pedidas strong {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section #medidas-pedidas .jasman-selectable-filter:not(.is-selected):not([title]) {
+  background: var(--dl-bg-card-elevated) !important;
+  border-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section #medidas-pedidas .jasman-selectable-filter.is-selected:not([title]) {
+  background: rgba(196, 30, 36, 0.2) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section #medidas-pedidas input {
+  background: var(--dl-bg-card-elevated) !important;
+  color: var(--dl-text-primary) !important;
+  border: 1px solid var(--dl-border) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section #medidas-pedidas select {
+  background: var(--dl-bg-card-elevated) !important;
+  color: var(--dl-text-primary) !important;
+  border: 1px solid var(--dl-border) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section #medidas-pedidas select option {
+  background: #14171d !important;
+  color: #f3f5f9 !important;
+}
+
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+  color: var(--dl-text-primary) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a h3,
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a div[style*="color: rgb(26, 31, 54)"] {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a div[style*="rgba(255, 255, 255, 0.85)"] {
+  background: var(--dl-bg-card-elevated) !important;
+  border-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a div[style*="rgba(255, 255, 255, 0.85)"] > div:first-child {
+  color: var(--dl-text-secondary) !important;
+}
+
+/* Brand logos in product cards keep clean white pill on dark cards */
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[src*="/brands/"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Bridgestone"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Michelin"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Goodyear"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Continental"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Pirelli"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Hankook"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Firestone"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="BFGoodrich"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Kelly"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Euzkadi"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Laufenn"],
+html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="General"] {
+  background: #ffffff;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+/* Keep "Mostrar más" dark-themed */
+html[data-jasman-theme] #tienda-home-section button[style*="background: rgb(255, 255, 255)"] {
+  background: var(--dl-bg-card-elevated) !important;
+  color: var(--dl-text-primary) !important;
+  border: 1px solid var(--dl-border-strong) !important;
+}
+
+/* Promotions Section (#promos) */
+html[data-jasman-theme] #promos {
+  background: var(--dl-bg-alt) !important;
+  border-top: 1px solid var(--dl-border) !important;
+}
+
+html[data-jasman-theme] #promos .jasman-tire-promo-card {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+}
+
+/* CTA Section (#cta) */
+html[data-jasman-theme] .home-cta-section {
+  background: var(--dl-bg-primary) !important;
+}
+
+/* Footer */
+html[data-jasman-theme] .site-footer {
+  background: var(--dl-bg-alt) !important;
+  border-top: 1px solid var(--dl-border) !important;
+}
+
+/* Floating Preview Switcher Pill (bottom-left on dark preview routes) */
+.jasman-theme-switcher-pill {
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  z-index: 950;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 9999px;
+  background: rgba(12, 14, 20, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48);
+}
+
+.jasman-theme-switcher-pill a {
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.jasman-theme-switcher-pill a:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.jasman-theme-switcher-pill a.is-active {
+  background: #c41e24;
+  color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .jasman-theme-switcher-pill {
+    bottom: 12px;
+    left: 10px;
+    padding: 4px;
+    gap: 2px;
+  }
+  .jasman-theme-switcher-pill a {
+    padding: 5px 9px;
+    font-size: 10px;
+  }
+}

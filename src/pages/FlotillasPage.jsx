@@ -179,9 +179,10 @@ export default function FlotillasPage() {
           }}
         />
         <div style={{ maxWidth: 1260, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          {/* Breadcrumbs */}
+          {/* Breadcrumbs (hidden on mobile) */}
           <nav
             aria-label="Breadcrumb"
+            className="flotillas-hero-mobile-hide"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -201,7 +202,10 @@ export default function FlotillasPage() {
           <div className="flotillas-hero-split">
             {/* Left column: Value prop + Badge + CTAs + 3 KPIs */}
             <div style={{ minWidth: 0 }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <div
+                className="flotillas-hero-mobile-hide"
+                style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 16 }}
+              >
                 <span
                   style={{
                     display: 'inline-flex',
@@ -357,7 +361,7 @@ export default function FlotillasPage() {
             </div>
 
             {/* Right column: Isometric Live Fleet Workshop immediately visible above the fold */}
-            <div style={{ minWidth: 0 }}>
+            <div className="flotillas-hero-anim-col" style={{ minWidth: 0 }}>
               <div
                 style={{
                   display: 'flex',
@@ -1049,11 +1053,19 @@ export default function FlotillasPage() {
           .flotillas-hero-split,
           .flotillas-contact-grid {
             grid-template-columns: minmax(0, 1fr) !important;
-            gap: 26px !important;
+            gap: 24px !important;
+          }
+          .flotillas-hero-anim-col {
+            order: -1 !important;
           }
           .flotillas-benefits-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             gap: 16px !important;
+          }
+        }
+        @media (max-width: 768px) {
+          .flotillas-hero-mobile-hide {
+            display: none !important;
           }
         }
         @media (max-width: 860px) {

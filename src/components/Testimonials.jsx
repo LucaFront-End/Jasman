@@ -11,7 +11,7 @@ export default function Testimonials() {
   const [dragDelta, setDragDelta] = useState(0);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   const containerRef = useRef(null);
-  const header = useReveal();
+  const { ref: headerRef, style: headerStyle } = useReveal();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -46,7 +46,7 @@ export default function Testimonials() {
   };
 
   return (
-    <section style={{
+    <section className="testimonials-section" style={{
       padding: isMobile ? '4rem 1rem 3.5rem' : '6rem 1.5rem',
       background: C.white,
       overflow: 'hidden',
@@ -58,7 +58,7 @@ export default function Testimonials() {
       }} />
 
       <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-        <div ref={header.ref} style={{ textAlign: 'center', maxWidth: 600, margin: isMobile ? '0 auto 32px' : '0 auto 56px', ...header.style }}>
+        <div ref={headerRef} style={{ textAlign: 'center', maxWidth: 600, margin: isMobile ? '0 auto 32px' : '0 auto 56px', ...headerStyle }}>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', borderRadius: 9999,
             background: 'rgba(196,30,36,0.08)', color: C.red,

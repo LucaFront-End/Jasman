@@ -1425,7 +1425,7 @@ main {
   }
 }
 
-/* ═══ SERVICES TABS (2-COL ON MOBILE, NO HORIZONTAL SCROLL) ═══ */
+/* ═══ SERVICES TABS CAROUSEL ON MOBILE ═══ */
 .services-tabs-bar {
   display: flex;
   gap: 8px;
@@ -1433,12 +1433,29 @@ main {
   margin-top: 48px;
 }
 
-@media (max-width: 768px) {
+.services-tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 900px) {
   .services-tabs-bar {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
     gap: 8px !important;
-    margin-top: 24px !important;
+    margin-top: 22px !important;
+    padding: 4px 2px 8px !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .services-tabs-bar > button {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    scroll-snap-align: center;
   }
 }
 

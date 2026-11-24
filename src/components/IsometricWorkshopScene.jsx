@@ -898,6 +898,7 @@ export default function IsometricWorkshopScene({
           ].map((stat) => (
             <div
               key={stat.title}
+              className="jasman-iso-stat-card"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -908,9 +909,10 @@ export default function IsometricWorkshopScene({
                 border: '1px solid rgba(255,255,255,0.06)',
               }}
             >
-              <stat.icon size={16} color={stat.accent} style={{ flexShrink: 0 }} />
+              <stat.icon size={16} color={stat.accent} style={{ flexShrink: 0 }} className="jasman-iso-stat-icon" />
               <div style={{ minWidth: 0 }}>
                 <div
+                  className="jasman-iso-stat-title"
                   style={{
                     fontFamily: F.heading,
                     fontSize: 11,
@@ -921,6 +923,7 @@ export default function IsometricWorkshopScene({
                   {stat.title}
                 </div>
                 <div
+                  className="jasman-iso-stat-desc"
                   style={{
                     fontSize: 11.5,
                     color: 'rgba(255,255,255,0.58)',
@@ -932,7 +935,7 @@ export default function IsometricWorkshopScene({
                   {stat.desc}
                 </div>
               </div>
-              <ArrowUpRight size={13} color="rgba(255,255,255,0.28)" style={{ marginLeft: 'auto', flexShrink: 0 }} />
+              <ArrowUpRight size={13} color="rgba(255,255,255,0.28)" style={{ marginLeft: 'auto', flexShrink: 0 }} className="jasman-iso-stat-arrow" />
             </div>
           ))}
         </div>
@@ -1041,9 +1044,26 @@ export default function IsometricWorkshopScene({
             font-size: 10.5px !important;
           }
           .jasman-iso-footer-strip {
-            grid-template-columns: 1fr !important;
-            gap: 8px !important;
-            padding: 12px 14px !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 6px !important;
+            padding: 10px 8px !important;
+          }
+          .jasman-iso-stat-card {
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            text-align: center !important;
+            padding: 8px 5px !important;
+            gap: 6px !important;
+          }
+          .jasman-iso-stat-title {
+            font-size: 10px !important;
+            line-height: 1.2 !important;
+            white-space: normal !important;
+          }
+          .jasman-iso-stat-desc,
+          .jasman-iso-stat-arrow {
+            display: none !important;
           }
         }
       `}</style>
