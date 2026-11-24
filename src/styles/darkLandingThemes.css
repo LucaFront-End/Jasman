@@ -1,363 +1,105 @@
 /* ═══════════════════════════════════════════════════════════════════
-   DARK LANDING PREVIEW THEMES (SCOPED TO /landing-negro & /landing-negro-suave)
-   Strictly scoped via html[data-jasman-theme] so "/" remains 100% untouched.
-   - "obsidian": Negro directo (#000000 / #08080A / #111116)
-   - "charcoal": Negro menos negroso (#14171D / #1B1F28 / #242936)
+   NAVY-ONLY DARK PREVIEW THEMES
+   Scoped strictly via html[data-jasman-theme] on preview URLs:
+   - /landing-negro & /llantas-negro       ("obsidian": Negro directo)
+   - /landing-negro-suave & /llantas-negro-suave ("charcoal": Negro menos negroso)
+
+   Replaces ONLY navy blue surfaces (#1A1F36, #131729, #111627, #101528, #0B0D17, #0a0c14)
+   while leaving all white/light sections, cards, and navbars untouched.
    ═══════════════════════════════════════════════════════════════════ */
 
 html[data-jasman-theme="obsidian"] {
-  --dl-bg-primary: #000000;
-  --dl-bg-alt: #08080b;
-  --dl-bg-card: #111116;
-  --dl-bg-card-elevated: #181820;
-  --dl-nav-scrolled: rgba(0, 0, 0, 0.90);
+  --dl-navy-bg: #000000;
+  --dl-navy-bg-soft: #0a0a0c;
+  --dl-navy-surface: #121215;
+  --dl-map-bar: rgba(0, 0, 0, 0.86);
   --dl-hero-overlay:
-    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.88) 100%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.72) 55%, rgba(0, 0, 0, 0.96) 100%);
-  --dl-services-overlay: linear-gradient(135deg, rgba(0, 0, 0, 0.96) 0%, rgba(8, 8, 12, 0.90) 50%, rgba(0, 0, 0, 0.95) 100%);
-  --dl-border: rgba(255, 255, 255, 0.11);
-  --dl-border-strong: rgba(255, 255, 255, 0.20);
-  --dl-text-primary: #ffffff;
-  --dl-text-secondary: #b4b9c5;
-  --dl-text-muted: #848b99;
-  --dl-glass: rgba(14, 14, 18, 0.86);
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.86) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.68) 55%, rgba(0, 0, 0, 0.94) 100%);
+  --dl-services-overlay: linear-gradient(135deg, rgba(0, 0, 0, 0.96) 0%, rgba(10, 10, 12, 0.88) 50%, rgba(0, 0, 0, 0.94) 100%);
 }
 
 html[data-jasman-theme="charcoal"] {
-  --dl-bg-primary: #14171d;
-  --dl-bg-alt: #1b1f28;
-  --dl-bg-card: #232835;
-  --dl-bg-card-elevated: #2b3140;
-  --dl-nav-scrolled: rgba(20, 23, 29, 0.92);
+  --dl-navy-bg: #1c1c1f;
+  --dl-navy-bg-soft: #252529;
+  --dl-navy-surface: #2d2d32;
+  --dl-map-bar: rgba(28, 28, 31, 0.88);
   --dl-hero-overlay:
-    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(20, 23, 29, 0.42) 0%, rgba(20, 23, 29, 0.84) 100%),
-    linear-gradient(180deg, rgba(20, 23, 29, 0.32) 0%, rgba(20, 23, 29, 0.68) 55%, rgba(20, 23, 29, 0.94) 100%);
-  --dl-services-overlay: linear-gradient(135deg, rgba(20, 23, 29, 0.95) 0%, rgba(27, 31, 40, 0.88) 50%, rgba(20, 23, 29, 0.94) 100%);
-  --dl-border: rgba(255, 255, 255, 0.13);
-  --dl-border-strong: rgba(255, 255, 255, 0.22);
-  --dl-text-primary: #f3f5f9;
-  --dl-text-secondary: #c1c8d6;
-  --dl-text-muted: #949eb0;
-  --dl-glass: rgba(31, 36, 48, 0.88);
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(24, 24, 27, 0.42) 0%, rgba(28, 28, 31, 0.82) 100%),
+    linear-gradient(180deg, rgba(24, 24, 27, 0.32) 0%, rgba(28, 28, 31, 0.65) 55%, rgba(28, 28, 31, 0.90) 100%);
+  --dl-services-overlay: linear-gradient(135deg, rgba(28, 28, 31, 0.95) 0%, rgba(37, 37, 41, 0.87) 50%, rgba(28, 28, 31, 0.93) 100%);
 }
 
-html[data-jasman-theme] body,
-html[data-jasman-theme] main {
-  background: var(--dl-bg-primary) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-/* Navbar scrolled bar */
-html[data-jasman-theme] nav.nav-scrolled {
-  background: var(--dl-nav-scrolled) !important;
-  border-bottom: 1px solid var(--dl-border) !important;
-  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.52) !important;
-}
-
-/* Hero */
+/* ─── 1. Home Navy Sections ─── */
 html[data-jasman-theme] .jasman-hero-section {
-  background: var(--dl-bg-primary) !important;
+  background: var(--dl-navy-bg) !important;
 }
 
 html[data-jasman-theme] .jasman-hero-overlay {
   background: var(--dl-hero-overlay) !important;
 }
 
-/* Brands Marquee */
 html[data-jasman-theme] .brands-marquee-section {
-  background: var(--dl-bg-alt) !important;
-  border-top-color: var(--dl-border) !important;
-  border-bottom: 1px solid var(--dl-border) !important;
+  background: var(--dl-navy-bg) !important;
 }
 
 html[data-jasman-theme] .brands-marquee-fade-left {
-  background: linear-gradient(to right, var(--dl-bg-alt), transparent) !important;
+  background: linear-gradient(to right, var(--dl-navy-bg), transparent) !important;
 }
 
 html[data-jasman-theme] .brands-marquee-fade-right {
-  background: linear-gradient(to left, var(--dl-bg-alt), transparent) !important;
+  background: linear-gradient(to left, var(--dl-navy-bg), transparent) !important;
 }
 
-/* About Section (#about) */
-html[data-jasman-theme] #about {
-  background: var(--dl-bg-primary) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] #about h2,
-html[data-jasman-theme] #about h4 {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] #about p,
-html[data-jasman-theme] #about div[style*="rgb(107, 114, 128)"] {
-  color: var(--dl-text-secondary) !important;
-}
-
-html[data-jasman-theme] #about button[style*="background: rgb(255, 255, 255)"] {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] #about button[style*="background: rgb(255, 255, 255)"] span {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] #about div[style*="background: rgb(248, 249, 250)"],
-html[data-jasman-theme] #about div[style*="background: rgb(255, 255, 255)"] {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] #about div[style*="rgba(255, 255, 255, 0.96)"] {
-  background: var(--dl-glass) !important;
-  border: 1px solid var(--dl-border-strong) !important;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45) !important;
-}
-
-html[data-jasman-theme] #about div[style*="rgba(255, 255, 255, 0.96)"] div[style*="rgb(26, 31, 54)"] {
-  color: var(--dl-text-primary) !important;
-}
-
-/* Timeline Section (#historia) */
-html[data-jasman-theme] #historia,
-html[data-jasman-theme] #historia > div:first-child {
-  background: var(--dl-bg-alt) !important;
-}
-
-html[data-jasman-theme] #historia h2,
-html[data-jasman-theme] #historia h3 {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] #historia p,
-html[data-jasman-theme] #historia span[style*="color: rgb(107, 114, 128)"] {
-  color: var(--dl-text-secondary) !important;
-}
-
-html[data-jasman-theme] #historia div[style*="background: rgb(255, 255, 255)"] {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] #historia button[style*="background: rgb(255, 255, 255)"] {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border-strong) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-/* Services Section (#services) */
 html[data-jasman-theme] #services {
-  background: var(--dl-bg-primary) !important;
+  background: var(--dl-navy-bg) !important;
 }
 
 html[data-jasman-theme] #services .services-bg-overlay {
   background: var(--dl-services-overlay) !important;
 }
 
-/* Process Section (#proceso) */
-html[data-jasman-theme] #proceso {
-  background: var(--dl-bg-alt) !important;
-}
-
-html[data-jasman-theme] #proceso h2,
-html[data-jasman-theme] #proceso h4 {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] #proceso p {
-  color: var(--dl-text-secondary) !important;
-}
-
-html[data-jasman-theme] #proceso div[style*="background: rgb(255, 255, 255)"] {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border-strong) !important;
-}
-
-/* Locations Section (#locations) */
 html[data-jasman-theme] #locations {
-  background: var(--dl-bg-primary) !important;
+  background: var(--dl-navy-bg) !important;
 }
 
-html[data-jasman-theme] #locations input {
-  color: #111827 !important;
+html[data-jasman-theme] #locations div[style*="rgba(26, 31, 54, 0.85)"] {
+  background: var(--dl-map-bar) !important;
 }
 
-/* Testimonials Section */
-html[data-jasman-theme] .testimonials-section {
-  background: var(--dl-bg-alt) !important;
-}
-
-html[data-jasman-theme] .testimonials-section h2,
-html[data-jasman-theme] .testimonials-section p,
-html[data-jasman-theme] .testimonials-section div[style*="color: rgb(26, 31, 54)"] {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .testimonials-section div[style*="color: rgb(107, 114, 128)"] {
-  color: var(--dl-text-secondary) !important;
-}
-
-html[data-jasman-theme] .testimonials-section div[style*="background: rgb(248, 249, 250)"] {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.36) !important;
-}
-
-html[data-jasman-theme] .testimonials-section button[style*="rgba(255, 255, 255"] {
-  background: var(--dl-bg-card-elevated) !important;
-  border-color: var(--dl-border-strong) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .testimonials-section button[style*="rgba(26, 31, 54, 0.15)"] {
-  background: rgba(255, 255, 255, 0.24) !important;
-}
-
-/* Tienda Catalog Preview Section (#tienda-home-section) */
-html[data-jasman-theme] #tienda-home-section .jasman-catalog-main-section {
-  background: var(--dl-bg-primary) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section .jasman-catalog-header-row h2 {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card:not(.is-selected) {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card.is-selected {
-  background: rgba(196, 30, 36, 0.16) !important;
-  border-color: #c41e24 !important;
-}
-
-html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card:not(.is-selected) div[style*="color: rgb(26, 31, 54)"] {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card div[style*="color: rgb(100, 116, 139)"] {
-  color: var(--dl-text-secondary) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card:not(.is-selected) svg path,
-html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card:not(.is-selected) svg circle,
-html[data-jasman-theme] #tienda-home-section .catalog-8vehicle-card:not(.is-selected) svg rect {
-  stroke: #e2e8f0;
-}
-
-html[data-jasman-theme] #tienda-home-section #medidas-pedidas {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border-strong) !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section #medidas-pedidas span[style*="color: rgb(26, 31, 54)"] {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section #medidas-pedidas strong {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section #medidas-pedidas .jasman-selectable-filter:not(.is-selected):not([title]) {
-  background: var(--dl-bg-card-elevated) !important;
-  border-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section #medidas-pedidas .jasman-selectable-filter.is-selected:not([title]) {
-  background: rgba(196, 30, 36, 0.2) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section #medidas-pedidas input {
-  background: var(--dl-bg-card-elevated) !important;
-  color: var(--dl-text-primary) !important;
-  border: 1px solid var(--dl-border) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section #medidas-pedidas select {
-  background: var(--dl-bg-card-elevated) !important;
-  color: var(--dl-text-primary) !important;
-  border: 1px solid var(--dl-border) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section #medidas-pedidas select option {
-  background: #14171d !important;
-  color: #f3f5f9 !important;
-}
-
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
-  color: var(--dl-text-primary) !important;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a h3,
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a div[style*="color: rgb(26, 31, 54)"] {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a div[style*="rgba(255, 255, 255, 0.85)"] {
-  background: var(--dl-bg-card-elevated) !important;
-  border-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a div[style*="rgba(255, 255, 255, 0.85)"] > div:first-child {
-  color: var(--dl-text-secondary) !important;
-}
-
-/* Brand logos in product cards keep clean white pill on dark cards */
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[src*="/brands/"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Bridgestone"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Michelin"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Goodyear"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Continental"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Pirelli"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Hankook"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Firestone"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="BFGoodrich"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Kelly"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Euzkadi"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="Laufenn"],
-html[data-jasman-theme] #tienda-home-section .tienda-bento-product-grid > a img[alt*="General"] {
-  background: #ffffff;
-  padding: 2px 6px;
-  border-radius: 6px;
-}
-
-/* Keep "Mostrar más" dark-themed */
-html[data-jasman-theme] #tienda-home-section button[style*="background: rgb(255, 255, 255)"] {
-  background: var(--dl-bg-card-elevated) !important;
-  color: var(--dl-text-primary) !important;
-  border: 1px solid var(--dl-border-strong) !important;
-}
-
-/* Promotions Section (#promos) */
 html[data-jasman-theme] #promos {
-  background: var(--dl-bg-alt) !important;
-  border-top: 1px solid var(--dl-border) !important;
+  background: linear-gradient(180deg, var(--dl-navy-bg) 0%, var(--dl-navy-bg-soft) 100%) !important;
 }
 
-html[data-jasman-theme] #promos .jasman-tire-promo-card {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
+html[data-jasman-theme] #promos span[style*="rgba(26, 31, 54, 0.82)"] {
+  background: var(--dl-map-bar) !important;
 }
 
-/* CTA Section (#cta) */
-html[data-jasman-theme] .home-cta-section {
-  background: var(--dl-bg-primary) !important;
+html[data-jasman-theme] #cta > div > div:first-child {
+  background: linear-gradient(135deg, #c41e24 0%, #9e161b 45%, var(--dl-navy-bg) 100%) !important;
 }
 
-/* Footer */
+/* ─── 2. Footer (shared across Home & Tienda de Llantas) ─── */
 html[data-jasman-theme] .site-footer {
-  background: var(--dl-bg-alt) !important;
-  border-top: 1px solid var(--dl-border) !important;
+  background: var(--dl-navy-bg) !important;
 }
 
-/* Floating Preview Switcher Pill (bottom-left on dark preview routes) */
+/* ─── 3. Solid Navy UI Badges, Step Numbers & Navy CTA Buttons ─── */
+html[data-jasman-theme] [style*="background: rgb(26, 31, 54)"],
+html[data-jasman-theme] [style*="background-color: rgb(26, 31, 54)"] {
+  background: var(--dl-navy-bg) !important;
+}
+
+/* ─── 4. Llantas Home Navy Sections (/llantas-negro & /llantas-negro-suave) ─── */
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-productos-recomendados {
+  background: linear-gradient(180deg, var(--dl-navy-bg) 0%, var(--dl-navy-bg-soft) 100%) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express .jasman-express-split-grid > div:first-child {
+  background: linear-gradient(155deg, #c41e24 0%, #8f1217 54%, var(--dl-navy-bg) 100%) !important;
+}
+
+/* ─── 5. Floating Theme Comparison Pill (only on preview routes) ─── */
 .jasman-theme-switcher-pill {
   position: fixed;
   bottom: 18px;
@@ -368,11 +110,11 @@ html[data-jasman-theme] .site-footer {
   gap: 4px;
   padding: 5px;
   border-radius: 9999px;
-  background: rgba(12, 14, 20, 0.92);
+  background: rgba(12, 12, 15, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
 .jasman-theme-switcher-pill a {
@@ -381,7 +123,7 @@ html[data-jasman-theme] .site-footer {
   font-family: 'Montserrat', sans-serif;
   font-size: 11px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.74);
   text-decoration: none;
   white-space: nowrap;
   transition: all 0.2s ease;
@@ -389,7 +131,7 @@ html[data-jasman-theme] .site-footer {
 
 .jasman-theme-switcher-pill a:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.10);
 }
 
 .jasman-theme-switcher-pill a.is-active {
@@ -409,338 +151,3 @@ html[data-jasman-theme] .site-footer {
     font-size: 10px;
   }
 }
-
-/* ═══════════════════════════════════════════════════════════════════
-   DARK STORE LANDING (/llantas-negro & /llantas-negro-suave)
-   Scoped strictly to html[data-jasman-theme] .jasman-dark-llantas
-   (and Store dropdown panels inside header when theme is active)
-   ═══════════════════════════════════════════════════════════════════ */
-
-html[data-jasman-theme] .jasman-dark-llantas {
-  background: var(--dl-bg-primary) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-/* 1. Store Hero Stage (#hero-stage) */
-html[data-jasman-theme] .jasman-dark-llantas #hero-stage {
-  background: var(--dl-bg-primary) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #hero-stage h1,
-html[data-jasman-theme] .jasman-dark-llantas #hero-stage div[style*="color: rgb(26, 31, 54)"] {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #hero-stage p,
-html[data-jasman-theme] .jasman-dark-llantas #hero-stage div[style*="color: rgb(107, 114, 128)"],
-html[data-jasman-theme] .jasman-dark-llantas #hero-stage div[style*="color: rgb(100, 116, 139)"] {
-  color: var(--dl-text-secondary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .hero-xray-callouts > div,
-html[data-jasman-theme] .jasman-dark-llantas .hero-mobile-telemetry-bar,
-html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-command-dock,
-html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-excerpt-bar {
-  background: var(--dl-glass) !important;
-  border-color: var(--dl-border-strong) !important;
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.55) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .hero-xray-callouts > div > div:last-child,
-html[data-jasman-theme] .jasman-dark-llantas .hero-mobile-telemetry-bar,
-html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-excerpt-txt {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-spotlights-row button[style*="background: transparent"] {
-  color: var(--dl-text-secondary) !important;
-  border: 1px solid var(--dl-border) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-spotlights-row button[style*="background: rgb(26, 31, 54)"] {
-  background: #c41e24 !important;
-  color: #ffffff !important;
-  border-color: #c41e24 !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-secondary-btn:not(.jasman-hero-catalog-cta) {
-  background: var(--dl-bg-card-elevated) !important;
-  color: var(--dl-text-primary) !important;
-  border-color: var(--dl-border-strong) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-catalog-cta {
-  background: #ffffff !important;
-  color: #111827 !important;
-  border-color: #ffffff !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-catalog-cta:hover {
-  background: #c41e24 !important;
-  color: #ffffff !important;
-  border-color: #c41e24 !important;
-}
-
-/* Keep tire cutout bright & sculptural on dark hero stage */
-html[data-jasman-theme] .jasman-dark-llantas #hero-stage img[alt]:not([src*="/brands/"]) {
-  mix-blend-mode: normal !important;
-  filter: drop-shadow(0 28px 38px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 28px rgba(255, 255, 255, 0.14)) contrast(1.06) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #hero-stage img[src*="/brands/"],
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e img[src*="/brands/"],
-html[data-jasman-theme] .jasman-dark-llantas #carruseles-tienda img[src*="/brands/"] {
-  background: #ffffff !important;
-  padding: 3px 8px !important;
-  border-radius: 6px !important;
-}
-
-/* 2. Brands Accordion & Vehicles (#marcas-acordeon) */
-html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon {
-  background: var(--dl-bg-alt) !important;
-  border-top-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon h2,
-html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon h3,
-html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon span[style*="color: rgb(26, 31, 54)"] {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon span[style*="color: rgb(100, 116, 139)"],
-html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon div[style*="color: rgb(100, 116, 139)"] {
-  color: var(--dl-text-secondary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .sutra-brands-all-btn {
-  background: var(--dl-bg-card) !important;
-  color: var(--dl-text-primary) !important;
-  border-color: var(--dl-border-strong) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-card {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-card:hover {
-  background: rgba(196, 30, 36, 0.16) !important;
-  border-color: #c41e24 !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-badge {
-  background: var(--dl-bg-card-elevated) !important;
-  border-color: var(--dl-border-strong) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-card svg path,
-html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-card svg circle,
-html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-card svg rect {
-  stroke: #e2e8f0;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon div[style*="background: rgb(248, 250, 252)"] {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .sutra-car-model-pill {
-  background: var(--dl-bg-card-elevated) !important;
-  border-color: var(--dl-border-strong) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-/* 3. Home Store Carousels (#carruseles-tienda) */
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express,
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-productos-recomendados {
-  background: var(--dl-bg-primary) !important;
-  border-top-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis {
-  background: var(--dl-bg-alt) !important;
-  border-top-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis h2,
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express h2 {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis p {
-  color: var(--dl-text-secondary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-carousel-arrow,
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-carousel-cta {
-  background: var(--dl-bg-card-elevated) !important;
-  border-color: var(--dl-border-strong) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express .jasman-home-carousel-track a,
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-shipping-landscape-card {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
-  color: var(--dl-text-primary) !important;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express .jasman-home-carousel-track a h3,
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express .jasman-home-carousel-track a div[style*="color: rgb(26, 31, 54)"],
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-shipping-landscape-card div[style*="color: rgb(26, 31, 54)"],
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-shipping-landscape-card span[style*="color: rgb(26, 31, 54)"] {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express .jasman-home-carousel-track a span[style*="color: rgb(100, 116, 139)"],
-html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-shipping-landscape-card span[style*="color: rgb(100, 116, 139)"] {
-  color: var(--dl-text-secondary) !important;
-}
-
-/* 4. Reviews Marquee (#resenas-tienda) */
-html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda {
-  background: var(--dl-bg-alt) !important;
-  border-top-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda h2,
-html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda p,
-html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda div[style*="color: rgb(26, 31, 54)"],
-html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda span[style*="color: rgb(26, 31, 54)"] {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda span[style*="color: rgb(107, 114, 128)"],
-html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda div[style*="color: rgb(107, 114, 128)"] {
-  color: var(--dl-text-secondary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda div[style*="background: rgb(248, 249, 250)"],
-html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda .jasman-review-card {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .jasman-reviews-blur-shield {
-  background: linear-gradient(90deg, var(--dl-bg-alt) 0%, transparent 100%) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .jasman-reviews-blur-shield[style*="270deg"] {
-  background: linear-gradient(270deg, var(--dl-bg-alt) 0%, transparent 100%) !important;
-}
-
-/* 5. Formula E Exhibition (#patrocinador-formula-e) */
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e {
-  background: var(--dl-bg-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e > div {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border) !important;
-  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e h3,
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e strong,
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e span[style*="color: rgb(26, 31, 54)"],
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e div[style*="color: rgb(26, 31, 54)"] {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e p,
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e div[style*="color: rgb(100, 116, 139)"],
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e div[style*="color: rgb(107, 114, 128)"] {
-  color: var(--dl-text-secondary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e div[style*="background: rgb(255, 255, 255)"] {
-  background: var(--dl-bg-card-elevated) !important;
-  border-color: var(--dl-border-strong) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e .fe-minimal-callout {
-  background: var(--dl-glass) !important;
-  border-color: var(--dl-border-strong) !important;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e .fe-minimal-top-sep {
-  background: var(--dl-border-strong) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e .fe-minimal-pillars-grid {
-  border-top-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e a[href*="/llantas/catalogo"] {
-  background: #c41e24 !important;
-  color: #ffffff !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .fe-minimal-tire-float img {
-  filter: drop-shadow(0 24px 38px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 24px rgba(255, 255, 255, 0.14)) !important;
-}
-
-/* 6. Installation Concierge Banner (.jasman-concierge-sec) */
-html[data-jasman-theme] .jasman-dark-llantas .jasman-concierge-sec {
-  background: var(--dl-bg-alt) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .jasman-concierge-box {
-  background: linear-gradient(135deg, var(--dl-bg-card) 0%, rgba(196, 30, 36, 0.14) 100%) !important;
-  border-color: rgba(196, 30, 36, 0.34) !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .jasman-concierge-box h3 {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] .jasman-dark-llantas .jasman-concierge-box a[href="/sucursales"] {
-  background: var(--dl-bg-card-elevated) !important;
-  border-color: var(--dl-border-strong) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-/* 7. Store Navbar Spotlight Search, Mega-Menu & Mobile Drawer Panels */
-html[data-jasman-theme] header .tienda-spotlight-panel,
-html[data-jasman-theme] header .tienda-mega-panel,
-html[data-jasman-theme] header .tienda-mobile-menu-panel {
-  background: var(--dl-bg-card) !important;
-  border-color: var(--dl-border-strong) !important;
-  color: var(--dl-text-primary) !important;
-  box-shadow: 0 32px 72px rgba(0, 0, 0, 0.65) !important;
-}
-
-html[data-jasman-theme] header .tienda-spotlight-panel form {
-  background: var(--dl-bg-alt) !important;
-  border-bottom-color: var(--dl-border) !important;
-}
-
-html[data-jasman-theme] header .tienda-spotlight-panel input {
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] header .tienda-spotlight-result-card,
-html[data-jasman-theme] header .tienda-mobile-menu-panel button[style*="background: rgb(248, 250, 252)"],
-html[data-jasman-theme] header .tienda-mobile-menu-panel a[style*="background: rgb(241, 245, 249)"] {
-  background: var(--dl-bg-card-elevated) !important;
-  border-color: var(--dl-border) !important;
-  color: var(--dl-text-primary) !important;
-}
-
-html[data-jasman-theme] header .tienda-spotlight-panel div[style*="color: rgb(26, 31, 54)"],
-html[data-jasman-theme] header .tienda-mega-panel div[style*="color: rgb(26, 31, 54)"],
-html[data-jasman-theme] header .tienda-mobile-menu-panel a,
-html[data-jasman-theme] header .tienda-mobile-menu-panel span[style*="color: rgb(26, 31, 54)"],
-html[data-jasman-theme] header .tienda-mobile-menu-panel button[style*="color: rgb(26, 31, 54)"] {
-  color: var(--dl-text-primary) !important;
-}
-

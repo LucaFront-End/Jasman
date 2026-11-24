@@ -20,29 +20,23 @@ export default function Navbar() {
   const toggleMobileOpen = () =>
     setMenuPath((prev) => (prev === location.pathname ? null : location.pathname));
 
-  const isDarkLanding =
-    location.pathname === '/landing-negro' || location.pathname === '/landing-negro-suave';
-  const isHome = location.pathname === '/' || isDarkLanding;
-  const darkMobileOverlayBg =
-    location.pathname === '/landing-negro' ? 'rgba(6,6,8,0.98)' : 'rgba(20,23,29,0.98)';
+  const isHome =
+    location.pathname === '/' ||
+    location.pathname === '/landing-negro' ||
+    location.pathname === '/landing-negro-suave';
 
   const renderLink = (l, i, mobile = false) => {
     const isHash = l.href.startsWith('#');
     const isExternal = l.external;
     const baseStyle = mobile ? {
       padding: '14px 24px', fontSize: 16, fontWeight: 600, fontFamily: F.heading,
-      color: isDarkLanding ? '#F8FAFC' : C.navy, display: 'block',
-      borderBottom: `1px solid ${isDarkLanding ? 'rgba(255,255,255,0.10)' : C.border}`,
+      color: C.navy, display: 'block', borderBottom: `1px solid ${C.border}`,
     } : {
       padding: '8px 18px', borderRadius: 9999, fontSize: 14, fontWeight: 500,
-      color: isDarkLanding
-        ? (hovered === i ? C.white : 'rgba(255,255,255,0.82)')
-        : scrolled
-          ? (hovered === i ? C.red : 'rgba(45,45,45,0.7)')
-          : (hovered === i ? C.white : 'rgba(255,255,255,0.7)'),
-      background: hovered === i
-        ? ((scrolled && !isDarkLanding) ? 'rgba(196,30,36,0.06)' : 'rgba(255,255,255,0.10)')
-        : 'transparent',
+      color: scrolled
+        ? (hovered === i ? C.red : 'rgba(45,45,45,0.7)')
+        : (hovered === i ? C.white : 'rgba(255,255,255,0.7)'),
+      background: hovered === i ? (scrolled ? 'rgba(196,30,36,0.06)' : 'rgba(255,255,255,0.08)') : 'transparent',
       transition: 'all 0.3s ease',
     };
 
@@ -75,7 +69,7 @@ export default function Navbar() {
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link to="/" style={{ display: 'flex', alignItems: 'center', position: 'relative', height: 42, textDecoration: 'none' }} aria-label="Jasman Automotriz">
-            {/* Logo para fondo claro (al hacer scroll o abrir menu movil en diseño normal) */}
+            {/* Logo para fondo claro (al hacer scroll o abrir menu movil) */}
             <img
               src="/images/logo/logo-01.png"
               alt="Jasman Automotriz"
@@ -84,12 +78,12 @@ export default function Navbar() {
                 width: 'auto',
                 maxWidth: 180,
                 objectFit: 'contain',
-                opacity: (!isDarkLanding && (scrolled || mobileOpen)) ? 1 : 0,
+                opacity: (scrolled || mobileOpen) ? 1 : 0,
                 transition: 'opacity 0.4s ease',
                 display: 'block',
               }}
             />
-            {/* Logo para fondo oscuro (hero inicial o landings oscuras) */}
+            {/* Logo para fondo oscuro (hero inicial) */}
             <img
               src="/images/logo/logo-03.png"
               alt="Jasman Automotriz"
@@ -102,7 +96,7 @@ export default function Navbar() {
                 width: 'auto',
                 maxWidth: 180,
                 objectFit: 'contain',
-                opacity: (isDarkLanding || (!scrolled && !mobileOpen)) ? 1 : 0,
+                opacity: (scrolled || mobileOpen) ? 0 : 1,
                 transition: 'opacity 0.4s ease',
                 pointerEvents: 'none',
                 display: 'block',
@@ -124,7 +118,7 @@ export default function Navbar() {
           {/* Mobile hamburger */}
           <button className="mobile-menu-btn" onClick={toggleMobileOpen} style={{
             display: 'none', background: 'none', border: 'none',
-            color: (!isDarkLanding && (scrolled || mobileOpen)) ? C.navy : C.white, padding: 8, cursor: 'pointer',
+            color: (scrolled || mobileOpen) ? C.navy : C.white, padding: 8, cursor: 'pointer',
           }}>
             {mobileOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
@@ -135,8 +129,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999,
-          background: isDarkLanding ? darkMobileOverlayBg : 'rgba(255,255,255,0.98)',
-          backdropFilter: 'blur(20px)',
+          background: 'rgba(255,255,255,0.98)', backdropFilter: 'blur(20px)',
           paddingTop: 80, animation: 'heroFadeUp 0.3s ease',
         }}>
           <div style={{ padding: '0 24px' }}>

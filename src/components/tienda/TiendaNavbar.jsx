@@ -72,14 +72,7 @@ export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
     pathname === '/llantas-negro' ||
     pathname === '/llantas-negro-suave';
   const isObsidianStore = darkTheme === 'obsidian' || pathname === '/llantas-negro';
-  const darkEyebrowBg = isObsidianStore ? '#000000' : '#101318';
-  const darkPillBg = isObsidianStore
-    ? 'rgba(10, 10, 14, 0.92)'
-    : 'rgba(22, 26, 35, 0.92)';
-  const darkBtnBg = isObsidianStore
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(255, 255, 255, 0.10)';
-  const darkNavText = '#F3F5F9';
+  const darkEyebrowBg = isObsidianStore ? '#000000' : '#1C1C1F';
 
   const openMegaMenu = (nextMode) => {
     if (closeMegaTimerRef.current) {
@@ -766,17 +759,13 @@ export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
                 ? '8px 12px 8px 22px'
                 : '9px 14px 9px 24px',
             borderRadius: 9999,
-            background: isDarkStore ? darkPillBg : 'rgba(255, 255, 255, 0.94)',
+            background: 'rgba(255, 255, 255, 0.94)',
             backdropFilter: 'saturate(180%) blur(24px)',
             WebkitBackdropFilter: 'saturate(180%) blur(24px)',
-            border: isDarkStore
-              ? '1px solid rgba(255, 255, 255, 0.14)'
-              : '1px solid rgba(26, 31, 54, 0.08)',
-            boxShadow: isDarkStore
-              ? '0 18px 46px rgba(0, 0, 0, 0.52)'
-              : scrolled
-                ? '0 18px 44px rgba(26, 31, 54, 0.09)'
-                : '0 10px 28px rgba(26, 31, 54, 0.05)',
+            border: '1px solid rgba(26, 31, 54, 0.08)',
+            boxShadow: scrolled
+              ? '0 18px 44px rgba(26, 31, 54, 0.09)'
+              : '0 10px 28px rgba(26, 31, 54, 0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -825,7 +814,7 @@ export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
               }}
             >
               <img
-                src={isDarkStore ? JASMAN_STORE_LOGOS.dark : JASMAN_STORE_LOGOS.light}
+                src={JASMAN_STORE_LOGOS.light}
                 alt="Jasman Tires"
                 className="tienda-apple-logo-img"
                 style={{
@@ -874,9 +863,9 @@ export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
                 background: isMegaActive
                   ? C.red
                   : isLinkActive
-                    ? (isDarkStore ? 'rgba(255, 255, 255, 0.10)' : 'rgba(26, 31, 54, 0.05)')
+                    ? 'rgba(26, 31, 54, 0.05)'
                     : 'transparent',
-                color: isMegaActive ? C.white : (isDarkStore ? darkNavText : C.navy),
+                color: isMegaActive ? C.white : C.navy,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -888,10 +877,8 @@ export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
 
               const handleEnter = (e) => {
                 if (!isMegaActive) {
-                  e.currentTarget.style.background = isDarkStore
-                    ? 'rgba(196, 30, 36, 0.20)'
-                    : 'rgba(196, 30, 36, 0.07)';
-                  e.currentTarget.style.color = isDarkStore ? '#FFFFFF' : C.red;
+                  e.currentTarget.style.background = 'rgba(196, 30, 36, 0.07)';
+                  e.currentTarget.style.color = C.red;
                 }
                 if (item.hasMega) {
                   openMegaMenu(item.megaMode || 'all');
@@ -903,9 +890,9 @@ export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
               const handleLeave = (e) => {
                 if (!isMegaActive) {
                   e.currentTarget.style.background = isLinkActive
-                    ? (isDarkStore ? 'rgba(255, 255, 255, 0.10)' : 'rgba(26, 31, 54, 0.05)')
+                    ? 'rgba(26, 31, 54, 0.05)'
                     : 'transparent';
-                  e.currentTarget.style.color = isDarkStore ? darkNavText : C.navy;
+                  e.currentTarget.style.color = C.navy;
                 }
                 if (item.hasMega) {
                   scheduleCloseMegaMenu();
@@ -975,16 +962,10 @@ export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
                   padding: 0,
                   borderRadius: '50%',
                   border: searchOpen
-                    ? `1px solid ${isDarkStore ? '#FFFFFF' : C.navy}`
-                    : isDarkStore
-                      ? '1px solid rgba(255, 255, 255, 0.15)'
-                      : '1px solid rgba(26, 31, 54, 0.09)',
-                  background: searchOpen
-                    ? C.red
-                    : isDarkStore
-                      ? darkBtnBg
-                      : '#F4F6F9',
-                  color: searchOpen ? '#FFFFFF' : (isDarkStore ? darkNavText : C.navy),
+                    ? `1px solid ${C.navy}`
+                    : '1px solid rgba(26, 31, 54, 0.09)',
+                  background: searchOpen ? C.navy : '#F4F6F9',
+                  color: searchOpen ? '#FFFFFF' : C.navy,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -996,7 +977,7 @@ export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
                 <Search
                   size={15.5}
                   strokeWidth={2.2}
-                  color={searchOpen ? '#FFFFFF' : (isDarkStore ? darkNavText : C.navy)}
+                  color={searchOpen ? '#FFFFFF' : C.navy}
                 />
               </button>
             )}
@@ -1080,15 +1061,9 @@ export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
                   borderRadius: user ? 9999 : '50%',
                   border: user
                     ? '1px solid rgba(22, 163, 74, 0.26)'
-                    : isDarkStore
-                      ? '1px solid rgba(255, 255, 255, 0.15)'
-                      : '1px solid rgba(26, 31, 54, 0.09)',
-                  background: user
-                    ? 'rgba(22, 163, 74, 0.14)'
-                    : isDarkStore
-                      ? darkBtnBg
-                      : '#F4F6F9',
-                  color: isDarkStore ? darkNavText : C.navy,
+                    : '1px solid rgba(26, 31, 54, 0.09)',
+                  background: user ? 'rgba(22, 163, 74, 0.08)' : '#F4F6F9',
+                  color: C.navy,
                   fontFamily: F.heading,
                   fontSize: 12,
                   fontWeight: 700,
@@ -1105,7 +1080,7 @@ export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
                 <User
                   size={15}
                   strokeWidth={2.2}
-                  color={user ? '#22C55E' : (isDarkStore ? darkNavText : C.navy)}
+                  color={user ? '#16A34A' : C.navy}
                 />
                 {user && (
                   <span className="tienda-apple-user-txt">
@@ -1163,15 +1138,9 @@ export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
                 width: 36,
                 height: 36,
                 borderRadius: '50%',
-                border: isDarkStore
-                  ? '1px solid rgba(255,255,255,0.16)'
-                  : '1px solid rgba(26,31,54,0.09)',
-                background: mobileMenu
-                  ? C.red
-                  : isDarkStore
-                    ? darkBtnBg
-                    : '#F4F6F9',
-                color: mobileMenu ? '#FFFFFF' : (isDarkStore ? darkNavText : C.navy),
+                border: '1px solid rgba(26,31,54,0.09)',
+                background: mobileMenu ? C.navy : '#F4F6F9',
+                color: mobileMenu ? '#FFFFFF' : C.navy,
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
