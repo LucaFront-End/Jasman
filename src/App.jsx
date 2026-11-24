@@ -52,6 +52,8 @@ export default function App() {
   const isLlantasStoreRoute =
     isLlantasSubdomain ||
     pathname === '/llantas' ||
+    pathname === '/llantas-negro' ||
+    pathname === '/llantas-negro-suave' ||
     pathname.startsWith('/llantas/catalogo') ||
     pathname.startsWith('/llantas/producto') ||
     pathname.startsWith('/llantas/cuenta') ||
@@ -96,6 +98,8 @@ export default function App() {
           />
           {/* Official Online Tire Store routes under /llantas */}
           <Route path="/llantas" element={<LandingTiendaPreviewPage />} />
+          <Route path="/llantas-negro" element={<LandingTiendaPreviewPage darkTheme="obsidian" />} />
+          <Route path="/llantas-negro-suave" element={<LandingTiendaPreviewPage darkTheme="charcoal" />} />
           <Route path="/llantas/catalogo" element={<CatalogoPreviewPage />} />
           <Route path="/llantas/producto/:id" element={<ProductoPreviewPage />} />
           <Route path="/llantas/cuenta" element={<CuentaPreviewPage />} />

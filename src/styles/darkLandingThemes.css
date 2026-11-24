@@ -409,3 +409,338 @@ html[data-jasman-theme] .site-footer {
     font-size: 10px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   DARK STORE LANDING (/llantas-negro & /llantas-negro-suave)
+   Scoped strictly to html[data-jasman-theme] .jasman-dark-llantas
+   (and Store dropdown panels inside header when theme is active)
+   ═══════════════════════════════════════════════════════════════════ */
+
+html[data-jasman-theme] .jasman-dark-llantas {
+  background: var(--dl-bg-primary) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+/* 1. Store Hero Stage (#hero-stage) */
+html[data-jasman-theme] .jasman-dark-llantas #hero-stage {
+  background: var(--dl-bg-primary) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #hero-stage h1,
+html[data-jasman-theme] .jasman-dark-llantas #hero-stage div[style*="color: rgb(26, 31, 54)"] {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #hero-stage p,
+html[data-jasman-theme] .jasman-dark-llantas #hero-stage div[style*="color: rgb(107, 114, 128)"],
+html[data-jasman-theme] .jasman-dark-llantas #hero-stage div[style*="color: rgb(100, 116, 139)"] {
+  color: var(--dl-text-secondary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .hero-xray-callouts > div,
+html[data-jasman-theme] .jasman-dark-llantas .hero-mobile-telemetry-bar,
+html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-command-dock,
+html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-excerpt-bar {
+  background: var(--dl-glass) !important;
+  border-color: var(--dl-border-strong) !important;
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.55) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .hero-xray-callouts > div > div:last-child,
+html[data-jasman-theme] .jasman-dark-llantas .hero-mobile-telemetry-bar,
+html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-excerpt-txt {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-spotlights-row button[style*="background: transparent"] {
+  color: var(--dl-text-secondary) !important;
+  border: 1px solid var(--dl-border) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-spotlights-row button[style*="background: rgb(26, 31, 54)"] {
+  background: #c41e24 !important;
+  color: #ffffff !important;
+  border-color: #c41e24 !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-secondary-btn:not(.jasman-hero-catalog-cta) {
+  background: var(--dl-bg-card-elevated) !important;
+  color: var(--dl-text-primary) !important;
+  border-color: var(--dl-border-strong) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-catalog-cta {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-color: #ffffff !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .jasman-hero-catalog-cta:hover {
+  background: #c41e24 !important;
+  color: #ffffff !important;
+  border-color: #c41e24 !important;
+}
+
+/* Keep tire cutout bright & sculptural on dark hero stage */
+html[data-jasman-theme] .jasman-dark-llantas #hero-stage img[alt]:not([src*="/brands/"]) {
+  mix-blend-mode: normal !important;
+  filter: drop-shadow(0 28px 38px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 28px rgba(255, 255, 255, 0.14)) contrast(1.06) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #hero-stage img[src*="/brands/"],
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e img[src*="/brands/"],
+html[data-jasman-theme] .jasman-dark-llantas #carruseles-tienda img[src*="/brands/"] {
+  background: #ffffff !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+}
+
+/* 2. Brands Accordion & Vehicles (#marcas-acordeon) */
+html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon {
+  background: var(--dl-bg-alt) !important;
+  border-top-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon h2,
+html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon h3,
+html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon span[style*="color: rgb(26, 31, 54)"] {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon span[style*="color: rgb(100, 116, 139)"],
+html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon div[style*="color: rgb(100, 116, 139)"] {
+  color: var(--dl-text-secondary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .sutra-brands-all-btn {
+  background: var(--dl-bg-card) !important;
+  color: var(--dl-text-primary) !important;
+  border-color: var(--dl-border-strong) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-card {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-card:hover {
+  background: rgba(196, 30, 36, 0.16) !important;
+  border-color: #c41e24 !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-badge {
+  background: var(--dl-bg-card-elevated) !important;
+  border-color: var(--dl-border-strong) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-card svg path,
+html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-card svg circle,
+html[data-jasman-theme] .jasman-dark-llantas .sutra-vehicle-card svg rect {
+  stroke: #e2e8f0;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #marcas-acordeon div[style*="background: rgb(248, 250, 252)"] {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .sutra-car-model-pill {
+  background: var(--dl-bg-card-elevated) !important;
+  border-color: var(--dl-border-strong) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+/* 3. Home Store Carousels (#carruseles-tienda) */
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express,
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-productos-recomendados {
+  background: var(--dl-bg-primary) !important;
+  border-top-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis {
+  background: var(--dl-bg-alt) !important;
+  border-top-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis h2,
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express h2 {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis p {
+  color: var(--dl-text-secondary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-carousel-arrow,
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-carousel-cta {
+  background: var(--dl-bg-card-elevated) !important;
+  border-color: var(--dl-border-strong) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express .jasman-home-carousel-track a,
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-shipping-landscape-card {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+  color: var(--dl-text-primary) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express .jasman-home-carousel-track a h3,
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express .jasman-home-carousel-track a div[style*="color: rgb(26, 31, 54)"],
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-shipping-landscape-card div[style*="color: rgb(26, 31, 54)"],
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-shipping-landscape-card span[style*="color: rgb(26, 31, 54)"] {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-ofertas-express .jasman-home-carousel-track a span[style*="color: rgb(100, 116, 139)"],
+html[data-jasman-theme] .jasman-dark-llantas #carrusel-envio-gratis .jasman-shipping-landscape-card span[style*="color: rgb(100, 116, 139)"] {
+  color: var(--dl-text-secondary) !important;
+}
+
+/* 4. Reviews Marquee (#resenas-tienda) */
+html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda {
+  background: var(--dl-bg-alt) !important;
+  border-top-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda h2,
+html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda p,
+html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda div[style*="color: rgb(26, 31, 54)"],
+html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda span[style*="color: rgb(26, 31, 54)"] {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda span[style*="color: rgb(107, 114, 128)"],
+html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda div[style*="color: rgb(107, 114, 128)"] {
+  color: var(--dl-text-secondary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda div[style*="background: rgb(248, 249, 250)"],
+html[data-jasman-theme] .jasman-dark-llantas #resenas-tienda .jasman-review-card {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .jasman-reviews-blur-shield {
+  background: linear-gradient(90deg, var(--dl-bg-alt) 0%, transparent 100%) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .jasman-reviews-blur-shield[style*="270deg"] {
+  background: linear-gradient(270deg, var(--dl-bg-alt) 0%, transparent 100%) !important;
+}
+
+/* 5. Formula E Exhibition (#patrocinador-formula-e) */
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e {
+  background: var(--dl-bg-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e > div {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border) !important;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e h3,
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e strong,
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e span[style*="color: rgb(26, 31, 54)"],
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e div[style*="color: rgb(26, 31, 54)"] {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e p,
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e div[style*="color: rgb(100, 116, 139)"],
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e div[style*="color: rgb(107, 114, 128)"] {
+  color: var(--dl-text-secondary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e div[style*="background: rgb(255, 255, 255)"] {
+  background: var(--dl-bg-card-elevated) !important;
+  border-color: var(--dl-border-strong) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e .fe-minimal-callout {
+  background: var(--dl-glass) !important;
+  border-color: var(--dl-border-strong) !important;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e .fe-minimal-top-sep {
+  background: var(--dl-border-strong) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e .fe-minimal-pillars-grid {
+  border-top-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas #patrocinador-formula-e a[href*="/llantas/catalogo"] {
+  background: #c41e24 !important;
+  color: #ffffff !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .fe-minimal-tire-float img {
+  filter: drop-shadow(0 24px 38px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 24px rgba(255, 255, 255, 0.14)) !important;
+}
+
+/* 6. Installation Concierge Banner (.jasman-concierge-sec) */
+html[data-jasman-theme] .jasman-dark-llantas .jasman-concierge-sec {
+  background: var(--dl-bg-alt) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .jasman-concierge-box {
+  background: linear-gradient(135deg, var(--dl-bg-card) 0%, rgba(196, 30, 36, 0.14) 100%) !important;
+  border-color: rgba(196, 30, 36, 0.34) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .jasman-concierge-box h3 {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] .jasman-dark-llantas .jasman-concierge-box a[href="/sucursales"] {
+  background: var(--dl-bg-card-elevated) !important;
+  border-color: var(--dl-border-strong) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+/* 7. Store Navbar Spotlight Search, Mega-Menu & Mobile Drawer Panels */
+html[data-jasman-theme] header .tienda-spotlight-panel,
+html[data-jasman-theme] header .tienda-mega-panel,
+html[data-jasman-theme] header .tienda-mobile-menu-panel {
+  background: var(--dl-bg-card) !important;
+  border-color: var(--dl-border-strong) !important;
+  color: var(--dl-text-primary) !important;
+  box-shadow: 0 32px 72px rgba(0, 0, 0, 0.65) !important;
+}
+
+html[data-jasman-theme] header .tienda-spotlight-panel form {
+  background: var(--dl-bg-alt) !important;
+  border-bottom-color: var(--dl-border) !important;
+}
+
+html[data-jasman-theme] header .tienda-spotlight-panel input {
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] header .tienda-spotlight-result-card,
+html[data-jasman-theme] header .tienda-mobile-menu-panel button[style*="background: rgb(248, 250, 252)"],
+html[data-jasman-theme] header .tienda-mobile-menu-panel a[style*="background: rgb(241, 245, 249)"] {
+  background: var(--dl-bg-card-elevated) !important;
+  border-color: var(--dl-border) !important;
+  color: var(--dl-text-primary) !important;
+}
+
+html[data-jasman-theme] header .tienda-spotlight-panel div[style*="color: rgb(26, 31, 54)"],
+html[data-jasman-theme] header .tienda-mega-panel div[style*="color: rgb(26, 31, 54)"],
+html[data-jasman-theme] header .tienda-mobile-menu-panel a,
+html[data-jasman-theme] header .tienda-mobile-menu-panel span[style*="color: rgb(26, 31, 54)"],
+html[data-jasman-theme] header .tienda-mobile-menu-panel button[style*="color: rgb(26, 31, 54)"] {
+  color: var(--dl-text-primary) !important;
+}
+

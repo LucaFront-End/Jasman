@@ -17,6 +17,7 @@ import TiendaCartDrawer from '../components/tienda/TiendaCartDrawer';
 import TiendaAuthModal from '../components/tienda/TiendaAuthModal';
 import FirstPurchasePopup from '../components/tienda/FirstPurchasePopup';
 import TiendaLiveChatWidget from '../components/tienda/TiendaLiveChatWidget';
+import '../styles/darkLandingThemes.css';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -51,7 +52,7 @@ const HERO_SPOTLIGHTS = [
   },
 ];
 
-export default function LandingTiendaPreviewPage() {
+export default function LandingTiendaPreviewPage({ darkTheme = null }) {
   const { pathname, hash } = useLocation();
   const { addToCart, coupon } = useTiendaState();
   const { products: catalogProducts } = useWixCatalogProducts();
@@ -60,6 +61,16 @@ export default function LandingTiendaPreviewPage() {
   const [selectedHeroId, setSelectedHeroId] = useState(HERO_SPOTLIGHTS[0].id);
   const [heroPaused, setHeroPaused] = useState(false);
   const [heroAdded, setHeroAdded] = useState(false);
+
+  useEffect(() => {
+    if (!darkTheme || typeof document === 'undefined') {
+      return undefined;
+    }
+    document.documentElement.setAttribute('data-jasman-theme', darkTheme);
+    return () => {
+      document.documentElement.removeAttribute('data-jasman-theme');
+    };
+  }, [darkTheme]);
 
   // Scroll smoothly when navigating directly to a section hash (e.g. #resenas-tienda)
   useEffect(() => {
@@ -100,9 +111,12 @@ export default function LandingTiendaPreviewPage() {
     : heroProduct.finalPriceTaxExcluded;
 
   return (
-    <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
+    <div
+      className={darkTheme ? `jasman-dark-llantas jasman-theme-${darkTheme}` : undefined}
+      style={{ background: '#FFFFFF', minHeight: '100vh' }}
+    >
       {/* Floating Apple Frosted Glass Navbar, Cart Drawer, Auth Popup & Store Chat */}
-      <TiendaNavbar />
+      <TiendaNavbar darkTheme={darkTheme} />
       <TiendaCartDrawer />
       <TiendaAuthModal />
       <TiendaLiveChatWidget />
@@ -1774,6 +1788,18 @@ export default function LandingTiendaPreviewPage() {
           }
         }
       `}</style>
+
+      {darkTheme && (
+        <nav className="jasman-theme-switcher-pill" aria-label="Versión de diseño Tienda de Llantas">
+          <Link to="/llantas">Actual</Link>
+          <Link to="/llantas-negro" className={darkTheme === 'obsidian' ? 'is-active' : ''}>
+            Negro
+          </Link>
+          <Link to="/llantas-negro-suave" className={darkTheme === 'charcoal' ? 'is-active' : ''}>
+            Negro Suave
+          </Link>
+        </nav>
+      )}
     </div>
   );
 }

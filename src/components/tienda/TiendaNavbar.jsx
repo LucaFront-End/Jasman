@@ -50,7 +50,7 @@ function normalizeMeasureToken(raw) {
   return compact;
 }
 
-export default function TiendaNavbar({ legacyMode = false }) {
+export default function TiendaNavbar({ legacyMode = false, darkTheme = null }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState(null); // 'categories' | 'brands' | null
@@ -66,6 +66,20 @@ export default function TiendaNavbar({ legacyMode = false }) {
   const { products: catalogProducts } = useWixCatalogProducts();
   const { pathname, hash } = useLocation();
   const navigate = useNavigate();
+
+  const isDarkStore =
+    Boolean(darkTheme) ||
+    pathname === '/llantas-negro' ||
+    pathname === '/llantas-negro-suave';
+  const isObsidianStore = darkTheme === 'obsidian' || pathname === '/llantas-negro';
+  const darkEyebrowBg = isObsidianStore ? '#000000' : '#101318';
+  const darkPillBg = isObsidianStore
+    ? 'rgba(10, 10, 14, 0.92)'
+    : 'rgba(22, 26, 35, 0.92)';
+  const darkBtnBg = isObsidianStore
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(255, 255, 255, 0.10)';
+  const darkNavText = '#F3F5F9';
 
   const openMegaMenu = (nextMode) => {
     if (closeMegaTimerRef.current) {
@@ -292,7 +306,12 @@ export default function TiendaNavbar({ legacyMode = false }) {
     setMegaOpen(false);
     setMobileMenu(false);
     setSearchOpen(false);
-    if (pathname === '/llantas' || pathname === '/landing-tienda-preview') {
+    if (
+      pathname === '/llantas' ||
+      pathname === '/llantas-negro' ||
+      pathname === '/llantas-negro-suave' ||
+      pathname === '/landing-tienda-preview'
+    ) {
       e.preventDefault();
       const target = document.getElementById('resenas-tienda');
       if (target) {
@@ -457,7 +476,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
             width: '100%',
             height: scrolled ? 0 : 34,
             opacity: scrolled ? 0 : 1,
-            background: '#111627',
+            background: isDarkStore ? darkEyebrowBg : '#111627',
             color: '#FFFFFF',
             borderBottom: scrolled ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
             overflow: 'hidden',
@@ -481,7 +500,9 @@ export default function TiendaNavbar({ legacyMode = false }) {
               display: 'flex',
               alignItems: 'center',
               padding: '0 28px 0 16px',
-              background: 'linear-gradient(90deg, #111627 78%, rgba(17, 22, 39, 0) 100%)',
+              background: isDarkStore
+                ? `linear-gradient(90deg, ${darkEyebrowBg} 78%, rgba(0, 0, 0, 0) 100%)`
+                : 'linear-gradient(90deg, #111627 78%, rgba(17, 22, 39, 0) 100%)',
               pointerEvents: 'auto',
             }}
           >
@@ -518,7 +539,9 @@ export default function TiendaNavbar({ legacyMode = false }) {
               top: 0,
               bottom: 0,
               width: 48,
-              background: 'linear-gradient(270deg, #111627 0%, rgba(17, 22, 39, 0) 100%)',
+              background: isDarkStore
+                ? `linear-gradient(270deg, ${darkEyebrowBg} 0%, rgba(0, 0, 0, 0) 100%)`
+                : 'linear-gradient(270deg, #111627 0%, rgba(17, 22, 39, 0) 100%)',
               zIndex: 3,
               pointerEvents: 'none',
             }}
@@ -743,13 +766,17 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 ? '8px 12px 8px 22px'
                 : '9px 14px 9px 24px',
             borderRadius: 9999,
-            background: 'rgba(255, 255, 255, 0.94)',
+            background: isDarkStore ? darkPillBg : 'rgba(255, 255, 255, 0.94)',
             backdropFilter: 'saturate(180%) blur(24px)',
             WebkitBackdropFilter: 'saturate(180%) blur(24px)',
-            border: '1px solid rgba(26, 31, 54, 0.08)',
-            boxShadow: scrolled
-              ? '0 18px 44px rgba(26, 31, 54, 0.09)'
-              : '0 10px 28px rgba(26, 31, 54, 0.05)',
+            border: isDarkStore
+              ? '1px solid rgba(255, 255, 255, 0.14)'
+              : '1px solid rgba(26, 31, 54, 0.08)',
+            boxShadow: isDarkStore
+              ? '0 18px 46px rgba(0, 0, 0, 0.52)'
+              : scrolled
+                ? '0 18px 44px rgba(26, 31, 54, 0.09)'
+                : '0 10px 28px rgba(26, 31, 54, 0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -786,7 +813,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
             </Link>
           ) : (
             <Link
-              to="/llantas"
+              to={isDarkStore ? pathname : '/llantas'}
               title="Inicio Jasman Tires"
               aria-label="Jasman Tires — Inicio"
               style={{
@@ -798,7 +825,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
               }}
             >
               <img
-                src={JASMAN_STORE_LOGOS.light}
+                src={isDarkStore ? JASMAN_STORE_LOGOS.dark : JASMAN_STORE_LOGOS.light}
                 alt="Jasman Tires"
                 className="tienda-apple-logo-img"
                 style={{
@@ -847,9 +874,9 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 background: isMegaActive
                   ? C.red
                   : isLinkActive
-                    ? 'rgba(26, 31, 54, 0.05)'
+                    ? (isDarkStore ? 'rgba(255, 255, 255, 0.10)' : 'rgba(26, 31, 54, 0.05)')
                     : 'transparent',
-                color: isMegaActive ? C.white : C.navy,
+                color: isMegaActive ? C.white : (isDarkStore ? darkNavText : C.navy),
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -861,8 +888,10 @@ export default function TiendaNavbar({ legacyMode = false }) {
 
               const handleEnter = (e) => {
                 if (!isMegaActive) {
-                  e.currentTarget.style.background = 'rgba(196, 30, 36, 0.07)';
-                  e.currentTarget.style.color = C.red;
+                  e.currentTarget.style.background = isDarkStore
+                    ? 'rgba(196, 30, 36, 0.20)'
+                    : 'rgba(196, 30, 36, 0.07)';
+                  e.currentTarget.style.color = isDarkStore ? '#FFFFFF' : C.red;
                 }
                 if (item.hasMega) {
                   openMegaMenu(item.megaMode || 'all');
@@ -874,9 +903,9 @@ export default function TiendaNavbar({ legacyMode = false }) {
               const handleLeave = (e) => {
                 if (!isMegaActive) {
                   e.currentTarget.style.background = isLinkActive
-                    ? 'rgba(26, 31, 54, 0.05)'
+                    ? (isDarkStore ? 'rgba(255, 255, 255, 0.10)' : 'rgba(26, 31, 54, 0.05)')
                     : 'transparent';
-                  e.currentTarget.style.color = C.navy;
+                  e.currentTarget.style.color = isDarkStore ? darkNavText : C.navy;
                 }
                 if (item.hasMega) {
                   scheduleCloseMegaMenu();
@@ -946,10 +975,16 @@ export default function TiendaNavbar({ legacyMode = false }) {
                   padding: 0,
                   borderRadius: '50%',
                   border: searchOpen
-                    ? `1px solid ${C.navy}`
-                    : '1px solid rgba(26, 31, 54, 0.09)',
-                  background: searchOpen ? C.navy : '#F4F6F9',
-                  color: searchOpen ? '#FFFFFF' : C.navy,
+                    ? `1px solid ${isDarkStore ? '#FFFFFF' : C.navy}`
+                    : isDarkStore
+                      ? '1px solid rgba(255, 255, 255, 0.15)'
+                      : '1px solid rgba(26, 31, 54, 0.09)',
+                  background: searchOpen
+                    ? C.red
+                    : isDarkStore
+                      ? darkBtnBg
+                      : '#F4F6F9',
+                  color: searchOpen ? '#FFFFFF' : (isDarkStore ? darkNavText : C.navy),
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -961,7 +996,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 <Search
                   size={15.5}
                   strokeWidth={2.2}
-                  color={searchOpen ? '#FFFFFF' : C.navy}
+                  color={searchOpen ? '#FFFFFF' : (isDarkStore ? darkNavText : C.navy)}
                 />
               </button>
             )}
@@ -1045,9 +1080,15 @@ export default function TiendaNavbar({ legacyMode = false }) {
                   borderRadius: user ? 9999 : '50%',
                   border: user
                     ? '1px solid rgba(22, 163, 74, 0.26)'
-                    : '1px solid rgba(26, 31, 54, 0.09)',
-                  background: user ? 'rgba(22, 163, 74, 0.08)' : '#F4F6F9',
-                  color: C.navy,
+                    : isDarkStore
+                      ? '1px solid rgba(255, 255, 255, 0.15)'
+                      : '1px solid rgba(26, 31, 54, 0.09)',
+                  background: user
+                    ? 'rgba(22, 163, 74, 0.14)'
+                    : isDarkStore
+                      ? darkBtnBg
+                      : '#F4F6F9',
+                  color: isDarkStore ? darkNavText : C.navy,
                   fontFamily: F.heading,
                   fontSize: 12,
                   fontWeight: 700,
@@ -1064,7 +1105,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 <User
                   size={15}
                   strokeWidth={2.2}
-                  color={user ? '#16A34A' : C.navy}
+                  color={user ? '#22C55E' : (isDarkStore ? darkNavText : C.navy)}
                 />
                 {user && (
                   <span className="tienda-apple-user-txt">
@@ -1122,9 +1163,15 @@ export default function TiendaNavbar({ legacyMode = false }) {
                 width: 36,
                 height: 36,
                 borderRadius: '50%',
-                border: '1px solid rgba(26,31,54,0.09)',
-                background: mobileMenu ? C.navy : '#F4F6F9',
-                color: mobileMenu ? '#FFFFFF' : C.navy,
+                border: isDarkStore
+                  ? '1px solid rgba(255,255,255,0.16)'
+                  : '1px solid rgba(26,31,54,0.09)',
+                background: mobileMenu
+                  ? C.red
+                  : isDarkStore
+                    ? darkBtnBg
+                    : '#F4F6F9',
+                color: mobileMenu ? '#FFFFFF' : (isDarkStore ? darkNavText : C.navy),
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
@@ -1150,6 +1197,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
           }}
         >
           <div
+            className="tienda-spotlight-panel"
             style={{
               borderRadius: 26,
               background: 'rgba(255, 255, 255, 0.98)',
@@ -1634,6 +1682,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
           }}
         >
           <div
+            className="tienda-mega-panel"
             style={{
               padding: '22px 28px',
               maxHeight: 'calc(100vh - 102px)',
@@ -1661,6 +1710,7 @@ export default function TiendaNavbar({ legacyMode = false }) {
       {/* Mobile Glass Dropdown */}
       {mobileMenu && (
         <div
+          className="tienda-mobile-menu-panel"
           style={{
             position: 'relative',
             zIndex: 3,
