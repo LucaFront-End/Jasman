@@ -22,6 +22,40 @@ const DEFAULT_WIX_SITE_ID = '7fd3b8ea-a3f3-4b51-9b48-4ec1f53d2cc9';
 const DEFAULT_WIX_CLIENT_ID = '5aabc542-16cf-44de-bedf-d8eb7ad08c46';
 const WIX_STORES_CATALOG_APP_ID = '215238eb-22a5-4c36-9e7b-e7c08025e04e';
 const DEFAULT_ORIGIN = 'https://www.jasman.com.mx';
+const WIX_CHECKOUT_HOST = 'checkout.jasman.com.mx';
+
+function normalizeWixCheckoutUrl(rawFullUrl) {
+  if (!rawFullUrl || typeof rawFullUrl !== 'string') return '';
+  try {
+    const outerUrl = new URL(rawFullUrl);
+    outerUrl.protocol = 'https:';
+    outerUrl.host = WIX_CHECKOUT_HOST;
+    outerUrl.pathname = outerUrl.pathname.replace(/^\/website-4(?=\/|$)/i, '') || '/';
+
+    const innerRedirectRaw = outerUrl.searchParams.get('redirectUrl');
+    if (innerRedirectRaw) {
+      try {
+        const innerUrl = new URL(innerRedirectRaw);
+        const innerPathLower = innerUrl.pathname.toLowerCase();
+        const isStoreReturn =
+          innerPathLower.startsWith('/thank-you') ||
+          innerPathLower.startsWith('/gracias') ||
+          innerPathLower.startsWith('/llantas');
+        if (!isStoreReturn) {
+          innerUrl.protocol = 'https:';
+          innerUrl.host = WIX_CHECKOUT_HOST;
+          innerUrl.pathname = innerUrl.pathname.replace(/^\/website-4(?=\/|$)/i, '') || '/';
+          outerUrl.searchParams.set('redirectUrl', innerUrl.toString());
+        }
+      } catch {
+        // ignore non-URL redirectUrl param
+      }
+    }
+    return outerUrl.toString();
+  } catch {
+    return rawFullUrl;
+  }
+}
 
 const MX_SUBDIVISION_MAP = {
   agu: 'MX-AGU',
@@ -722,7 +756,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       checkoutId,
-      checkoutUrl: redirectUrl,
+      checkoutUrl: normalizeWixCheckoutUrl(redirectUrl),
       memberTokens: hasValidTokenPair(activeMemberTokens) ? activeMemberTokens : null,
       payNow: createdCheckout?.payNow || null,
       lineItems: createdCheckout?.lineItems || [],

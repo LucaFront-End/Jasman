@@ -13,7 +13,7 @@
  *      - Nombre: COUPON_BRIDGE_SECRET
  *      - Valor: (una clave aleatoria segura)
  *   4. En Vercel (Environment Variables del proyecto Jasman), configurar:
- *      - WIX_VELO_COUPON_URL = https://sistemas5160.wixsite.com/website-4/_functions/createCoupon
+ *      - WIX_VELO_COUPON_URL = https://checkout.jasman.com.mx/_functions/createCoupon
  *      - WIX_VELO_COUPON_SECRET = <el mismo valor secreto>
  */
 

@@ -6,8 +6,8 @@ export const WIX_CLIENT_ID = '5aabc542-16cf-44de-bedf-d8eb7ad08c46';
 export const WIX_SITE_ID = '7fd3b8ea-a3f3-4b51-9b48-4ec1f53d2cc9';
 
 // Jasman Wix Base Domain (used for Wix-managed eCommerce Checkout redirect)
-export const JASMAN_WIX_BASE_HOST = 'sistemas5160.wixsite.com';
-export const JASMAN_WIX_BASE_PATH = '/website-4';
+export const JASMAN_WIX_BASE_HOST = 'checkout.jasman.com.mx';
+export const JASMAN_WIX_BASE_PATH = '';
 export const JASMAN_WIX_BASE_URL = `https://${JASMAN_WIX_BASE_HOST}${JASMAN_WIX_BASE_PATH}`;
 
 // Session & Checkout Storage Keys

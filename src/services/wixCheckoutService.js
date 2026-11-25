@@ -184,9 +184,23 @@ export async function ensureWixCheckoutSession() {
   return sessionInitPromise;
 }
 
+function stripLegacyWixBasePath(pathname = '/') {
+  const cleaned = String(pathname || '/').replace(/^\/website-4(?=\/|$)/i, '');
+  return cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
+}
+
+function isStorefrontReturnUrl(urlObj) {
+  const p = String(urlObj?.pathname || '').toLowerCase();
+  return (
+    p.startsWith('/thank-you') ||
+    p.startsWith('/gracias') ||
+    p.startsWith('/llantas')
+  );
+}
+
 /**
- * Ensures the Wix redirect URL always targets Jasman's Wix base domain:
- * https://sistemas5160.wixsite.com/website-4/...
+ * Ensures the Wix redirect URL always targets Jasman's Wix checkout domain:
+ * https://checkout.jasman.com.mx/...
  */
 export function normalizeJasmanWixCheckoutUrl(rawFullUrl) {
   if (!rawFullUrl || typeof rawFullUrl !== 'string') return rawFullUrl;
@@ -195,39 +209,25 @@ export function normalizeJasmanWixCheckoutUrl(rawFullUrl) {
     const outerUrl = new URL(rawFullUrl);
     const innerRedirectRaw = outerUrl.searchParams.get('redirectUrl');
 
-    const outerAlreadyMatches =
-      outerUrl.protocol === 'https:' &&
-      outerUrl.host === JASMAN_WIX_BASE_HOST &&
-      outerUrl.pathname.startsWith(JASMAN_WIX_BASE_PATH);
-
-    const innerAlreadyMatches =
-      !innerRedirectRaw || innerRedirectRaw.startsWith(JASMAN_WIX_BASE_URL);
-
-    if (outerAlreadyMatches && innerAlreadyMatches) {
-      return rawFullUrl;
-    }
-
     outerUrl.protocol = 'https:';
     outerUrl.host = JASMAN_WIX_BASE_HOST;
-    if (!outerUrl.pathname.startsWith(JASMAN_WIX_BASE_PATH)) {
-      const cleanOuterPath = outerUrl.pathname.startsWith('/')
-        ? outerUrl.pathname
-        : `/${outerUrl.pathname}`;
-      outerUrl.pathname = `${JASMAN_WIX_BASE_PATH}${cleanOuterPath === '/' ? '' : cleanOuterPath}`;
-    }
+    const outerCleanPath = stripLegacyWixBasePath(outerUrl.pathname);
+    outerUrl.pathname = JASMAN_WIX_BASE_PATH
+      ? `${JASMAN_WIX_BASE_PATH}${outerCleanPath === '/' ? '' : outerCleanPath}`
+      : outerCleanPath;
 
     if (innerRedirectRaw) {
       try {
         const innerUrl = new URL(innerRedirectRaw);
-        innerUrl.protocol = 'https:';
-        innerUrl.host = JASMAN_WIX_BASE_HOST;
-        if (!innerUrl.pathname.startsWith(JASMAN_WIX_BASE_PATH)) {
-          const cleanInnerPath = innerUrl.pathname.startsWith('/')
-            ? innerUrl.pathname
-            : `/${innerUrl.pathname}`;
-          innerUrl.pathname = `${JASMAN_WIX_BASE_PATH}${cleanInnerPath === '/' ? '' : cleanInnerPath}`;
+        if (!isStorefrontReturnUrl(innerUrl)) {
+          innerUrl.protocol = 'https:';
+          innerUrl.host = JASMAN_WIX_BASE_HOST;
+          const innerCleanPath = stripLegacyWixBasePath(innerUrl.pathname);
+          innerUrl.pathname = JASMAN_WIX_BASE_PATH
+            ? `${JASMAN_WIX_BASE_PATH}${innerCleanPath === '/' ? '' : innerCleanPath}`
+            : innerCleanPath;
+          outerUrl.searchParams.set('redirectUrl', innerUrl.toString());
         }
-        outerUrl.searchParams.set('redirectUrl', innerUrl.toString());
       } catch {
         // leave inner redirectUrl untouched if not a standard URL
       }
@@ -237,7 +237,11 @@ export function normalizeJasmanWixCheckoutUrl(rawFullUrl) {
   } catch (err) {
     console.warn('[Jasman Checkout] Fallback string normalization on checkout URL:', err);
     let fallbackUrl = rawFullUrl;
-    for (const brokenDomain of ['https://www.jasman.com.mx', 'https://jasman.com.mx']) {
+    for (const brokenDomain of [
+      'https://sistemas5160.wixsite.com/website-4',
+      'https://www.jasman.com.mx',
+      'https://jasman.com.mx',
+    ]) {
       if (fallbackUrl.startsWith(brokenDomain)) {
         fallbackUrl = JASMAN_WIX_BASE_URL + fallbackUrl.slice(brokenDomain.length);
       }
@@ -565,7 +569,7 @@ export async function clearWixCurrentCart() {
 /**
  * Syncs Jasman's cart items into Wix eCommerce Current Cart (reusing existing
  * synced cart when already up-to-date), creates a Wix Checkout, generates a
- * Wix Redirect Session targeting https://sistemas5160.wixsite.com/website-4,
+ * Wix Redirect Session targeting https://checkout.jasman.com.mx,
  * caches the snapshot for /thank-you, and redirects the browser.
  */
 export async function redirectToJasmanWixCheckout({

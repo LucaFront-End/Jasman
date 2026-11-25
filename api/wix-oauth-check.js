@@ -3,7 +3,8 @@ export default async function handler(req, res) {
   if (
     !url ||
     typeof url !== 'string' ||
-    !url.startsWith('https://www.jasman.com.mx/_api/oauth2/authorize')
+    (!url.startsWith('https://checkout.jasman.com.mx/_api/oauth2/authorize') &&
+      !url.startsWith('https://www.jasman.com.mx/_api/oauth2/authorize'))
   ) {
     return res.status(400).json({ allowed: false, reason: 'invalid_url' });
   }
