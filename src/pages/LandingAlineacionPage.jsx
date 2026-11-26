@@ -262,6 +262,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
   // Appointment Booking State ("Agenda tu servicio desde $750")
   const [bookingName, setBookingName] = useState('');
   const [bookingPhone, setBookingPhone] = useState('');
+  const [bookingEmail, setBookingEmail] = useState('');
   const [bookingCar, setBookingCar] = useState('');
   const [bookingDate, setBookingDate] = useState('');
   const [bookingBranchId, setBookingBranchId] = useState('');
@@ -619,7 +620,9 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
 
     let text = '';
     if (bookingDetails) {
-      text = `SW- Hola quisiera más información de su promoción de ${promoTitleForWa}. Sucursal: ${branchName}. Folio: ${bookingDetails.folio}. Nombre: ${bookingDetails.nombre}, Teléfono: ${bookingDetails.telefono}, Vehículo: ${bookingDetails.vehiculo}, Fecha tentativa: ${bookingDetails.fechaVisita}.`;
+      const bookingCorreo = bookingDetails.email || bookingDetails.correo || '';
+      const correoPart = bookingCorreo ? `, Correo: ${bookingCorreo}` : '';
+      text = `SW- Hola quisiera más información de su promoción de ${promoTitleForWa}. Sucursal: ${branchName}. Folio: ${bookingDetails.folio}. Nombre: ${bookingDetails.nombre}, Teléfono: ${bookingDetails.telefono}${correoPart}, Vehículo: ${bookingDetails.vehiculo}, Fecha tentativa: ${bookingDetails.fechaVisita}.`;
     } else {
       text = `SW- Hola quisiera más información de su promoción de ${promoTitleForWa}`;
     }
@@ -630,7 +633,8 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
   // Submit Appointment Form & save to Wix CMS collection
   const handleBookVisit = async (e) => {
     e.preventDefault();
-    if (!bookingName.trim() || !bookingPhone.trim()) return;
+    const cleanEmail = bookingEmail.trim().toLowerCase();
+    if (!bookingName.trim() || !bookingPhone.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cleanEmail)) return;
 
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const folio = isAlignmentPromo ? `SW-ALIN-${randomSuffix}` : `SW-PROMO-${randomSuffix}`;
@@ -641,6 +645,8 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
       folio,
       nombre: bookingName.trim(),
       telefono: bookingPhone.trim(),
+      email: cleanEmail,
+      correo: cleanEmail,
       vehiculo: bookingCar.trim() || 'No especificado',
       fechaVisita: bookingDate || 'Lo antes posible',
       sucursalId: targetBranch?.id || '',
@@ -648,6 +654,7 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
       sucursalTelefono: targetBranch?.phone || '',
       sucursalDireccion: targetBranch?.address || '',
       servicio: promoDisplayTitle,
+      promocion: promoDisplayTitle,
       precio: promotion.subheadline || 'Promoción vigente',
       promocionId: promotion.id,
       promocionSlug: promotion.slug,
@@ -1980,6 +1987,25 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
                     />
                   </div>
 
+                  {/* Correo electrónico */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', marginBottom: 8, textTransform: 'uppercase' }}>
+                      Correo electrónico *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="Ej. carlos@correo.com"
+                      value={bookingEmail}
+                      onChange={e => setBookingEmail(e.target.value)}
+                      style={{
+                        width: '100%', padding: '13px 14px', borderRadius: 12,
+                        background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
+                        color: C.white, fontSize: 14, outline: 'none', boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
                   {/* Vehículo */}
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', marginBottom: 8, textTransform: 'uppercase' }}>
@@ -2106,6 +2132,14 @@ export default function LandingAlineacionPage({ promoVariant = 'all' }) {
                     <div style={{ fontSize: 11, color: C.gray, fontWeight: 600 }}>TELÉFONO:</div>
                     <div style={{ fontWeight: 700, color: C.navy, fontSize: 14 }}>{confirmedBooking.telefono}</div>
                   </div>
+                  {(confirmedBooking.email || confirmedBooking.correo) && (
+                    <div>
+                      <div style={{ fontSize: 11, color: C.gray, fontWeight: 600 }}>CORREO ELECTRÓNICO:</div>
+                      <div style={{ fontWeight: 700, color: C.navy, fontSize: 14, wordBreak: 'break-word' }}>
+                        {confirmedBooking.email || confirmedBooking.correo}
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <div style={{ fontSize: 11, color: C.gray, fontWeight: 600 }}>VEHÍCULO:</div>
                     <div style={{ fontWeight: 700, color: C.navy, fontSize: 14 }}>{confirmedBooking.vehiculo}</div>

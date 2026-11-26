@@ -670,9 +670,14 @@ export async function getWixBranches() {
  * Integrates with Wix CMS tracking.
  */
 export async function saveBookingLead(booking) {
-  const folio = 'JAS-' + Math.floor(100000 + Math.random() * 900000);
+  const folio = booking.folio || 'JAS-' + Math.floor(100000 + Math.random() * 900000);
+  const cleanEmail = String(booking.email || booking.correo || '').trim().toLowerCase();
+  const promoLabel = booking.promocion || booking.servicio || 'Alineación y Balanceo';
   const leadRecord = {
     ...booking,
+    email: cleanEmail,
+    correo: cleanEmail,
+    promocion: promoLabel,
     folio,
     createdAt: new Date().toISOString(),
     status: 'PENDIENTE',
@@ -690,13 +695,14 @@ export async function saveBookingLead(booking) {
         folio: leadRecord.folio,
         nombre: leadRecord.nombre,
         telefono: leadRecord.telefono,
-        email: leadRecord.email || leadRecord.correo || '',
+        email: cleanEmail,
+        correo: cleanEmail,
         sucursal: leadRecord.sucursalNombre,
         vehiculo: leadRecord.vehiculo || 'Automóvil',
         fechaVisita: leadRecord.fechaVisita || 'Por agendar',
-        promocion: leadRecord.promocion || 'Alineación y Balanceo',
+        promocion: promoLabel,
         asunto: `Cita Web: ${leadRecord.vehiculo || 'Automóvil'} — ${leadRecord.fechaVisita || 'Por agendar'}`,
-        mensaje: `Folio: ${leadRecord.folio} | Promoción: ${leadRecord.promocion || 'Alineación y Balanceo'} | Vehículo: ${leadRecord.vehiculo || 'Automóvil'} | Fecha tentativa: ${leadRecord.fechaVisita || 'Por agendar'}`,
+        mensaje: `Folio: ${leadRecord.folio} | Promoción: ${promoLabel} | Vehículo: ${leadRecord.vehiculo || 'Automóvil'} | Fecha tentativa: ${leadRecord.fechaVisita || 'Por agendar'}`,
         origen: 'Landing Promociones / Agenda de Cita',
       });
     } catch {
@@ -709,10 +715,12 @@ export async function saveBookingLead(booking) {
         title: `${leadRecord.nombre} - ${leadRecord.folio}`,
         nombre: leadRecord.nombre,
         telefono: leadRecord.telefono,
+        email: cleanEmail,
+        correo: cleanEmail,
         vehiculo: leadRecord.vehiculo,
         fechaVisita: leadRecord.fechaVisita,
         sucursal: leadRecord.sucursalNombre,
-        promocion: leadRecord.promocion || 'Alineación y Balanceo $750',
+        promocion: promoLabel,
         folio: leadRecord.folio,
       });
     } catch {
