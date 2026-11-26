@@ -1,8 +1,18 @@
+import {
+  DEFAULT_WHATSAPP_PHONE,
+  parseMxWhatsAppInput,
+} from '../utils/whatsappLinks.js';
+
 /* ═══ Real Jasman branches from corporate spreadsheet ═══ */
 
-const buildWhatsApp = (_phone, branchName, customWhatsappPhone) => {
+const resolveBranchWaPhone = (phone, customWhatsappPhone) =>
+  parseMxWhatsAppInput(customWhatsappPhone).whatsappPhone ||
+  parseMxWhatsAppInput(phone).whatsappPhone ||
+  DEFAULT_WHATSAPP_PHONE;
+
+const buildWhatsApp = (phone, branchName, customWhatsappPhone) => {
   const msg = encodeURIComponent(`SW - Hola quisiera más información de sus servicios automotrices en su sucursal "${branchName}"`);
-  const waNumber = customWhatsappPhone || '5215510024945';
+  const waNumber = resolveBranchWaPhone(phone, customWhatsappPhone);
   return `https://api.whatsapp.com/send/?phone=${waNumber}&text=${msg}`;
 };
 
@@ -85,6 +95,7 @@ const toSlug = (name) => name.toLowerCase().normalize('NFD').replace(/[\u0300-\u
 
 export const sucursales = raw.map(b => {
   const fullName = `Jasman Automotriz - Suc. ${b.name}`;
+  const whatsappPhone = resolveBranchWaPhone(b.phone, b.whatsappPhone);
   return {
     id: toSlug(b.name),
     region: b.region,
@@ -95,7 +106,7 @@ export const sucursales = raw.map(b => {
     address: b.address,
     cp: b.cp,
     phone: b.phone,
-    whatsappPhone: b.whatsappPhone || null,
+    whatsappPhone,
     schedule: b.schedule || 'Lun - Sáb: 8:00 - 18:00',
     whatsappUrl: (b.phone || b.whatsappPhone) ? buildWhatsApp(b.phone, fullName, b.whatsappPhone) : null,
     mapsUrl: b.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(b.address)}`,

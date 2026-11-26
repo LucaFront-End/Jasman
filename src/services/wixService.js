@@ -6,6 +6,12 @@ import {
   specificPostalCodes,
   postalCodeCentroids,
 } from '../data/postalCodesData.js';
+import {
+  DEFAULT_WHATSAPP_PHONE,
+  parseMxWhatsAppInput,
+  formatMxDisplayPhone,
+  buildBranchGeneralWhatsAppUrl,
+} from '../utils/whatsappLinks.js';
 
 export const WIX_CLIENT_ID = '5aabc542-16cf-44de-bedf-d8eb7ad08c46';
 export const WIX_SITE_ID = '7fd3b8ea-a3f3-4b51-9b48-4ec1f53d2cc9';
@@ -297,28 +303,30 @@ export function normalizeWixBranch(b) {
     'Ciudad de México';
   const state = b.estado || b.address?.subdivision || localMatch?.state || 'CDMX';
 
-  // Extract phone number from CMS WhatsApp URL (supports 52XXXXXXXXXX and 521XXXXXXXXXX)
-  const cmsWhatsappUrl = typeof b.whatsapp === 'string' && b.whatsapp.trim() ? b.whatsapp.trim() : '';
-  let tenDigits = '';
-  let whatsappPhone = '';
-  if (cmsWhatsappUrl) {
-    const m =
-      cmsWhatsappUrl.match(/phone=(?:521?)?(\d{10})/i) ||
-      cmsWhatsappUrl.match(/wa\.me\/(?:521?)?(\d{10})/i);
-    if (m && m[1]) {
-      tenDigits = m[1];
-      const fullM =
-        cmsWhatsappUrl.match(/phone=(\d+)/i) ||
-        cmsWhatsappUrl.match(/wa\.me\/(\d+)/i);
-      whatsappPhone = fullM ? fullM[1] : `52${tenDigits}`;
-    }
-  }
+  // Extract WhatsApp number from live CMS fields (URL or raw phone), falling back to the branch's own phone
+  const rawWaCandidate = [
+    b.whatsapp,
+    b.whatsappUrl,
+    b.whatsappPhone,
+    b.numeroWhatsapp,
+    b.telefono,
+    b.celular,
+    b.phone,
+  ].find((v) => parseMxWhatsAppInput(v).whatsappPhone);
 
-  const displayPhone = tenDigits
-    ? `${tenDigits.slice(0, 2)} ${tenDigits.slice(2, 6)} ${tenDigits.slice(6)}`
-    : localMatch?.phone || '55 1002 4945';
+  const cmsWhatsappUrl =
+    typeof b.whatsapp === 'string' && /^https?:\/\//i.test(b.whatsapp.trim())
+      ? b.whatsapp.trim()
+      : '';
+  const { whatsappPhone: cmsWhatsappPhone, tenDigits: cmsTenDigits } =
+    parseMxWhatsAppInput(rawWaCandidate);
+  const cmsDisplayPhone = cmsTenDigits ? formatMxDisplayPhone(cmsTenDigits) : '';
 
-  const resolvedWhatsappPhone = whatsappPhone || localMatch?.whatsappPhone || '5215510024945';
+  const localParsed = parseMxWhatsAppInput(localMatch?.whatsappPhone || localMatch?.phone);
+  const resolvedWhatsappPhone =
+    cmsWhatsappPhone || localParsed.whatsappPhone || DEFAULT_WHATSAPP_PHONE;
+  const displayPhone = cmsDisplayPhone || localMatch?.phone || '55 1002 4945';
+
   const rawMapsCandidate = [
     b.enlaceDeGoogleMaps,
     b.googleMaps,
@@ -331,9 +339,6 @@ export function normalizeWixBranch(b) {
       : `https://${rawMapsCandidate.trim()}`
     : '';
   const fullBranchLabel = title.startsWith('Jasman') ? title : `Jasman Automotriz - Suc. ${title}`;
-  const unifiedWaMsg = encodeURIComponent(
-    `SW - Hola quisiera más información de sus servicios automotrices en su sucursal "${fullBranchLabel}"`
-  );
 
   return {
     ...(localMatch || {}),
@@ -350,9 +355,17 @@ export function normalizeWixBranch(b) {
     lat,
     lng,
     phone: displayPhone,
+    cmsDisplayPhone,
+    cmsWhatsappPhone,
     whatsappPhone: resolvedWhatsappPhone,
     cmsWhatsappUrl,
-    whatsappUrl: cmsWhatsappUrl || `https://api.whatsapp.com/send/?phone=${resolvedWhatsappPhone}&text=${unifiedWaMsg}`,
+    whatsappUrl: buildBranchGeneralWhatsAppUrl({
+      fullName: fullBranchLabel,
+      name: cleanName || localMatch?.name || title,
+      cmsWhatsappPhone,
+      whatsappPhone: resolvedWhatsappPhone,
+      phone: displayPhone,
+    }),
     cmsMapsUrl,
     mapsUrl: cmsMapsUrl || localMatch?.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${title} ${fullAddr}`)}`,
     source: 'wix-cms',
@@ -2179,14 +2192,27 @@ export function mergeSucursalesWithWix(staticList = [], wixBranches = []) {
     }
     if (!wb) return s;
 
+    const mergedPhone = wb.cmsDisplayPhone || s.phone || wb.phone;
+    const mergedWhatsappPhone =
+      wb.cmsWhatsappPhone ||
+      parseMxWhatsAppInput(s.whatsappPhone || s.phone).whatsappPhone ||
+      wb.whatsappPhone ||
+      DEFAULT_WHATSAPP_PHONE;
+
     return {
       ...s,
       wixId: wb.wixId || s.wixId || '',
       address: wb.hasStreetAddress && wb.address ? wb.address : s.address,
-      phone: wb.phone || s.phone,
-      whatsappPhone: wb.whatsappPhone || s.whatsappPhone,
+      phone: mergedPhone,
+      cmsWhatsappPhone: wb.cmsWhatsappPhone || '',
+      whatsappPhone: mergedWhatsappPhone,
       cmsWhatsappUrl: wb.cmsWhatsappUrl || s.cmsWhatsappUrl || '',
-      whatsappUrl: wb.cmsWhatsappUrl || s.whatsappUrl,
+      whatsappUrl: buildBranchGeneralWhatsAppUrl({
+        ...s,
+        phone: mergedPhone,
+        cmsWhatsappPhone: wb.cmsWhatsappPhone || '',
+        whatsappPhone: mergedWhatsappPhone,
+      }),
       cmsMapsUrl: wb.cmsMapsUrl || s.cmsMapsUrl || '',
       mapsUrl: wb.cmsMapsUrl || s.mapsUrl,
       lat: wb.lat ?? s.lat,

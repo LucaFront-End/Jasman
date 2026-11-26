@@ -1,16 +1,44 @@
 import { useLocation } from 'react-router-dom';
 import { F } from '../hooks/useAnimations';
+import { sucursales as staticSucursales } from '../data/sucursalesData';
+import { servicios, paquetes } from '../data/serviciosData';
+import { useWixSucursales } from '../hooks/useWixSucursales';
+import {
+  DEFAULT_WHATSAPP_PHONE,
+  buildBranchGeneralWhatsAppUrl,
+  buildBranchServiceWhatsAppUrl,
+} from '../utils/whatsappLinks';
 
 export default function FloatingWhatsAppButton() {
   const { pathname } = useLocation();
   const isFlotillas = pathname.startsWith('/flotillas');
-  const phone = isFlotillas ? '5215545990295' : '5215510024945';
-  const defaultMsg = isFlotillas
-    ? 'SW - Hola, me interesa el servicio de flotillas de Jasman.'
-    : 'SW - Hola Jasman, me gustaría recibir atención de un asesor.';
-  const whatsappUrl = `https://api.whatsapp.com/send/?phone=${phone}&text=${encodeURIComponent(
-    defaultMsg
-  )}`;
+  const sucursales = useWixSucursales(staticSucursales);
+
+  let whatsappUrl = '';
+  if (pathname.startsWith('/sucursales/')) {
+    const parts = pathname.replace(/^\/sucursales\//, '').split('/').filter(Boolean);
+    const branchSlug = parts[0] || '';
+    const serviceSlug = parts[1] || '';
+    const branch = branchSlug ? sucursales.find((s) => s.id === branchSlug) : null;
+    if (branch) {
+      const matchedService = serviceSlug
+        ? [...servicios, ...paquetes].find((sv) => sv.slug === serviceSlug)
+        : null;
+      whatsappUrl = matchedService
+        ? buildBranchServiceWhatsAppUrl(branch, matchedService.title)
+        : buildBranchGeneralWhatsAppUrl(branch);
+    }
+  }
+
+  if (!whatsappUrl) {
+    const phone = isFlotillas ? '5215545990295' : DEFAULT_WHATSAPP_PHONE;
+    const defaultMsg = isFlotillas
+      ? 'SW - Hola, me interesa el servicio de flotillas de Jasman.'
+      : 'SW - Hola Jasman, me gustaría recibir atención de un asesor.';
+    whatsappUrl = `https://api.whatsapp.com/send/?phone=${phone}&text=${encodeURIComponent(
+      defaultMsg
+    )}`;
+  }
 
   return (
     <>
