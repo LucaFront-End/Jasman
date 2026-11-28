@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PageHero from '../components/PageHero';
-import { C, F, useCountUp } from '../hooks/useAnimations';
+import { C, F } from '../hooks/useAnimations';
 import { Link } from 'react-router-dom';
 import { saveContactoWeb } from '../services/wixService';
 import {
@@ -542,7 +542,7 @@ export default function ContactoPage() {
                 }}>Enlaces rápidos</h4>
                 {[
                   { label: 'Facturación en línea', href: 'https://www.jasman.com.mx/facturación', external: true },
-                  { label: 'Aviso de Privacidad', href: 'https://www.jasman.com.mx/avisodeprivacidad', external: true },
+                  { label: 'Aviso de Privacidad', href: '/aviso-de-privacidad' },
                   { label: 'Nuestros Servicios', href: '/servicios' },
                   { label: 'Bolsa de Trabajo', href: '/bolsa-de-trabajo' },
                   { label: 'Programa Flotillas', href: '/flotillas' },

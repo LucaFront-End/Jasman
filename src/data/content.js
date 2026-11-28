@@ -253,8 +253,10 @@ export const footerContent = {
       { label: 'Contacto', href: '/contacto' },
     ],
     legal: [
-      { label: 'Aviso de Privacidad', href: 'https://www.jasman.com.mx/avisodeprivacidad' },
-      { label: 'Términos y Condiciones', href: 'https://www.jasman.com.mx/términosycondciones' },
+      { label: 'Aviso de Privacidad', href: '/aviso-de-privacidad' },
+      { label: 'Términos y Condiciones', href: '/terminos-y-condiciones' },
+      { label: 'Política de Devoluciones', href: '/politica-de-reembolso' },
+      { label: 'Política de Envíos', href: '/politica-de-envios' },
       { label: 'Facturación', href: 'https://www.jasman.com.mx/facturación' },
       { label: 'Jasman Te Escucha', href: 'https://www.jasman.com.mx/jasman-te-escucha' },
     ],

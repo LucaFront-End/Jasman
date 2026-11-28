@@ -64,6 +64,31 @@ export const TALLER_ROUTE_SEO = {
     description:
       'Accede rápido a Tienda Online de Llantas, Promociones, Sucursales, Servicios Automotrices y atención por WhatsApp de JASMAN.',
   },
+  '/aviso-de-privacidad': {
+    title: 'Aviso de Privacidad Integral | JASMAN Automotriz',
+    description:
+      'Consulta el Aviso de Privacidad Integral de JASMAN Automotriz conforme a la LFPDPPP. Conoce cómo protegemos tus datos personales y tus derechos ARCO.',
+  },
+  '/politica-de-privacidad': {
+    title: 'Aviso de Privacidad Integral | JASMAN Automotriz',
+    description:
+      'Consulta el Aviso de Privacidad Integral de JASMAN Automotriz conforme a la LFPDPPP. Conoce cómo protegemos tus datos personales y tus derechos ARCO.',
+  },
+  '/terminos-y-condiciones': {
+    title: 'Términos y Condiciones de Uso y Compra | JASMAN Automotriz',
+    description:
+      'Términos y Condiciones generales de uso, compra de llantas en línea, citas de taller mecánico, promociones y facturación CFDI en JASMAN Automotriz.',
+  },
+  '/politica-de-reembolso': {
+    title: 'Política de Devoluciones, Reembolsos y Garantías | JASMAN',
+    description:
+      'Conoce la Política de Devoluciones, Reembolsos y Garantías por escrito en llantas y servicios automotrices de JASMAN Automotriz en México.',
+  },
+  '/politica-de-envios': {
+    title: 'Política de Envíos y Entregas a Todo México | JASMAN TIRES',
+    description:
+      'Consulta cobertura nacional, tiempos de entrega de 3 a 5 días hábiles, rastreo de guías y opciones de instalación en las +80 sucursales JASMAN.',
+  },
 };
 
 export const TIENDA_HOME_SEO = {

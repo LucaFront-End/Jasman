@@ -1,0 +1,534 @@
+/* ==========================================================================
+   LEGAL & POLICIES PAGE — JASMAN AUTOMOTRIZ CORPORATE STYLING
+   ========================================================================== */
+
+.jasman-legal-page {
+  min-height: 100vh;
+  background-color: #F8F9FA;
+  color: #2D2D2D;
+  padding-bottom: 5rem;
+}
+
+/* --- Corporate Navy Hero --- */
+.jasman-legal-hero {
+  position: relative;
+  overflow: hidden;
+  background: #1A1F36;
+  padding: 124px 24px 52px;
+}
+
+.jasman-legal-hero-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(26, 31, 54, 0.98) 0%,
+    rgba(26, 31, 54, 0.9) 55%,
+    rgba(196, 30, 36, 0.2) 100%
+  );
+  pointer-events: none;
+}
+
+.jasman-legal-hero-ring {
+  position: absolute;
+  top: -180px;
+  right: -180px;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  border: 1px solid rgba(196, 30, 36, 0.14);
+  pointer-events: none;
+}
+
+.jasman-legal-hero-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* --- Breadcrumbs --- */
+.jasman-legal-breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 22px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.jasman-legal-bc-link {
+  color: rgba(255, 255, 255, 0.62);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.jasman-legal-bc-link:hover {
+  color: #FFFFFF;
+}
+
+.jasman-legal-bc-sep {
+  opacity: 0.45;
+  flex-shrink: 0;
+}
+
+.jasman-legal-bc-muted {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.jasman-legal-bc-current {
+  color: #E8353B;
+  font-weight: 600;
+}
+
+/* --- Hero Typography & Meta --- */
+.jasman-legal-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 18px;
+  border-radius: 9999px;
+  background: rgba(196, 30, 36, 0.16);
+  border: 1px solid rgba(232, 53, 59, 0.28);
+  color: #FF6B70;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.jasman-legal-tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #E8353B;
+}
+
+.jasman-legal-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: clamp(2rem, 4.4vw, 3.1rem);
+  color: #FFFFFF;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+}
+
+.jasman-legal-subtitle {
+  font-size: 16.5px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.65;
+  max-width: 720px;
+  margin: 0;
+}
+
+.jasman-legal-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.jasman-legal-updated {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.jasman-legal-cms-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #34D399;
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+
+.jasman-legal-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.jasman-legal-print-btn:hover {
+  background: #C41E24;
+  border-color: #C41E24;
+  transform: translateY(-1px);
+}
+
+/* --- Sticky Policy Switcher Tabs --- */
+.jasman-legal-tabs-wrapper {
+  position: sticky;
+  top: 72px;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #E5E7EB;
+  box-shadow: 0 4px 18px rgba(26, 31, 54, 0.05);
+}
+
+.jasman-legal-tabs-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.jasman-legal-tabs-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.jasman-legal-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  padding: 10px 18px;
+  border-radius: 9999px;
+  border: 1px solid #E5E7EB;
+  background: #F8F9FA;
+  color: #1A1F36;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.22s ease;
+}
+
+.jasman-legal-tab-btn:hover {
+  border-color: rgba(196, 30, 36, 0.45);
+  color: #C41E24;
+  background: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.jasman-legal-tab-btn.active {
+  background: #C41E24;
+  border-color: #C41E24;
+  color: #FFFFFF;
+  box-shadow: 0 6px 18px rgba(196, 30, 36, 0.28);
+}
+
+/* --- Document Card & Prose --- */
+.jasman-legal-content-wrap {
+  max-width: 1000px;
+  margin: 36px auto 0;
+  padding: 0 24px;
+}
+
+.jasman-legal-card {
+  background: #FFFFFF;
+  border-radius: 24px;
+  border: 1px solid #E5E7EB;
+  padding: 48px 46px;
+  box-shadow: 0 12px 36px rgba(26, 31, 54, 0.05);
+}
+
+.jasman-legal-prose {
+  font-family: 'Inter', sans-serif;
+  font-size: 15.5px;
+  line-height: 1.82;
+  color: #374151;
+}
+
+.jasman-legal-prose h2 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1A1F36;
+  margin: 2.3rem 0 0.9rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid #F1F5F9;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.jasman-legal-prose h2:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.jasman-legal-prose h3 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #1A1F36;
+  margin: 1.6rem 0 0.65rem;
+}
+
+.jasman-legal-prose p {
+  margin: 0 0 1.15rem;
+  color: #374151;
+}
+
+.jasman-legal-prose ul,
+.jasman-legal-prose ol {
+  margin: 0.85rem 0 1.35rem 1.35rem;
+  padding-left: 0.45rem;
+}
+
+.jasman-legal-prose ul {
+  list-style-type: disc;
+}
+
+.jasman-legal-prose ol {
+  list-style-type: decimal;
+}
+
+.jasman-legal-prose li {
+  margin-bottom: 0.6rem;
+  line-height: 1.75;
+  color: #374151;
+}
+
+.jasman-legal-prose li ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  list-style-type: circle;
+}
+
+.jasman-legal-prose strong,
+.jasman-legal-prose b {
+  font-weight: 700;
+  color: #1A1F36;
+}
+
+.jasman-legal-prose a {
+  color: #C41E24;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+
+.jasman-legal-prose a:hover {
+  color: #1A1F36;
+}
+
+.jasman-legal-prose blockquote {
+  margin: 1.4rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid #C41E24;
+  background: #F8F9FA;
+  border-radius: 0 12px 12px 0;
+  color: #1A1F36;
+}
+
+/* --- Support Box --- */
+.jasman-legal-support {
+  margin-top: 44px;
+  padding: 28px 30px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1A1F36 0%, #232A48 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.jasman-legal-support-info {
+  max-width: 480px;
+}
+
+.jasman-legal-support-info h4 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0 0 6px;
+}
+
+.jasman-legal-support-info p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.74);
+  margin: 0;
+  line-height: 1.55;
+}
+
+.jasman-legal-support-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.jasman-legal-support-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 9999px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.jasman-legal-support-btn.whatsapp {
+  background: #25D366;
+  color: #FFFFFF;
+}
+
+.jasman-legal-support-btn.whatsapp:hover {
+  background: #1FB855;
+  transform: translateY(-1px);
+}
+
+.jasman-legal-support-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+.jasman-legal-support-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.jasman-legal-support-btn.primary {
+  background: #C41E24;
+  color: #FFFFFF;
+}
+
+.jasman-legal-support-btn.primary:hover {
+  background: #E8353B;
+  transform: translateY(-1px);
+}
+
+/* --- Skeleton & Error --- */
+@keyframes jasmanLegalPulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.jasman-legal-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.jasman-legal-sk-line {
+  height: 16px;
+  border-radius: 8px;
+  background: #E5E7EB;
+  animation: jasmanLegalPulse 1.4s ease-in-out infinite;
+}
+
+.jasman-legal-sk-heading {
+  height: 32px;
+  width: 52%;
+  margin-bottom: 12px;
+}
+
+.jasman-legal-error {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .jasman-legal-hero {
+    padding: 108px 18px 38px;
+  }
+
+  .jasman-legal-tabs-wrapper {
+    top: 64px;
+  }
+
+  .jasman-legal-tabs-inner {
+    padding: 10px 16px;
+  }
+
+  .jasman-legal-content-wrap {
+    margin-top: 22px;
+    padding: 0 14px;
+  }
+
+  .jasman-legal-card {
+    padding: 28px 20px;
+    border-radius: 18px;
+  }
+
+  .jasman-legal-prose {
+    font-size: 14.8px;
+  }
+
+  .jasman-legal-support {
+    padding: 22px 18px;
+  }
+
+  .jasman-legal-support-actions,
+  .jasman-legal-support-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* --- Print Stylesheet --- */
+@media print {
+  header nav,
+  .site-footer,
+  .jasman-legal-tabs-wrapper,
+  .jasman-legal-actions,
+  .jasman-legal-support {
+    display: none !important;
+  }
+
+  .jasman-legal-page {
+    background: #FFFFFF !important;
+    padding: 0 !important;
+  }
+
+  .jasman-legal-hero {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    padding: 0 0 16px !important;
+    border-bottom: 2px solid #1A1F36;
+  }
+
+  .jasman-legal-hero-glow,
+  .jasman-legal-hero-ring {
+    display: none !important;
+  }
+
+  .jasman-legal-title,
+  .jasman-legal-subtitle,
+  .jasman-legal-updated {
+    color: #000000 !important;
+  }
+
+  .jasman-legal-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 16px 0 !important;
+  }
+}

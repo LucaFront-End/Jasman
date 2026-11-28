@@ -40,6 +40,10 @@ const STATIC_TALLER_PATHS = [
   { path: '/bolsa-de-trabajo', changefreq: 'weekly', priority: '0.7' },
   { path: '/proveedores', changefreq: 'monthly', priority: '0.6' },
   { path: '/linktree', changefreq: 'weekly', priority: '0.7' },
+  { path: '/aviso-de-privacidad', changefreq: 'monthly', priority: '0.5' },
+  { path: '/terminos-y-condiciones', changefreq: 'monthly', priority: '0.5' },
+  { path: '/politica-de-reembolso', changefreq: 'monthly', priority: '0.5' },
+  { path: '/politica-de-envios', changefreq: 'monthly', priority: '0.5' },
 ];
 
 const STATIC_PROMO_PATHS = [

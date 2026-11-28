@@ -26,6 +26,7 @@ import CuentaPreviewPage from './pages/CuentaPreviewPage';
 import ThankYouPage from './pages/ThankYouPage';
 import MetaAdminPage from './pages/MetaAdminPage';
 import LinktreePage from './pages/LinktreePage';
+import LegalPage from './pages/LegalPage';
 import SeoManager from './components/SeoManager';
 import TrackingScriptsManager from './components/TrackingScriptsManager';
 
@@ -195,6 +196,29 @@ export default function App() {
           <Route path="/admin-meta" element={<MetaAdminPage />} />
           <Route path="/meta-pixel" element={<MetaAdminPage />} />
           <Route path="/configuracion-meta" element={<MetaAdminPage />} />
+
+          {/* Official Legal & Policy routes connected to Wix CMS */}
+          <Route path="/aviso-de-privacidad" element={<LegalPage policyKey="privacy" />} />
+          <Route path="/politica-de-privacidad" element={<LegalPage policyKey="privacy" />} />
+          <Route path="/privacidad" element={<LegalPage policyKey="privacy" />} />
+          <Route path="/avisodeprivacidad" element={<LegalPage policyKey="privacy" />} />
+          <Route path="/terminos-y-condiciones" element={<LegalPage policyKey="terms" />} />
+          <Route path="/terminos" element={<LegalPage policyKey="terms" />} />
+          <Route path="/terminosycondiciones" element={<LegalPage policyKey="terms" />} />
+          <Route path="/terminosycondciones" element={<LegalPage policyKey="terms" />} />
+          <Route path="/términosycondciones" element={<LegalPage policyKey="terms" />} />
+          <Route path="/politica-de-reembolso" element={<LegalPage policyKey="refund" />} />
+          <Route path="/politica-de-reembolsos" element={<LegalPage policyKey="refund" />} />
+          <Route path="/politica-de-devoluciones" element={<LegalPage policyKey="refund" />} />
+          <Route path="/reembolsos" element={<LegalPage policyKey="refund" />} />
+          <Route path="/devoluciones" element={<LegalPage policyKey="refund" />} />
+          <Route path="/garantias" element={<LegalPage policyKey="refund" />} />
+          <Route path="/politica-de-envios" element={<LegalPage policyKey="shipping" />} />
+          <Route path="/politica-de-envio" element={<LegalPage policyKey="shipping" />} />
+          <Route path="/envios" element={<LegalPage policyKey="shipping" />} />
+          <Route path="/politicas" element={<LegalPage policyKey="privacy" />} />
+          <Route path="/legal/:slug" element={<LegalPage />} />
+          <Route path="/politicas/:slug" element={<LegalPage />} />
 
           {/* Bio / Linktree / Taplink routes connected to Wix CMS "LINKTREE" */}
           <Route path="/linktree" element={<LinktreePage />} />
