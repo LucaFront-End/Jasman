@@ -39,6 +39,7 @@ const STATIC_TALLER_PATHS = [
   { path: '/contacto', changefreq: 'monthly', priority: '0.7' },
   { path: '/bolsa-de-trabajo', changefreq: 'weekly', priority: '0.7' },
   { path: '/proveedores', changefreq: 'monthly', priority: '0.6' },
+  { path: '/linktree', changefreq: 'weekly', priority: '0.7' },
 ];
 
 const STATIC_PROMO_PATHS = [

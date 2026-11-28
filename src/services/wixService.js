@@ -2228,3 +2228,264 @@ export function mergeSucursalesWithWix(staticList = [], wixBranches = []) {
     };
   });
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * WIX CMS "LINKTREE" — Bio / Taplink Page Integration
+ * Schema fields: title (TEXT), excerpt (TEXT), enlace (URL), vectores (IMAGE)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+export const LINKTREE_COLLECTION_ID = 'LINKTREE';
+const LINKTREE_CACHE_KEY = 'jasman_cms_linktree_cache_v1';
+
+export const DEFAULT_LINKTREE_ITEMS = [
+  {
+    id: 'default-tienda',
+    title: 'Tienda Online',
+    excerpt: 'Encuentra las llantas ideales para tu auto.',
+    href: '/llantas',
+    isExternal: false,
+    vectorUrl: '',
+    iconKey: 'store',
+  },
+  {
+    id: 'default-promos',
+    title: 'Promociones',
+    excerpt: 'Estrena llantas al mejor precio.',
+    href: '/alineacion-y-balanceo',
+    isExternal: false,
+    vectorUrl: '',
+    iconKey: 'promo',
+  },
+  {
+    id: 'default-sucursales',
+    title: 'Busca tu Sucursal',
+    excerpt: 'Encuentra un Jasman cerca de ti.',
+    href: '/sucursales',
+    isExternal: false,
+    vectorUrl: '',
+    iconKey: 'location',
+  },
+  {
+    id: 'default-servicios',
+    title: 'Servicios Automotrices',
+    excerpt: 'Conoce nuestros servicios para tu auto.',
+    href: '/servicios',
+    isExternal: false,
+    vectorUrl: '',
+    iconKey: 'services',
+  },
+  {
+    id: 'default-whatsapp',
+    title: 'WhatsApp',
+    excerpt: 'Cotiza tus llantas con un especialista.',
+    href: 'https://wa.link/t5jc7v',
+    isExternal: true,
+    vectorUrl: '',
+    iconKey: 'whatsapp',
+  },
+];
+
+/**
+ * Formats a Wix CMS `vectores` field (wix:image://, wix:vector://, inline <svg>, object, or CDN URL)
+ * into a renderable URL or data URI.
+ */
+export function formatWixVectorOrImageUrl(raw) {
+  if (!raw) return '';
+  const candidate =
+    typeof raw === 'object'
+      ? String(raw.src || raw.url || raw.fileUrl || '')
+      : String(raw);
+  const s = candidate.trim();
+  if (!s) return '';
+
+  if (s.startsWith('<svg')) {
+    return `data:image/svg+xml;utf8,${encodeURIComponent(s)}`;
+  }
+
+  if (
+    s.startsWith('data:image/') ||
+    s.startsWith('http://') ||
+    s.startsWith('https://') ||
+    s.startsWith('/')
+  ) {
+    return s;
+  }
+
+  const imgMatch = s.match(/^wix:image:\/\/v1\/([^/#?]+)/i);
+  if (imgMatch && imgMatch[1]) {
+    return `https://static.wixstatic.com/media/${imgMatch[1]}`;
+  }
+
+  const vecMatch = s.match(/^wix:vector:\/\/v1\/([^/#?]+)/i);
+  if (vecMatch && vecMatch[1]) {
+    return `https://static.wixstatic.com/shapes/${vecMatch[1]}`;
+  }
+
+  return '';
+}
+
+function normalizeLinktreeText(raw) {
+  return String(raw || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+export function detectLinktreeIconKey(title = '', href = '') {
+  const text = `${normalizeLinktreeText(title)} ${normalizeLinktreeText(href)}`;
+  if (/whatsapp|wa\.me|wa\.link|cotiza/.test(text)) return 'whatsapp';
+  if (/instagram|ig\.me/.test(text)) return 'instagram';
+  if (/tiktok/.test(text)) return 'tiktok';
+  if (/facebook|fb\.com/.test(text)) return 'facebook';
+  if (/youtube|youtu\.be/.test(text)) return 'youtube';
+  if (/tienda|catalogo|compra|ecommerce/.test(text)) return 'store';
+  if (/promocion|promo|descuento|oferta|cupon/.test(text)) return 'promo';
+  if (/sucursal|ubicacion|mapa|taller cerca|cerca de ti/.test(text)) return 'location';
+  if (/servicio|mecanico|mantenimiento|alineacion|freno|aceite|bateria|suspension/.test(text)) {
+    return 'services';
+  }
+  if (/flotilla|empresa|corporativ/.test(text)) return 'fleet';
+  if (/bolsa|vacante|empleo|trabajo/.test(text)) return 'jobs';
+  if (/tel:|telefono|llamar|contacto/.test(text)) return 'phone';
+  return 'link';
+}
+
+export function resolveLinktreeHref(rawHref, title = '') {
+  const cleanHref = String(rawHref || '').trim();
+  if (cleanHref) {
+    if (
+      /^(https?:\/\/|mailto:|tel:)/i.test(cleanHref) ||
+      cleanHref.startsWith('/') ||
+      cleanHref.startsWith('#')
+    ) {
+      // Convert full jasman.com.mx URLs to SPA-friendly paths only when on main domain without external subdomains
+      try {
+        if (/^https?:\/\/(www\.)?jasman\.com\.mx(\/|$)/i.test(cleanHref)) {
+          const parsed = new URL(cleanHref);
+          return `${parsed.pathname || '/'}${parsed.search || ''}${parsed.hash || ''}`;
+        }
+      } catch {
+        // keep original URL
+      }
+      return cleanHref;
+    }
+    return `https://${cleanHref}`;
+  }
+
+  const normTitle = normalizeLinktreeText(title);
+  if (/whatsapp|cotiza/.test(normTitle)) return 'https://wa.link/t5jc7v';
+  if (/tienda|llanta|catalogo/.test(normTitle)) return '/llantas';
+  if (/promocion|promo|oferta/.test(normTitle)) return '/alineacion-y-balanceo';
+  if (/sucursal|ubicacion|mapa/.test(normTitle)) return '/sucursales';
+  if (/servicio|mantenimiento|taller/.test(normTitle)) return '/servicios';
+  if (/flotilla|empresa/.test(normTitle)) return '/flotillas';
+  if (/contacto|atencion/.test(normTitle)) return '/contacto';
+  if (/bolsa|vacante|trabajo/.test(normTitle)) return '/bolsa-de-trabajo';
+  if (/nosotros|historia/.test(normTitle)) return '/nosotros';
+  return '/';
+}
+
+export function normalizeLinktreeItem(item, index = 0) {
+  if (!item || typeof item !== 'object') return null;
+  if (item.activo === false || item.visible === false || item.oculto === true) {
+    return null;
+  }
+
+  const title = String(item.title || item.titulo || item.nombre || '').trim();
+  if (!title) return null;
+
+  const excerpt = String(
+    item.excerpt || item.extracto || item.descripcion || item.subtitulo || item.subtitle || ''
+  ).trim();
+  const rawHref = item.enlace || item.url || item.link || item.href || '';
+  const href = resolveLinktreeHref(rawHref, title);
+  const isExternal = /^(https?:\/\/|mailto:|tel:)/i.test(href);
+  const vectorUrl = formatWixVectorOrImageUrl(
+    item.vectores || item.vector || item.icono || item.icon || item.imagen || item.image || ''
+  );
+  const iconKey = detectLinktreeIconKey(title, href);
+  const rawOrder = item.orden ?? item.order ?? item.posicion ?? item.position;
+  const sortOrder =
+    rawOrder !== undefined && rawOrder !== null && rawOrder !== '' && Number.isFinite(Number(rawOrder))
+      ? Number(rawOrder)
+      : null;
+  const createdTime = item._createdDate ? new Date(item._createdDate).getTime() : index;
+
+  return {
+    id: item._id || item.id || `linktree-${index}`,
+    title,
+    excerpt,
+    href,
+    isExternal,
+    vectorUrl,
+    iconKey,
+    sortOrder,
+    createdTime: Number.isFinite(createdTime) ? createdTime : index,
+  };
+}
+
+export function readCachedLinktreeLinks() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(LINKTREE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed?.items) && parsed.items.length > 0) {
+      return parsed.items;
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return null;
+}
+
+/**
+ * Queries live Wix CMS "LINKTREE" collection and returns normalized bio-link options.
+ */
+export async function getWixLinktreeLinks() {
+  try {
+    const res = await withPublicWixClient(async (client) => {
+      try {
+        return await client.items
+          .query(LINKTREE_COLLECTION_ID)
+          .ascending('_createdDate')
+          .limit(100)
+          .find();
+      } catch {
+        return client.items.query(LINKTREE_COLLECTION_ID).limit(100).find();
+      }
+    });
+
+    const rawItems = Array.isArray(res?.items) ? res.items : [];
+    const normalized = rawItems
+      .map((item, idx) => normalizeLinktreeItem(item, idx))
+      .filter(Boolean)
+      .sort((a, b) => {
+        if (a.sortOrder !== null && b.sortOrder !== null && a.sortOrder !== b.sortOrder) {
+          return a.sortOrder - b.sortOrder;
+        }
+        if (a.sortOrder !== null && b.sortOrder === null) return -1;
+        if (a.sortOrder === null && b.sortOrder !== null) return 1;
+        return a.createdTime - b.createdTime;
+      });
+
+    if (normalized.length > 0) {
+      if (typeof window !== 'undefined') {
+        try {
+          window.localStorage.setItem(
+            LINKTREE_CACHE_KEY,
+            JSON.stringify({ updatedAt: Date.now(), items: normalized })
+          );
+        } catch {
+          // ignore storage errors
+        }
+      }
+      return normalized;
+    }
+  } catch (err) {
+    console.warn('[Wix CMS LINKTREE] Fallback activado:', err?.message || err);
+  }
+
+  return readCachedLinktreeLinks() || DEFAULT_LINKTREE_ITEMS;
+}

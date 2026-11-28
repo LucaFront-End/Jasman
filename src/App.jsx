@@ -25,6 +25,7 @@ import HomeTiendaPreviewPage from './pages/HomeTiendaPreviewPage';
 import CuentaPreviewPage from './pages/CuentaPreviewPage';
 import ThankYouPage from './pages/ThankYouPage';
 import MetaAdminPage from './pages/MetaAdminPage';
+import LinktreePage from './pages/LinktreePage';
 import SeoManager from './components/SeoManager';
 import TrackingScriptsManager from './components/TrackingScriptsManager';
 
@@ -75,19 +76,35 @@ export default function App() {
     pathname === '/meta-pixel' ||
     pathname === '/configuracion-meta';
 
+  const cleanPathname = pathname.replace(/\/+$/, '').toLowerCase() || '/';
+  const isLinktreeSubdomain =
+    hostname.startsWith('links.') ||
+    hostname.startsWith('linktree.') ||
+    hostname.startsWith('bio.') ||
+    hostname.startsWith('taplink.');
+
+  const isLinktreeRoute =
+    isLinktreeSubdomain ||
+    cleanPathname === '/linktree' ||
+    cleanPathname === '/links' ||
+    cleanPathname === '/taplink' ||
+    cleanPathname === '/bio';
+
   return (
     <>
       <ScrollToTop />
       <SeoManager />
       <TrackingScriptsManager />
-      {!isDedicatedStoreLanding && !isMetaAdminRoute && <Navbar />}
-      <ScrollProgress />
+      {!isDedicatedStoreLanding && !isMetaAdminRoute && !isLinktreeRoute && <Navbar />}
+      {!isLinktreeRoute && <ScrollProgress />}
       <main>
         <Routes>
           <Route
             path="/"
             element={
-              isLlantasSubdomain ? (
+              isLinktreeSubdomain ? (
+                <LinktreePage />
+              ) : isLlantasSubdomain ? (
                 <LandingTiendaPreviewPage />
               ) : isPromoSubdomain ? (
                 <LandingAlineacionPage />
@@ -179,6 +196,12 @@ export default function App() {
           <Route path="/meta-pixel" element={<MetaAdminPage />} />
           <Route path="/configuracion-meta" element={<MetaAdminPage />} />
 
+          {/* Bio / Linktree / Taplink routes connected to Wix CMS "LINKTREE" */}
+          <Route path="/linktree" element={<LinktreePage />} />
+          <Route path="/links" element={<LinktreePage />} />
+          <Route path="/taplink" element={<LinktreePage />} />
+          <Route path="/bio" element={<LinktreePage />} />
+
           {/* Dark Home Landing theme previews (separate URLs, "/" remains intact) */}
           <Route path="/landing-negro" element={<HomePage darkTheme="obsidian" />} />
           <Route path="/landing-negro-suave" element={<HomePage darkTheme="charcoal" />} />
@@ -187,12 +210,13 @@ export default function App() {
           <Route path="/:slug" element={<LandingAlineacionPage key={pathname} />} />
         </Routes>
       </main>
-      <Footer />
+      {!isLinktreeRoute && <Footer />}
       {/* Main corporate site floating controls: Coupon on bottom-left, Live Chat stacked above WhatsApp on bottom-right */}
       {!isPromoSubdomain &&
         !isDedicatedStoreLanding &&
         !isPromoSlugUnderLlantas &&
         !isMetaAdminRoute &&
+        !isLinktreeRoute &&
         !pathname.includes('alineacion') &&
         !pathname.includes('alineación') && (
           <>

@@ -44,6 +44,26 @@ export const TALLER_ROUTE_SEO = {
     description:
       '¿Quieres ser proveedor de JASMAN? Conoce cómo establecer contacto comercial con nuestro Taller Mecánico Automotriz #1 de México y crear alianzas.',
   },
+  '/linktree': {
+    title: 'Enlaces Oficiales | JASMAN Automotriz',
+    description:
+      'Accede rápido a Tienda Online de Llantas, Promociones, Sucursales, Servicios Automotrices y atención por WhatsApp de JASMAN.',
+  },
+  '/links': {
+    title: 'Enlaces Oficiales | JASMAN Automotriz',
+    description:
+      'Accede rápido a Tienda Online de Llantas, Promociones, Sucursales, Servicios Automotrices y atención por WhatsApp de JASMAN.',
+  },
+  '/taplink': {
+    title: 'Enlaces Oficiales | JASMAN Automotriz',
+    description:
+      'Accede rápido a Tienda Online de Llantas, Promociones, Sucursales, Servicios Automotrices y atención por WhatsApp de JASMAN.',
+  },
+  '/bio': {
+    title: 'Enlaces Oficiales | JASMAN Automotriz',
+    description:
+      'Accede rápido a Tienda Online de Llantas, Promociones, Sucursales, Servicios Automotrices y atención por WhatsApp de JASMAN.',
+  },
 };
 
 export const TIENDA_HOME_SEO = {
