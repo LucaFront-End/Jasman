@@ -13,62 +13,21 @@ import {
   Mail,
 } from 'lucide-react';
 import { useLegalCMS } from '../hooks/useLegalCMS';
-import { LEGAL_POLICIES_CONFIG, DEFAULT_LEGAL_SUBTITLE } from '../data/legalPoliciesData';
+import { DEFAULT_LEGAL_SUBTITLE } from '../data/legalPoliciesData';
 import './LegalPage.css';
 
-const PATH_OR_SLUG_MAP = {
-  // Privacy
-  '/aviso-de-privacidad': 'privacy',
-  '/politica-de-privacidad': 'privacy',
-  '/privacidad': 'privacy',
-  '/avisodeprivacidad': 'privacy',
-  '/politicas': 'privacy',
-  privacidad: 'privacy',
-  'aviso-de-privacidad': 'privacy',
-  'politica-de-privacidad': 'privacy',
-  avisodeprivacidad: 'privacy',
-  privacy: 'privacy',
+function upsertMeta(selector, createEl, attr, value) {
+  if (typeof document === 'undefined' || !value) return;
+  let el = document.head.querySelector(selector);
+  if (!el) {
+    el = createEl();
+    document.head.appendChild(el);
+  }
+  el.setAttribute(attr, value);
+}
 
-  // Terms
-  '/terminos-y-condiciones': 'terms',
-  '/terminos': 'terms',
-  '/terminosycondiciones': 'terms',
-  '/terminosycondciones': 'terms',
-  '/términosycondciones': 'terms',
-  terminos: 'terms',
-  'terminos-y-condiciones': 'terms',
-  terminosycondiciones: 'terms',
-  terminosycondciones: 'terms',
-  terms: 'terms',
-
-  // Refund & Warranty
-  '/politica-de-reembolso': 'refund',
-  '/politica-de-reembolsos': 'refund',
-  '/politica-de-devoluciones': 'refund',
-  '/reembolsos': 'refund',
-  '/devoluciones': 'refund',
-  '/garantias': 'refund',
-  reembolso: 'refund',
-  reembolsos: 'refund',
-  devoluciones: 'refund',
-  garantias: 'refund',
-  'politica-de-reembolso': 'refund',
-  'politica-de-reembolsos': 'refund',
-  'politica-de-devoluciones': 'refund',
-  refund: 'refund',
-
-  // Shipping
-  '/politica-de-envios': 'shipping',
-  '/politica-de-envio': 'shipping',
-  '/envios': 'shipping',
-  envios: 'shipping',
-  'politica-de-envios': 'shipping',
-  'politica-de-envio': 'shipping',
-  shipping: 'shipping',
-};
-
-function PolicyTabIcon({ policyKey }) {
-  switch (policyKey) {
+function PolicyTabIcon({ coreKey }) {
+  switch (coreKey) {
     case 'privacy':
       return <ShieldCheck size={16} strokeWidth={2.1} />;
     case 'terms':
@@ -86,41 +45,86 @@ export default function LegalPage({ policyKey: propPolicyKey }) {
   const location = useLocation();
   const { slug } = useParams();
 
-  const activeKey = useMemo(() => {
-    if (propPolicyKey && LEGAL_POLICIES_CONFIG[propPolicyKey]) {
-      return propPolicyKey;
-    }
-    const decodedPath = decodeURIComponent(location.pathname || '')
+  const requestedIdentifier = useMemo(() => {
+    if (slug) return slug;
+    if (propPolicyKey) return propPolicyKey;
+    const cleanPath = decodeURIComponent(location.pathname || '')
       .toLowerCase()
       .replace(/\/+$/, '');
-    if (PATH_OR_SLUG_MAP[decodedPath]) {
-      return PATH_OR_SLUG_MAP[decodedPath];
+    if (!cleanPath || cleanPath === '/politicas' || cleanPath === '/legal') {
+      return 'privacy';
     }
-    if (slug) {
-      const cleanSlug = decodeURIComponent(slug).toLowerCase().trim();
-      if (PATH_OR_SLUG_MAP[cleanSlug]) {
-        return PATH_OR_SLUG_MAP[cleanSlug];
-      }
-    }
-    return 'privacy';
-  }, [propPolicyKey, location.pathname, slug]);
+    return cleanPath;
+  }, [propPolicyKey, slug, location.pathname]);
 
   const {
-    config,
+    activePolicy,
     content,
     title,
     subtitle,
     tag,
+    heroImage,
+    heroImageAlt,
     lastUpdated,
     loading,
     error,
     allPolicies,
     isCMSLive,
-  } = useLegalCMS(activeKey);
+  } = useLegalCMS(requestedIdentifier);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeKey]);
+  }, [activePolicy?.slug]);
+
+  // Dynamically sync <title>, meta description & canonical with live Wix CMS `politicas` edits
+  useEffect(() => {
+    if (!activePolicy || typeof document === 'undefined') return;
+    const fullTitle = activePolicy.metaTitle || `${activePolicy.title} | JASMAN Automotriz`;
+    const fullDesc = activePolicy.metaDesc || DEFAULT_LEGAL_SUBTITLE;
+    const canonical = `https://www.jasman.com.mx${activePolicy.path}`;
+
+    document.title = fullTitle;
+    upsertMeta(
+      'meta[name="description"]',
+      () => {
+        const m = document.createElement('meta');
+        m.setAttribute('name', 'description');
+        return m;
+      },
+      'content',
+      fullDesc
+    );
+    upsertMeta(
+      'meta[property="og:title"]',
+      () => {
+        const m = document.createElement('meta');
+        m.setAttribute('property', 'og:title');
+        return m;
+      },
+      'content',
+      fullTitle
+    );
+    upsertMeta(
+      'meta[property="og:description"]',
+      () => {
+        const m = document.createElement('meta');
+        m.setAttribute('property', 'og:description');
+        return m;
+      },
+      'content',
+      fullDesc
+    );
+    upsertMeta(
+      'link[rel="canonical"]',
+      () => {
+        const l = document.createElement('link');
+        l.setAttribute('rel', 'canonical');
+        return l;
+      },
+      'href',
+      canonical
+    );
+  }, [activePolicy]);
 
   const formattedDate = useMemo(() => {
     if (!lastUpdated) return 'Noviembre de 2026';
@@ -145,9 +149,9 @@ export default function LegalPage({ policyKey: propPolicyKey }) {
     () => ({
       '@context': 'https://schema.org',
       '@type': 'WebPage',
-      name: config.metaTitle,
-      description: config.metaDesc,
-      url: `https://www.jasman.com.mx${config.path}`,
+      name: activePolicy?.metaTitle || title,
+      description: activePolicy?.metaDesc || subtitle,
+      url: `https://www.jasman.com.mx${activePolicy?.path || '/aviso-de-privacidad'}`,
       publisher: {
         '@type': 'Organization',
         name: 'Jasman Automotriz',
@@ -171,17 +175,17 @@ export default function LegalPage({ policyKey: propPolicyKey }) {
           {
             '@type': 'ListItem',
             position: 3,
-            name: config.label,
-            item: `https://www.jasman.com.mx${config.path}`,
+            name: title,
+            item: `https://www.jasman.com.mx${activePolicy?.path || '/aviso-de-privacidad'}`,
           },
         ],
       },
     }),
-    [config]
+    [activePolicy, title, subtitle]
   );
 
   const waSupportUrl = `https://api.whatsapp.com/send/?phone=5215510024945&text=${encodeURIComponent(
-    `SW - Hola Jasman, tengo una consulta sobre "${config.label}".`
+    `SW - Hola Jasman, tengo una consulta sobre "${title}".`
   )}`;
 
   return (
@@ -193,6 +197,13 @@ export default function LegalPage({ policyKey: propPolicyKey }) {
 
       {/* Corporate Navy Hero Header */}
       <header className="jasman-legal-hero">
+        {heroImage && (
+          <img
+            src={heroImage}
+            alt={heroImageAlt}
+            className="jasman-legal-hero-bg-img"
+          />
+        )}
         <div className="jasman-legal-hero-glow" aria-hidden="true" />
         <div className="jasman-legal-hero-ring" aria-hidden="true" />
 
@@ -204,15 +215,15 @@ export default function LegalPage({ policyKey: propPolicyKey }) {
             <ChevronRight size={13} className="jasman-legal-bc-sep" />
             <span className="jasman-legal-bc-muted">Legal y Políticas</span>
             <ChevronRight size={13} className="jasman-legal-bc-sep" />
-            <span className="jasman-legal-bc-current">{config.label}</span>
+            <span className="jasman-legal-bc-current">{title}</span>
           </nav>
 
           <span className="jasman-legal-tag">
             <span className="jasman-legal-tag-dot" />
-            {tag || config.tag}
+            {tag}
           </span>
 
-          <h1 className="jasman-legal-title">{title || config.label}</h1>
+          <h1 className="jasman-legal-title">{title}</h1>
 
           <p className="jasman-legal-subtitle">
             {subtitle || DEFAULT_LEGAL_SUBTITLE}
@@ -242,22 +253,22 @@ export default function LegalPage({ policyKey: propPolicyKey }) {
         </div>
       </header>
 
-      {/* Sticky Policy Switcher Bar */}
+      {/* Sticky Policy Switcher Bar (100% dynamic from Wix CMS `politicas`) */}
       <nav
         className="jasman-legal-tabs-wrapper"
         aria-label="Políticas oficiales de Jasman Automotriz"
       >
         <div className="jasman-legal-tabs-inner">
           {allPolicies.map((pol) => {
-            const isActive = pol.key === activeKey;
+            const isActive = pol.slug === activePolicy?.slug;
             return (
               <Link
-                key={pol.key}
+                key={pol.id || pol.slug}
                 to={pol.path}
                 className={`jasman-legal-tab-btn ${isActive ? 'active' : ''}`}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <PolicyTabIcon policyKey={pol.key} />
+                <PolicyTabIcon coreKey={pol.coreKey} />
                 <span>{pol.label}</span>
               </Link>
             );

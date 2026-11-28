@@ -251,9 +251,35 @@ function makeEntryBuilder(origin, todayIso) {
 const SITEMAP_BUILDERS = {
   paginas: async ({ origin, todayIso }) => {
     const { entries, push } = makeEntryBuilder(origin, todayIso);
+    const seenPaths = new Set();
     for (const item of STATIC_TALLER_PATHS) {
+      seenPaths.add(item.path);
       push(item.path, item);
     }
+
+    // Dynamically include any extra active rows added in Wix CMS `politicas`
+    const cmsPolicies = await fetchWixCollectionAll('politicas', 50, 2);
+    const coreSlugs = new Set([
+      'aviso-de-privacidad',
+      'terminos-y-condiciones',
+      'politica-de-reembolso',
+      'politica-de-envios',
+    ]);
+    for (const row of cmsPolicies) {
+      const data = row?.data && typeof row.data === 'object' ? row.data : row;
+      if (!data || data.activo === false || data.visible === false) continue;
+      const slug = slugifySegment(data.slug || data.title || '');
+      if (!slug) continue;
+      const locPath = coreSlugs.has(slug) ? `/${slug}` : `/politicas/${slug}`;
+      if (seenPaths.has(locPath)) continue;
+      seenPaths.add(locPath);
+      push(locPath, {
+        changefreq: 'monthly',
+        priority: '0.5',
+        lastmod: toIsoDate(data._updatedDate || data._createdDate, todayIso),
+      });
+    }
+
     return renderUrlsetXml(entries);
   },
 

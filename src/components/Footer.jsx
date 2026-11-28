@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { footerContent } from '../data/content';
+import { useLegalPoliciesList } from '../hooks/useLegalCMS';
 import { C, F } from '../hooks/useAnimations';
 import { Phone, Mail, MessageCircle } from 'lucide-react';
 
@@ -13,6 +14,8 @@ const isExternal = (href) => href.startsWith('http');
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const dynamicPolicies = useLegalPoliciesList();
+  const externalLegalLinks = footerContent.links.legal.filter((l) => isExternal(l.href));
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
@@ -67,17 +70,18 @@ export default function Footer() {
             <div className="site-footer-col">
               <h4>Legal</h4>
               <ul>
-                {footerContent.links.legal.map(l => (
+                {dynamicPolicies.map((pol) => (
+                  <li key={pol.id || pol.slug}>
+                    <Link to={pol.path} className="link-hover">
+                      {pol.label}
+                    </Link>
+                  </li>
+                ))}
+                {externalLegalLinks.map((l) => (
                   <li key={l.label}>
-                    {isExternal(l.href) ? (
-                      <a href={l.href} target="_blank" rel="noopener noreferrer" className="link-hover">
-                        {l.label}
-                      </a>
-                    ) : (
-                      <Link to={l.href} className="link-hover">
-                        {l.label}
-                      </Link>
-                    )}
+                    <a href={l.href} target="_blank" rel="noopener noreferrer" className="link-hover">
+                      {l.label}
+                    </a>
                   </li>
                 ))}
               </ul>

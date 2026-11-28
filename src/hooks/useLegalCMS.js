@@ -1,55 +1,65 @@
 import { useState, useEffect } from 'react';
-import { publicWixClient } from '../services/wixService';
+import { createClient, OAuthStrategy } from '@wix/sdk';
+import { items } from '@wix/data';
+import { formatWixImageUrl, WIX_CLIENT_ID } from '../services/wixService';
 import {
   LEGAL_POLICIES_CONFIG,
   DEFAULT_LEGAL_CONTENT,
   DEFAULT_LEGAL_SUBTITLE,
 } from '../data/legalPoliciesData';
 
-// In-memory cache across SPA navigation
-const legalCache = new Map();
+export const POLITICAS_COLLECTION_ID = 'politicas';
 
-export const POLICY_COLLECTION_CANDIDATES = {
-  privacy: [
-    'AvisoDePrivacidad',
-    'AvisodePrivacidad',
-    'Avisodeprivacidad',
-    'PoliticaDePrivacidad',
-    'Politicas',
-  ],
-  terms: [
-    'TerminosYCondiciones',
-    'Terminosycondiciones',
-    'TerminosyCondiciones',
-    'Politicas',
-  ],
-  refund: [
-    'PoliticaDeReembolsos',
-    'PoliticadeReembolsos',
-    'PoliticaDeReembolso',
-    'PoliticaDeDevoluciones',
-    'PoliticaDeGarantias',
-    'Politicas',
-  ],
-  shipping: [
-    'PoliticaDeEnvios',
-    'PoliticadeEnvios',
-    'PoliticaDeEnvio',
-    'Politicas',
-  ],
+const CORE_SLUG_TO_KEY = {
+  'aviso-de-privacidad': 'privacy',
+  'politica-de-privacidad': 'privacy',
+  privacidad: 'privacy',
+  avisodeprivacidad: 'privacy',
+  privacy: 'privacy',
+
+  'terminos-y-condiciones': 'terms',
+  terminos: 'terms',
+  terminosycondiciones: 'terms',
+  terminosycondciones: 'terms',
+  terms: 'terms',
+
+  'politica-de-reembolso': 'refund',
+  'politica-de-reembolsos': 'refund',
+  'politica-de-devoluciones': 'refund',
+  reembolso: 'refund',
+  reembolsos: 'refund',
+  devoluciones: 'refund',
+  garantias: 'refund',
+  refund: 'refund',
+
+  'politica-de-envios': 'shipping',
+  'politica-de-envio': 'shipping',
+  envios: 'shipping',
+  shipping: 'shipping',
 };
+
+const CORE_ROOT_SLUGS = new Set([
+  'aviso-de-privacidad',
+  'terminos-y-condiciones',
+  'politica-de-reembolso',
+  'politica-de-envios',
+]);
 
 const CONTENT_FIELD_KEYS = [
   'contenido',
   'texto',
   'politica',
   'cuerpo',
-  'descripcin',
-  'descripcion',
   'richtext',
-  'description',
   'content',
 ];
+
+function createFreshPublicDataClient() {
+  return createClient({
+    modules: { items },
+    auth: OAuthStrategy({ clientId: WIX_CLIENT_ID }),
+  });
+}
 
 function escapeHtml(text = '') {
   return String(text)
@@ -57,6 +67,24 @@ function escapeHtml(text = '') {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function slugifyPolicy(raw = '') {
+  let decoded = String(raw || '');
+  try {
+    decoded = decodeURIComponent(decoded);
+  } catch {
+    // ignore
+  }
+  return decoded
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/^https?:\/\/[^/]+/i, '')
+    .replace(/^\/?(?:politicas|legal)\//i, '')
+    .replace(/^\/+|\/+$/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 function renderRicosTextNode(node) {
@@ -115,11 +143,9 @@ function renderRicosNodes(nodes = []) {
 function formatPlainOrHtmlString(raw = '') {
   const trimmed = String(raw || '').trim();
   if (!trimmed) return '';
-  // Already contains HTML tags (from Wix Rich Text HTML field or seeded HTML)
-  if (/<(h[1-6]|p|ul|ol|li|div|strong|br|section|article)\b/i.test(trimmed)) {
+  if (/<(h[1-6]|p|ul|ol|li|div|strong|br|section|article|blockquote)\b/i.test(trimmed)) {
     return trimmed;
   }
-  // Plain text fallback: convert paragraphs cleanly into <p> blocks
   return trimmed
     .split(/\n{2,}/)
     .map((block) => `<p>${escapeHtml(block.trim()).replace(/\n/g, '<br />')}</p>`)
@@ -139,8 +165,17 @@ const IGNORED_META_KEYS = new Set([
   'slug',
   'subtitulo',
   'subtitle',
+  'description',
+  'descripcion',
+  'descripcin',
+  'image',
+  'imageAltText',
   'tag',
   'etiqueta',
+  'orden',
+  'order',
+  'activo',
+  'visible',
 ]);
 
 export function extractPolicyHtmlContent(rawItem) {
@@ -159,7 +194,6 @@ export function extractPolicyHtmlContent(rawItem) {
     }
   }
 
-  // Accept any custom long-text/rich-text column created in Wix CMS
   for (const [key, val] of Object.entries(data)) {
     if (IGNORED_META_KEYS.has(key) || !val) continue;
     if (typeof val === 'string' && val.trim().length > 20) {
@@ -179,180 +213,277 @@ function resolveDateIso(rawDate) {
   return rawDate;
 }
 
-function matchesUnifiedPoliticasRow(rawData, policyKey) {
-  const norm = (s) =>
-    String(s || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .trim();
-  const slugVal = norm(rawData?.slug || rawData?.identificador || rawData?.tipo || '');
-  const titleVal = norm(rawData?.title || rawData?.titulo || '');
-  const combined = `${slugVal} ${titleVal}`;
-
-  if (policyKey === 'privacy') return /privacy|privacidad|arco|datos/.test(combined);
-  if (policyKey === 'terms') return /terms|termino|condicion/.test(combined);
-  if (policyKey === 'refund') return /refund|reembolso|devolucion|garantia|cambio/.test(combined);
-  if (policyKey === 'shipping') return /shipping|envio|entrega/.test(combined);
-  return false;
+function inferCoreKey(slug, title) {
+  if (CORE_SLUG_TO_KEY[slug]) return CORE_SLUG_TO_KEY[slug];
+  const norm = slugifyPolicy(title);
+  if (/privacidad|arco|datos/.test(norm)) return 'privacy';
+  if (/termino|condicion/.test(norm)) return 'terms';
+  if (/reembolso|devolucion|garantia|cambio/.test(norm)) return 'refund';
+  if (/envio|entrega/.test(norm)) return 'shipping';
+  return '';
 }
 
-function pickBestLegalItem(items = [], filterPolicyKey = null) {
-  const candidates = (Array.isArray(items) ? items : [])
-    .map((item) => {
-      const rawData = item?.data && typeof item.data === 'object' ? item.data : item;
-      const htmlContent = extractPolicyHtmlContent(item);
-      return { rawItem: item, rawData, htmlContent };
-    })
-    .filter((entry) => {
-      if (!entry.htmlContent || entry.htmlContent.trim().length <= 20) return false;
-      if (filterPolicyKey && !matchesUnifiedPoliticasRow(entry.rawData, filterPolicyKey)) {
-        return false;
-      }
-      return true;
-    });
-
-  if (candidates.length === 0) return null;
-
-  candidates.sort((a, b) => {
-    const tA = new Date(
-      resolveDateIso(a.rawData?._updatedDate) || resolveDateIso(a.rawData?._createdDate) || 0
-    ).getTime();
-    const tB = new Date(
-      resolveDateIso(b.rawData?._updatedDate) || resolveDateIso(b.rawData?._createdDate) || 0
-    ).getTime();
-    return tB - tA;
+function buildDefaultPoliciesCatalog() {
+  const orderedKeys = ['privacy', 'terms', 'refund', 'shipping'];
+  return orderedKeys.map((key, idx) => {
+    const cfg = LEGAL_POLICIES_CONFIG[key];
+    const cleanSlug = cfg.path.replace(/^\/+/, '');
+    return {
+      id: `default-${key}`,
+      key,
+      coreKey: key,
+      slug: cleanSlug,
+      path: cfg.path,
+      label: cfg.label,
+      title: cfg.label,
+      tag: cfg.tag,
+      subtitle: DEFAULT_LEGAL_SUBTITLE,
+      metaTitle: cfg.metaTitle,
+      metaDesc: cfg.metaDesc,
+      heroImage: '',
+      heroImageAlt: '',
+      content: DEFAULT_LEGAL_CONTENT[key] || '',
+      orden: idx + 1,
+      lastUpdated: cfg.lastUpdated,
+      isLive: false,
+    };
   });
-
-  return candidates[0];
 }
 
-function normalizeLiveItem(picked, config) {
-  const { rawItem, rawData, htmlContent } = picked;
+export function normalizePoliticasRow(rawItem, index = 0) {
+  if (!rawItem || typeof rawItem !== 'object') return null;
+  const data = rawItem.data && typeof rawItem.data === 'object' ? rawItem.data : rawItem;
+
+  // Respect Wix CMS visibility toggle (`activo` / `visible`)
+  if (data.activo === false || data.visible === false || data.oculto === true) {
+    return null;
+  }
+
+  const title = String(data.title || data.titulo || '').trim();
+  if (!title) return null;
+
+  const slug = slugifyPolicy(data.slug || title);
+  if (!slug) return null;
+
+  const coreKey = inferCoreKey(slug, title);
+  const fallbackCfg = coreKey ? LEGAL_POLICIES_CONFIG[coreKey] : null;
+  const uniqueKey = coreKey || slug;
+  const path = CORE_ROOT_SLUGS.has(slug)
+    ? `/${slug}`
+    : fallbackCfg?.path && slug === fallbackCfg.path.replace(/^\/+/, '')
+      ? fallbackCfg.path
+      : `/politicas/${slug}`;
+
+  const htmlContent =
+    extractPolicyHtmlContent(data) ||
+    (coreKey ? DEFAULT_LEGAL_CONTENT[coreKey] || '' : '');
+
+  const rawOrden = data.orden ?? data.order ?? data.posicion;
+  const orden =
+    rawOrden !== undefined && rawOrden !== null && rawOrden !== '' && Number.isFinite(Number(rawOrden))
+      ? Number(rawOrden)
+      : 100 + index;
+
+  const createdIso = resolveDateIso(data._createdDate || rawItem.createdDate);
+  const updatedIso = resolveDateIso(data._updatedDate || rawItem.updatedDate);
+
   return {
-    id: rawData._id || rawItem.id || `cms-${config.key}`,
-    title: rawData.title || rawData.titulo || config.label,
-    subtitle: rawData.subtitulo || rawData.subtitle || DEFAULT_LEGAL_SUBTITLE,
-    tag: rawData.tag || rawData.etiqueta || config.tag,
+    id: data._id || rawItem.id || `cms-${slug}`,
+    key: uniqueKey,
+    coreKey: coreKey || 'custom',
+    slug,
+    path,
+    label: title,
+    title,
+    tag: String(data.tag || data.etiqueta || fallbackCfg?.tag || 'DOCUMENTO LEGAL JASMAN').trim(),
+    subtitle: String(
+      data.subtitulo || data.subtitle || DEFAULT_LEGAL_SUBTITLE
+    ).trim(),
+    metaTitle: `${title} | JASMAN Automotriz`,
+    metaDesc: String(
+      data.description || data.descripcion || fallbackCfg?.metaDesc || DEFAULT_LEGAL_SUBTITLE
+    ).trim(),
+    heroImage: data.image ? formatWixImageUrl(data.image, '') : '',
+    heroImageAlt: String(data.imageAltText || title).trim(),
     content: htmlContent,
-    lastUpdated:
-      resolveDateIso(rawData._updatedDate) ||
-      resolveDateIso(rawData._createdDate) ||
-      config.lastUpdated,
+    orden,
+    createdTime: createdIso ? new Date(createdIso).getTime() : index,
+    lastUpdated: updatedIso || createdIso || fallbackCfg?.lastUpdated || '2026-11-27',
     isLive: true,
   };
 }
 
-/**
- * Dynamically fetches Jasman's legal policies from Wix CMS with complete local fallback.
- * @param {'privacy' | 'terms' | 'refund' | 'shipping'} policyKey
- */
-export function useLegalCMS(policyKey = 'privacy') {
-  const config = LEGAL_POLICIES_CONFIG[policyKey] || LEGAL_POLICIES_CONFIG.privacy;
+// Shared live memory snapshot + subscribers so LegalPage & Footer update together instantly
+let liveCatalogSnapshot = null;
+let inflightCatalogPromise = null;
+const catalogSubscribers = new Set();
 
-  const [state, setState] = useState(() => {
-    const cached = legalCache.get(config.key) || null;
-    return { key: cached ? config.key : null, entry: cached };
-  });
+function notifySubscribers(list) {
+  liveCatalogSnapshot = list;
+  for (const fn of catalogSubscribers) {
+    try {
+      fn(list);
+    } catch {
+      // ignore subscriber errors
+    }
+  }
+}
 
-  useEffect(() => {
-    let isCancelled = false;
+export async function refreshLivePoliticasCatalog() {
+  if (inflightCatalogPromise) return inflightCatalogPromise;
 
-    const fallbackEntry = {
-      id: `default-${config.key}`,
-      title: config.label,
-      subtitle: DEFAULT_LEGAL_SUBTITLE,
-      tag: config.tag,
-      content: DEFAULT_LEGAL_CONTENT[config.key] || '',
-      lastUpdated: config.lastUpdated,
-      isLive: false,
-    };
+  inflightCatalogPromise = (async () => {
+    let rawList = [];
 
-    async function fetchPolicyFromCMS() {
-      let liveEntry = null;
-
-      try {
-        if (publicWixClient?.items?.query) {
-          const candidates = POLICY_COLLECTION_CANDIDATES[config.key] || [config.collection];
-
-          for (const coll of candidates) {
-            if (isCancelled) return;
-            try {
-              const res = await publicWixClient.items.query(coll).limit(20).find();
-              const isUnified = coll.toLowerCase() === 'politicas';
-              const picked = pickBestLegalItem(
-                res?.items || [],
-                isUnified ? config.key : null
-              );
-              if (picked) {
-                liveEntry = normalizeLiveItem(picked, config);
-                break;
-              }
-            } catch {
-              // Collection not created yet or restricted; try next candidate
-            }
-          }
-        }
-
-        if (!liveEntry && !isCancelled) {
-          try {
-            const apiRes = await fetch(
-              `/api/legal-policies?policy=${encodeURIComponent(config.key)}`
-            );
-            const contentType = apiRes.headers.get('content-type') || '';
-            if (apiRes.ok && contentType.includes('application/json')) {
-              const json = await apiRes.json();
-              const apiItem = json?.policy?.item;
-              if (apiItem) {
-                const picked = pickBestLegalItem([apiItem]);
-                if (picked) {
-                  liveEntry = normalizeLiveItem(picked, config);
-                }
-              }
-            }
-          } catch {
-            // Serverless API unavailable in local static preview
-          }
-        }
-      } catch (err) {
-        console.warn('[Jasman LegalCMS] Aviso:', err?.message || err);
+    // 1. Direct query to Wix CMS `politicas` with a fresh stateless client (always reflects latest published edits)
+    try {
+      const client = createFreshPublicDataClient();
+      const res = await client.items.query(POLITICAS_COLLECTION_ID).limit(50).find();
+      if (Array.isArray(res?.items) && res.items.length > 0) {
+        rawList = res.items;
       }
-
-      if (isCancelled) return;
-
-      const resolved = liveEntry || fallbackEntry;
-      legalCache.set(config.key, resolved);
-      setState({ key: config.key, entry: resolved });
+    } catch {
+      // Fall through to serverless API
     }
 
-    fetchPolicyFromCMS();
+    // 2. Fallback to serverless `/api/legal-policies` (uses WIX_API_KEY + consistentRead)
+    if (rawList.length === 0) {
+      try {
+        const apiRes = await fetch(`/api/legal-policies?t=${Date.now()}`, {
+          cache: 'no-store',
+        });
+        const ct = apiRes.headers.get('content-type') || '';
+        if (apiRes.ok && ct.includes('application/json')) {
+          const json = await apiRes.json();
+          if (Array.isArray(json?.items) && json.items.length > 0) {
+            rawList = json.items;
+          }
+        }
+      } catch {
+        // Offline or local static preview without API
+      }
+    }
 
-    const handleFocus = () => {
-      fetchPolicyFromCMS();
+    if (rawList.length > 0) {
+      const normalized = rawList
+        .map((item, idx) => normalizePoliticasRow(item, idx))
+        .filter(Boolean)
+        .sort((a, b) => {
+          if (a.orden !== b.orden) return a.orden - b.orden;
+          return a.createdTime - b.createdTime;
+        });
+
+      if (normalized.length > 0) {
+        notifySubscribers(normalized);
+        return normalized;
+      }
+    }
+
+    const fallback = liveCatalogSnapshot || buildDefaultPoliciesCatalog();
+    notifySubscribers(fallback);
+    return fallback;
+  })().finally(() => {
+    inflightCatalogPromise = null;
+  });
+
+  return inflightCatalogPromise;
+}
+
+function findMatchingPolicy(catalog, identifier) {
+  if (!Array.isArray(catalog) || catalog.length === 0) return null;
+  const cleanId = slugifyPolicy(identifier);
+  const mappedCore = CORE_SLUG_TO_KEY[cleanId] || identifier;
+
+  return (
+    catalog.find(
+      (p) =>
+        p.slug === cleanId ||
+        p.key === identifier ||
+        p.key === mappedCore ||
+        p.coreKey === mappedCore ||
+        slugifyPolicy(p.path) === cleanId
+    ) || catalog[0]
+  );
+}
+
+/**
+ * Lightweight hook for Footer / menus to render live policy links from Wix CMS `politicas`.
+ */
+export function useLegalPoliciesList() {
+  const [policies, setPolicies] = useState(
+    () => liveCatalogSnapshot || buildDefaultPoliciesCatalog()
+  );
+
+  useEffect(() => {
+    const handleUpdate = (nextList) => setPolicies(nextList);
+    catalogSubscribers.add(handleUpdate);
+
+    refreshLivePoliticasCatalog();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshLivePoliticasCatalog();
+      }
     };
-    window.addEventListener('focus', handleFocus);
+    window.addEventListener('focus', refreshLivePoliticasCatalog);
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      isCancelled = true;
-      window.removeEventListener('focus', handleFocus);
+      catalogSubscribers.delete(handleUpdate);
+      window.removeEventListener('focus', refreshLivePoliticasCatalog);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [config]);
+  }, []);
 
-  const cachedForKey = legalCache.get(config.key) || null;
-  const activeEntry = state.key === config.key ? state.entry : cachedForKey;
-  const loading = !activeEntry;
+  return policies;
+}
+
+/**
+ * Full hook for LegalPage — resolves any core policy OR custom policy row added by the client in Wix CMS `politicas`.
+ */
+export function useLegalCMS(identifier = 'privacy') {
+  const [catalog, setCatalog] = useState(() => liveCatalogSnapshot);
+
+  useEffect(() => {
+    const handleUpdate = (nextList) => setCatalog(nextList);
+    catalogSubscribers.add(handleUpdate);
+
+    refreshLivePoliticasCatalog();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshLivePoliticasCatalog();
+      }
+    };
+    window.addEventListener('focus', refreshLivePoliticasCatalog);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      catalogSubscribers.delete(handleUpdate);
+      window.removeEventListener('focus', refreshLivePoliticasCatalog);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [identifier]);
+
+  const effectiveCatalog = catalog || buildDefaultPoliciesCatalog();
+  const activePolicy =
+    findMatchingPolicy(effectiveCatalog, identifier) || effectiveCatalog[0];
+  const loading = !catalog;
 
   return {
-    config,
-    data: activeEntry,
-    content: activeEntry?.content || DEFAULT_LEGAL_CONTENT[config.key] || '',
-    title: activeEntry?.title || config.label,
-    subtitle: activeEntry?.subtitle || DEFAULT_LEGAL_SUBTITLE,
-    tag: activeEntry?.tag || config.tag,
-    lastUpdated: activeEntry?.lastUpdated || config.lastUpdated,
+    config: activePolicy,
+    activePolicy,
+    data: activePolicy,
+    content: activePolicy?.content || '',
+    title: activePolicy?.title || 'Políticas Legales',
+    subtitle: activePolicy?.subtitle || DEFAULT_LEGAL_SUBTITLE,
+    tag: activePolicy?.tag || 'DOCUMENTO LEGAL JASMAN',
+    heroImage: activePolicy?.heroImage || '',
+    heroImageAlt: activePolicy?.heroImageAlt || '',
+    lastUpdated: activePolicy?.lastUpdated || '2026-11-27',
     loading,
     error: null,
-    isCMSLive: Boolean(activeEntry?.isLive),
-    allPolicies: Object.values(LEGAL_POLICIES_CONFIG),
+    isCMSLive: Boolean(activePolicy?.isLive),
+    allPolicies: effectiveCatalog,
   };
 }

@@ -1,9 +1,9 @@
 /**
- * Wix CMS Legal Policies Endpoint (Jasman Automotriz + Jasman TIRES)
+ * Wix CMS Unified `politicas` Endpoint (Jasman Automotriz + Jasman TIRES)
  *
- * GET  /api/legal-policies                   -> Returns all 4 legal policies from Wix CMS
- * GET  /api/legal-policies?policy=privacy    -> Returns a single policy ('privacy' | 'terms' | 'refund' | 'shipping')
- * POST /api/legal-policies { action: "seed_if_empty" } -> Ensures CMS fields & seeds initial Jasman legal copy if empty
+ * GET  /api/legal-policies                   -> Returns all active rows from Wix CMS `politicas`
+ * GET  /api/legal-policies?policy=<slug|key> -> Returns a single matching policy row
+ * POST /api/legal-policies { action: "seed_if_empty" } -> Ensures schema fields & upserts 4 initial policies if missing
  */
 
 import { Buffer } from 'node:buffer';
@@ -19,19 +19,22 @@ import {
 const WIX_API_BASE = 'https://www.wixapis.com';
 const WIX_CLIENT_ID = '5aabc542-16cf-44de-bedf-d8eb7ad08c46';
 const DEFAULT_WIX_SITE_ID = '7fd3b8ea-a3f3-4b51-9b48-4ec1f53d2cc9';
-
-const COLLECTION_CANDIDATES = {
-  privacy: ['AvisoDePrivacidad', 'AvisodePrivacidad', 'Avisodeprivacidad', 'PoliticaDePrivacidad'],
-  terms: ['TerminosYCondiciones', 'Terminosycondiciones', 'TerminosyCondiciones'],
-  refund: ['PoliticaDeReembolsos', 'PoliticadeReembolsos', 'PoliticaDeReembolso', 'PoliticaDeDevoluciones'],
-  shipping: ['PoliticaDeEnvios', 'PoliticadeEnvios', 'PoliticaDeEnvio'],
-};
+const POLITICAS_COLLECTION_ID = 'politicas';
 
 const REQUIRED_FIELDS = [
-  { key: 'contenido', displayName: 'Contenido', type: 'RICH_TEXT' },
-  { key: 'subtitulo', displayName: 'Subtítulo', type: 'TEXT' },
+  { key: 'slug', displayName: 'Slug (URL)', type: 'TEXT' },
   { key: 'tag', displayName: 'Etiqueta Superior', type: 'TEXT' },
-  { key: 'slug', displayName: 'Identificador', type: 'TEXT' },
+  { key: 'subtitulo', displayName: 'Subtítulo', type: 'TEXT' },
+  { key: 'contenido', displayName: 'Contenido', type: 'RICH_TEXT' },
+  { key: 'orden', displayName: 'Orden', type: 'NUMBER' },
+  { key: 'activo', displayName: 'Visible en Web', type: 'BOOLEAN' },
+];
+
+const SEED_ROWS = [
+  { key: 'privacy', slug: 'aviso-de-privacidad', orden: 1 },
+  { key: 'terms', slug: 'terminos-y-condiciones', orden: 2 },
+  { key: 'refund', slug: 'politica-de-reembolso', orden: 3 },
+  { key: 'shipping', slug: 'politica-de-envios', orden: 4 },
 ];
 
 function getWixCredentials() {
@@ -61,6 +64,15 @@ function compactPolicyHtml(raw = '') {
     .map((line) => line.trim())
     .filter(Boolean)
     .join('\n');
+}
+
+function normalizeLookup(raw = '') {
+  return String(raw || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/^\/+|\/+$/g, '')
+    .trim();
 }
 
 async function parseJsonBody(req) {
@@ -118,290 +130,45 @@ async function wixRestFetch(path, apiKey, siteId, options = {}) {
   return data;
 }
 
-async function ensurePolicyCollectionFields(collectionId, apiKey, siteId) {
-  if (!apiKey) {
-    return { checked: false, added: [], warnings: ['No WIX_API_KEY configured'] };
-  }
-
-  const added = [];
-  const warnings = [];
-
-  try {
-    const info = await wixRestFetch(
-      `/wix-data/v2/collections/${encodeURIComponent(collectionId)}`,
-      apiKey,
-      siteId
-    );
-    const existingFields = info?.collection?.fields || [];
-    const existingKeys = new Set(existingFields.map((f) => f.key));
-
-    for (const field of REQUIRED_FIELDS) {
-      if (existingKeys.has(field.key)) continue;
-      try {
-        await wixRestFetch(
-          '/wix-data/v2/collections/create-field',
-          apiKey,
-          siteId,
-          {
-            method: 'POST',
-            body: JSON.stringify({ dataCollectionId: collectionId, field }),
-          }
-        );
-        added.push(field.key);
-      } catch (fieldErr) {
-        warnings.push(`field "${field.key}": ${fieldErr.message}`);
-      }
-    }
-
-    return { checked: true, added, warnings };
-  } catch (err) {
-    warnings.push(`collection lookup: ${err.message}`);
-    return { checked: false, added, warnings };
-  }
-}
-
-function pickNewestItem(rawList = []) {
-  if (!Array.isArray(rawList) || rawList.length === 0) return null;
-  const normalized = rawList.map((entry) => {
-    const data = entry?.data && typeof entry.data === 'object' ? entry.data : entry;
-    return {
-      ...data,
-      _id: entry?.id || data?._id || entry?._id,
-      _updatedDate: entry?.updatedDate || data?._updatedDate || entry?._updatedDate,
-      _createdDate: entry?.createdDate || data?._createdDate || entry?._createdDate,
-    };
-  });
-  normalized.sort((a, b) => {
-    const dA = a._updatedDate?.$date || a._updatedDate || a._createdDate?.$date || a._createdDate || 0;
-    const dB = b._updatedDate?.$date || b._updatedDate || b._createdDate?.$date || b._createdDate || 0;
-    return new Date(dB).getTime() - new Date(dA).getTime();
-  });
-  return normalized[0];
-}
-
-async function querySingleCollection(collectionId, sdkClient, apiKey, siteId) {
-  let sdkError = null;
-  try {
-    const sdkRes = await sdkClient.items.query(collectionId).limit(10).find();
-    if (Array.isArray(sdkRes?.items) && sdkRes.items.length > 0) {
-      return {
-        items: sdkRes.items.map((item) => item?.data || item),
-        source: 'wix-sdk',
-        publiclyVisible: true,
-        collection: collectionId,
-      };
-    }
-  } catch (err) {
-    sdkError = err?.message || 'wix_sdk_error';
-  }
-
+async function queryPoliticasRows(sdkClient, apiKey, siteId) {
   if (apiKey) {
     try {
       const restRes = await wixRestFetch('/wix-data/v2/items/query', apiKey, siteId, {
         method: 'POST',
         body: JSON.stringify({
-          dataCollectionId: collectionId,
-          query: { paging: { limit: 10 } },
+          dataCollectionId: POLITICAS_COLLECTION_ID,
+          query: { paging: { limit: 50 } },
           consistentRead: true,
         }),
       });
       const dataItems = restRes?.dataItems || [];
-      if (dataItems.length > 0) {
-        return {
-          items: dataItems.map((entry) => ({
-            ...(entry?.data || {}),
-            _id: entry?.id || entry?.data?._id,
-            _updatedDate: entry?.updatedDate || entry?.data?._updatedDate,
-            _createdDate: entry?.createdDate || entry?.data?._createdDate,
-          })),
-          source: 'wix-rest',
-          publiclyVisible: false,
-          sdkError,
-          collection: collectionId,
-        };
-      }
-    } catch (restErr) {
       return {
-        items: [],
-        source: 'error',
-        publiclyVisible: false,
-        sdkError,
-        restError: restErr?.message || 'wix_rest_error',
-        collection: collectionId,
+        source: 'wix-rest',
+        items: dataItems.map((entry) => ({
+          ...(entry?.data || {}),
+          _id: entry?.id || entry?.data?._id,
+          _updatedDate: entry?.updatedDate || entry?.data?._updatedDate,
+          _createdDate: entry?.createdDate || entry?.data?._createdDate,
+        })),
       };
-    }
-  }
-
-  return {
-    items: [],
-    source: sdkError ? 'error' : 'wix-sdk',
-    publiclyVisible: !sdkError,
-    sdkError,
-    collection: collectionId,
-  };
-}
-
-async function queryPolicyAcrossCandidates(cfg, sdkClient, apiKey, siteId) {
-  const candidates = COLLECTION_CANDIDATES[cfg.key] || [cfg.collection];
-  let firstAttempt = null;
-
-  for (const coll of candidates) {
-    const res = await querySingleCollection(coll, sdkClient, apiKey, siteId);
-    if (!firstAttempt) firstAttempt = res;
-    if (res.items.length > 0) return res;
-  }
-
-  // Also check unified "Politicas" collection filtered by slug
-  if (apiKey) {
-    try {
-      const unified = await wixRestFetch('/wix-data/v2/items/query', apiKey, siteId, {
-        method: 'POST',
-        body: JSON.stringify({
-          dataCollectionId: 'Politicas',
-          query: {
-            filter: { slug: cfg.key },
-            paging: { limit: 5 },
-          },
-          consistentRead: true,
-        }),
-      });
-      const dataItems = unified?.dataItems || [];
-      if (dataItems.length > 0) {
-        return {
-          items: dataItems.map((entry) => ({
-            ...(entry?.data || {}),
-            _id: entry?.id || entry?.data?._id,
-            _updatedDate: entry?.updatedDate || entry?.data?._updatedDate,
-            _createdDate: entry?.createdDate || entry?.data?._createdDate,
-          })),
-          source: 'wix-rest',
-          publiclyVisible: false,
-          collection: 'Politicas',
-        };
-      }
     } catch {
-      // ignore if Politicas does not exist
+      // fall through to public SDK
     }
   }
 
-  return firstAttempt || {
-    items: [],
-    source: 'empty',
-    publiclyVisible: false,
-    collection: cfg.collection,
-  };
-}
-
-async function seedPolicyIfEmpty(cfg, sdkClient, apiKey, siteId) {
-  const candidates = COLLECTION_CANDIDATES[cfg.key] || [cfg.collection];
-  let targetCollection = cfg.collection;
-
-  if (apiKey) {
-    for (const coll of candidates) {
-      try {
-        await wixRestFetch(
-          `/wix-data/v2/collections/${encodeURIComponent(coll)}`,
-          apiKey,
-          siteId
-        );
-        targetCollection = coll;
-        break;
-      } catch {
-        // try next candidate
-      }
-    }
-  }
-
-  const schema = await ensurePolicyCollectionFields(targetCollection, apiKey, siteId);
-  const existingQuery = await querySingleCollection(targetCollection, sdkClient, apiKey, siteId);
-
-  if (existingQuery.items.length > 0) {
-    const latest = pickNewestItem(existingQuery.items);
+  try {
+    const sdkRes = await sdkClient.items.query(POLITICAS_COLLECTION_ID).limit(50).find();
     return {
-      key: cfg.key,
-      collection: targetCollection,
-      status: 'already_populated',
-      count: existingQuery.items.length,
-      itemId: latest?._id || null,
-      publiclyVisible: existingQuery.publiclyVisible,
-      schema,
+      source: 'wix-sdk',
+      items: (sdkRes?.items || []).map((it) => it?.data || it),
+    };
+  } catch (err) {
+    return {
+      source: 'error',
+      items: [],
+      error: err?.message || 'wix_query_failed',
     };
   }
-
-  const itemData = {
-    title: cfg.label,
-    slug: cfg.key,
-    tag: cfg.tag,
-    subtitulo: DEFAULT_LEGAL_SUBTITLE,
-    contenido: compactPolicyHtml(DEFAULT_LEGAL_CONTENT[cfg.key] || ''),
-  };
-
-  let insertedId = null;
-  let insertSource = '';
-  const errors = [];
-
-  if (apiKey) {
-    try {
-      const inserted = await wixRestFetch('/wix-data/v2/items', apiKey, siteId, {
-        method: 'POST',
-        body: JSON.stringify({
-          dataCollectionId: targetCollection,
-          dataItem: { data: itemData },
-        }),
-      });
-      insertedId = inserted?.dataItem?.id || inserted?.dataItem?.data?._id || null;
-      insertSource = 'wix-rest';
-    } catch (restErr) {
-      errors.push(`rest_insert: ${restErr.message}`);
-    }
-  }
-
-  if (!insertedId) {
-    try {
-      const sdkInserted = await sdkClient.items.insert(targetCollection, itemData);
-      insertedId = sdkInserted?._id || sdkInserted?.id || sdkInserted?.data?._id || null;
-      insertSource = 'wix-sdk';
-    } catch (sdkErr) {
-      errors.push(`sdk_insert: ${sdkErr?.message || 'sdk_insert_failed'}`);
-    }
-  }
-
-  if (!insertedId) {
-    return {
-      key: cfg.key,
-      collection: targetCollection,
-      status: 'insert_failed',
-      errors,
-      schema,
-    };
-  }
-
-  let publishStatus = 'skipped';
-  if (apiKey) {
-    try {
-      await wixRestFetch('/wix-data/v2/items/publish', apiKey, siteId, {
-        method: 'POST',
-        body: JSON.stringify({
-          dataCollectionId: targetCollection,
-          itemIds: [insertedId],
-        }),
-      });
-      publishStatus = 'published';
-    } catch (pubErr) {
-      publishStatus = `not_needed_or_error: ${pubErr.message}`;
-    }
-  }
-
-  return {
-    key: cfg.key,
-    collection: targetCollection,
-    status: 'seeded',
-    itemId: insertedId,
-    insertSource,
-    publishStatus,
-    schema,
-    errors: errors.length > 0 ? errors : undefined,
-  };
 }
 
 export default async function handler(req, res) {
@@ -419,40 +186,50 @@ export default async function handler(req, res) {
   const sdkClient = getSdkClient();
 
   if (req.method === 'GET') {
-    const singleKey = String(req.query?.policy || '').trim().toLowerCase();
-    const configs = singleKey
-      ? [LEGAL_POLICIES_CONFIG[singleKey]].filter(Boolean)
-      : Object.values(LEGAL_POLICIES_CONFIG);
+    const queryResult = await queryPoliticasRows(sdkClient, apiKey, siteId);
+    const activeItems = queryResult.items
+      .filter((row) => row && row.activo !== false && row.visible !== false)
+      .sort((a, b) => (Number(a.orden) || 999) - (Number(b.orden) || 999));
 
-    if (singleKey && configs.length === 0) {
-      return res.status(404).json({ ok: false, error: `Unknown policy key: ${singleKey}` });
+    const singleTarget = normalizeLookup(req.query?.policy || '');
+    if (singleTarget) {
+      const keyAlias = {
+        privacy: 'aviso-de-privacidad',
+        terms: 'terminos-y-condiciones',
+        refund: 'politica-de-reembolso',
+        shipping: 'politica-de-envios',
+      }[singleTarget] || singleTarget;
+
+      const match = activeItems.find((it) => {
+        const rowSlug = normalizeLookup(it.slug || '');
+        const rowTitle = normalizeLookup(it.title || '');
+        return rowSlug === keyAlias || rowSlug === singleTarget || rowTitle.includes(singleTarget);
+      });
+
+      return res.status(200).json({
+        ok: true,
+        collection: POLITICAS_COLLECTION_ID,
+        source: queryResult.source,
+        policy: {
+          key: singleTarget,
+          collection: POLITICAS_COLLECTION_ID,
+          item: match || null,
+        },
+      });
     }
 
-    const policies = {};
-    for (const cfg of configs) {
-      const result = await queryPolicyAcrossCandidates(cfg, sdkClient, apiKey, siteId);
-      const item = pickNewestItem(result.items);
-      policies[cfg.key] = {
-        key: cfg.key,
-        collection: result.collection || cfg.collection,
-        source: result.source,
-        publiclyVisible: result.publiclyVisible,
-        item,
-        count: result.items.length,
-        ...(result.sdkError ? { sdkError: result.sdkError } : {}),
-      };
-    }
-
-    if (singleKey) {
-      return res.status(200).json({ ok: true, policy: policies[singleKey] });
-    }
-    return res.status(200).json({ ok: true, policies });
+    return res.status(200).json({
+      ok: true,
+      collection: POLITICAS_COLLECTION_ID,
+      source: queryResult.source,
+      count: activeItems.length,
+      items: activeItems,
+    });
   }
 
   if (req.method === 'POST') {
     const body = await parseJsonBody(req);
     const action = String(body?.action || '').trim();
-
     if (action !== 'seed_if_empty') {
       return res.status(400).json({
         ok: false,
@@ -460,19 +237,70 @@ export default async function handler(req, res) {
       });
     }
 
-    const results = [];
-    for (const cfg of Object.values(LEGAL_POLICIES_CONFIG)) {
-      const seeded = await seedPolicyIfEmpty(cfg, sdkClient, apiKey, siteId);
-      results.push(seeded);
+    if (!apiKey) {
+      return res.status(500).json({ ok: false, error: 'Missing WIX_API_KEY' });
     }
 
-    const hasFailures = results.some((r) => r.status === 'insert_failed');
-    return res.status(hasFailures ? 500 : 200).json({
-      ok: !hasFailures,
-      hasApiKey: Boolean(apiKey),
+    const colInfo = await wixRestFetch(
+      `/wix-data/v2/collections/${POLITICAS_COLLECTION_ID}`,
+      apiKey,
+      siteId
+    );
+    const existingKeys = new Set((colInfo?.collection?.fields || []).map((f) => f.key));
+    const addedFields = [];
+
+    for (const field of REQUIRED_FIELDS) {
+      if (existingKeys.has(field.key)) continue;
+      await wixRestFetch('/wix-data/v2/collections/create-field', apiKey, siteId, {
+        method: 'POST',
+        body: JSON.stringify({ dataCollectionId: POLITICAS_COLLECTION_ID, field }),
+      });
+      addedFields.push(field.key);
+    }
+
+    const current = await queryPoliticasRows(sdkClient, apiKey, siteId);
+    const results = [];
+
+    for (const rowSpec of SEED_ROWS) {
+      const cfg = LEGAL_POLICIES_CONFIG[rowSpec.key];
+      const exists = current.items.find((it) => normalizeLookup(it.slug) === rowSpec.slug);
+      if (exists) {
+        results.push({ slug: rowSpec.slug, status: 'already_populated', id: exists._id });
+        continue;
+      }
+
+      const data = {
+        title: cfg.label,
+        slug: rowSpec.slug,
+        tag: cfg.tag,
+        subtitulo: DEFAULT_LEGAL_SUBTITLE,
+        description: cfg.metaDesc,
+        contenido: compactPolicyHtml(DEFAULT_LEGAL_CONTENT[rowSpec.key] || ''),
+        orden: rowSpec.orden,
+        activo: true,
+      };
+
+      const inserted = await wixRestFetch('/wix-data/v2/items', apiKey, siteId, {
+        method: 'POST',
+        body: JSON.stringify({
+          dataCollectionId: POLITICAS_COLLECTION_ID,
+          dataItem: { data },
+        }),
+      });
+      results.push({
+        slug: rowSpec.slug,
+        status: 'seeded',
+        id: inserted?.dataItem?.id || null,
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      collection: POLITICAS_COLLECTION_ID,
+      addedFields,
       results,
     });
   }
 
-  return res.status(405).json({ ok: false, error: 'Method not allowed. Use GET or POST.' });
+  return res.status(405).json({ ok: false, error: 'Method not allowed.' });
 }
